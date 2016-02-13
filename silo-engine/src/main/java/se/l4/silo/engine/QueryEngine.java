@@ -6,9 +6,9 @@ package se.l4.silo.engine;
  * @author Andreas Holstenson
  *
  */
-public interface QueryEngine
+public interface QueryEngine<T>
 {
-	void query();
+	void query(QueryEncounter<T> encounter);
 	
 	/**
 	 * Update this query engine with new data.

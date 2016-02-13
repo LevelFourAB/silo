@@ -5,24 +5,6 @@ import org.apache.bval.jsr303.xml.FieldType;
 public interface FieldLimited<T>
 {
 	/**
-	 * Set how the identity should be treated. By default the name of the
-	 * field will be {@code id} with the type {@link FieldType#UUID}.
-	 * 
-	 * @param column
-	 * @param type
-	 * @return
-	 */
-	T setIdentity(String column, FieldType type);
-	
-	/**
-	 * Set the type of the identity column.
-	 * 
-	 * @param type
-	 * @return
-	 */
-	T setIdentityType(FieldType type);
-	
-	/**
 	 * Set the limit for a specific field.
 	 * 
 	 * @param field

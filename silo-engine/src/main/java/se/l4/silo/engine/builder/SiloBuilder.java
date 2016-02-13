@@ -3,6 +3,8 @@ package se.l4.silo.engine.builder;
 import com.google.inject.Provides;
 
 import se.l4.silo.Silo;
+import se.l4.silo.engine.QueryEngine;
+import se.l4.silo.engine.QueryEngineFactory;
 
 /**
  * Builder for instances of {@link Silo}. Should be used in a method annotated
@@ -14,10 +16,20 @@ import se.l4.silo.Silo;
 public interface SiloBuilder
 {
 	/**
-	 * Create a new instance via a configuration key.
+	 * Register a new {@link QueryEngine}. This can be referenced by its name
+	 * for entity configurations.
+	 * 
+	 * @param name
+	 * @param factory
+	 * @return
+	 */
+	SiloBuilder addQueryEngine(String name, QueryEngineFactory factory);
+	
+	/**
+	 * Create this instance.
 	 * 
 	 * @param configSet
 	 * @return
 	 */
-	Silo viaConfig(String configSet);
+	Silo build();
 }
