@@ -1,8 +1,8 @@
 package se.l4.silo.engine.internal;
 
 import java.io.IOException;
+import java.util.function.Supplier;
 
-import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 
 import se.l4.aurochs.core.io.Bytes;

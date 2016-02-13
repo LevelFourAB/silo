@@ -1,8 +1,6 @@
 package se.l4.silo.engine.internal;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
 
 import org.h2.mvstore.MVStore;
 import org.h2.mvstore.OffHeapStore;
@@ -39,63 +37,6 @@ public class MVDataStorageTest
 		store.close();
 	}
 	
-	private Bytes generateData(int size)
-		throws IOException
-	{
-		return Bytes.viaDataOutput(o -> {
-			for(int i=0; i<size; i++)
-			{
-				o.write(i % 255);
-			}
-		});
-	}
-	
-	/**
-	 * Test that two instances of {@link Bytes} are equal by both checking
-	 * their byte arrays and checking their input streams.
-	 * 
-	 * @param b1
-	 * @param b2
-	 * @throws IOException
-	 */
-	private void assertBytesEquals(Bytes b1, Bytes b2)
-		throws IOException
-	{
-		byte[] a1 = b1.toByteArray();
-		byte[] a2 = b2.toByteArray();
-		
-		if(a1.length != a2.length)
-		{
-			throw new AssertionError("Bytes not equal, size is different. First is " + a1.length + " bytes, second is " + a2.length);
-		}
-		
-		if(! Arrays.equals(a1, a2))
-		{
-			throw new AssertionError("Bytes are not equal");
-		}
-		
-		InputStream in1 = b1.asInputStream();
-		InputStream in2 = b2.asInputStream();
-		
-		int i = 0;
-		int r1;
-		while((r1 = in1.read()) != -1)
-		{
-			int r2 = in2.read();
-			if(r1 != r2)
-			{
-				throw new AssertionError("Bytes not equal, diverged at index " + i);
-			}
-			
-			i++;
-		}
-		
-		if(in2.read() != -1)
-		{
-			throw new AssertionError("Bytes not equal, second byte stream still has data at index " + i);
-		}
-	}
-	
 	@Test
 	public void testStoreEmptyData()
 		throws IOException
@@ -107,14 +48,14 @@ public class MVDataStorageTest
 	public void testStoreSmallData()
 		throws IOException
 	{
-		storage.store(1, generateData(1024));
+		storage.store(1, DataUtils.generate(1024));
 	}
 	
 	@Test
 	public void testStoreLargeData()
 		throws IOException
 	{
-		storage.store(1, generateData(1024 * 1024 * 4));
+		storage.store(1, DataUtils.generate(1024 * 1024 * 4));
 	}
 	
 	private void testStoreAndRead(Bytes bytes)
@@ -123,7 +64,7 @@ public class MVDataStorageTest
 		storage.store(1, bytes);
 		Bytes data = storage.get(1);
 		
-		assertBytesEquals(bytes, data);
+		DataUtils.assertBytesEquals(bytes, data);
 	}
 	
 	@Test
@@ -137,14 +78,14 @@ public class MVDataStorageTest
 	public void testStoreAndReadSmallData()
 		throws IOException
 	{
-		testStoreAndRead(generateData(1024));
+		testStoreAndRead(DataUtils.generate(1024));
 	}
 	
 	@Test
 	public void testStoreAndReadLargeData()
 		throws IOException
 	{
-		testStoreAndRead(generateData(1024 * 1024 * 4));
+		testStoreAndRead(DataUtils.generate(1024 * 1024 * 4));
 	}
 	
 	private void testStoreAndDelete(Bytes data)
@@ -168,14 +109,14 @@ public class MVDataStorageTest
 	public void testStoreAndDeleteSmallData()
 		throws IOException
 	{
-		testStoreAndDelete(generateData(1024));
+		testStoreAndDelete(DataUtils.generate(1024));
 	}
 	
 	@Test
 	public void testStoreAndDeleteLargeData()
 		throws IOException
 	{
-		testStoreAndDelete(generateData(1024 * 1024 * 4));
+		testStoreAndDelete(DataUtils.generate(1024 * 1024 * 4));
 	}
 	
 	private void testStoreAndReadMultiple(Bytes b1, Bytes b2)
@@ -184,41 +125,41 @@ public class MVDataStorageTest
 		storage.store(1, b1);
 		storage.store(2, b2);
 		
-		assertBytesEquals(storage.get(1), b1);
-		assertBytesEquals(storage.get(2), b2);
+		DataUtils.assertBytesEquals(storage.get(1), b1);
+		DataUtils.assertBytesEquals(storage.get(2), b2);
 	}
 	
 	@Test
 	public void testStoreMixedEmptyAndLarge()
 		throws IOException
 	{
-		testStoreAndReadMultiple(Bytes.empty(), generateData(1024 * 1024 * 4));
+		testStoreAndReadMultiple(Bytes.empty(), DataUtils.generate(1024 * 1024 * 4));
 	}
 	
 	@Test
 	public void testStoreMixedLargeAndLarge()
 		throws IOException
 	{
-		testStoreAndReadMultiple(generateData(1024 * 1024 * 4), generateData(1024 * 1024 * 4));
+		testStoreAndReadMultiple(DataUtils.generate(1024 * 1024 * 4), DataUtils.generate(1024 * 1024 * 4));
 	}
 	
 	@Test
 	public void testStoreReadDelete()
 		throws IOException
 	{
-		Bytes b1 = generateData(1024 * 17);
-		Bytes b2 = generateData(1024 * 1024 * 4);
-		Bytes b3 = generateData(1024 * 1024 * 2);
+		Bytes b1 = DataUtils.generate(1024 * 17);
+		Bytes b2 = DataUtils.generate(1024 * 1024 * 4);
+		Bytes b3 = DataUtils.generate(1024 * 1024 * 2);
 		storage.store(1, b1);
 		storage.store(2, b2);
 		storage.store(3, b3);
 		
-		assertBytesEquals(storage.get(1), b1);
-		assertBytesEquals(storage.get(2), b2);
-		assertBytesEquals(storage.get(3), b3);
+		DataUtils.assertBytesEquals(storage.get(1), b1);
+		DataUtils.assertBytesEquals(storage.get(2), b2);
+		DataUtils.assertBytesEquals(storage.get(3), b3);
 		
 		storage.delete(1);
-		assertBytesEquals(storage.get(2), b2);
-		assertBytesEquals(storage.get(3), b3);
+		DataUtils.assertBytesEquals(storage.get(2), b2);
+		DataUtils.assertBytesEquals(storage.get(3), b3);
 	}
 }

@@ -54,4 +54,10 @@ public class EmptyFetchResult<T>
 	public void close()
 	{
 	}
+	
+	@Override
+	public String toString()
+	{
+		return "EmptyFetchResult{}";
+	}
 }

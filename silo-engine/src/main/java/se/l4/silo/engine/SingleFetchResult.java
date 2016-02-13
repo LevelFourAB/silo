@@ -51,4 +51,10 @@ public class SingleFetchResult<T>
 	{
 
 	}
+	
+	@Override
+	public String toString()
+	{
+		return "SingleFetchResult{" + item + "}";
+	}
 }

@@ -40,9 +40,14 @@ public class StorageEngine
 	private final SimpleLongIdGenerator ids;
 
 	private final TransactionLog transactionLog;
+
+	private final EntityChangeListener entityListener;
 	
-	public StorageEngine(LogBuilder logBuilder, Path root, EngineConfig config)
+	public StorageEngine(LogBuilder logBuilder, Path root, EngineConfig config,
+			EntityChangeListener entityListener)
 	{
+		this.entityListener = entityListener;
+	
 		try
 		{
 			Files.createDirectories(root);
@@ -110,13 +115,17 @@ public class StorageEngine
 			StorageEntity existing = entities.get(key);
 			if(existing == null)
 			{
-				entities.put(key, createEntity(key, ec));
+				StorageEntity newEntity = createEntity(key, ec);
+				entities.put(key, newEntity);
+				entityListener.newBinaryEntity(key, newEntity);
 			}
 			else
 			{
 				existing.loadConfig(ec);
 			}
 		}
+		
+		// TODO: Support for entity removal
 	}
 	
 	/**
