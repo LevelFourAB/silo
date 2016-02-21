@@ -4,17 +4,17 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
 
 import se.l4.silo.ResourceHandle;
 import se.l4.silo.Silo;
 import se.l4.silo.Transaction;
 import se.l4.silo.binary.BinaryEntity;
+import se.l4.silo.engine.builder.SiloBuilder;
 import se.l4.silo.engine.config.EngineConfig;
-import se.l4.silo.engine.internal.BinaryEntityOverLog;
-import se.l4.silo.engine.internal.EntityChangeListener;
+import se.l4.silo.engine.internal.LocalEngineFactories;
+import se.l4.silo.engine.internal.LocalSiloBuilder;
 import se.l4.silo.engine.internal.StorageEngine;
-import se.l4.silo.engine.internal.StorageEntity;
+import se.l4.silo.engine.internal.TransactionSupport;
 import se.l4.silo.engine.internal.tx.TransactionExchange;
 import se.l4.silo.engine.internal.tx.TransactionImpl;
 import se.l4.silo.engine.internal.tx.WrappedTransaction;
@@ -33,51 +33,62 @@ public class LocalSilo
 {
 	private final ConcurrentHashMap<String, Object> entities;
 	
+	private final TransactionSupport tx;
 	private final StorageEngine storageEngine;
-	private final Supplier<TransactionExchange> exchanges;
 	private final ThreadLocal<TransactionImpl> transactions;
 
-	public LocalSilo(LogBuilder logBuilder, Path storage, EngineConfig config)
+	public LocalSilo(LocalEngineFactories factories, LogBuilder logBuilder, Path storage, EngineConfig config)
 	{
+		Objects.requireNonNull(factories, "factories is required");
 		Objects.requireNonNull(logBuilder, "logBuilder is required");
 		Objects.requireNonNull(storage, "storage path is required");
 		Objects.requireNonNull(config, "configuration is required");
 		
 		entities = new ConcurrentHashMap<>();
 		
-		exchanges = this::getExchange;
+		tx = createTransactionSupport();
 		transactions = new ThreadLocal<>();
 		
-		storageEngine = new StorageEngine(logBuilder, storage, config, createEntityListener());
+		storageEngine = new StorageEngine(factories, tx, logBuilder, storage, config);
 	}
 	
-	public static Silo open(Path path, EngineConfig config)
+	/**
+	 * Start creating a local instance of Silo. The built instance will use a
+	 * {@link DirectApplyLog} so any operations will be applied directly by the
+	 * calling thread.
+	 * 
+	 * @param path
+	 *   the directory where data will be stored
+	 * @return
+	 */
+	public static SiloBuilder open(Path path)
 	{
-		return new LocalSilo(DirectApplyLog.builder(), path, config);
+		return new LocalSiloBuilder(DirectApplyLog.builder(), path);
 	}
 	
-	public static Silo open(File path, EngineConfig config)
+	/**
+	 * Start creating a local instance of Silo. See {@link #open(Path)} for
+	 * details about how the instance will behave.
+	 * 
+	 * @param path
+	 *   the directory where data will be stored
+	 * @return
+	 */
+	public static SiloBuilder open(File path)
 	{
-		return open(path.toPath(), config);
+		return open(path.toPath());
 	}
-
-	private EntityChangeListener createEntityListener()
+	
+	/**
+	 * Start creating a new instance using a specific log to apply operations.
+	 * 
+	 * @param logBuilder
+	 * @param path
+	 * @return
+	 */
+	public static SiloBuilder open(LogBuilder logBuilder, Path path)
 	{
-		return new EntityChangeListener()
-		{
-			@Override
-			public void removeEntity(String name)
-			{
-				entities.remove(name);
-			}
-			
-			@Override
-			public void newBinaryEntity(String name, StorageEntity storageEntity)
-			{
-				BinaryEntityOverLog entity = new BinaryEntityOverLog(name, exchanges, storageEntity);
-				entities.put(name, entity);
-			}
-		};
+		return new LocalSiloBuilder(logBuilder, path);
 	}
 
 	@Override
@@ -94,16 +105,45 @@ public class LocalSilo
 		storageEngine.close();
 	}
 	
-	private TransactionExchange getExchange()
+	private TransactionSupport createTransactionSupport()
 	{
-		TransactionImpl tx = transactions.get();
-		if(tx != null)
+		return new TransactionSupport()
 		{
-			return tx.getExchange();
-		}
+			@Override
+			public TransactionExchange getExchange()
+			{
+				TransactionImpl tx = transactions.get();
+				if(tx != null)
+				{
+					return tx.getExchange();
+				}
 
-		// No active transaction, create a new transaction
-		return new TransactionImpl(storageEngine.getTransactionLog(), (i) -> {});
+				// No active transaction, create a new transaction
+				return new TransactionImpl(storageEngine.getTransactionLog(), (i) -> {});
+			}
+
+			@Override
+			public Transaction newTransaction()
+			{
+				TransactionImpl tx = transactions.get();
+				if(tx != null)
+				{
+					return new WrappedTransaction(tx);
+				}
+				
+				tx = new TransactionImpl(storageEngine.getTransactionLog(), this::deactivateTransaction);
+				transactions.set(tx);
+				return tx;
+			}
+			
+			private void deactivateTransaction(Transaction tx)
+			{
+				if(transactions.get() == tx)
+				{
+					transactions.remove();
+				}
+			}
+		};
 	}
 
 	@Override
@@ -115,7 +155,7 @@ public class LocalSilo
 	@SuppressWarnings("unchecked")
 	private <T> T entity(String entityName)
 	{
-		return (T) entities.get(entityName);
+		return storageEngine.getEntity(entityName);
 	}
 
 	@Override
@@ -123,29 +163,13 @@ public class LocalSilo
 	{
 		return entity(entityName);
 	}
-
+	
 	@Override
 	public Transaction newTransaction()
 	{
-		TransactionImpl tx = transactions.get();
-		if(tx != null)
-		{
-			return new WrappedTransaction(tx);
-		}
-		
-		tx = new TransactionImpl(storageEngine.getTransactionLog(), this::deactivateTransaction);
-		transactions.set(tx);
-		return tx;
+		return tx.newTransaction();
 	}
 	
-	private void deactivateTransaction(Transaction tx)
-	{
-		if(transactions.get() == tx)
-		{
-			transactions.remove();
-		}
-	}
-
 	@Override
 	public ResourceHandle acquireResourceHandle()
 	{

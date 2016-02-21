@@ -11,9 +11,17 @@ import org.h2.mvstore.MVStore;
 
 import com.google.common.base.Throwables;
 
+import se.l4.aurochs.core.id.LongIdGenerator;
 import se.l4.aurochs.core.id.SimpleLongIdGenerator;
 import se.l4.aurochs.core.io.Bytes;
+import se.l4.silo.Entity;
 import se.l4.silo.StorageException;
+import se.l4.silo.engine.DataStorage;
+import se.l4.silo.engine.EntityCreationEncounter;
+import se.l4.silo.engine.EntityTypeFactory;
+import se.l4.silo.engine.QueryEngineFactory;
+import se.l4.silo.engine.Storage;
+import se.l4.silo.engine.builder.StorageBuilder;
 import se.l4.silo.engine.config.EngineConfig;
 import se.l4.silo.engine.config.EntityConfig;
 import se.l4.silo.engine.internal.log.TransactionLog;
@@ -30,23 +38,61 @@ import se.l4.silo.engine.log.LogBuilder;
 public class StorageEngine
 	implements Closeable
 {
+	/**
+	 * Factories that can be used to fetch registered factories.
+	 */
+	private final EngineFactories factories;
+	
+	/**
+	 * The log to use for replicating data. Created via the log builder passed
+	 * to the storage engine.
+	 */
 	private final Log log;
 	
-	private final Map<String, StorageEntity> entities;
+	/**
+	 * All instances of {@link Storage} that have been created by
+	 * {@link Entity entities}.
+	 */
+	private final Map<String, StorageImpl> storages;
 	
+	/**
+	 * Instances of {@link Entity} created via configuration.
+	 */
+	private final Map<String, Entity> entities;
+	
+	/**
+	 * The store used for storing main data. 
+	 */
 	private final MVStore store;
-	private final MVDataStorage storage;
+	/**
+	 * Abstraction over {@link MVStore} to make data storage simpler.
+	 */
+	private final DataStorage dataStorage;
 
-	private final SimpleLongIdGenerator ids;
+	/**
+	 * The generator used for creating identifiers for transactions and
+	 * primary key mapping.
+	 */
+	private final LongIdGenerator ids;
 
+	/**
+	 * The log used for mapping transaction operations to smaller chunks
+	 * that can be passed to {@link #log}.
+	 */
 	private final TransactionLog transactionLog;
+	/**
+	 * Helper for working with transactions.
+	 */
+	private final TransactionSupport transactionSupport;
 
-	private final EntityChangeListener entityListener;
-	
-	public StorageEngine(LogBuilder logBuilder, Path root, EngineConfig config,
-			EntityChangeListener entityListener)
+	public StorageEngine(EngineFactories factories,
+			TransactionSupport transactionSupport,
+			LogBuilder logBuilder,
+			Path root,
+			EngineConfig config)
 	{
-		this.entityListener = entityListener;
+		this.factories = factories;
+		this.transactionSupport = transactionSupport;
 	
 		try
 		{
@@ -63,7 +109,8 @@ public class StorageEngine
 			.open();
 		
 		ids = new SimpleLongIdGenerator();
-		storage = new MVDataStorage(store);
+		dataStorage = new MVDataStorage(store);
+		storages = new ConcurrentHashMap<>();
 		entities = new ConcurrentHashMap<>();
 		
 		loadConfig(config);
@@ -88,16 +135,30 @@ public class StorageEngine
 			@Override
 			public void store(String entity, Object id, Bytes data) throws IOException
 			{
-				resolveEntity(entity).store(id, data);
+				resolveStorage(entity).directStore(id, data);
 				
 			}
 			
 			@Override
 			public void delete(String entity, Object id) throws IOException
 			{
-				resolveEntity(entity).delete(id);
+				resolveStorage(entity).directDelete(id);
 			}
 		};
+	}
+	
+	@Override
+	public void close()
+			throws IOException
+	{
+		log.close();
+		store.close();
+	}
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private EntityCreationEncounter createEncounter(String name, Object config)
+	{
+		return new EntityCreationEncounterImpl(this, name, config);
 	}
 	
 	/**
@@ -105,6 +166,7 @@ public class StorageEngine
 	 * 
 	 * @param config
 	 */
+	@SuppressWarnings("unchecked")
 	private void loadConfig(EngineConfig config)
 	{
 		for(Map.Entry<String, EntityConfig> entry : config.getEntities().entrySet())
@@ -112,37 +174,19 @@ public class StorageEngine
 			String key = entry.getKey();
 			EntityConfig ec = entry.getValue();
 			
-			StorageEntity existing = entities.get(key);
-			if(existing == null)
-			{
-				StorageEntity newEntity = createEntity(key, ec);
-				entities.put(key, newEntity);
-				entityListener.newBinaryEntity(key, newEntity);
-			}
-			else
-			{
-				existing.loadConfig(ec);
-			}
+			// TODO: Check if the configuration has actually changed for existing entities before recreating
+			
+			EntityTypeFactory<?, ?> factory = factories.forEntity(ec.getType());
+			Entity entity = factory.create(createEncounter(key, ec.as(factory.getConfigType())));
+			entities.put(key, entity);
 		}
 		
 		// TODO: Support for entity removal
 	}
 	
-	/**
-	 * Create an entity that 
-	 * @param key
-	 * @param ec
-	 * @return
-	 */
-	private StorageEntity createEntity(String key, EntityConfig ec)
+	private StorageImpl resolveStorage(String entity)
 	{
-		PrimaryIndex primaryIndex = new PrimaryIndex(store, ids, key);
-		return new StorageEntity(storage, primaryIndex);
-	}
-
-	private StorageEntity resolveEntity(String entity)
-	{
-		StorageEntity result = entities.get(entity);
+		StorageImpl result = storages.get(entity);
 		if(result == null)
 		{
 			throw new StorageException("The entity " + entity + " does not exist");
@@ -150,16 +194,73 @@ public class StorageEngine
 		return result;
 	}
 	
+	/**
+	 * Get the {@link TransactionLog} this engine uses.
+	 * 
+	 * @return
+	 */
 	public TransactionLog getTransactionLog()
 	{
 		return transactionLog;
 	}
 	
-	@Override
-	public void close()
-		throws IOException
+	/**
+	 * Create a new main storage.
+	 * 
+	 * @param name
+	 * @return
+	 */
+	public StorageBuilder createStorage(String name)
 	{
-		log.close();
-		store.close();
+		return createStorage(name, null);
+	}
+
+	/**
+	 * Create a new storage.
+	 * 
+	 * @param name
+	 * @param subName
+	 * @return
+	 */
+	public StorageBuilder createStorage(String name, String subName)
+	{
+		String storageName = name + "::" + (subName == null ? "main" : subName);
+		return new StorageBuilder()
+		{
+			@Override
+			public <C> StorageBuilder withQueryEngine(QueryEngineFactory<?> factory, C config)
+			{
+				return this;
+			}
+			
+			@Override
+			public Storage build()
+			{
+				StorageImpl storage = storages.get(storageName);
+				if(storage == null)
+				{
+					// New storage, create the instance
+					PrimaryIndex primaryIndex = new PrimaryIndex(store, ids, storageName);
+					storage = new StorageImpl(storageName, transactionSupport, dataStorage, primaryIndex);
+					storages.put(storageName, storage);
+					return storage;
+				}
+				
+				// TODO: Reload configuration of storage
+				
+				return storage;
+			}
+		};
+	}
+
+	/**
+	 * Get an entity from this engine.
+	 * 
+	 * @param entityName
+	 * @return
+	 */
+	public <T> T getEntity(String entityName)
+	{
+		return (T) entities.get(entityName);
 	}
 }

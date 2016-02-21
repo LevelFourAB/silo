@@ -2,6 +2,7 @@ package se.l4.silo.binary;
 
 import se.l4.aurochs.core.io.Bytes;
 import se.l4.silo.DeleteResult;
+import se.l4.silo.Entity;
 import se.l4.silo.FetchResult;
 import se.l4.silo.StoreResult;
 
@@ -12,14 +13,8 @@ import se.l4.silo.StoreResult;
  * @author Andreas Holstenson
  */
 public interface BinaryEntity
+	extends Entity
 {
-	/**
-	 * Get the name of the entity.
-	 * 
-	 * @return
-	 */
-	String getName();
-	
 	/**
 	 * Get an object via its identifier.
 	 * 

@@ -8,12 +8,12 @@ import se.l4.silo.binary.BinaryEntity;
  * @author Andreas Holstenson
  *
  */
-public interface BinaryBuilder
+public interface BinaryBuilder<Parent>
 {
 	/**
-	 * Build and register the entity.
+	 * Indicate that we are done building this entity.
 	 * 
 	 * @return
 	 */
-	BinaryEntity build();
+	Parent done();
 }

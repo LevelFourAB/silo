@@ -2,6 +2,11 @@ package se.l4.silo.engine.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 
 import com.google.common.base.Throwables;
@@ -81,5 +86,28 @@ public class DataUtils
 		{
 			throw Throwables.propagate(e);
 		}
+	}
+
+	public static void removeRecursive(Path tmp)
+		throws IOException
+	{
+		Files.walkFileTree(tmp, new SimpleFileVisitor<Path>()
+		{
+			@Override
+			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+				throws IOException
+			{
+				Files.delete(file);
+				return FileVisitResult.CONTINUE;
+			}
+
+			@Override
+			public FileVisitResult postVisitDirectory(Path dir, IOException exc)
+				throws IOException
+			{
+				Files.delete(dir);
+				return FileVisitResult.CONTINUE;
+			}
+		});
 	}
 }
