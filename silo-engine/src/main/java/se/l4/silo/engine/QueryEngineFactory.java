@@ -3,6 +3,7 @@ package se.l4.silo.engine;
 import java.util.function.Function;
 
 import se.l4.silo.engine.builder.BuilderWithParent;
+import se.l4.silo.engine.config.QueryEngineConfig;
 
 /**
  * Factory for configuring and building instances of {@link QueryEngine}.
@@ -27,5 +28,13 @@ public interface QueryEngineFactory<Builder extends BuilderWithParent<?>>
 	 * @param parent
 	 * @return
 	 */
-	<T> Builder builder(Function<Object, T> configReceiver);
+	<T> Builder builder(Function<QueryEngineConfig, T> configReceiver);
+	
+	/**
+	 * Create a new instance of this query engine from the given configuration.
+	 * 
+	 * @param config
+	 * @return
+	 */
+	QueryEngine<?> create(QueryEngineConfig config);
 }

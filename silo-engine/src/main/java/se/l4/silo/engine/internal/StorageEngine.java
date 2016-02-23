@@ -4,6 +4,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -24,6 +25,8 @@ import se.l4.silo.engine.Storage;
 import se.l4.silo.engine.builder.StorageBuilder;
 import se.l4.silo.engine.config.EngineConfig;
 import se.l4.silo.engine.config.EntityConfig;
+import se.l4.silo.engine.config.QueryEngineConfig;
+import se.l4.silo.engine.config.QueryableEntityConfig;
 import se.l4.silo.engine.internal.log.TransactionLog;
 import se.l4.silo.engine.internal.log.TransactionLogImpl;
 import se.l4.silo.engine.log.Log;
@@ -227,6 +230,15 @@ public class StorageEngine
 		String storageName = name + "::" + (subName == null ? "main" : subName);
 		return new StorageBuilder()
 		{
+			private final Map<String, QueryEngineConfig> queryEngines = new HashMap<>();
+			
+			@Override
+			public StorageBuilder withQueryEngines(QueryableEntityConfig config)
+			{
+				queryEngines.putAll(config.getQueryEngines());
+				return this;
+			}
+			
 			@Override
 			public <C> StorageBuilder withQueryEngine(QueryEngineFactory<?> factory, C config)
 			{
@@ -241,7 +253,7 @@ public class StorageEngine
 				{
 					// New storage, create the instance
 					PrimaryIndex primaryIndex = new PrimaryIndex(store, ids, storageName);
-					storage = new StorageImpl(storageName, transactionSupport, dataStorage, primaryIndex);
+					storage = new StorageImpl(factories, transactionSupport, dataStorage, primaryIndex, storageName, queryEngines);
 					storages.put(storageName, storage);
 					return storage;
 				}

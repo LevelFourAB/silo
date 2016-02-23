@@ -4,7 +4,7 @@ import java.util.function.Function;
 
 import se.l4.silo.engine.builder.BinaryBuilder;
 import se.l4.silo.engine.builder.EntityBuilder;
-import se.l4.silo.engine.builder.ObjectBuilder;
+import se.l4.silo.engine.builder.StructuredEntityBuilder;
 import se.l4.silo.engine.config.EntityConfig;
 import se.l4.silo.engine.internal.binary.BinaryBuilderImpl;
 
@@ -32,8 +32,8 @@ public class EntityBuilderImpl<Parent>
 	}
 
 	@Override
-	public ObjectBuilder<Parent> asObject()
+	public StructuredEntityBuilder<Parent> asStructured()
 	{
-		return new ObjectEntityBuilderImpl<>(configReceiver);
+		return new StructuredEntityBuilderImpl<>(configReceiver);
 	}
 }

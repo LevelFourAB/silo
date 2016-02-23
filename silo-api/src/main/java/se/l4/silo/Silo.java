@@ -6,6 +6,7 @@ import com.google.common.base.Throwables;
 
 import se.l4.crayon.services.ManagedService;
 import se.l4.silo.binary.BinaryEntity;
+import se.l4.silo.structured.StructuredEntity;
 
 /**
  * Silo storage.
@@ -32,6 +33,14 @@ public interface Silo
 	 * @return
 	 */
 	BinaryEntity binary(String entityName);
+	
+	/**
+	 * Get an entity used for storing structured data with the given name.
+	 * 
+	 * @param entityName
+	 * @return
+	 */
+	StructuredEntity structured(String entityName);
 	
 	/**
 	 * Create a new transaction for the current thread.

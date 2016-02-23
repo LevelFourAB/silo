@@ -3,8 +3,14 @@ package se.l4.silo.engine.config;
 import java.util.HashMap;
 import java.util.Map;
 
+import se.l4.silo.Entity;
+import se.l4.silo.engine.LocalSilo;
+import se.l4.silo.engine.builder.SiloBuilder;
+
 /**
- * Configuration for an engine consisting of several entitiese.
+ * Configuration for an engine consisting of several {@link Entity entities}.
+ * Instances of this class can be created via a {@link SiloBuilder} retrieved
+ * from for example {@link LocalSilo}.
  * 
  * @author Andreas Holstenson
  *

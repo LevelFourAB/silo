@@ -9,6 +9,8 @@ import se.l4.aurochs.serialization.Serializer;
 public class StringFieldType
 	implements FieldType<String>
 {
+	public static final FieldType<String> INSTANCE = new StringFieldType();
+
 	@Override
 	public String uniqueId()
 	{

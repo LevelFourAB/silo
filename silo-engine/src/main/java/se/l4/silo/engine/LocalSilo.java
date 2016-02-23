@@ -20,6 +20,7 @@ import se.l4.silo.engine.internal.tx.TransactionImpl;
 import se.l4.silo.engine.internal.tx.WrappedTransaction;
 import se.l4.silo.engine.log.DirectApplyLog;
 import se.l4.silo.engine.log.LogBuilder;
+import se.l4.silo.structured.StructuredEntity;
 
 /**
  * {@link Silo} instance that stores data locally. You can use this to embed
@@ -152,7 +153,6 @@ public class LocalSilo
 		throw new UnsupportedOperationException();
 	}
 	
-	@SuppressWarnings("unchecked")
 	private <T> T entity(String entityName)
 	{
 		return storageEngine.getEntity(entityName);
@@ -160,6 +160,12 @@ public class LocalSilo
 
 	@Override
 	public BinaryEntity binary(String entityName)
+	{
+		return entity(entityName);
+	}
+	
+	@Override
+	public StructuredEntity structured(String entityName)
 	{
 		return entity(entityName);
 	}

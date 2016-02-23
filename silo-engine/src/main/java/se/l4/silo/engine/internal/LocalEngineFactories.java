@@ -49,4 +49,16 @@ public class LocalEngineFactories
 		return factory;
 	}
 
+	@Override
+	public QueryEngineFactory<?> forQueryEngine(String type)
+	{
+		QueryEngineFactory<?> factory = queryEngines.get(type);
+		if(factory == null)
+		{
+			throw new StorageException("Unknown query engine " + type);
+		}
+		
+		return factory;
+	}
+	
 }

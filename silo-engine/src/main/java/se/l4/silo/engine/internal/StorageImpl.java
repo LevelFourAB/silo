@@ -1,13 +1,19 @@
 package se.l4.silo.engine.internal;
 
 import java.io.IOException;
+import java.util.Map;
+
+import com.google.common.collect.ImmutableMap;
 
 import se.l4.aurochs.core.io.Bytes;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.StorageException;
 import se.l4.silo.StoreResult;
 import se.l4.silo.engine.DataStorage;
+import se.l4.silo.engine.QueryEngine;
+import se.l4.silo.engine.QueryEngineFactory;
 import se.l4.silo.engine.Storage;
+import se.l4.silo.engine.config.QueryEngineConfig;
 import se.l4.silo.engine.internal.tx.TransactionExchange;
 
 /**
@@ -23,16 +29,35 @@ public class StorageImpl
 	private final TransactionSupport transactionSupport;
 	private final DataStorage storage;
 	private final PrimaryIndex primary;
+	private final ImmutableMap<String, QueryEngine<?>> queryEngines;
 
-	public StorageImpl(String name,
+	public StorageImpl(
+			EngineFactories factories,
 			TransactionSupport transactionSupport,
 			DataStorage storage,
-			PrimaryIndex primary)
+			PrimaryIndex primary,
+			String name,
+			Map<String, QueryEngineConfig> queryEngines)
 	{
 		this.name = name;
 		this.transactionSupport = transactionSupport;
 		this.storage = storage;
 		this.primary = primary;
+		
+		ImmutableMap.Builder<String, QueryEngine<?>> builder = ImmutableMap.builder();
+		for(Map.Entry<String, QueryEngineConfig> qe : queryEngines.entrySet())
+		{
+			String key = qe.getKey();
+			QueryEngineConfig config = qe.getValue();
+			
+			String type = config.getType();
+			QueryEngineFactory<?> factory = factories.forQueryEngine(type);
+			QueryEngine<?> engine = factory.create(config);
+			
+			builder.put(key, engine);
+		}
+		
+		this.queryEngines = builder.build();
 	}
 
 	@Override
@@ -86,6 +111,14 @@ public class StorageImpl
 			throw new StorageException("Unable to get data with id " + id + "; " + e.getMessage(), e);
 		}
 	}
+	
+	@Override
+	public void query(String engine, Object query)
+	{
+		QueryEngine<?> qe = queryEngines.get(engine);
+		System.out.println("Should invoke " + query + " on " + qe);
+		System.out.println("  " + query);
+	}
 
 	/**
 	 * Store an entry for this entity.
@@ -99,6 +132,15 @@ public class StorageImpl
 	{
 		long internalId = primary.store(id);
 		storage.store(internalId, bytes);
+		
+		Bytes storedBytes = storage.get(internalId);
+		
+		// TODO: Keep track of the last id of each query engine
+		for(Map.Entry<String, QueryEngine<?>> e : queryEngines.entrySet())
+		{
+			QueryEngine<?> engine = e.getValue();
+			engine.update(internalId, new DataEncounterImpl(storedBytes));
+		}
 	}
 	
 	/**
