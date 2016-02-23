@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import junit.framework.Assert;
 import se.l4.aurochs.core.io.Bytes;
+import se.l4.silo.engine.MVStoreManager;
 
 /**
  * Tests for {@link MVDataStorage}.
@@ -19,22 +20,25 @@ import se.l4.aurochs.core.io.Bytes;
  */
 public class MVDataStorageTest
 {
-	private MVStore store;
 	private MVDataStorage storage;
+	private MVStoreManager storeManager;
 	
 	@Before
 	public void before()
 	{
-		store = new MVStore.Builder()
+		MVStore store = new MVStore.Builder()
 			.fileStore(new OffHeapStore())
 			.open();
-		storage = new MVDataStorage(store);
+		
+		storeManager = new MVStoreManagerImpl(store);
+		storage = new MVDataStorage(storeManager);
 	}
 	
 	@After
 	public void after()
+		throws IOException
 	{
-		store.close();
+		storeManager.close();
 	}
 	
 	@Test

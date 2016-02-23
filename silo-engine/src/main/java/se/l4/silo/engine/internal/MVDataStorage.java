@@ -17,8 +17,8 @@ import com.google.common.annotations.VisibleForTesting;
 import se.l4.aurochs.core.io.ByteArrayConsumer;
 import se.l4.aurochs.core.io.Bytes;
 import se.l4.silo.engine.DataStorage;
+import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.types.ByteArrayFieldType;
-import se.l4.silo.engine.types.DataTypeAdapter;
 import se.l4.silo.engine.types.LongArrayFieldType;
 import se.l4.silo.engine.types.LongFieldType;
 
@@ -37,19 +37,10 @@ public class MVDataStorage
 	private final MVMap<Long, long[]> keys;
 	private final MVMap<Long, byte[]> chunks;
 
-	public MVDataStorage(MVStore store)
+	public MVDataStorage(MVStoreManager storeManager)
 	{
-		DataTypeAdapter longType = new DataTypeAdapter(LongFieldType.INSTANCE);
-		DataTypeAdapter arrayType = new DataTypeAdapter(new LongArrayFieldType());
-		DataTypeAdapter byteArrayType = new DataTypeAdapter(ByteArrayFieldType.INSTANCE);
-		
-		keys = store.openMap("data.keys", new MVMap.Builder<Long, long[]>()
-			.keyType(longType)
-			.valueType(arrayType));
-		
-		chunks = store.openMap("data.chunks", new MVMap.Builder<Long, byte[]>()
-			.keyType(longType)
-			.valueType(byteArrayType));
+		keys = storeManager.openMap("data.keys", LongFieldType.INSTANCE, new LongArrayFieldType());
+		chunks = storeManager.openMap("data.chunks", LongFieldType.INSTANCE, ByteArrayFieldType.INSTANCE);
 	}
 
 	@Override

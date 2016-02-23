@@ -1,10 +1,10 @@
 package se.l4.silo.engine.internal;
 
 import org.h2.mvstore.MVMap;
-import org.h2.mvstore.MVStore;
 import org.h2.mvstore.type.ObjectDataType;
 
 import se.l4.aurochs.core.id.LongIdGenerator;
+import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.types.DataTypeAdapter;
 import se.l4.silo.engine.types.LongFieldType;
 
@@ -19,10 +19,10 @@ public class PrimaryIndex
 	private final MVMap<Object, Long> map;
 	private final LongIdGenerator ids;
 
-	public PrimaryIndex(MVStore store, LongIdGenerator ids, String name)
+	public PrimaryIndex(MVStoreManager storeManager, LongIdGenerator ids, String name)
 	{
 		this.ids = ids;
-		map = store.openMap("primary." + name, new MVMap.Builder<Object, Long>()
+		map = storeManager.openMap("primary." + name, new MVMap.Builder<Object, Long>()
 			.keyType(new ObjectDataType())
 			.valueType(new DataTypeAdapter(LongFieldType.INSTANCE))
 		);

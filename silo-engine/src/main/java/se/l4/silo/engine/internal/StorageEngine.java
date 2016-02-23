@@ -20,6 +20,7 @@ import se.l4.silo.StorageException;
 import se.l4.silo.engine.DataStorage;
 import se.l4.silo.engine.EntityCreationEncounter;
 import se.l4.silo.engine.EntityTypeFactory;
+import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.QueryEngineFactory;
 import se.l4.silo.engine.Storage;
 import se.l4.silo.engine.builder.StorageBuilder;
@@ -66,7 +67,7 @@ public class StorageEngine
 	/**
 	 * The store used for storing main data. 
 	 */
-	private final MVStore store;
+	private final MVStoreManager store;
 	/**
 	 * Abstraction over {@link MVStore} to make data storage simpler.
 	 */
@@ -106,13 +107,15 @@ public class StorageEngine
 			throw Throwables.propagate(e);
 		}
 		
-		store = new MVStore.Builder()
+		MVStore store = new MVStore.Builder()
 			.compress()
 			.fileName(root.resolve("storage.mv.bin").toString())
 			.open();
 		
+		this.store = new MVStoreManagerImpl(store);
+		
 		ids = new SimpleLongIdGenerator();
-		dataStorage = new MVDataStorage(store);
+		dataStorage = new MVDataStorage(this.store);
 		storages = new ConcurrentHashMap<>();
 		entities = new ConcurrentHashMap<>();
 		
