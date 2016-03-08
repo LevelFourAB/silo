@@ -12,7 +12,7 @@ import se.l4.silo.engine.config.QueryEngineConfig;
  *
  * @param <Builder>
  */
-public interface QueryEngineFactory<Builder extends BuilderWithParent<?>>
+public interface QueryEngineFactory<Builder extends BuilderWithParent<?>, Config extends QueryEngineConfig>
 {
 	/**
 	 * Get the identifier of this query engine.
@@ -31,10 +31,17 @@ public interface QueryEngineFactory<Builder extends BuilderWithParent<?>>
 	<T> Builder builder(Function<QueryEngineConfig, T> configReceiver);
 	
 	/**
+	 * Get the type of configuration this factory expects.
+	 * 
+	 * @return
+	 */
+	Class<Config> getConfigClass();
+	
+	/**
 	 * Create a new instance of this query engine from the given configuration.
 	 * 
 	 * @param config
 	 * @return
 	 */
-	QueryEngine<?> create(QueryEngineConfig config);
+	QueryEngine<?> create(QueryEngineCreationEncounter<Config> config);
 }

@@ -3,6 +3,7 @@ package se.l4.silo.engine.internal;
 import se.l4.silo.Silo;
 import se.l4.silo.engine.EntityTypeFactory;
 import se.l4.silo.engine.QueryEngineFactory;
+import se.l4.silo.engine.types.FieldType;
 
 /**
  * Class for keeping track of different factories registered with a {@link Silo}
@@ -27,5 +28,13 @@ public interface EngineFactories
 	 * @param type
 	 * @return
 	 */
-	QueryEngineFactory<?> forQueryEngine(String type);
+	QueryEngineFactory<?, ?> forQueryEngine(String type);
+
+	/**
+	 * Get a field type.
+	 * 
+	 * @param type
+	 * @return
+	 */
+	FieldType<?> getFieldType(String type);
 }

@@ -3,6 +3,8 @@ package se.l4.silo.engine.builder;
 import se.l4.silo.Entity;
 import se.l4.silo.engine.QueryEngineFactory;
 import se.l4.silo.engine.Storage;
+import se.l4.silo.engine.config.FieldConfig;
+import se.l4.silo.engine.config.QueryEngineConfig;
 import se.l4.silo.engine.config.QueryableEntityConfig;
 
 /**
@@ -14,6 +16,14 @@ import se.l4.silo.engine.config.QueryableEntityConfig;
  */
 public interface StorageBuilder
 {
+	/**
+	 * Define which fields that are made available to query engines.
+	 * 
+	 * @param fields
+	 * @return
+	 */
+	StorageBuilder withFields(Iterable<FieldConfig> fields);
+	
 	/**
 	 * Add all query engines from the given configuration.
 	 * 
@@ -29,7 +39,7 @@ public interface StorageBuilder
 	 * @param config
 	 * @return
 	 */
-	<C> StorageBuilder withQueryEngine(QueryEngineFactory<?> factory, C config);
+	<C extends QueryEngineConfig> StorageBuilder withQueryEngine(QueryEngineFactory<?, C> factory, C config);
 	
 	/**
 	 * Build and return the storage.

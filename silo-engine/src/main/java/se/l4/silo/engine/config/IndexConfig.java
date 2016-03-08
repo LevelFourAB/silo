@@ -3,10 +3,10 @@ package se.l4.silo.engine.config;
 import se.l4.aurochs.serialization.Expose;
 import se.l4.aurochs.serialization.ReflectionSerializer;
 import se.l4.aurochs.serialization.Use;
-import se.l4.silo.engine.IndexQueryEngine;
+import se.l4.silo.engine.IndexQueryEngineFactory;
 
 /**
- * Configuration for {@link IndexQueryEngine}.
+ * Configuration for {@link IndexQueryEngineFactory}.
  * 
  * @author Andreas Holstenson
  *

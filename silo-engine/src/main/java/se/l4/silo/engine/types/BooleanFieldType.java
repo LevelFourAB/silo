@@ -9,6 +9,8 @@ import se.l4.aurochs.serialization.Serializer;
 public class BooleanFieldType
 	implements FieldType<Boolean>
 {
+	public static final FieldType<Boolean> INSTANCE = new BooleanFieldType();
+
 	@Override
 	public String uniqueId()
 	{

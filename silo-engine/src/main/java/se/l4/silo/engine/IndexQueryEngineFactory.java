@@ -3,8 +3,10 @@ package se.l4.silo.engine;
 import java.util.function.Function;
 
 import se.l4.silo.engine.builder.IndexBuilder;
+import se.l4.silo.engine.config.IndexConfig;
 import se.l4.silo.engine.config.QueryEngineConfig;
 import se.l4.silo.engine.internal.index.IndexQueryBuilderImpl;
+import se.l4.silo.engine.internal.query.IndexQueryEngine;
 
 /**
  * Query engine that supports indexing and querying a set of fields.
@@ -12,10 +14,10 @@ import se.l4.silo.engine.internal.index.IndexQueryBuilderImpl;
  * @author Andreas Holstenson
  *
  */
-public class IndexQueryEngine
-	implements QueryEngineFactory<IndexBuilder<?>>
+public class IndexQueryEngineFactory
+	implements QueryEngineFactory<IndexBuilder<?>, IndexConfig>
 {
-	private static final IndexQueryEngine INSTANCE = new IndexQueryEngine();
+	private static final IndexQueryEngineFactory INSTANCE = new IndexQueryEngineFactory();
 	
 	@Override
 	public String getId()
@@ -30,9 +32,17 @@ public class IndexQueryEngine
 	}
 	
 	@Override
-	public QueryEngine<?> create(QueryEngineConfig config)
+	public Class<IndexConfig> getConfigClass()
 	{
-		return new se.l4.silo.engine.internal.query.IndexQueryEngine<>();
+		return IndexConfig.class;
+	}
+	
+	@Override
+	public QueryEngine<?> create(QueryEngineCreationEncounter<IndexConfig> encounter)
+	{
+		IndexConfig config = encounter.getConfig();
+		MVStoreManager store = encounter.openMVStore("index");
+		return new IndexQueryEngine(encounter.getName(), store, config);
 	}
 
 	/**
@@ -41,7 +51,7 @@ public class IndexQueryEngine
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T> QueryEngineFactory<IndexBuilder<T>> type()
+	public static <T> QueryEngineFactory<IndexBuilder<T>, ?> type()
 	{
 		return (QueryEngineFactory) INSTANCE;
 	}

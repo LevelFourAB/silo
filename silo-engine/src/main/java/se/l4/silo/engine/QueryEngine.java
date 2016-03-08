@@ -1,5 +1,7 @@
 package se.l4.silo.engine;
 
+import java.io.Closeable;
+
 /**
  * Engine that provides query abilities for stored data.
  * 
@@ -7,6 +9,7 @@ package se.l4.silo.engine;
  *
  */
 public interface QueryEngine<T>
+	extends Closeable
 {
 	void query(QueryEncounter<T> encounter);
 	

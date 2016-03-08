@@ -4,13 +4,16 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.h2.mvstore.MVStore;
 
 import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
 
 import se.l4.aurochs.core.id.LongIdGenerator;
 import se.l4.aurochs.core.id.SimpleLongIdGenerator;
@@ -20,12 +23,14 @@ import se.l4.silo.StorageException;
 import se.l4.silo.engine.DataStorage;
 import se.l4.silo.engine.EntityCreationEncounter;
 import se.l4.silo.engine.EntityTypeFactory;
+import se.l4.silo.engine.Fields;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.QueryEngineFactory;
 import se.l4.silo.engine.Storage;
 import se.l4.silo.engine.builder.StorageBuilder;
 import se.l4.silo.engine.config.EngineConfig;
 import se.l4.silo.engine.config.EntityConfig;
+import se.l4.silo.engine.config.FieldConfig;
 import se.l4.silo.engine.config.QueryEngineConfig;
 import se.l4.silo.engine.config.QueryableEntityConfig;
 import se.l4.silo.engine.internal.log.TransactionLog;
@@ -89,6 +94,11 @@ public class StorageEngine
 	 */
 	private final TransactionSupport transactionSupport;
 
+	/**
+	 * Root directory for data of this engine.
+	 */
+	private final Path root;
+
 	public StorageEngine(EngineFactories factories,
 			TransactionSupport transactionSupport,
 			LogBuilder logBuilder,
@@ -97,6 +107,7 @@ public class StorageEngine
 	{
 		this.factories = factories;
 		this.transactionSupport = transactionSupport;
+		this.root = root;
 	
 		try
 		{
@@ -218,7 +229,7 @@ public class StorageEngine
 	 */
 	public StorageBuilder createStorage(String name)
 	{
-		return createStorage(name, null);
+		return createStorage(name, "main");
 	}
 
 	/**
@@ -230,10 +241,22 @@ public class StorageEngine
 	 */
 	public StorageBuilder createStorage(String name, String subName)
 	{
-		String storageName = name + "::" + (subName == null ? "main" : subName);
+		String storageName = name + "::" + subName;
+		Path dataPath = resolveDataPath(name, subName);
 		return new StorageBuilder()
 		{
 			private final Map<String, QueryEngineConfig> queryEngines = new HashMap<>();
+			private final List<FieldConfig> fields = new ArrayList<>();
+			
+			@Override
+			public StorageBuilder withFields(Iterable<FieldConfig> fields)
+			{
+				for(FieldConfig f : fields)
+				{
+					this.fields.add(f);
+				}
+				return this;
+			}
 			
 			@Override
 			public StorageBuilder withQueryEngines(QueryableEntityConfig config)
@@ -243,8 +266,9 @@ public class StorageEngine
 			}
 			
 			@Override
-			public <C> StorageBuilder withQueryEngine(QueryEngineFactory<?> factory, C config)
+			public <C extends QueryEngineConfig> StorageBuilder withQueryEngine(QueryEngineFactory<?, C> factory, C config)
 			{
+				queryEngines.put(factory.getId(), config);
 				return this;
 			}
 			
@@ -256,7 +280,20 @@ public class StorageEngine
 				{
 					// New storage, create the instance
 					PrimaryIndex primaryIndex = new PrimaryIndex(store, ids, storageName);
-					storage = new StorageImpl(factories, transactionSupport, dataStorage, primaryIndex, storageName, queryEngines);
+					Fields fields = new FieldsImpl(Iterables.transform(this.fields, c -> {
+						String type = c.getType();
+						return new FieldDefImpl(c.getName(), factories.getFieldType(type), c.isCollection());
+					}));
+					storage = new StorageImpl(
+						factories,
+						transactionSupport,
+						dataPath,
+						dataStorage,
+						primaryIndex,
+						storageName,
+						fields,
+						queryEngines
+					);
 					storages.put(storageName, storage);
 					return storage;
 				}
@@ -266,6 +303,11 @@ public class StorageEngine
 				return storage;
 			}
 		};
+	}
+
+	private Path resolveDataPath(String name, String subName)
+	{
+		return root.resolve(name).resolve(subName);
 	}
 
 	/**

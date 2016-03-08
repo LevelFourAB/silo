@@ -3,6 +3,7 @@ package se.l4.silo.engine.builder;
 import se.l4.silo.Silo;
 import se.l4.silo.engine.QueryEngine;
 import se.l4.silo.engine.QueryEngineFactory;
+import se.l4.silo.engine.types.FieldType;
 
 /**
  * Builder for instances of {@link Silo}.
@@ -28,7 +29,15 @@ public interface SiloBuilder
 	 * @param factory
 	 * @return
 	 */
-	SiloBuilder addQueryEngine(QueryEngineFactory<?> factory);
+	SiloBuilder addQueryEngine(QueryEngineFactory<?, ?> factory);
+	
+	/**
+	 * Register a {@link FieldType} that can be used by entities.
+	 * 
+	 * @param fieldType
+	 * @return
+	 */
+	SiloBuilder addFieldType(FieldType<?> fieldType);
 	
 	/**
 	 * Create this instance.

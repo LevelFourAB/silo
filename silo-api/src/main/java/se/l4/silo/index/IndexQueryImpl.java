@@ -8,16 +8,19 @@ public class IndexQueryImpl<T>
 	implements IndexQuery<T>
 {
 	private final QueryRunner<T> runner;
+	private IndexQueryRequest request;
 
 	public IndexQueryImpl(QueryRunner<T> runner)
 	{
 		this.runner = runner;
+		
+		request = new IndexQueryRequest();
 	}
 
 	@Override
 	public FetchResult<T> run()
 	{
-		return runner.fetchResults("hello!");
+		return runner.fetchResults(request);
 	}
 
 	@Override

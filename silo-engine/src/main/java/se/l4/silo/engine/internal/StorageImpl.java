@@ -1,6 +1,7 @@
 package se.l4.silo.engine.internal;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
@@ -10,6 +11,7 @@ import se.l4.silo.DeleteResult;
 import se.l4.silo.StorageException;
 import se.l4.silo.StoreResult;
 import se.l4.silo.engine.DataStorage;
+import se.l4.silo.engine.Fields;
 import se.l4.silo.engine.QueryEngine;
 import se.l4.silo.engine.QueryEngineFactory;
 import se.l4.silo.engine.Storage;
@@ -30,19 +32,23 @@ public class StorageImpl
 	private final DataStorage storage;
 	private final PrimaryIndex primary;
 	private final ImmutableMap<String, QueryEngine<?>> queryEngines;
+	private final Fields fields;
 
 	public StorageImpl(
 			EngineFactories factories,
 			TransactionSupport transactionSupport,
+			Path dataDir,
 			DataStorage storage,
 			PrimaryIndex primary,
 			String name,
+			Fields fields,
 			Map<String, QueryEngineConfig> queryEngines)
 	{
 		this.name = name;
 		this.transactionSupport = transactionSupport;
 		this.storage = storage;
 		this.primary = primary;
+		this.fields = fields;
 		
 		ImmutableMap.Builder<String, QueryEngine<?>> builder = ImmutableMap.builder();
 		for(Map.Entry<String, QueryEngineConfig> qe : queryEngines.entrySet())
@@ -51,8 +57,13 @@ public class StorageImpl
 			QueryEngineConfig config = qe.getValue();
 			
 			String type = config.getType();
-			QueryEngineFactory<?> factory = factories.forQueryEngine(type);
-			QueryEngine<?> engine = factory.create(config);
+			QueryEngineFactory<?, ?> factory = factories.forQueryEngine(type);
+			QueryEngine<?> engine = factory.create(new QueryEngineCreationEncounterImpl(
+				dataDir,
+				key,
+				config.as(factory.getConfigClass()),
+				fields
+			));
 			
 			builder.put(key, engine);
 		}

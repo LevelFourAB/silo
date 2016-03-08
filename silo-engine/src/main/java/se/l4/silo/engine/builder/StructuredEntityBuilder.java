@@ -9,6 +9,7 @@ import se.l4.silo.engine.QueryEngineFactory;
  * @param <Parent>
  */
 public interface StructuredEntityBuilder<Parent>
+	extends HasFieldDefinitions<StructuredEntityBuilder<Parent>>
 {
 	/**
 	 * Add a new index to to object entity. 
@@ -24,7 +25,7 @@ public interface StructuredEntityBuilder<Parent>
 	 * @param type
 	 * @return
 	 */
-	<T extends BuilderWithParent<StructuredEntityBuilder<Parent>>> T add(String name, QueryEngineFactory<T> type);
+	<T extends BuilderWithParent<StructuredEntityBuilder<Parent>>> T add(String name, QueryEngineFactory<T, ?> type);
 	
 	/**
 	 * Indicate that we are done building this entity.

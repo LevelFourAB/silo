@@ -19,7 +19,7 @@ import se.l4.aurochs.serialization.format.StreamingInput.Token;
 import se.l4.silo.FetchResult;
 import se.l4.silo.IndexQuery;
 import se.l4.silo.Silo;
-import se.l4.silo.engine.IndexQueryEngine;
+import se.l4.silo.engine.IndexQueryEngineFactory;
 import se.l4.silo.engine.LocalSilo;
 import se.l4.silo.structured.StructuredEntity;
 
@@ -38,7 +38,7 @@ public class StructuredEntityTest
 		silo = LocalSilo.open(tmp)
 			.addEntity("test")
 				.asStructured()
-				.add("byField", IndexQueryEngine.type())
+				.add("byField", IndexQueryEngineFactory.type())
 					.addField("field")
 					.done()
 				.done()
