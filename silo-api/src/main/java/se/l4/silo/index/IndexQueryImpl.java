@@ -3,12 +3,15 @@ package se.l4.silo.index;
 import se.l4.silo.FetchResult;
 import se.l4.silo.IndexQuery;
 import se.l4.silo.QueryRunner;
+import se.l4.silo.StorageException;
+import se.l4.silo.index.IndexQueryRequest.Op;
 
 public class IndexQueryImpl<T>
 	implements IndexQuery<T>
 {
 	private final QueryRunner<T> runner;
 	private IndexQueryRequest request;
+	private String field;
 
 	public IndexQueryImpl(QueryRunner<T> runner)
 	{
@@ -26,84 +29,80 @@ public class IndexQueryImpl<T>
 	@Override
 	public IndexQuery<T> field(String name)
 	{
-		// TODO Auto-generated method stub
-		return null;
+		this.field = name;
+		return this;
 	}
 
-	@Override
-	public IndexQuery<T> multipleOr()
+	private IndexQuery<T> add(Op op, Object value)
 	{
-		// TODO Auto-generated method stub
-		return null;
+		if(field == null)
+		{
+			throw new StorageException("No field given");
+		}
+		
+		request.addCritera(field, op, value);
+		field = null;
+		return this;
 	}
-
+	
 	@Override
 	public IndexQuery<T> isEqualTo(Object value)
 	{
-		// TODO Auto-generated method stub
-		return null;
+		return add(Op.EQUAL, value);
 	}
+
 
 	@Override
 	public IndexQuery<T> isMoreThan(Number number)
 	{
-		// TODO Auto-generated method stub
-		return null;
+		return add(Op.MORE_THAN, number);
 	}
 
 	@Override
 	public IndexQuery<T> isLessThan(Number number)
 	{
-		// TODO Auto-generated method stub
-		return null;
+		return add(Op.LESS_THAN, number);
 	}
 
 	@Override
 	public IndexQuery<T> isLessThanOrEqualTo(Number number)
 	{
-		// TODO Auto-generated method stub
-		return null;
+		return add(Op.LESS_THAN_OR_EQUAL_TO, number);
 	}
 
 	@Override
 	public IndexQuery<T> isMoreThanOrEqualTo(Number number)
 	{
-		// TODO Auto-generated method stub
-		return null;
+		return add(Op.MORA_THAN_OR_EQUAL_TO, number);
 	}
 
 	@Override
 	public IndexQuery<T> sortAscending()
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public IndexQuery<T> sortDescending()
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public IndexQuery<T> limit(int limit)
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public IndexQuery<T> offset(int offset)
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public IndexQuery<T> returnCount()
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
 

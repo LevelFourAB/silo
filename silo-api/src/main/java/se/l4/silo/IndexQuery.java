@@ -26,12 +26,6 @@ public interface IndexQuery<T>
 	IndexQuery<T> field(String name);
 	
 	/**
-	 * Indicate that multiple values can match.
-	 * @return 
-	 */
-	IndexQuery<T> multipleOr();
-	
-	/**
 	 * Check if the field is equal to the specified value.
 	 * 
 	 * @param value

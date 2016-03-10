@@ -32,6 +32,7 @@ public class StructuredEntityFactory
 	public StructuredEntity create(EntityCreationEncounter<StructuredEntityConfig> encounter)
 	{
 		Storage entity = encounter.createMainEntity()
+			.withFields(encounter.getConfig().fields)
 			.withQueryEngines(encounter.getConfig())
 			.build();
 		return new StructuredEntityImpl(encounter.getEntityName(), entity);

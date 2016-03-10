@@ -40,9 +40,10 @@ public class IndexQueryEngineFactory
 	@Override
 	public QueryEngine<?> create(QueryEngineCreationEncounter<IndexConfig> encounter)
 	{
+		Fields fields = encounter.getFields();
 		IndexConfig config = encounter.getConfig();
 		MVStoreManager store = encounter.openMVStore("index");
-		return new IndexQueryEngine(encounter.getName(), store, config);
+		return new IndexQueryEngine(encounter.getName(), fields, store, config);
 	}
 
 	/**

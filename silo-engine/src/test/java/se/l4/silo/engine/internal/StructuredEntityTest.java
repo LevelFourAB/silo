@@ -38,6 +38,7 @@ public class StructuredEntityTest
 		silo = LocalSilo.open(tmp)
 			.addEntity("test")
 				.asStructured()
+				.defineField("field", "string")
 				.add("byField", IndexQueryEngineFactory.type())
 					.addField("field")
 					.done()
@@ -127,6 +128,8 @@ public class StructuredEntityTest
 		entity.store("test", generateTestData());
 		
 		FetchResult<StreamingInput> fr = entity.query("byName", IndexQuery.type())
+			.field("field")
+			.isEqualTo("test")
 			.run();
 		
 		check(fr);

@@ -31,6 +31,7 @@ public class StructuredEntityBuilderImpl<Parent>
 	@Override
 	public Parent done()
 	{
+		config.fields = this.fields.build();
 		return configReceiver.apply(config);
 	}
 	
