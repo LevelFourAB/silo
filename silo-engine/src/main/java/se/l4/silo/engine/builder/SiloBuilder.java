@@ -1,5 +1,7 @@
 package se.l4.silo.engine.builder;
 
+import se.l4.aurochs.serialization.DefaultSerializerCollection;
+import se.l4.aurochs.serialization.SerializerCollection;
 import se.l4.silo.Silo;
 import se.l4.silo.engine.QueryEngine;
 import se.l4.silo.engine.QueryEngineFactory;
@@ -13,6 +15,15 @@ import se.l4.silo.engine.types.FieldType;
  */
 public interface SiloBuilder
 {
+	/**
+	 * Set the serializer collection to use. If this is not called an
+	 * instance of {@link DefaultSerializerCollection} will be used.
+	 * 
+	 * @param collection
+	 * @return
+	 */
+	SiloBuilder withSerializerCollection(SerializerCollection collection);
+	
 	/**
 	 * Add a new entity to this instance.
 	 * 

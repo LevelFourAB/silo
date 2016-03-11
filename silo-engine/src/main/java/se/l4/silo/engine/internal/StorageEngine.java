@@ -18,6 +18,7 @@ import com.google.common.collect.Iterables;
 import se.l4.aurochs.core.id.LongIdGenerator;
 import se.l4.aurochs.core.id.SimpleLongIdGenerator;
 import se.l4.aurochs.core.io.Bytes;
+import se.l4.aurochs.serialization.SerializerCollection;
 import se.l4.silo.Entity;
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.DataStorage;
@@ -51,6 +52,11 @@ public class StorageEngine
 	 * Factories that can be used to fetch registered factories.
 	 */
 	private final EngineFactories factories;
+	
+	/**
+	 * The {@link SerializerCollection} in use for this Silo instance.
+	 */
+	private SerializerCollection serializers;
 	
 	/**
 	 * The log to use for replicating data. Created via the log builder passed
@@ -100,12 +106,14 @@ public class StorageEngine
 	private final Path root;
 
 	public StorageEngine(EngineFactories factories,
+			SerializerCollection serializers,
 			TransactionSupport transactionSupport,
 			LogBuilder logBuilder,
 			Path root,
 			EngineConfig config)
 	{
 		this.factories = factories;
+		this.serializers = serializers;
 		this.transactionSupport = transactionSupport;
 		this.root = root;
 	
@@ -175,7 +183,7 @@ public class StorageEngine
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private EntityCreationEncounter createEncounter(String name, Object config)
 	{
-		return new EntityCreationEncounterImpl(this, name, config);
+		return new EntityCreationEncounterImpl(serializers, this, name, config);
 	}
 	
 	/**

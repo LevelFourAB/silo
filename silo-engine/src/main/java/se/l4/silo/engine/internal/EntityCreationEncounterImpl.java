@@ -1,5 +1,6 @@
 package se.l4.silo.engine.internal;
 
+import se.l4.aurochs.serialization.SerializerCollection;
 import se.l4.silo.engine.EntityCreationEncounter;
 import se.l4.silo.engine.builder.StorageBuilder;
 
@@ -16,9 +17,11 @@ public class EntityCreationEncounterImpl<Config>
 	private final StorageEngine engine;
 	private final String name;
 	private final Config config;
+	private final SerializerCollection serializers;
 
-	public EntityCreationEncounterImpl(StorageEngine engine, String name, Config config)
+	public EntityCreationEncounterImpl(SerializerCollection serializers, StorageEngine engine, String name, Config config)
 	{
+		this.serializers = serializers;
 		this.engine = engine;
 		this.name = name;
 		this.config = config;
@@ -34,6 +37,12 @@ public class EntityCreationEncounterImpl<Config>
 	public Config getConfig()
 	{
 		return config;
+	}
+	
+	@Override
+	public SerializerCollection getSerializerCollection()
+	{
+		return serializers;
 	}
 
 	@Override

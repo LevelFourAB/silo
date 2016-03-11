@@ -35,7 +35,7 @@ public class StructuredEntityFactory
 			.withFields(encounter.getConfig().fields)
 			.withQueryEngines(encounter.getConfig())
 			.build();
-		return new StructuredEntityImpl(encounter.getEntityName(), entity);
+		return new StructuredEntityImpl(encounter.getSerializerCollection(), encounter.getEntityName(), entity);
 	}
 	
 }

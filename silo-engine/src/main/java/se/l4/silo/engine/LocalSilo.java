@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+import se.l4.aurochs.serialization.SerializerCollection;
 import se.l4.silo.ResourceHandle;
 import se.l4.silo.Silo;
 import se.l4.silo.Transaction;
@@ -38,9 +39,10 @@ public class LocalSilo
 	private final StorageEngine storageEngine;
 	private final ThreadLocal<TransactionImpl> transactions;
 
-	public LocalSilo(LocalEngineFactories factories, LogBuilder logBuilder, Path storage, EngineConfig config)
+	public LocalSilo(LocalEngineFactories factories, SerializerCollection serializers, LogBuilder logBuilder, Path storage, EngineConfig config)
 	{
 		Objects.requireNonNull(factories, "factories is required");
+		Objects.requireNonNull(serializers, "serializers is required");
 		Objects.requireNonNull(logBuilder, "logBuilder is required");
 		Objects.requireNonNull(storage, "storage path is required");
 		Objects.requireNonNull(config, "configuration is required");
@@ -50,7 +52,7 @@ public class LocalSilo
 		tx = createTransactionSupport();
 		transactions = new ThreadLocal<>();
 		
-		storageEngine = new StorageEngine(factories, tx, logBuilder, storage, config);
+		storageEngine = new StorageEngine(factories, serializers, tx, logBuilder, storage, config);
 	}
 	
 	/**

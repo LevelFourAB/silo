@@ -1,5 +1,6 @@
 package se.l4.silo.engine;
 
+import se.l4.aurochs.serialization.SerializerCollection;
 import se.l4.silo.engine.builder.StorageBuilder;
 
 /**
@@ -24,6 +25,13 @@ public interface EntityCreationEncounter<Config>
 	 * @return
 	 */
 	Config getConfig();
+	
+	/**
+	 * Get the {@link SerializerCollection} in use for this entity.
+	 * 
+	 * @return
+	 */
+	SerializerCollection getSerializerCollection();
 	
 	/**
 	 * Create the main storage for this entity.

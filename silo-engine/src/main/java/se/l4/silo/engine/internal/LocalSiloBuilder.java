@@ -4,6 +4,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import se.l4.aurochs.serialization.DefaultSerializerCollection;
+import se.l4.aurochs.serialization.SerializerCollection;
 import se.l4.silo.Silo;
 import se.l4.silo.engine.EntityTypeFactory;
 import se.l4.silo.engine.IndexQueryEngineFactory;
@@ -34,6 +36,7 @@ public class LocalSiloBuilder
 	private final List<FieldType<?>> fieldTypes;
 	
 	private EngineConfig config;
+	private SerializerCollection serializers;
 
 	public LocalSiloBuilder(LogBuilder logBuilder, Path dataPath)
 	{
@@ -55,6 +58,13 @@ public class LocalSiloBuilder
 		fieldTypes.add(IntFieldType.INSTANCE);
 		fieldTypes.add(LongFieldType.INSTANCE);
 		fieldTypes.add(StringFieldType.INSTANCE);
+	}
+	
+	@Override
+	public SiloBuilder withSerializerCollection(SerializerCollection collection)
+	{
+		this.serializers = collection;
+		return this;
 	}
 	
 	@Override
@@ -84,6 +94,7 @@ public class LocalSiloBuilder
 	public Silo build()
 	{
 		LocalEngineFactories factories = new LocalEngineFactories(entityTypes, queryEngineTypes, fieldTypes);
-		return new LocalSilo(factories, logBuilder, dataPath, config);
+		SerializerCollection serializers = this.serializers == null ? new DefaultSerializerCollection() : this.serializers;
+		return new LocalSilo(factories, serializers, logBuilder, dataPath, config);
 	}
 }

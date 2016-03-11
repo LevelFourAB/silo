@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import se.l4.aurochs.core.io.Bytes;
+import se.l4.aurochs.serialization.SerializerCollection;
 import se.l4.aurochs.serialization.format.BinaryOutput;
 import se.l4.aurochs.serialization.format.StreamingInput;
 import se.l4.aurochs.serialization.format.StreamingInput.Token;
@@ -14,16 +15,19 @@ import se.l4.silo.QueryType;
 import se.l4.silo.StorageException;
 import se.l4.silo.StoreResult;
 import se.l4.silo.engine.Storage;
+import se.l4.silo.structured.ObjectEntity;
 import se.l4.silo.structured.StructuredEntity;
 
 public class StructuredEntityImpl
 	implements StructuredEntity
 {
+	private final SerializerCollection serializers;
 	private final String name;
 	private final Storage entity;
 
-	public StructuredEntityImpl(String name, Storage entity)
+	public StructuredEntityImpl(SerializerCollection serializers, String name, Storage entity)
 	{
+		this.serializers = serializers;
 		this.name = name;
 		this.entity = entity;
 	}
@@ -73,6 +77,12 @@ public class StructuredEntityImpl
 			return entity.query(engine, data, BytesToStreamingInputFunction.INSTANCE)
 				.transform(translator);
 		});
+	}
+	
+	@Override
+	public <T> ObjectEntity<T> asObject(Class<T> type)
+	{
+		return asObject(serializers.find(type));
 	}
 	
 	private Bytes toBytes(StreamingInput in)
