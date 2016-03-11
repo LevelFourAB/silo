@@ -76,13 +76,13 @@ public class IndexQueryRequest
 		if(sort == null)
 		{
 			sort = new ArrayList<>();
-			
-			SortOnField s = new SortOnField();
-			s.field = field;
-			s.ascending = ascending;
-			
-			sort.add(s);
 		}
+			
+		SortOnField s = new SortOnField();
+		s.field = field;
+		s.ascending = ascending;
+		
+		sort.add(s);
 	}
 	
 	@Use(ReflectionSerializer.class)
