@@ -9,11 +9,11 @@ import se.l4.silo.index.IndexQueryRequest.Op;
 public class IndexQueryImpl<T>
 	implements IndexQuery<T>
 {
-	private final QueryRunner<T> runner;
+	private final QueryRunner<T, T> runner;
 	private IndexQueryRequest request;
 	private String field;
 
-	public IndexQueryImpl(QueryRunner<T> runner)
+	public IndexQueryImpl(QueryRunner<T, T> runner)
 	{
 		this.runner = runner;
 		
@@ -23,7 +23,7 @@ public class IndexQueryImpl<T>
 	@Override
 	public FetchResult<T> run()
 	{
-		return runner.fetchResults(request);
+		return runner.fetchResults(request, r -> r.getData());
 	}
 
 	@Override
@@ -73,7 +73,7 @@ public class IndexQueryImpl<T>
 	@Override
 	public IndexQuery<T> isMoreThanOrEqualTo(Number number)
 	{
-		return add(Op.MORA_THAN_OR_EQUAL_TO, number);
+		return add(Op.MORE_THAN_OR_EQUAL_TO, number);
 	}
 
 	@Override

@@ -6,7 +6,6 @@ import se.l4.silo.FetchResult;
 import se.l4.silo.StoreResult;
 import se.l4.silo.binary.BinaryEntity;
 import se.l4.silo.binary.BinaryEntry;
-import se.l4.silo.engine.SingleFetchResult;
 import se.l4.silo.engine.Storage;
 import se.l4.silo.engine.internal.BinaryEntryImpl;
 
@@ -55,6 +54,6 @@ public class BinaryEntityImpl
 			return FetchResult.empty();
 		}
 		
-		return new SingleFetchResult<BinaryEntry>(new BinaryEntryImpl(id, null, data));
+		return FetchResult.single(new BinaryEntryImpl(id, null, data));
 	}
 }

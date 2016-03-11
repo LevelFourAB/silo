@@ -12,7 +12,7 @@ import se.l4.silo.index.IndexQueryType;
 public interface IndexQuery<T>
 	extends Query<T>
 {
-	static <T> QueryType<T, IndexQuery<T>> type()
+	static <T> QueryType<T, T, IndexQuery<T>> type()
 	{
 		return new IndexQueryType<>();
 	}

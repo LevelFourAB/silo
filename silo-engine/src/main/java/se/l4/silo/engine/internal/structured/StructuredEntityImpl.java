@@ -62,15 +62,16 @@ public class StructuredEntityImpl
 			return FetchResult.empty();
 		}
 		
-		return StreamingInputFetchResult.single(bytes);
+		
+		return FetchResult.single(bytes).transform(BytesToStreamingInputFunction.INSTANCE);
 	}
 	
 	@Override
-	public <R extends Query<?>> R query(String engine, QueryType<StreamingInput, R> type)
+	public <RT, R extends Query<?>> R query(String engine, QueryType<StreamingInput, RT, R> type)
 	{
-		return type.create(null, data -> {
-			entity.query(engine, data);
-			return null;
+		return type.create((data, translator) -> {
+			return entity.query(engine, data, BytesToStreamingInputFunction.INSTANCE)
+				.transform(translator);
 		});
 	}
 	

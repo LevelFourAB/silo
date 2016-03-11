@@ -5,11 +5,11 @@ import se.l4.silo.QueryRunner;
 import se.l4.silo.QueryType;
 
 public class IndexQueryType<ResultType>
-	implements QueryType<ResultType, IndexQuery<ResultType>>
+	implements QueryType<ResultType, ResultType, IndexQuery<ResultType>>
 {
 
 	@Override
-	public IndexQuery<ResultType> create(Class<ResultType> type, QueryRunner<ResultType> runner)
+	public IndexQuery<ResultType> create(QueryRunner<ResultType, ResultType> runner)
 	{
 		return new IndexQueryImpl<>(runner);
 	}

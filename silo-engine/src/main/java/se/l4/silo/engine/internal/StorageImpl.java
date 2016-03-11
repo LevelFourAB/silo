@@ -3,11 +3,14 @@ package se.l4.silo.engine.internal;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.function.Function;
 
 import com.google.common.collect.ImmutableMap;
 
 import se.l4.aurochs.core.io.Bytes;
 import se.l4.silo.DeleteResult;
+import se.l4.silo.FetchResult;
+import se.l4.silo.QueryResult;
 import se.l4.silo.StorageException;
 import se.l4.silo.StoreResult;
 import se.l4.silo.engine.DataStorage;
@@ -16,6 +19,7 @@ import se.l4.silo.engine.QueryEngine;
 import se.l4.silo.engine.QueryEngineFactory;
 import se.l4.silo.engine.Storage;
 import se.l4.silo.engine.config.QueryEngineConfig;
+import se.l4.silo.engine.internal.query.QueryEncounterImpl;
 import se.l4.silo.engine.internal.tx.TransactionExchange;
 
 /**
@@ -124,11 +128,29 @@ public class StorageImpl
 	}
 	
 	@Override
-	public void query(String engine, Object query)
+	public <R> FetchResult<QueryResult<R>> query(String engine, Object query, Function<Bytes, R> dataLoader)
 	{
 		QueryEngine<?> qe = queryEngines.get(engine);
-		System.out.println("Should invoke " + query + " on " + qe);
-		System.out.println("  " + query);
+		if(qe == null)
+		{
+			throw new StorageException("Unknown query engine `" + engine + "`");
+		}
+		
+		QueryEncounterImpl encounter = new QueryEncounterImpl<>(query, id -> {
+			try
+			{
+				Bytes data = storage.get(id);
+				return dataLoader.apply(data);
+			}
+			catch(IOException e)
+			{
+				throw new StorageException("Unable to fetch data for internal id " + id + "; " + e.getMessage(), e);
+			}
+		});
+		
+		qe.query(encounter);
+		
+		return encounter.getResult();
 	}
 
 	/**

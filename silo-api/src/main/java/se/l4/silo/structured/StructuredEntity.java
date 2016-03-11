@@ -49,5 +49,5 @@ public interface StructuredEntity
 	 * @param index
 	 * @return
 	 */
-	<R extends Query<?>> R query(String engine, QueryType<StreamingInput, R> type);
+	<RT, R extends Query<?>> R query(String engine, QueryType<StreamingInput, RT, R> type);
 }

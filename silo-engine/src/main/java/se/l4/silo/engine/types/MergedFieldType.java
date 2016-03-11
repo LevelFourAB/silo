@@ -20,6 +20,11 @@ public class MergedFieldType
 		this.types = types;
 	}
 	
+	public FieldType[] getTypes()
+	{
+		return types;
+	}
+	
 	@Override
 	public String uniqueId()
 	{

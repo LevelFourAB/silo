@@ -1,9 +1,5 @@
 package se.l4.silo.engine;
 
-import java.util.Iterator;
-
-import com.carrotsearch.hppc.cursors.LongIntCursor;
-
 /**
  * Encounter with a query, contains information that can be used by a
  * {@link QueryEngine} to return results.
@@ -14,21 +10,6 @@ import com.carrotsearch.hppc.cursors.LongIntCursor;
 public interface QueryEncounter<T>
 {
 	/**
-	 * Get the offset where results are expected to begin. Offsets are used
-	 * to support pagination.
-	 * 
-	 * @return
-	 */
-	int getOffset();
-	
-	/**
-	 * Get the max number of results to return.
-	 * 
-	 * @return
-	 */
-	int getMax();
-	
-	/**
 	 * Get the data that describes the query.
 	 * 
 	 * @return
@@ -36,11 +17,28 @@ public interface QueryEncounter<T>
 	T getData();
 	
 	/**
-	 * Automatically slice an iterator with results so that the offset and
-	 * maximum number of results are applied.
+	 * Load the given object.
 	 * 
-	 * @param iterator
+	 * @param id
 	 * @return
 	 */
-	Iterator<LongIntCursor> sliceResults(Iterator<LongIntCursor> iterator);
+	Object load(long id);
+
+	/**
+	 * Indicate that the given data should be returned as a result for this
+	 * query.
+	 * 
+	 * @param id
+	 */
+	void receive(long id);
+	
+	/**
+	 * Set the metadata about offset, limit and total number of hits found
+	 * for this query.
+	 * 
+	 * @param offset
+	 * @param limit
+	 * @param totalHits
+	 */
+	void setMetadata(int offset, int limit, int totalHits);
 }

@@ -1,5 +1,7 @@
 package se.l4.silo;
 
+import java.util.function.Function;
+
 /**
  * Receiver of query operations from a {@link Query}.
  * 
@@ -7,7 +9,7 @@ package se.l4.silo;
  *
  * @param <R>
  */
-public interface QueryRunner<R>
+public interface QueryRunner<T, R>
 {
 	/**
 	 * Query and fetch results matching.
@@ -15,5 +17,5 @@ public interface QueryRunner<R>
 	 * @param data
 	 * @return
 	 */
-	FetchResult<R> fetchResults(Object data);
+	FetchResult<R> fetchResults(Object data, Function<QueryResult<T>, R> resultCreator);
 }

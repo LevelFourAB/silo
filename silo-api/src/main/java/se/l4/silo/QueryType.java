@@ -8,7 +8,7 @@ package se.l4.silo;
  * @param <ResultType>
  * @param <R>
  */
-public interface QueryType<ResultType, R extends Query<?>>
+public interface QueryType<EntityDataType, ResultType, R extends Query<?>>
 {
 	/**
 	 * Create a new query for the given result type.
@@ -17,5 +17,5 @@ public interface QueryType<ResultType, R extends Query<?>>
 	 * @param runner
 	 * @return
 	 */
-	R create(Class<ResultType> type, QueryRunner<ResultType> runner);
+	R create(QueryRunner<EntityDataType, ResultType> runner);
 }

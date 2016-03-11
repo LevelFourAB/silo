@@ -43,6 +43,12 @@ public class EmptyFetchResult<T>
 	{
 		return -1;
 	}
+	
+	@Override
+	public int getTotal()
+	{
+		return 0;
+	}
 
 	@Override
 	public boolean isEmpty()

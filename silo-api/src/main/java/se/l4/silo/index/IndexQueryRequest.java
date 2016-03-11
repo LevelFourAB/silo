@@ -72,6 +72,6 @@ public class IndexQueryRequest
 		LESS_THAN,
 		LESS_THAN_OR_EQUAL_TO,
 		MORE_THAN,
-		MORA_THAN_OR_EQUAL_TO
+		MORE_THAN_OR_EQUAL_TO
 	}
 }

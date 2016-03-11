@@ -127,9 +127,9 @@ public class StructuredEntityTest
 	{
 		entity.store("test", generateTestData());
 		
-		FetchResult<StreamingInput> fr = entity.query("byName", IndexQuery.type())
+		FetchResult<StreamingInput> fr = entity.query("byField", IndexQuery.type())
 			.field("field")
-			.isEqualTo("test")
+			.isEqualTo("value")
 			.run();
 		
 		check(fr);

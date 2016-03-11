@@ -1,8 +1,12 @@
 package se.l4.silo.engine;
 
+import java.util.function.Function;
+
 import se.l4.aurochs.core.io.Bytes;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.Entity;
+import se.l4.silo.FetchResult;
+import se.l4.silo.QueryResult;
 import se.l4.silo.StoreResult;
 
 /**
@@ -43,6 +47,7 @@ public interface Storage
 	 * 
 	 * @param engine
 	 * @param query
+	 * @return 
 	 */
-	void query(String engine, Object query);
+	<R> FetchResult<QueryResult<R>> query(String engine, Object query, Function<Bytes, R> dataLoader);
 }
