@@ -55,6 +55,12 @@ public class TransformingFetchResult<T>
 	}
 	
 	@Override
+	public int getTotal()
+	{
+		return in.getTotal();
+	}
+	
+	@Override
 	public Iterator<T> iterator()
 	{
 		return new TransformingIterator(in.iterator());
