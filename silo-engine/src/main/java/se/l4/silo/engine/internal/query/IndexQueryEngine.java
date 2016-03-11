@@ -30,6 +30,7 @@ import se.l4.silo.engine.types.MaxMin;
 import se.l4.silo.engine.types.MergedFieldType;
 import se.l4.silo.index.IndexQueryRequest;
 import se.l4.silo.index.IndexQueryRequest.Criterion;
+import se.l4.silo.index.IndexQueryRequest.SortOnField;
 
 /**
  * {@link QueryEngine} that creates a queryable index similiar in functionality
@@ -52,6 +53,7 @@ public class IndexQueryEngine
 	private final String[] fields;
 	private final FieldType[] fieldTypes;
 	private final String[] sortFields;
+	private final FieldType[] sortFieldTypes;
 
 	public IndexQueryEngine(String name, Fields fields, MVStoreManager store, IndexConfig config)
 	{
@@ -66,6 +68,7 @@ public class IndexQueryEngine
 		indexedData = store.openMap("data:" + name, LongFieldType.INSTANCE, indexKey);
 		
 		MergedFieldType indexData = createFieldType(name, fields, config.getSortFields(), false);
+		this.sortFieldTypes = indexData.getTypes();
 		index = store.openMap("index:" + name, indexKey, indexData);
 	}
 	
@@ -140,6 +143,37 @@ public class IndexQueryEngine
 			index.remove(previousKey);
 		}
 	}
+	
+	private int findField(String name, boolean errorOnNoFind)
+	{
+		for(int i=0, n=fields.length; i<n; i++)
+		{
+			if(fields[i].equals(name))
+			{
+				return i;
+			}
+		}
+		
+		if(errorOnNoFind)
+		{
+			throw new StorageException("The field `" + name + "` does not exist in this index");
+		}
+		
+		return -1;
+	}
+	
+	private int findSortField(String name)
+	{
+		for(int i=0, n=sortFields.length; i<n; i++)
+		{
+			if(sortFields[i].equals(name))
+			{
+				return i;
+			}
+		}
+		
+		throw new StorageException("The field `" + name + "` does not exist in this index");
+	}
 
 	@Override
 	public void query(QueryEncounter<IndexQueryRequest> encounter)
@@ -150,21 +184,7 @@ public class IndexQueryEngine
 		QueryPart[] parts = new QueryPart[fields.length + 1];
 		for(Criterion c : request.getCriterias())
 		{
-			int field = -1;
-			String f = c.getField();
-			for(int i=0, n=fields.length; i<n; i++)
-			{
-				if(fields[i].equals(f))
-				{
-					field = i;
-					break;
-				}
-			}
-			
-			if(field == -1)
-			{
-				throw new StorageException("The field `" + f + "` does not exist in this index");
-			}
+			int field = findField(c.getField(), true);
 			
 			FieldType<?> ft = fieldTypes[field];
 			
@@ -237,17 +257,36 @@ public class IndexQueryEngine
 			break;
 		}
 		
-		// TODO: Support for sorting
-		int limit = 0;
-		int offset = 0;
-		Comparator<Result> sort = Sort.builder()
+		// Setup sorting of the results
+		boolean hasSort = false;
+		Sort.Builder sortBuilder = Sort.builder();
+		for(SortOnField s : request.getSort())
+		{
+			int field = findField(s.getField(), false);
+			if(field >= 0)
+			{
+				sortBuilder.key(field, fieldTypes[field], s.isAscending());
+			}
+			else
+			{
+				hasSort = true;
+				field = findSortField(s.getField());
+				sortBuilder.value(field, sortFieldTypes[field], s.isAscending());
+			}
+		}
+		
+		Comparator<Result> sort = sortBuilder
 			.id(true)
 			.build();
+		
+		// Fetch the limits and setup collection of results
+		int limit = request.getLimit();
+		int offset = request.getOffset();
 		
 		MutableInt total = new MutableInt();
 		int maxSize = limit > 0 ? offset + limit : 0;
 		TreeSet<Result> tree = new TreeSet<>(sort);
-		parts[fields.length] = new ResultCollector(index, fields.length, false)
+		parts[fields.length] = new ResultCollector(index, fields.length, hasSort)
 		{
 			@Override
 			protected boolean accept(long id, Object[] key, Object[] values)
@@ -267,7 +306,7 @@ public class IndexQueryEngine
 					tree.add(result);
 				}
 				
-				// TODO: Better logic on when to short circuit
+				// TODO: Can we short circuit the result collection somehow?
 				return true;
 			}
 		};
@@ -278,7 +317,6 @@ public class IndexQueryEngine
 		parts[0].run(lower, upper, parts, (v) -> true);
 		
 		// Cut down the results if needed
-		Collection<Result> results;
 		if(maxSize != 0 && tree.size() > limit)
 		{
 			int n = tree.size() - offset;
@@ -296,6 +334,8 @@ public class IndexQueryEngine
 				encounter.receive(r.getId());
 			}
 		}
+		
+		encounter.setMetadata(offset, limit, total.intValue());
 	}
 	
 	private Number convert(FieldType<?> type, Object v)

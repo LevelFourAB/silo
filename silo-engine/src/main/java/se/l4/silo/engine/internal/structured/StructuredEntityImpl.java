@@ -67,7 +67,7 @@ public class StructuredEntityImpl
 	}
 	
 	@Override
-	public <RT, R extends Query<?>> R query(String engine, QueryType<StreamingInput, RT, R> type)
+	public <RT, Q extends Query<RT>> Q query(String engine, QueryType<StreamingInput, RT, Q> type)
 	{
 		return type.create((data, translator) -> {
 			return entity.query(engine, data, BytesToStreamingInputFunction.INSTANCE)

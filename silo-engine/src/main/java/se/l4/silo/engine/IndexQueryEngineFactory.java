@@ -42,7 +42,7 @@ public class IndexQueryEngineFactory
 	{
 		Fields fields = encounter.getFields();
 		IndexConfig config = encounter.getConfig();
-		MVStoreManager store = encounter.openMVStore("index");
+		MVStoreManager store = encounter.openMVStore(encounter.getName());
 		return new IndexQueryEngine(encounter.getName(), fields, store, config);
 	}
 

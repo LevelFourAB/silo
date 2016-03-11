@@ -1,5 +1,6 @@
 package se.l4.silo.structured;
 
+import se.l4.aurochs.serialization.Serializer;
 import se.l4.aurochs.serialization.format.StreamingInput;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.Entity;
@@ -49,5 +50,16 @@ public interface StructuredEntity
 	 * @param index
 	 * @return
 	 */
-	<RT, R extends Query<?>> R query(String engine, QueryType<StreamingInput, RT, R> type);
+	<RT, Q extends Query<RT>> Q query(String engine, QueryType<StreamingInput, RT, Q> type);
+
+	/**
+	 * Get an entity that translates the structured data into objects.
+	 * 
+	 * @param serializer
+	 * @return
+	 */
+	default <T> ObjectEntity<T> asObject(Serializer<T> serializer)
+	{
+		return new DefaultObjectEntity<>(this, serializer);
+	}
 }

@@ -1,14 +1,28 @@
 package se.l4.silo;
 
+import se.l4.aurochs.serialization.format.StreamingInput;
+import se.l4.silo.structured.ObjectEntity;
+import se.l4.silo.structured.StructuredEntity;
+
 /**
- * Type interface that creates instances of {@link Query}.
+ * Type interface that creates instances of {@link Query}. When an {@link Entity}
+ * is queried the query type is responsible for creating a {@link Query} instance
+ * that calls a {@link QueryRunner} to execute the query and transform the
+ * results.
+ * 
+ * <p>
+ * A {@link QueryType} has three generic attributes, {@code EntityDataType}
+ * is the type the entity works with, such as {@link StreamingInput} for
+ * {@link StructuredEntity} or any object type for {@link ObjectEntity}.
+ * It is assumed that the {@code EntityDataType} can be modified to support
+ * composing of queries.
  * 
  * @author Andreas Holstenson
  *
  * @param <ResultType>
- * @param <R>
+ * @param <QueryBuilder>
  */
-public interface QueryType<EntityDataType, ResultType, R extends Query<?>>
+public interface QueryType<EntityDataType, ResultType, QueryBuilder extends Query<ResultType>>
 {
 	/**
 	 * Create a new query for the given result type.
@@ -17,5 +31,10 @@ public interface QueryType<EntityDataType, ResultType, R extends Query<?>>
 	 * @param runner
 	 * @return
 	 */
-	R create(QueryRunner<EntityDataType, ResultType> runner);
+	QueryBuilder create(QueryRunner<EntityDataType, ResultType> runner);
+	
+	default <DT, RT, Q extends Query<RT>> QueryType<DT, RT, Q> withNewEntityDataType()
+	{
+		return (QueryType<DT, RT, Q>) this;
+	}
 }

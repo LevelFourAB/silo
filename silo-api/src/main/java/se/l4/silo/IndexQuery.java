@@ -94,11 +94,4 @@ public interface IndexQuery<T>
 	 * @return
 	 */
 	IndexQuery<T> offset(int offset);
-	
-	/**
-	 * Request that a count is returned for this query.
-	 * 
-	 * @return
-	 */
-	IndexQuery<T> returnCount();
 }

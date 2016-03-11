@@ -1,6 +1,7 @@
 package se.l4.silo.index;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import se.l4.aurochs.serialization.AllowAny;
@@ -12,15 +13,42 @@ import se.l4.aurochs.serialization.Use;
 public class IndexQueryRequest
 {
 	@Expose
+	private int offset;
+	@Expose
+	private int limit;
+	
+	@Expose
 	private List<Criterion> criterias;
+	@Expose
+	private List<SortOnField> sort;
 	
 	public IndexQueryRequest()
 	{
 	}
 	
+	public int getOffset()
+	{
+		return offset;
+	}
+	
+	public void setOffset(int offset)
+	{
+		this.offset = offset;
+	}
+	
+	public int getLimit()
+	{
+		return limit;
+	}
+	
+	public void setLimit(int limit)
+	{
+		this.limit = limit;
+	}
+	
 	public List<Criterion> getCriterias()
 	{
-		return criterias;
+		return criterias == null ? Collections.emptyList() : criterias;
 	}
 	
 	public void addCritera(String field, Op op, Object value)
@@ -36,6 +64,25 @@ public class IndexQueryRequest
 		c.value = value;
 		
 		criterias.add(c);
+	}
+	
+	public List<SortOnField> getSort()
+	{
+		return sort == null ? Collections.emptyList() : sort;
+	}
+	
+	public void addSort(String field, boolean ascending)
+	{
+		if(sort == null)
+		{
+			sort = new ArrayList<>();
+			
+			SortOnField s = new SortOnField();
+			s.field = field;
+			s.ascending = ascending;
+			
+			sort.add(s);
+		}
 	}
 	
 	@Use(ReflectionSerializer.class)
@@ -73,5 +120,24 @@ public class IndexQueryRequest
 		LESS_THAN_OR_EQUAL_TO,
 		MORE_THAN,
 		MORE_THAN_OR_EQUAL_TO
+	}
+	
+	@Use(ReflectionSerializer.class)
+	public static class SortOnField
+	{
+		@Expose
+		private String field;
+		@Expose
+		private boolean ascending;
+		
+		public String getField()
+		{
+			return field;
+		}
+		
+		public boolean isAscending()
+		{
+			return ascending;
+		}
 	}
 }

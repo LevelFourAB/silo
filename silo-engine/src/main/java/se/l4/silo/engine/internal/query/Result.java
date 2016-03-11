@@ -1,5 +1,7 @@
 package se.l4.silo.engine.internal.query;
 
+import java.util.Arrays;
+
 public class Result
 {
 	private final long id;
@@ -16,5 +18,11 @@ public class Result
 	public long getId()
 	{
 		return id;
+	}
+
+	@Override
+	public String toString()
+	{
+		return "Result [id=" + id + ", keys=" + Arrays.toString(keys) + ", values=" + Arrays.toString(values) + "]";
 	}
 }

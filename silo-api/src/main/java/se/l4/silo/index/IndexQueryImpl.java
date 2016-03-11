@@ -75,35 +75,45 @@ public class IndexQueryImpl<T>
 	{
 		return add(Op.MORE_THAN_OR_EQUAL_TO, number);
 	}
+	
+	private IndexQuery<T> addSort(boolean ascending)
+	{
+		if(field == null)
+		{
+			throw new StorageException("No field given");
+		}
+		
+		request.addSort(field, ascending);
+		
+		field = null;
+		
+		return this;
+	}
 
 	@Override
 	public IndexQuery<T> sortAscending()
 	{
-		return null;
+		return addSort(true);
 	}
 
 	@Override
 	public IndexQuery<T> sortDescending()
 	{
-		return null;
+		return addSort(false);
 	}
 
 	@Override
 	public IndexQuery<T> limit(int limit)
 	{
-		return null;
+		request.setLimit(limit);
+		return this;
 	}
 
 	@Override
 	public IndexQuery<T> offset(int offset)
 	{
-		return null;
-	}
-
-	@Override
-	public IndexQuery<T> returnCount()
-	{
-		return null;
+		request.setOffset(offset);
+		return this;
 	}
 
 }
