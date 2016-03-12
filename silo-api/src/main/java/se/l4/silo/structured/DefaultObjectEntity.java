@@ -15,6 +15,13 @@ import se.l4.silo.QueryRunner;
 import se.l4.silo.QueryType;
 import se.l4.silo.StorageException;
 
+/**
+ * Implementation of {@link ObjectEntity}.
+ * 
+ * @author Andreas Holstenson
+ *
+ * @param <T>
+ */
 public class DefaultObjectEntity<T>
 	implements ObjectEntity<T>
 {

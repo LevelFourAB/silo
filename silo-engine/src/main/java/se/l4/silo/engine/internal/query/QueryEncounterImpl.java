@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.function.LongFunction;
 
 import se.l4.silo.FetchResult;
-import se.l4.silo.IteratorFetchResult;
 import se.l4.silo.QueryResult;
 import se.l4.silo.engine.QueryEncounter;
+import se.l4.silo.results.IteratorFetchResult;
 
 /**
  * Implementation of {@link QueryEncounter}.

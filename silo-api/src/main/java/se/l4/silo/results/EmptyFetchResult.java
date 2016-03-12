@@ -1,8 +1,10 @@
-package se.l4.silo;
+package se.l4.silo.results;
 
 import java.util.Iterator;
 
 import com.google.common.collect.Iterators;
+
+import se.l4.silo.FetchResult;
 
 /**
  * A {@link FetchResult} that is always empty.

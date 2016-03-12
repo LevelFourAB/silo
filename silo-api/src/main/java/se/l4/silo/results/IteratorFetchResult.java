@@ -1,7 +1,9 @@
-package se.l4.silo;
+package se.l4.silo.results;
 
 import java.util.Collection;
 import java.util.Iterator;
+
+import se.l4.silo.FetchResult;
 
 /**
  * {@link FetchResult} implemented over an {@link Iterator}.

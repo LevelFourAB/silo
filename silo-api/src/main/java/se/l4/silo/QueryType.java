@@ -32,9 +32,4 @@ public interface QueryType<EntityDataType, ResultType, QueryBuilder extends Quer
 	 * @return
 	 */
 	QueryBuilder create(QueryRunner<EntityDataType, ResultType> runner);
-	
-	default <DT, RT, Q extends Query<RT>> QueryType<DT, RT, Q> withNewEntityDataType()
-	{
-		return (QueryType<DT, RT, Q>) this;
-	}
 }

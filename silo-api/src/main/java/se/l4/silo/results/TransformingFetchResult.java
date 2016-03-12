@@ -1,4 +1,4 @@
-package se.l4.silo.raw;
+package se.l4.silo.results;
 
 import java.util.Iterator;
 import java.util.function.Function;
