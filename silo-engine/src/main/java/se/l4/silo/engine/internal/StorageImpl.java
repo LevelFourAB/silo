@@ -15,12 +15,14 @@ import se.l4.silo.StorageException;
 import se.l4.silo.StoreResult;
 import se.l4.silo.engine.DataStorage;
 import se.l4.silo.engine.Fields;
+import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.QueryEngine;
 import se.l4.silo.engine.QueryEngineFactory;
 import se.l4.silo.engine.Storage;
 import se.l4.silo.engine.config.QueryEngineConfig;
 import se.l4.silo.engine.internal.query.QueryEncounterImpl;
 import se.l4.silo.engine.internal.query.QueryEngineCreationEncounterImpl;
+import se.l4.silo.engine.internal.query.QueryEngineUpdater;
 import se.l4.silo.engine.internal.tx.TransactionExchange;
 
 /**
@@ -36,12 +38,15 @@ public class StorageImpl
 	private final TransactionSupport transactionSupport;
 	private final DataStorage storage;
 	private final PrimaryIndex primary;
-	private final ImmutableMap<String, QueryEngine<?>> queryEngines;
 	private final Fields fields;
+	
+	private final ImmutableMap<String, QueryEngine<?>> queryEngines;
+	private final QueryEngineUpdater queryEngineUpdater;
 
 	public StorageImpl(
 			EngineFactories factories,
 			TransactionSupport transactionSupport,
+			MVStoreManager stateStore,
 			Path dataDir,
 			DataStorage storage,
 			PrimaryIndex primary,
@@ -74,6 +79,7 @@ public class StorageImpl
 		}
 		
 		this.queryEngines = builder.build();
+		this.queryEngineUpdater = new QueryEngineUpdater(stateStore, this.queryEngines);
 	}
 
 	@Override
@@ -164,17 +170,13 @@ public class StorageImpl
 	public void directStore(Object id, Bytes bytes)
 		throws IOException
 	{
+		long previous = primary.latest();
 		long internalId = primary.store(id);
 		storage.store(internalId, bytes);
 		
 		Bytes storedBytes = storage.get(internalId);
 		
-		// TODO: Keep track of the last id of each query engine
-		for(Map.Entry<String, QueryEngine<?>> e : queryEngines.entrySet())
-		{
-			QueryEngine<?> engine = e.getValue();
-			engine.update(internalId, new DataEncounterImpl(storedBytes));
-		}
+		queryEngineUpdater.store(previous, internalId, storedBytes);
 	}
 	
 	/**
@@ -188,6 +190,8 @@ public class StorageImpl
 	{
 		long internalId = primary.get(id);
 		if(internalId == 0) return;
+		
+		queryEngineUpdater.delete(internalId);
 		
 		storage.delete(internalId);
 		primary.remove(id);

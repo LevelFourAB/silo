@@ -79,10 +79,16 @@ public class StorageEngine
 	 * The store used for storing main data. 
 	 */
 	private final MVStoreManager store;
+	
 	/**
 	 * Abstraction over {@link MVStore} to make data storage simpler.
 	 */
 	private final DataStorage dataStorage;
+	
+	/**
+	 * Store used for state data that is derived.  
+	 */
+	private final MVStoreManager stateStore;
 
 	/**
 	 * The generator used for creating identifiers for transactions and
@@ -133,6 +139,11 @@ public class StorageEngine
 		
 		this.store = new MVStoreManagerImpl(store);
 		
+		this.stateStore = new MVStoreManagerImpl(new MVStore.Builder()
+			.compress()
+			.fileName(root.resolve("derived-state.mv.bin").toString())
+			.open());
+		
 		ids = new SimpleLongIdGenerator();
 		dataStorage = new MVDataStorage(this.store);
 		storages = new ConcurrentHashMap<>();
@@ -178,6 +189,7 @@ public class StorageEngine
 	{
 		log.close();
 		store.close();
+		stateStore.close();
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -295,6 +307,7 @@ public class StorageEngine
 					storage = new StorageImpl(
 						factories,
 						transactionSupport,
+						stateStore,
 						dataPath,
 						dataStorage,
 						primaryIndex,

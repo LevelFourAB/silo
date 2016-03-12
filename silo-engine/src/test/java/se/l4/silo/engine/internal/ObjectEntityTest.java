@@ -85,6 +85,8 @@ public class ObjectEntityTest
 			.sortAscending()
 			.run())
 		{
+			Assert.assertEquals(fr.getTotal(), 675);
+			
 			for(Data d : fr)
 			{
 				if(d.age <= 30)

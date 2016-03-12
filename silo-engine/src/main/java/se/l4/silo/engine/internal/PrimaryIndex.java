@@ -7,6 +7,7 @@ import se.l4.aurochs.core.id.LongIdGenerator;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.types.DataTypeAdapter;
 import se.l4.silo.engine.types.LongFieldType;
+import se.l4.silo.engine.types.StringFieldType;
 
 /**
  * Index that helps map objects to internal long identifiers.
@@ -18,14 +19,19 @@ public class PrimaryIndex
 {
 	private final MVMap<Object, Long> map;
 	private final LongIdGenerator ids;
+	private final MVMap<String, Long> counter;
+	private final String name;
 
 	public PrimaryIndex(MVStoreManager storeManager, LongIdGenerator ids, String name)
 	{
 		this.ids = ids;
-		map = storeManager.openMap("primary." + name, new MVMap.Builder<Object, Long>()
+		this.name = name;
+		map = storeManager.openMap("primary.values." + name, new MVMap.Builder<Object, Long>()
 			.keyType(new ObjectDataType())
 			.valueType(new DataTypeAdapter(LongFieldType.INSTANCE))
 		);
+		
+		counter = storeManager.openMap("primary.counter", StringFieldType.INSTANCE, LongFieldType.INSTANCE);
 	}
 	
 	/**
@@ -54,6 +60,7 @@ public class PrimaryIndex
 		}
 		
 		long id = ids.next();
+		counter.put(name, id);
 		map.put(key, id);
 		return id;
 	}
@@ -66,5 +73,15 @@ public class PrimaryIndex
 	public void remove(Object key)
 	{
 		map.remove(key);
+	}
+	
+	/**
+	 * Get the latest internal identifier.
+	 * 
+	 * @return
+	 */
+	public long latest()
+	{
+		return counter.getOrDefault(name, 0l);
 	}
 }
