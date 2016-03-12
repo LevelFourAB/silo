@@ -1,4 +1,4 @@
-package se.l4.silo.engine.internal.query;
+package se.l4.silo.engine.internal.index;
 
 import java.util.Comparator;
 

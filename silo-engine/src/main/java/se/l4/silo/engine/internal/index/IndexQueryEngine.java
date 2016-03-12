@@ -1,4 +1,4 @@
-package se.l4.silo.engine.internal.query;
+package se.l4.silo.engine.internal.index;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -24,6 +24,7 @@ import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.QueryEncounter;
 import se.l4.silo.engine.QueryEngine;
 import se.l4.silo.engine.config.IndexConfig;
+import se.l4.silo.engine.internal.index.Sort.Builder;
 import se.l4.silo.engine.types.FieldType;
 import se.l4.silo.engine.types.LongFieldType;
 import se.l4.silo.engine.types.MaxMin;

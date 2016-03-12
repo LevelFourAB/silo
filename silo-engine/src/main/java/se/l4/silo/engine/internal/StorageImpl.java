@@ -20,6 +20,7 @@ import se.l4.silo.engine.QueryEngineFactory;
 import se.l4.silo.engine.Storage;
 import se.l4.silo.engine.config.QueryEngineConfig;
 import se.l4.silo.engine.internal.query.QueryEncounterImpl;
+import se.l4.silo.engine.internal.query.QueryEngineCreationEncounterImpl;
 import se.l4.silo.engine.internal.tx.TransactionExchange;
 
 /**

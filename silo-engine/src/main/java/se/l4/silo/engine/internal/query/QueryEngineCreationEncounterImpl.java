@@ -1,4 +1,4 @@
-package se.l4.silo.engine.internal;
+package se.l4.silo.engine.internal.query;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,6 +11,7 @@ import se.l4.silo.engine.Fields;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.QueryEngineCreationEncounter;
 import se.l4.silo.engine.config.QueryEngineConfig;
+import se.l4.silo.engine.internal.MVStoreManagerImpl;
 
 /**
  * Implementation of {@link QueryEngineCreationEncounter}.

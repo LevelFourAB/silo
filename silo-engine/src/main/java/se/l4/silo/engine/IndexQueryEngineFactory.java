@@ -6,7 +6,7 @@ import se.l4.silo.engine.builder.IndexBuilder;
 import se.l4.silo.engine.config.IndexConfig;
 import se.l4.silo.engine.config.QueryEngineConfig;
 import se.l4.silo.engine.internal.index.IndexQueryBuilderImpl;
-import se.l4.silo.engine.internal.query.IndexQueryEngine;
+import se.l4.silo.engine.internal.index.IndexQueryEngine;
 
 /**
  * Query engine that supports indexing and querying a set of fields.
