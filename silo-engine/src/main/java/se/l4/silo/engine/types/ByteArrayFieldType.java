@@ -20,6 +20,44 @@ public class ByteArrayFieldType
 	@Override
 	public int compare(byte[] o1, byte[] o2)
 	{
+		if(o1 == null)
+		{
+			if(o2 == null)
+			{
+				return 0;
+			}
+			else
+			{
+				return -1;
+			}
+		}
+
+		if(o2 == null)
+		{
+			return 1;
+		}
+
+		for(int i=0, n=Math.min(o1.length, o2.length); i<n; i++)
+		{
+			if(o1[i] < o2[i])
+			{
+				return -1;
+			}
+			else if(o1[i] > o2[i])
+			{
+				return 1;
+			}
+		}
+
+		if(o1.length < o2.length)
+		{
+			return -1;
+		}
+		else if(o1.length > o2.length)
+		{
+			return 1;
+		}
+		
 		return 0;
 	}
 

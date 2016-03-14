@@ -24,7 +24,6 @@ import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.QueryEncounter;
 import se.l4.silo.engine.QueryEngine;
 import se.l4.silo.engine.config.IndexConfig;
-import se.l4.silo.engine.internal.index.Sort.Builder;
 import se.l4.silo.engine.types.FieldType;
 import se.l4.silo.engine.types.LongFieldType;
 import se.l4.silo.engine.types.MaxMin;
@@ -448,7 +447,9 @@ public class IndexQueryEngine
 					upper[field] = o;
 					
 					// Extend the filter
-					Predicate<Object[]> f2 = filter.and((data) -> Objects.equals(o, data[field]));
+					Predicate<Object[]> f2 = o instanceof byte[]
+						? filter.and(data -> Arrays.equals((byte[]) o, (byte[]) data[field]))
+						: filter.and(data -> Objects.equals(o, data[field]));
 					
 					// The run the next part
 					parts[field+1].run(lower, upper, parts, f2);
@@ -461,7 +462,9 @@ public class IndexQueryEngine
 				upper[field] = value;
 				
 				// Extend the filter
-				filter = filter.and((data) -> Objects.equals(value, data[field]));
+				filter = value instanceof byte[]
+					? filter.and(data -> Arrays.equals((byte[]) value, (byte[]) data[field]))
+					: filter.and(data -> Objects.equals(value, data[field]));
 				
 				// The run the next part
 				parts[field+1].run(lower, upper, parts, filter);
