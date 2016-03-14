@@ -22,7 +22,7 @@ public class QueryEngineUpdater
 	private final List<EngineDef> engines;
 	private final MVMap<String, Long> state;
 
-	public QueryEngineUpdater(MVStoreManager store, Map<String, QueryEngine<?>> engines)
+	public QueryEngineUpdater(MVStoreManager store, String name, Map<String, QueryEngine<?>> engines)
 	{
 		ImmutableList.Builder<EngineDef> builder = ImmutableList.builder();
 		for(Map.Entry<String, QueryEngine<?>> e : engines.entrySet())
@@ -31,7 +31,7 @@ public class QueryEngineUpdater
 		}
 		this.engines = builder.build();
 		
-		state = store.openMap("storage.query-engine",
+		state = store.openMap("storage.query-engine." + name,
 			StringFieldType.INSTANCE,
 			VersionedType.singleVersion(LongFieldType.INSTANCE)
 		);

@@ -1,5 +1,6 @@
 package se.l4.silo.engine.internal;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
@@ -32,7 +33,7 @@ import se.l4.silo.engine.internal.tx.TransactionExchange;
  *
  */
 public class StorageImpl
-	implements Storage
+	implements Storage, Closeable
 {
 	private final String name;
 	private final TransactionSupport transactionSupport;
@@ -79,7 +80,14 @@ public class StorageImpl
 		}
 		
 		this.queryEngines = builder.build();
-		this.queryEngineUpdater = new QueryEngineUpdater(stateStore, this.queryEngines);
+		this.queryEngineUpdater = new QueryEngineUpdater(stateStore, name, this.queryEngines);
+	}
+	
+	@Override
+	public void close()
+		throws IOException
+	{
+		// We currently have nothing that can be closed
 	}
 
 	@Override
