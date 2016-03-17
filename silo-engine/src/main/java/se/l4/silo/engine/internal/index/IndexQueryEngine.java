@@ -254,7 +254,6 @@ public class IndexQueryEngine
 					break;
 				}
 			}
-			break;
 		}
 		
 		// Setup sorting of the results
