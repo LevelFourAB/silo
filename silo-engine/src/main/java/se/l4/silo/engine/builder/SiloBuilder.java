@@ -1,5 +1,6 @@
 package se.l4.silo.engine.builder;
 
+import se.l4.aurochs.core.AutoLoader;
 import se.l4.aurochs.serialization.DefaultSerializerCollection;
 import se.l4.aurochs.serialization.SerializerCollection;
 import se.l4.silo.Silo;
@@ -24,6 +25,15 @@ public interface SiloBuilder
 	 * @return
 	 */
 	SiloBuilder withSerializerCollection(SerializerCollection collection);
+	
+	/**
+	 * Set the auto loader to use. If this is set the created instance will
+	 * be able to pick up extensions automatically.
+	 * 
+	 * @param loader
+	 * @return
+	 */
+	SiloBuilder withAutoLoader(AutoLoader loader);
 	
 	/**
 	 * Add a new entity to this instance.

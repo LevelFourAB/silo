@@ -1,15 +1,18 @@
 package se.l4.silo.engine.internal;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
+import se.l4.aurochs.core.AutoLoader;
 import se.l4.aurochs.serialization.DefaultSerializerCollection;
 import se.l4.aurochs.serialization.SerializerCollection;
+import se.l4.crayon.ConfigurationException;
 import se.l4.silo.engine.EntityTypeFactory;
 import se.l4.silo.engine.IndexQueryEngineFactory;
 import se.l4.silo.engine.LocalSilo;
 import se.l4.silo.engine.QueryEngineFactory;
+import se.l4.silo.engine.SearchIndexQueryEngineFactory;
 import se.l4.silo.engine.builder.EntityBuilder;
 import se.l4.silo.engine.builder.SiloBuilder;
 import se.l4.silo.engine.config.EngineConfig;
@@ -30,12 +33,13 @@ public class LocalSiloBuilder
 	private final LogBuilder logBuilder;
 	private final Path dataPath;
 	
-	private final List<EntityTypeFactory<?, ?>> entityTypes;
-	private final List<QueryEngineFactory<?, ?>> queryEngineTypes;
-	private final List<FieldType<?>> fieldTypes;
+	private final Map<String, EntityTypeFactory<?, ?>> entityTypes;
+	private final Map<String, QueryEngineFactory<?, ?>> queryEngineTypes;
+	private final Map<String, FieldType<?>> fieldTypes;
 	
 	private EngineConfig config;
 	private SerializerCollection serializers;
+	private AutoLoader autoLoader;
 
 	public LocalSiloBuilder(LogBuilder logBuilder, Path dataPath)
 	{
@@ -44,25 +48,44 @@ public class LocalSiloBuilder
 		
 		config = new EngineConfig();
 		
-		entityTypes = new ArrayList<>();
-		entityTypes.add(new BinaryEntityFactory());
-		entityTypes.add(new StructuredEntityFactory());
+		entityTypes = new HashMap<>();
+		queryEngineTypes = new HashMap<>();
+		fieldTypes = new HashMap<>();
 		
-		queryEngineTypes = new ArrayList<>();
-		queryEngineTypes.add(IndexQueryEngineFactory.type());
+		addEntityType(new BinaryEntityFactory());
+		addEntityType(new StructuredEntityFactory());
 		
-		fieldTypes = new ArrayList<>();
-		fieldTypes.add(BooleanFieldType.INSTANCE);
-		fieldTypes.add(ByteArrayFieldType.INSTANCE);
-		fieldTypes.add(IntFieldType.INSTANCE);
-		fieldTypes.add(LongFieldType.INSTANCE);
-		fieldTypes.add(StringFieldType.INSTANCE);
+		addQueryEngine(IndexQueryEngineFactory.type());
+		addQueryEngine(SearchIndexQueryEngineFactory.type());
+		
+		addFieldType(BooleanFieldType.INSTANCE);
+		addFieldType(ByteArrayFieldType.INSTANCE);
+		addFieldType(IntFieldType.INSTANCE);
+		addFieldType(LongFieldType.INSTANCE);
+		addFieldType(StringFieldType.INSTANCE);
+	}
+	
+	private <T> void put(Map<String, T> map, T instance, String name)
+	{
+		if(map.containsKey(name))
+		{
+			throw new ConfigurationException("Can not register " + instance + " with id " + name);
+		}
+		
+		map.put(name, instance);
 	}
 	
 	@Override
 	public SiloBuilder withSerializerCollection(SerializerCollection collection)
 	{
 		this.serializers = collection;
+		return this;
+	}
+	
+	@Override
+	public SiloBuilder withAutoLoader(AutoLoader loader)
+	{
+		this.autoLoader = loader;
 		return this;
 	}
 	
@@ -75,25 +98,56 @@ public class LocalSiloBuilder
 		});
 	}
 	
+	public SiloBuilder addEntityType(EntityTypeFactory<?, ?> type)
+	{
+		put(entityTypes, type, type.getId());
+		return this;
+	}
+	
 	@Override
 	public SiloBuilder addQueryEngine(QueryEngineFactory factory)
 	{
-		queryEngineTypes.add(factory);
+		put(queryEngineTypes, factory, factory.getId());
 		return this;
 	}
 	
 	@Override
 	public SiloBuilder addFieldType(FieldType<?> fieldType)
 	{
-		fieldTypes.add(fieldType);
+		put(fieldTypes, fieldType, fieldType.uniqueId());
 		return this;
 	}
 	
 	@Override
 	public LocalSilo build()
 	{
-		LocalEngineFactories factories = new LocalEngineFactories(entityTypes, queryEngineTypes, fieldTypes);
+		autoLoad();
+		
+		LocalEngineFactories factories = new LocalEngineFactories(entityTypes.values(), queryEngineTypes.values(), fieldTypes.values());
 		SerializerCollection serializers = this.serializers == null ? new DefaultSerializerCollection() : this.serializers;
 		return new LocalSilo(factories, serializers, logBuilder, dataPath, config);
+	}
+
+	private void autoLoad()
+	{
+		if(autoLoader == null) return;
+		
+		// Locate any query engine types available
+		for(QueryEngineFactory<?, ?> qe : autoLoader.getSubTypesAsInstances(QueryEngineFactory.class))
+		{
+			addQueryEngine(qe);
+		}
+		
+		// Find all available field types
+		for(FieldType<?> ft : autoLoader.getSubTypesAsInstances(FieldType.class))
+		{
+			addFieldType(ft);
+		}
+		
+		// Find all entity types
+		for(EntityTypeFactory<?, ?> et : autoLoader.getSubTypesAsInstances(EntityTypeFactory.class))
+		{
+			addEntityType(et);
+		}
 	}
 }
