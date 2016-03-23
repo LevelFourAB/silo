@@ -92,7 +92,6 @@ public class StorageImpl
 		// Close all of our query engines
 		for(QueryEngine<?> engine : this.queryEngines.values())
 		{
-			System.out.println("Closing " + engine);
 			engine.close();
 		}
 	}
