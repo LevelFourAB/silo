@@ -2,8 +2,13 @@ package se.l4.silo.engine.internal;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +20,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.h2.mvstore.MVStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
@@ -25,12 +32,12 @@ import se.l4.aurochs.core.io.Bytes;
 import se.l4.aurochs.serialization.SerializerCollection;
 import se.l4.silo.Entity;
 import se.l4.silo.StorageException;
-import se.l4.silo.engine.DataStorage;
 import se.l4.silo.engine.EntityCreationEncounter;
 import se.l4.silo.engine.EntityTypeFactory;
 import se.l4.silo.engine.Fields;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.QueryEngineFactory;
+import se.l4.silo.engine.Snapshot;
 import se.l4.silo.engine.Storage;
 import se.l4.silo.engine.builder.StorageBuilder;
 import se.l4.silo.engine.config.EngineConfig;
@@ -40,6 +47,7 @@ import se.l4.silo.engine.config.QueryEngineConfig;
 import se.l4.silo.engine.config.QueryableEntityConfig;
 import se.l4.silo.engine.internal.log.TransactionLog;
 import se.l4.silo.engine.internal.log.TransactionLogImpl;
+import se.l4.silo.engine.internal.mvstore.MVStoreManagerImpl;
 import se.l4.silo.engine.log.Log;
 import se.l4.silo.engine.log.LogBuilder;
 
@@ -52,6 +60,8 @@ import se.l4.silo.engine.log.LogBuilder;
 public class StorageEngine
 	implements Closeable
 {
+	private static final Logger logger = LoggerFactory.getLogger(StorageEngine.class);
+	
 	/**
 	 * Factories that can be used to fetch registered factories.
 	 */
@@ -72,7 +82,7 @@ public class StorageEngine
 	 * All instances of {@link Storage} that have been created by
 	 * {@link Entity entities}.
 	 */
-	private final Map<String, StorageImpl> storages;
+	private final Map<String, StorageDef> storages;
 	
 	/**
 	 * Instances of {@link Entity} created via configuration.
@@ -87,7 +97,7 @@ public class StorageEngine
 	/**
 	 * Abstraction over {@link MVStore} to make data storage simpler.
 	 */
-	private final DataStorage dataStorage;
+	private final MVDataStorage dataStorage;
 	
 	/**
 	 * Store used for state data that is derived.  
@@ -105,6 +115,13 @@ public class StorageEngine
 	 * that can be passed to {@link #log}.
 	 */
 	private final TransactionLog transactionLog;
+	
+	/**
+	 * The adapter that receives transaction parts and turns them into
+	 * storage operations.
+	 */
+	private final TransactionAdapter transactionAdapter;
+	
 	/**
 	 * Helper for working with transactions.
 	 */
@@ -132,6 +149,8 @@ public class StorageEngine
 			Path root,
 			EngineConfig config)
 	{
+		logger.debug("Creating new storage engine in {}", root);
+		
 		this.factories = factories;
 		this.serializers = serializers;
 		this.transactionSupport = transactionSupport;
@@ -148,17 +167,13 @@ public class StorageEngine
 			throw Throwables.propagate(e);
 		}
 		
-		MVStore store = new MVStore.Builder()
+		this.store = new MVStoreManagerImpl(new MVStore.Builder()
 			.compress()
-			.fileName(root.resolve("storage.mv.bin").toString())
-			.open();
-		
-		this.store = new MVStoreManagerImpl(store);
+			.fileName(root.resolve("storage.mv.bin").toString()));
 		
 		this.stateStore = new MVStoreManagerImpl(new MVStore.Builder()
 			.compress()
-			.fileName(root.resolve("derived-state.mv.bin").toString())
-			.open());
+			.fileName(root.resolve("derived-state.mv.bin").toString()));
 		
 		ids = new SequenceLongIdGenerator();
 		dataStorage = new MVDataStorage(this.store);
@@ -170,8 +185,8 @@ public class StorageEngine
 		loadConfig(config);
 		
 		// Build log and start receiving log entries
-		TransactionAdapter adapter = new TransactionAdapter(store, createApplier());
-		log = logBuilder.build(adapter);
+		transactionAdapter = new TransactionAdapter(store, createApplier());
+		log = logBuilder.build(transactionAdapter);
 		
 		transactionLog = new TransactionLogImpl(log, ids);
 	}
@@ -223,6 +238,12 @@ public class StorageEngine
 	{
 		executor.shutdownNow();
 		log.close();
+		
+		for(StorageDef def : storages.values())
+		{
+			def.getImpl().close();
+		}
+		
 		store.close();
 		stateStore.close();
 	}
@@ -258,12 +279,12 @@ public class StorageEngine
 	
 	private StorageImpl resolveStorage(String entity)
 	{
-		StorageImpl result = storages.get(entity);
+		StorageDef result = storages.get(entity);
 		if(result == null)
 		{
 			throw new StorageException("The entity " + entity + " does not exist");
 		}
-		return result;
+		return result.getImpl();
 	}
 	
 	/**
@@ -298,6 +319,7 @@ public class StorageEngine
 	{
 		String storageName = name + "::" + subName;
 		Path dataPath = resolveDataPath(name, subName);
+		StorageDef def = new StorageDef(storageName, dataPath);
 		return new StorageBuilder()
 		{
 			private final Map<String, QueryEngineConfig> queryEngines = new HashMap<>();
@@ -330,39 +352,9 @@ public class StorageEngine
 			@Override
 			public Storage build()
 			{
-				StorageImpl storage = storages.get(storageName);
-				if(storage != null)
-				{
-					try
-					{
-						storage.close();
-					}
-					catch(Throwable e)
-					{
-						throw new StorageException("Unable to close existing storage; " + e.getMessage(), e);
-					}
-				}
-				
-				// Create a new storage instance
-				PrimaryIndex primaryIndex = new PrimaryIndex(store, ids, storageName);
-				Fields fields = new FieldsImpl(Iterables.transform(this.fields, c -> {
-					String type = c.getType();
-					return new FieldDefImpl(c.getName(), factories.getFieldType(type), c.isCollection());
-				}));
-				storage = new StorageImpl(
-					factories,
-					executor,
-					transactionSupport,
-					stateStore,
-					dataPath,
-					dataStorage,
-					primaryIndex,
-					storageName,
-					fields,
-					queryEngines
-				);
-				storages.put(storageName, storage);
-				return storage;
+				def.update(fields, queryEngines);
+				storages.put(storageName, def);
+				return def.getStorage();
 			}
 		};
 	}
@@ -381,5 +373,183 @@ public class StorageEngine
 	public <T> T getEntity(String entityName)
 	{
 		return (T) entities.get(entityName);
+	}
+	
+	/**
+	 * Create a snapshot of the data stored in this storage engine. This
+	 * can be transfered to another engine or used as a backup.
+	 * 
+	 * @return
+	 */
+	public Snapshot createSnapshot()
+	{
+		return store.createSnapshot();
+	}
+	
+	/**
+	 * Install a snapshot into this {@link StorageEngine}.
+	 * 
+	 * @param snapshot
+	 * @throws IOException
+	 */
+	public void installSnapshot(Snapshot snapshot)
+		throws IOException
+	{
+		try
+		{
+			mutationLock.lock();
+			
+			long t1 = System.currentTimeMillis();
+			logger.info("Installing a snapshot into the storage engine");
+			
+			// First lock all of our delegating storage instances
+			for(StorageDef def : storages.values())
+			{
+				def.lock();
+			}
+
+			// Install the snapshot into the main engine
+			store.installSnapshot(snapshot);
+			
+			// Destroy our derived data
+			stateStore.recreate();
+			
+			// Reopen our data storage
+			dataStorage.reopen();
+			
+			// Recreate all of the storages
+			for(StorageDef def : storages.values())
+			{
+				def.recreate();
+			}
+			
+			// Wait for all of the query engines to become up to date
+			for(StorageDef def : storages.values())
+			{
+				def.awaitQueryEngines();
+			}
+			
+			// Reopen our transaction adapter
+			transactionAdapter.reopen();
+			
+			long t2 = System.currentTimeMillis();
+			logger.info("Fully installed snapshot. Took " + Duration.of(t2 - t1, ChronoUnit.MILLIS).toString());
+		}
+		finally
+		{
+			mutationLock.unlock();
+		}
+	}
+	
+	private class StorageDef
+	{
+		private final DelegatingStorage storage;
+		private final String storageName;
+		private final Path dataPath;
+		
+		private Map<String, QueryEngineConfig> queryEngines;
+		private List<FieldConfig> fieldConfigs;
+		
+		public StorageDef(String name, Path dataPath)
+		{
+			this.storageName = name;
+			this.dataPath = dataPath;
+			storage = new DelegatingStorage();
+		}
+		
+		public StorageImpl getImpl()
+		{
+			return (StorageImpl) storage.getStorage();
+		}
+
+		public DelegatingStorage getStorage()
+		{
+			return storage;
+		}
+		
+		public void lock()
+			throws IOException
+		{
+			getImpl().close();
+			storage.setStorage(null);
+		}
+		
+		public void recreate()
+			throws IOException
+		{
+			// First delete the entire data storage of this storage
+			if(Files.exists(dataPath))
+			{
+				Files.walkFileTree(dataPath, new SimpleFileVisitor<Path>()
+				{
+					@Override
+					public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+						throws IOException
+					{
+						Files.delete(file);
+						return FileVisitResult.CONTINUE;
+					}
+	
+					@Override
+					public FileVisitResult postVisitDirectory(Path dir, IOException exc)
+						throws IOException
+					{
+						Files.delete(dir);
+						return FileVisitResult.CONTINUE;
+					}
+				});
+			}
+			
+			// Recreate it as we last saw it
+			update(this.fieldConfigs, this.queryEngines);
+		}
+		
+		public void awaitQueryEngines()
+		{
+			getImpl().awaitQueryEngines();
+		}
+		
+		public void update(List<FieldConfig> fieldConfigs, Map<String, QueryEngineConfig> queryEngines)
+		{
+			if(storage.getStorage() != null)
+			{
+				try
+				{
+					// Close our existing implementation if one exists
+					StorageImpl impl = (StorageImpl) storage.getStorage();
+					impl.close();
+				}
+				catch(Throwable e)
+				{
+					throw new StorageException("Unable to close existing storage; " + e.getMessage(), e);
+				}
+			}
+			
+			// Create a new storage instance
+			PrimaryIndex primaryIndex = new PrimaryIndex(store, ids, storageName);
+			Fields fields = new FieldsImpl(Iterables.transform(fieldConfigs, c -> {
+				String type = c.getType();
+				return new FieldDefImpl(c.getName(), factories.getFieldType(type), c.isCollection());
+			}));
+			StorageImpl impl = new StorageImpl(
+				factories,
+				executor,
+				transactionSupport,
+				stateStore,
+				dataPath,
+				dataStorage,
+				primaryIndex,
+				storageName,
+				fields,
+				queryEngines
+			);
+			
+			// Save the configuration for later usage
+			this.fieldConfigs = fieldConfigs;
+			this.queryEngines = queryEngines;
+			
+			// Set the implementation used
+			storage.setStorage(impl);
+		}
 	}
 }

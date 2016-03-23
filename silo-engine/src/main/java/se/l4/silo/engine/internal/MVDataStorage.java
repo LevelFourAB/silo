@@ -34,13 +34,22 @@ public class MVDataStorage
 	implements DataStorage
 {
 	private static final int CHUNK_SIZE = 8192;
-	private final MVMap<Long, long[]> keys;
-	private final MVMap<Long, byte[]> chunks;
+	
+	private final MVStoreManager store;
+	
+	private volatile MVMap<Long, long[]> keys;
+	private volatile MVMap<Long, byte[]> chunks;
 
-	public MVDataStorage(MVStoreManager storeManager)
+	public MVDataStorage(MVStoreManager store)
 	{
-		keys = storeManager.openMap("data.keys", LongFieldType.INSTANCE, new LongArrayFieldType());
-		chunks = storeManager.openMap("data.chunks", LongFieldType.INSTANCE, ByteArrayFieldType.INSTANCE);
+		this.store = store;
+		reopen();
+	}
+	
+	public void reopen()
+	{
+		keys = store.openMap("data.keys", LongFieldType.INSTANCE, new LongArrayFieldType());
+		chunks = store.openMap("data.chunks", LongFieldType.INSTANCE, ByteArrayFieldType.INSTANCE);
 	}
 
 	@Override

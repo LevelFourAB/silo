@@ -6,7 +6,6 @@ import java.util.List;
 
 import se.l4.aurochs.serialization.DefaultSerializerCollection;
 import se.l4.aurochs.serialization.SerializerCollection;
-import se.l4.silo.Silo;
 import se.l4.silo.engine.EntityTypeFactory;
 import se.l4.silo.engine.IndexQueryEngineFactory;
 import se.l4.silo.engine.LocalSilo;
@@ -91,7 +90,7 @@ public class LocalSiloBuilder
 	}
 	
 	@Override
-	public Silo build()
+	public LocalSilo build()
 	{
 		LocalEngineFactories factories = new LocalEngineFactories(entityTypes, queryEngineTypes, fieldTypes);
 		SerializerCollection serializers = this.serializers == null ? new DefaultSerializerCollection() : this.serializers;

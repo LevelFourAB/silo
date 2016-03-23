@@ -10,7 +10,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.h2.mvstore.MVMap;
-import org.h2.mvstore.MVStore;
 
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
@@ -18,10 +17,10 @@ import com.google.common.io.ByteStreams;
 import se.l4.aurochs.core.io.Bytes;
 import se.l4.aurochs.core.io.ExtendedDataInput;
 import se.l4.aurochs.core.io.IoConsumer;
+import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.internal.tx.TransactionOperation;
 import se.l4.silo.engine.internal.tx.TransactionOperationType;
 import se.l4.silo.engine.log.LogEntry;
-import se.l4.silo.engine.types.DataTypeAdapter;
 import se.l4.silo.engine.types.LongArrayFieldType;
 
 /**
@@ -34,16 +33,22 @@ import se.l4.silo.engine.types.LongArrayFieldType;
 public class TransactionAdapter
 	implements IoConsumer<LogEntry>
 {
-	private final MVMap<long[], TransactionOperation> log;
 	private final StorageApplier applier;
+	private final MVStoreManager store;
+	
+	private volatile MVMap<long[], TransactionOperation> log;
 
-	public TransactionAdapter(MVStore store, StorageApplier applier)
+	public TransactionAdapter(MVStoreManager store, StorageApplier applier)
 	{
+		this.store = store;
 		this.applier = applier;
-		log = store.openMap("tx.log", new MVMap.Builder<long[], TransactionOperation>()
-			.keyType(new DataTypeAdapter(new LongArrayFieldType()))
-			.valueType(new DataTypeAdapter(new TransactionOperationType()))
-		);
+		
+		reopen();
+	}
+	
+	public void reopen()
+	{
+		log = store.openMap("tx.log", new LongArrayFieldType(), new TransactionOperationType());
 	}
 	
 	@Override

@@ -11,7 +11,7 @@ import se.l4.silo.engine.Fields;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.QueryEngineCreationEncounter;
 import se.l4.silo.engine.config.QueryEngineConfig;
-import se.l4.silo.engine.internal.MVStoreManagerImpl;
+import se.l4.silo.engine.internal.mvstore.MVStoreManagerImpl;
 
 /**
  * Implementation of {@link QueryEngineCreationEncounter}.
@@ -79,10 +79,8 @@ public class QueryEngineCreationEncounterImpl<C extends QueryEngineConfig>
 			throw new StorageException("Unable to create data directory: " + root + "; " + e.getMessage(), e);
 		}
 		
-		MVStore store = new MVStore.Builder()
+		return new MVStoreManagerImpl(new MVStore.Builder()
 			.fileName(resolveDataFile(name).toString())
-			.compress()
-			.open();
-		return new MVStoreManagerImpl(store);
+			.compress());
 	}
 }

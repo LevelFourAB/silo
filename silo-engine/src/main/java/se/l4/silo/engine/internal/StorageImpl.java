@@ -89,7 +89,12 @@ public class StorageImpl
 	public void close()
 		throws IOException
 	{
-		// We currently have nothing that can be closed
+		// Close all of our query engines
+		for(QueryEngine<?> engine : this.queryEngines.values())
+		{
+			System.out.println("Closing " + engine);
+			engine.close();
+		}
 	}
 
 	@Override
@@ -227,5 +232,21 @@ public class StorageImpl
 		
 		storage.delete(internalId);
 		primary.remove(id);
+	}
+
+	public void awaitQueryEngines()
+	{
+		while(! queryEngineUpdater.isAllUpDate())
+		{
+			try
+			{
+				Thread.sleep(500);
+			}
+			catch(InterruptedException e)
+			{
+				Thread.currentThread().interrupt();
+				throw new StorageException("Interrupted while waiting for query engines to be updated");
+			}
+		}
 	}
 }

@@ -1,6 +1,7 @@
 package se.l4.silo.engine;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -191,4 +192,19 @@ public class LocalSilo
 		};
 	}
 	
+	/**
+	 * Create a snapshot of this instance.
+	 * 
+	 * @return
+	 */
+	public Snapshot createSnapshot()
+	{
+		return storageEngine.createSnapshot();
+	}
+	
+	public void installSnapshot(Snapshot snapshot)
+		throws IOException
+	{
+		storageEngine.installSnapshot(snapshot);
+	}
 }

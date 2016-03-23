@@ -12,10 +12,12 @@ import com.google.common.base.Throwables;
 
 import se.l4.aurochs.core.id.SimpleLongIdGenerator;
 import se.l4.aurochs.core.io.Bytes;
+import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.internal.OpChecker;
 import se.l4.silo.engine.internal.StorageApplier;
 import se.l4.silo.engine.internal.TransactionAdapter;
 import se.l4.silo.engine.internal.log.TransactionLogImpl;
+import se.l4.silo.engine.internal.mvstore.MVStoreManagerImpl;
 import se.l4.silo.engine.log.DirectApplyLog;
 import se.l4.silo.engine.log.Log;
 
@@ -28,7 +30,7 @@ import se.l4.silo.engine.log.Log;
  */
 public class TransactionAdapterTest
 {
-	private MVStore store;
+	private MVStoreManager store;
 	private TransactionAdapter adapter;
 	private OpChecker ops;
 	private TransactionLogImpl tx;
@@ -36,9 +38,8 @@ public class TransactionAdapterTest
 	@Before
 	public void before()
 	{
-		store = new MVStore.Builder()
-			.fileStore(new OffHeapStore())
-			.open();
+		store = new MVStoreManagerImpl(new MVStore.Builder()
+			.fileStore(new OffHeapStore()));
 		
 		ops = new OpChecker();
 		
@@ -67,6 +68,7 @@ public class TransactionAdapterTest
 	
 	@After
 	public void after()
+		throws IOException
 	{
 		store.close();
 	}

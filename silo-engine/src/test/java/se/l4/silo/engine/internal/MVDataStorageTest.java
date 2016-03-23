@@ -11,6 +11,7 @@ import org.junit.Test;
 import junit.framework.Assert;
 import se.l4.aurochs.core.io.Bytes;
 import se.l4.silo.engine.MVStoreManager;
+import se.l4.silo.engine.internal.mvstore.MVStoreManagerImpl;
 
 /**
  * Tests for {@link MVDataStorage}.
@@ -26,11 +27,8 @@ public class MVDataStorageTest
 	@Before
 	public void before()
 	{
-		MVStore store = new MVStore.Builder()
-			.fileStore(new OffHeapStore())
-			.open();
-		
-		storeManager = new MVStoreManagerImpl(store);
+		storeManager = new MVStoreManagerImpl(new MVStore.Builder()
+			.fileStore(new OffHeapStore()));
 		storage = new MVDataStorage(storeManager);
 	}
 	

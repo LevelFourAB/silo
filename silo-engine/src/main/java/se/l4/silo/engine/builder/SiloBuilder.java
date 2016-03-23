@@ -3,6 +3,7 @@ package se.l4.silo.engine.builder;
 import se.l4.aurochs.serialization.DefaultSerializerCollection;
 import se.l4.aurochs.serialization.SerializerCollection;
 import se.l4.silo.Silo;
+import se.l4.silo.engine.LocalSilo;
 import se.l4.silo.engine.QueryEngine;
 import se.l4.silo.engine.QueryEngineFactory;
 import se.l4.silo.engine.types.FieldType;
@@ -56,5 +57,5 @@ public interface SiloBuilder
 	 * @param configSet
 	 * @return
 	 */
-	Silo build();
+	LocalSilo build();
 }

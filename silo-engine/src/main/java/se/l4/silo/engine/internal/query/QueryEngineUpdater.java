@@ -104,6 +104,21 @@ public class QueryEngineUpdater
 		}
 	}
 	
+	public boolean isAllUpDate()
+	{
+		long storageLatest = storage.getLatest();
+		for(EngineDef def : engines)
+		{
+			long latest = state.getOrDefault(def.name, DEFAULT);
+			if(latest != storageLatest)
+			{
+				return false;
+			}
+		}
+		
+		return true;
+	}
+	
 	private static class EngineDef
 	{
 		private final String name;

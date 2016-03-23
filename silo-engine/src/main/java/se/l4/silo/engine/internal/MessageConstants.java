@@ -1,5 +1,13 @@
 package se.l4.silo.engine.internal;
 
+import se.l4.silo.engine.log.LogEntry;
+
+/**
+ * Constants used for {@link LogEntry log entries}.
+ * 
+ * @author Andreas Holstenson
+ *
+ */
 public class MessageConstants
 {
 	public static final int START_TRANSACTION = 1;
