@@ -9,6 +9,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.h2.mvstore.MVStore;
 
@@ -16,7 +20,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 
 import se.l4.aurochs.core.id.LongIdGenerator;
-import se.l4.aurochs.core.id.SimpleLongIdGenerator;
+import se.l4.aurochs.core.id.SequenceLongIdGenerator;
 import se.l4.aurochs.core.io.Bytes;
 import se.l4.aurochs.serialization.SerializerCollection;
 import se.l4.silo.Entity;
@@ -111,6 +115,16 @@ public class StorageEngine
 	 */
 	private final Path root;
 
+	/**
+	 * Lock used for all mutations of this engine.
+	 */
+	private final Lock mutationLock;
+
+	/**
+	 * Executor for performing asynchronous tasks for this engine.
+	 */
+	private final ScheduledExecutorService executor;
+	
 	public StorageEngine(EngineFactories factories,
 			SerializerCollection serializers,
 			TransactionSupport transactionSupport,
@@ -122,6 +136,8 @@ public class StorageEngine
 		this.serializers = serializers;
 		this.transactionSupport = transactionSupport;
 		this.root = root;
+		
+		mutationLock = new ReentrantLock();
 	
 		try
 		{
@@ -144,10 +160,12 @@ public class StorageEngine
 			.fileName(root.resolve("derived-state.mv.bin").toString())
 			.open());
 		
-		ids = new SimpleLongIdGenerator();
+		ids = new SequenceLongIdGenerator();
 		dataStorage = new MVDataStorage(this.store);
 		storages = new ConcurrentHashMap<>();
 		entities = new ConcurrentHashMap<>();
+		
+		executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 2);
 		
 		loadConfig(config);
 		
@@ -171,14 +189,30 @@ public class StorageEngine
 			@Override
 			public void store(String entity, Object id, Bytes data) throws IOException
 			{
-				resolveStorage(entity).directStore(id, data);
+				try
+				{
+					mutationLock.lock();
+					resolveStorage(entity).directStore(id, data);
+				}
+				finally
+				{
+					mutationLock.unlock();
+				}
 				
 			}
 			
 			@Override
 			public void delete(String entity, Object id) throws IOException
 			{
-				resolveStorage(entity).directDelete(id);
+				try
+				{
+					mutationLock.lock();
+					resolveStorage(entity).directDelete(id);
+				}
+				finally
+				{
+					mutationLock.unlock();
+				}
 			}
 		};
 	}
@@ -187,6 +221,7 @@ public class StorageEngine
 	public void close()
 			throws IOException
 	{
+		executor.shutdownNow();
 		log.close();
 		store.close();
 		stateStore.close();
@@ -296,31 +331,37 @@ public class StorageEngine
 			public Storage build()
 			{
 				StorageImpl storage = storages.get(storageName);
-				if(storage == null)
+				if(storage != null)
 				{
-					// New storage, create the instance
-					PrimaryIndex primaryIndex = new PrimaryIndex(store, ids, storageName);
-					Fields fields = new FieldsImpl(Iterables.transform(this.fields, c -> {
-						String type = c.getType();
-						return new FieldDefImpl(c.getName(), factories.getFieldType(type), c.isCollection());
-					}));
-					storage = new StorageImpl(
-						factories,
-						transactionSupport,
-						stateStore,
-						dataPath,
-						dataStorage,
-						primaryIndex,
-						storageName,
-						fields,
-						queryEngines
-					);
-					storages.put(storageName, storage);
-					return storage;
+					try
+					{
+						storage.close();
+					}
+					catch(Throwable e)
+					{
+						throw new StorageException("Unable to close existing storage; " + e.getMessage(), e);
+					}
 				}
 				
-				// TODO: Reload configuration of storage
-				
+				// Create a new storage instance
+				PrimaryIndex primaryIndex = new PrimaryIndex(store, ids, storageName);
+				Fields fields = new FieldsImpl(Iterables.transform(this.fields, c -> {
+					String type = c.getType();
+					return new FieldDefImpl(c.getName(), factories.getFieldType(type), c.isCollection());
+				}));
+				storage = new StorageImpl(
+					factories,
+					executor,
+					transactionSupport,
+					stateStore,
+					dataPath,
+					dataStorage,
+					primaryIndex,
+					storageName,
+					fields,
+					queryEngines
+				);
+				storages.put(storageName, storage);
 				return storage;
 			}
 		};

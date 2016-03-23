@@ -7,7 +7,6 @@ import se.l4.aurochs.core.id.LongIdGenerator;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.types.DataTypeAdapter;
 import se.l4.silo.engine.types.LongFieldType;
-import se.l4.silo.engine.types.StringFieldType;
 
 /**
  * Index that helps map objects to internal long identifiers.
@@ -18,20 +17,22 @@ import se.l4.silo.engine.types.StringFieldType;
 public class PrimaryIndex
 {
 	private final MVMap<Object, Long> map;
+	private final MVMap<Long, Object> reverse;
+	
 	private final LongIdGenerator ids;
-	private final MVMap<String, Long> counter;
-	private final String name;
 
 	public PrimaryIndex(MVStoreManager storeManager, LongIdGenerator ids, String name)
 	{
 		this.ids = ids;
-		this.name = name;
-		map = storeManager.openMap("primary.values." + name, new MVMap.Builder<Object, Long>()
+		map = storeManager.openMap("primary.toExternal." + name, new MVMap.Builder<Object, Long>()
 			.keyType(new ObjectDataType())
 			.valueType(new DataTypeAdapter(LongFieldType.INSTANCE))
 		);
 		
-		counter = storeManager.openMap("primary.counter", StringFieldType.INSTANCE, LongFieldType.INSTANCE);
+		reverse = storeManager.openMap("primary.fromExternal." + name, new MVMap.Builder<Long, Object>()
+			.keyType(new DataTypeAdapter(LongFieldType.INSTANCE))
+			.valueType(new ObjectDataType())
+		);
 	}
 	
 	/**
@@ -60,8 +61,8 @@ public class PrimaryIndex
 		}
 		
 		long id = ids.next();
-		counter.put(name, id);
 		map.put(key, id);
+		reverse.put(id, key);
 		return id;
 	}
 	
@@ -72,7 +73,11 @@ public class PrimaryIndex
 	 */
 	public void remove(Object key)
 	{
-		map.remove(key);
+		Long removed = map.remove(key);
+		if(removed != null)
+		{
+			reverse.remove(removed);
+		}
 	}
 	
 	/**
@@ -82,6 +87,19 @@ public class PrimaryIndex
 	 */
 	public long latest()
 	{
-		return counter.getOrDefault(name, 0l);
+		Long last = reverse.lastKey();
+		return last == null ? 0l : last;
+	}
+	
+	/**
+	 * Get the next id in use after the given id.
+	 * 
+	 * @param id
+	 * @return
+	 */
+	public long nextAfter(long id)
+	{
+		Long higher = reverse.higherKey(id);
+		return higher == null ? 0l : higher;
 	}
 }

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,6 +53,7 @@ public class ObjectEntityTest
 		entity = silo.structured("test").asObject(serializer);
 	}
 	
+	@After
 	public void after()
 		throws Exception
 	{
@@ -85,7 +87,7 @@ public class ObjectEntityTest
 			.sortAscending()
 			.run())
 		{
-			Assert.assertEquals(fr.getTotal(), 675);
+			Assert.assertEquals(675, fr.getTotal());
 			
 			for(Data d : fr)
 			{

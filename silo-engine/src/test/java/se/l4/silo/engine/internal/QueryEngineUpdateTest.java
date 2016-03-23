@@ -7,8 +7,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.base.Throwables;
@@ -24,18 +22,25 @@ import se.l4.silo.engine.IndexQueryEngineFactory;
 import se.l4.silo.engine.LocalSilo;
 import se.l4.silo.structured.StructuredEntity;
 
-public class StructuredEntityTest
+public class QueryEngineUpdateTest
 {
-	private StructuredEntity entity;
-	private Path tmp;
-	private Silo silo;
-	
-
-	@Before
-	public void before()
-		throws IOException
+	@Test
+	public void createNewIndex()
+		throws Exception
 	{
-		tmp = Files.createTempDirectory("silo");
+		Path tmp = Files.createTempDirectory("silo");
+		Silo silo = LocalSilo.open(tmp)
+			.addEntity("test")
+				.asStructured()
+				.defineField("field", "string")
+				.done()
+			.build();
+		
+		StructuredEntity entity = silo.structured("test");
+		entity.store("test", generateTestData());
+		
+		silo.stop();
+		
 		silo = LocalSilo.open(tmp)
 			.addEntity("test")
 				.asStructured()
@@ -47,13 +52,18 @@ public class StructuredEntityTest
 			.build();
 		
 		entity = silo.structured("test");
-	}
-	
-	@After
-	public void after()
-		throws Exception
-	{
+		
+		Thread.sleep(100);
+		
+		FetchResult<StreamingInput> fr = entity.query("byField", IndexQuery.type())
+			.field("field")
+			.isEqualTo("value")
+			.run();
+		
+		check(fr);
+		
 		silo.stop();
+		
 		DataUtils.removeRecursive(tmp);
 	}
 	
@@ -113,27 +123,5 @@ public class StructuredEntityTest
 		}
 			
 		fr.close();
-	}
-	
-	@Test
-	public void testStoreNoTransaction()
-	{
-		entity.store("test", generateTestData());
-		
-		FetchResult<StreamingInput> fr = entity.get("test");
-		check(fr);
-	}
-	
-	@Test
-	public void testQuery()
-	{
-		entity.store("test", generateTestData());
-		
-		FetchResult<StreamingInput> fr = entity.query("byField", IndexQuery.type())
-			.field("field")
-			.isEqualTo("value")
-			.run();
-		
-		check(fr);
 	}
 }

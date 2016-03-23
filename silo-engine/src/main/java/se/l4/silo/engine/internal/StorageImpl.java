@@ -4,6 +4,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
 
 import com.google.common.collect.ImmutableMap;
@@ -46,6 +47,7 @@ public class StorageImpl
 
 	public StorageImpl(
 			EngineFactories factories,
+			ScheduledExecutorService executor,
 			TransactionSupport transactionSupport,
 			MVStoreManager stateStore,
 			Path dataDir,
@@ -80,7 +82,7 @@ public class StorageImpl
 		}
 		
 		this.queryEngines = builder.build();
-		this.queryEngineUpdater = new QueryEngineUpdater(stateStore, name, this.queryEngines);
+		this.queryEngineUpdater = new QueryEngineUpdater(stateStore, this, executor, name, this.queryEngines);
 	}
 	
 	@Override
@@ -140,6 +142,28 @@ public class StorageImpl
 		{
 			throw new StorageException("Unable to get data with id " + id + "; " + e.getMessage(), e);
 		}
+	}
+	
+	public Bytes getInternal(long id)
+	{
+		try
+		{
+			return storage.get(id);
+		}
+		catch(IOException e)
+		{
+			throw new StorageException("Unable to get internal data with id " + id + "; " + e.getMessage(), e);
+		}
+	}
+	
+	public long getLatest()
+	{
+		return primary.latest();
+	}
+	
+	public long nextId(long id)
+	{
+		return primary.nextAfter(id);
 	}
 	
 	@Override
