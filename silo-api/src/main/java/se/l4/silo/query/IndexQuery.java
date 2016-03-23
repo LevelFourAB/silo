@@ -1,5 +1,6 @@
-package se.l4.silo;
+package se.l4.silo.query;
 
+import se.l4.silo.FetchResult;
 import se.l4.silo.index.IndexQueryType;
 
 /**
@@ -10,7 +11,7 @@ import se.l4.silo.index.IndexQueryType;
  * @param <T>
  */
 public interface IndexQuery<T>
-	extends Query<T>
+	extends Query<FetchResult<T>>
 {
 	static <T> QueryType<T, T, IndexQuery<T>> type()
 	{

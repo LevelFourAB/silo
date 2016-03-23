@@ -18,10 +18,10 @@ import se.l4.aurochs.serialization.format.BinaryOutput;
 import se.l4.aurochs.serialization.format.StreamingInput;
 import se.l4.aurochs.serialization.format.StreamingInput.Token;
 import se.l4.silo.FetchResult;
-import se.l4.silo.IndexQuery;
 import se.l4.silo.Silo;
 import se.l4.silo.engine.IndexQueryEngineFactory;
 import se.l4.silo.engine.LocalSilo;
+import se.l4.silo.query.IndexQuery;
 import se.l4.silo.structured.StructuredEntity;
 
 public class StructuredEntityTest

@@ -10,11 +10,11 @@ import se.l4.aurochs.serialization.format.StreamingInput;
 import se.l4.aurochs.serialization.format.StreamingInput.Token;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.FetchResult;
-import se.l4.silo.Query;
-import se.l4.silo.QueryType;
 import se.l4.silo.StorageException;
 import se.l4.silo.StoreResult;
 import se.l4.silo.engine.Storage;
+import se.l4.silo.query.Query;
+import se.l4.silo.query.QueryType;
 import se.l4.silo.structured.ObjectEntity;
 import se.l4.silo.structured.StructuredEntity;
 
@@ -71,7 +71,7 @@ public class StructuredEntityImpl
 	}
 	
 	@Override
-	public <RT, Q extends Query<RT>> Q query(String engine, QueryType<StreamingInput, RT, Q> type)
+	public <RT, Q extends Query<?>> Q query(String engine, QueryType<StreamingInput, RT, Q> type)
 	{
 		return type.create((data, translator) -> {
 			return entity.query(engine, data, BytesToStreamingInputFunction.INSTANCE)

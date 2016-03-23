@@ -9,11 +9,11 @@ import se.l4.aurochs.serialization.Serializer;
 import se.l4.aurochs.serialization.format.BinaryInput;
 import se.l4.aurochs.serialization.format.StreamingInput;
 import se.l4.silo.FetchResult;
-import se.l4.silo.Query;
-import se.l4.silo.QueryResult;
-import se.l4.silo.QueryRunner;
-import se.l4.silo.QueryType;
 import se.l4.silo.StorageException;
+import se.l4.silo.query.Query;
+import se.l4.silo.query.QueryResult;
+import se.l4.silo.query.QueryRunner;
+import se.l4.silo.query.QueryType;
 
 /**
  * Implementation of {@link ObjectEntity}.
@@ -83,7 +83,7 @@ public class DefaultObjectEntity<T>
 	}
 
 	@Override
-	public <RT, Q extends Query<RT>> Q query(String engine, QueryType<T, RT, Q> type)
+	public <RT, Q extends Query<?>> Q query(String engine, QueryType<T, RT, Q> type)
 	{
 		return parent.query(engine, new TransformingQueryType<StreamingInput, T, RT, Q>(type, in -> {
 			try
@@ -107,7 +107,7 @@ public class DefaultObjectEntity<T>
 		}));
 	}
 
-	private static class TransformingQueryType<TransformedFrom, EntityDataType, ResultType, Q extends Query<ResultType>>
+	private static class TransformingQueryType<TransformedFrom, EntityDataType, ResultType, Q extends Query<?>>
 		implements QueryType<TransformedFrom, ResultType, Q>
 	{
 		private QueryType<EntityDataType, ResultType, Q> qt;

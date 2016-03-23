@@ -12,10 +12,10 @@ import org.junit.Test;
 import se.l4.aurochs.serialization.DefaultSerializerCollection;
 import se.l4.aurochs.serialization.Serializer;
 import se.l4.silo.FetchResult;
-import se.l4.silo.IndexQuery;
 import se.l4.silo.Silo;
 import se.l4.silo.engine.IndexQueryEngineFactory;
 import se.l4.silo.engine.LocalSilo;
+import se.l4.silo.query.IndexQuery;
 import se.l4.silo.structured.ObjectEntity;
 
 public class ObjectEntityTest

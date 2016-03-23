@@ -11,6 +11,11 @@ import java.io.Closeable;
 public interface QueryEngine<T>
 	extends Closeable
 {
+	/**
+	 * Query this query engine.
+	 * 
+	 * @param encounter
+	 */
 	void query(QueryEncounter<T> encounter);
 	
 	/**

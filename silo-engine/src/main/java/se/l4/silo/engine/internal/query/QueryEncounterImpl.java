@@ -1,12 +1,19 @@
 package se.l4.silo.engine.internal.query;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.LongFunction;
 
-import se.l4.silo.FetchResult;
-import se.l4.silo.QueryResult;
+import com.google.common.collect.ImmutableMap;
+
 import se.l4.silo.engine.QueryEncounter;
+import se.l4.silo.query.QueryFetchResult;
+import se.l4.silo.query.QueryResult;
 import se.l4.silo.results.IteratorFetchResult;
 
 /**
@@ -22,6 +29,8 @@ public class QueryEncounterImpl<T, R>
 	private final T data;
 	private final LongFunction<R> dataLoader;
 	private final List<QueryResult<R>> result;
+	private final Map<String, Object> metadata;
+	
 	private int offset;
 	private int limit;
 	private int totalHits;
@@ -31,6 +40,7 @@ public class QueryEncounterImpl<T, R>
 		this.data = data;
 		this.dataLoader = dataLoader;
 		this.result = new ArrayList<>();
+		this.metadata = new HashMap<>();
 	}
 
 	@Override
@@ -48,7 +58,22 @@ public class QueryEncounterImpl<T, R>
 	@Override
 	public void receive(long id)
 	{
-		result.add(new QueryResultImpl<>(id, dataLoader));
+		result.add(new QueryResultImpl<>(id, Collections.emptyMap(), dataLoader));
+	}
+	
+	@Override
+	public void receive(long id, Consumer<BiConsumer<String, Object>> metadataCreator)
+	{
+		ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
+		metadataCreator.accept(builder::put);
+		
+		result.add(new QueryResultImpl<>(id, builder.build(), dataLoader));
+	}
+	
+	@Override
+	public void addMetadata(String key, Object value)
+	{
+		metadata.put(key, value);
 	}
 	
 	@Override
@@ -59,9 +84,10 @@ public class QueryEncounterImpl<T, R>
 		this.totalHits = totalHits;
 	}
 	
-	public FetchResult<QueryResult<R>> getResult()
+	public QueryFetchResult<QueryResult<R>> getResult()
 	{
-		return new IteratorFetchResult<>(result, offset, limit, totalHits);
+		IteratorFetchResult<QueryResult<R>> fr = new IteratorFetchResult<>(result, offset, limit, totalHits);
+		return new DelegatingQueryFetchResult<>(fr, metadata);
 	}
 	
 	private static class QueryResultImpl<R>
@@ -69,10 +95,12 @@ public class QueryEncounterImpl<T, R>
 	{
 		private final long id;
 		private final LongFunction<R> loader;
+		private final Map<String, Object> metadata;
 
-		public QueryResultImpl(long id, LongFunction<R> loader)
+		public QueryResultImpl(long id, Map<String, Object> metadata, LongFunction<R> loader)
 		{
 			this.id = id;
+			this.metadata = metadata;
 			this.loader = loader;
 		}
 
@@ -85,7 +113,7 @@ public class QueryEncounterImpl<T, R>
 		@Override
 		public Object getMetadata(String key)
 		{
-			return null;
+			return metadata.get(key);
 		}
 		
 	}

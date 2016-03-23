@@ -1,6 +1,7 @@
-package se.l4.silo;
+package se.l4.silo.query;
 
 import se.l4.aurochs.serialization.format.StreamingInput;
+import se.l4.silo.Entity;
 import se.l4.silo.structured.ObjectEntity;
 import se.l4.silo.structured.StructuredEntity;
 
@@ -22,7 +23,7 @@ import se.l4.silo.structured.StructuredEntity;
  * @param <ResultType>
  * @param <QueryBuilder>
  */
-public interface QueryType<EntityDataType, ResultType, QueryBuilder extends Query<ResultType>>
+public interface QueryType<EntityDataType, ResultType, QueryBuilder extends Query<?>>
 {
 	/**
 	 * Create a new query for the given result type.

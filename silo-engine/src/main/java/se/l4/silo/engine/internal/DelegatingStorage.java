@@ -5,12 +5,12 @@ import java.util.function.Function;
 import se.l4.aurochs.core.io.Bytes;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.Entity;
-import se.l4.silo.FetchResult;
-import se.l4.silo.QueryResult;
 import se.l4.silo.StorageException;
 import se.l4.silo.StoreResult;
 import se.l4.silo.engine.Snapshot;
 import se.l4.silo.engine.Storage;
+import se.l4.silo.query.QueryFetchResult;
+import se.l4.silo.query.QueryResult;
 
 /**
  * {@link Storage} that delegates to another instance. This is what is
@@ -70,7 +70,7 @@ public class DelegatingStorage
 	}
 
 	@Override
-	public <R> FetchResult<QueryResult<R>> query(String engine, Object query, Function<Bytes, R> dataLoader)
+	public <R> QueryFetchResult<QueryResult<R>> query(String engine, Object query, Function<Bytes, R> dataLoader)
 	{
 		check();
 		return storage.query(engine, query, dataLoader);

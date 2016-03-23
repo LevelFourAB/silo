@@ -11,8 +11,6 @@ import com.google.common.collect.ImmutableMap;
 
 import se.l4.aurochs.core.io.Bytes;
 import se.l4.silo.DeleteResult;
-import se.l4.silo.FetchResult;
-import se.l4.silo.QueryResult;
 import se.l4.silo.StorageException;
 import se.l4.silo.StoreResult;
 import se.l4.silo.engine.DataStorage;
@@ -26,6 +24,8 @@ import se.l4.silo.engine.internal.query.QueryEncounterImpl;
 import se.l4.silo.engine.internal.query.QueryEngineCreationEncounterImpl;
 import se.l4.silo.engine.internal.query.QueryEngineUpdater;
 import se.l4.silo.engine.internal.tx.TransactionExchange;
+import se.l4.silo.query.QueryFetchResult;
+import se.l4.silo.query.QueryResult;
 
 /**
  * Implementation of {@link Storage}.
@@ -171,7 +171,7 @@ public class StorageImpl
 	}
 	
 	@Override
-	public <R> FetchResult<QueryResult<R>> query(String engine, Object query, Function<Bytes, R> dataLoader)
+	public <R> QueryFetchResult<QueryResult<R>> query(String engine, Object query, Function<Bytes, R> dataLoader)
 	{
 		QueryEngine<?> qe = queryEngines.get(engine);
 		if(qe == null)

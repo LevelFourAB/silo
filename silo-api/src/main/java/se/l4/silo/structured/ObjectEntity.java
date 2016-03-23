@@ -1,8 +1,8 @@
 package se.l4.silo.structured;
 
 import se.l4.silo.Entity;
-import se.l4.silo.Query;
-import se.l4.silo.QueryType;
+import se.l4.silo.query.Query;
+import se.l4.silo.query.QueryType;
 
 /**
  * Entity for storing and retrieving objects.
@@ -42,5 +42,5 @@ public interface ObjectEntity<T>
 	 * @param index
 	 * @return
 	 */
-	<RT, Q extends Query<RT>> Q query(String engine, QueryType<T, RT, Q> type);
+	<RT, Q extends Query<?>> Q query(String engine, QueryType<T, RT, Q> type);
 }

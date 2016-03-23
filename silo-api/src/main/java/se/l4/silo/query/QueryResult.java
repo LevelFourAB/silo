@@ -1,4 +1,4 @@
-package se.l4.silo;
+package se.l4.silo.query;
 
 /**
  * Individual result of a query operation. Used by {@link QueryType} to

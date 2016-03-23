@@ -6,9 +6,9 @@ import se.l4.aurochs.serialization.format.StreamingInput;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.Entity;
 import se.l4.silo.FetchResult;
-import se.l4.silo.Query;
-import se.l4.silo.QueryType;
 import se.l4.silo.StoreResult;
+import se.l4.silo.query.Query;
+import se.l4.silo.query.QueryType;
 
 /**
  * Entity for storing structured data. Anything that can be represented as
@@ -51,7 +51,7 @@ public interface StructuredEntity
 	 * @param index
 	 * @return
 	 */
-	<RT, Q extends Query<RT>> Q query(String engine, QueryType<StreamingInput, RT, Q> type);
+	<RT, Q extends Query<?>> Q query(String engine, QueryType<StreamingInput, RT, Q> type);
 
 	/**
 	 * Get an entity that translates the structured data into objects. This

@@ -5,9 +5,9 @@ import java.util.function.Function;
 import se.l4.aurochs.core.io.Bytes;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.Entity;
-import se.l4.silo.FetchResult;
-import se.l4.silo.QueryResult;
 import se.l4.silo.StoreResult;
+import se.l4.silo.query.QueryFetchResult;
+import se.l4.silo.query.QueryResult;
 
 /**
  * Storage that can be used by {@link Entity entities}.
@@ -49,5 +49,5 @@ public interface Storage
 	 * @param query
 	 * @return 
 	 */
-	<R> FetchResult<QueryResult<R>> query(String engine, Object query, Function<Bytes, R> dataLoader);
+	<R> QueryFetchResult<QueryResult<R>> query(String engine, Object query, Function<Bytes, R> dataLoader);
 }

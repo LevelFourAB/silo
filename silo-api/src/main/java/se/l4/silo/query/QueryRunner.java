@@ -1,4 +1,4 @@
-package se.l4.silo;
+package se.l4.silo.query;
 
 import java.util.function.Function;
 
@@ -17,5 +17,5 @@ public interface QueryRunner<T, R>
 	 * @param data
 	 * @return
 	 */
-	FetchResult<R> fetchResults(Object data, Function<QueryResult<T>, R> resultCreator);
+	QueryFetchResult<R> fetchResults(Object data, Function<QueryResult<T>, R> resultCreator);
 }

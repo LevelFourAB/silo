@@ -1,4 +1,4 @@
-package se.l4.silo;
+package se.l4.silo.query;
 
 /**
  * Query builder.
@@ -14,5 +14,5 @@ public interface Query<R>
 	 * 
 	 * @return
 	 */
-	FetchResult<R> run();
+	R run();
 }

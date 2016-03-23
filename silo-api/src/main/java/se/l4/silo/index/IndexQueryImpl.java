@@ -1,10 +1,10 @@
 package se.l4.silo.index;
 
 import se.l4.silo.FetchResult;
-import se.l4.silo.IndexQuery;
-import se.l4.silo.QueryRunner;
 import se.l4.silo.StorageException;
 import se.l4.silo.index.IndexQueryRequest.Op;
+import se.l4.silo.query.IndexQuery;
+import se.l4.silo.query.QueryRunner;
 
 public class IndexQueryImpl<T>
 	implements IndexQuery<T>
