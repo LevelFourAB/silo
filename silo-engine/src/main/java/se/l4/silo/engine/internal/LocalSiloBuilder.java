@@ -12,6 +12,7 @@ import se.l4.silo.engine.EntityTypeFactory;
 import se.l4.silo.engine.IndexQueryEngineFactory;
 import se.l4.silo.engine.LocalSilo;
 import se.l4.silo.engine.QueryEngineFactory;
+import se.l4.silo.engine.SearchIndexQueryEngineFactory;
 import se.l4.silo.engine.builder.EntityBuilder;
 import se.l4.silo.engine.builder.SiloBuilder;
 import se.l4.silo.engine.config.EngineConfig;
@@ -55,6 +56,7 @@ public class LocalSiloBuilder
 		addEntityType(new StructuredEntityFactory());
 		
 		addQueryEngine(IndexQueryEngineFactory.type());
+		addQueryEngine(SearchIndexQueryEngineFactory.type());
 		
 		addFieldType(BooleanFieldType.INSTANCE);
 		addFieldType(ByteArrayFieldType.INSTANCE);
