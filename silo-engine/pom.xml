@@ -32,18 +32,6 @@
 		    <artifactId>h2-mvstore</artifactId>
 		    <version>1.4.191</version>
 		</dependency>
-		
-		<dependency>
-		    <groupId>org.apache.lucene</groupId>
-		    <artifactId>lucene-core</artifactId>
-		    <version>${lucene-version}</version>
-		</dependency>
-		
-		<dependency>
-		    <groupId>org.apache.lucene</groupId>
-		    <artifactId>lucene-analyzers-common</artifactId>
-		    <version>${lucene-version}</version>
-		</dependency>
 	</dependencies>
 	
 </project>
