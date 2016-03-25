@@ -22,12 +22,6 @@
 		</dependency>
 		
 		<dependency>
-			<groupId>se.l4.commons</groupId>
-			<artifactId>commons-main</artifactId>
-			<version>0.2-SNAPSHOT</version>
-		</dependency>
-		
-		<dependency>
 		    <groupId>com.carrotsearch</groupId>
 		    <artifactId>hppc</artifactId>
 		    <version>0.7.1</version>
