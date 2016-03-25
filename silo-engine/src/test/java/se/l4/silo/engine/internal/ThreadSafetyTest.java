@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
 
 import net.jodah.concurrentunit.Waiter;
 import se.l4.silo.FetchResult;
@@ -21,6 +22,7 @@ public class ThreadSafetyTest
 	extends RandomizedTest
 {
 	@Test
+	@ThreadLeakLingering(linger = 1000)
 	public void testSeveralThreadsWithBinaryEntity()
 		throws Exception
 	{
@@ -76,6 +78,7 @@ public class ThreadSafetyTest
 	}
 	
 	@Test
+	@ThreadLeakLingering(linger = 1000)
 	public void testSeveralThreadsWithObjectEntity()
 		throws Exception
 	{
