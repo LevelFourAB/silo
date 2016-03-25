@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVMap.Builder;
@@ -31,12 +32,14 @@ public class MVStoreManagerImpl
 	private final MVStore.Builder builder;
 	
 	private volatile MVStore store;
-	private volatile int snapshotsOpen;
+	private AtomicLong snapshotsOpen;
 
 	public MVStoreManagerImpl(MVStore.Builder builder)
 	{
 		this.builder = builder;
 		store = builder.open();
+		
+		snapshotsOpen = new AtomicLong();
 	}
 
 	@Override
@@ -56,7 +59,7 @@ public class MVStoreManagerImpl
 	@Override
 	public Snapshot createSnapshot()
 	{
-		snapshotsOpen++;
+		snapshotsOpen.incrementAndGet();
 		store.commit();
 		store.setReuseSpace(false);
 		return new Snapshot()
@@ -81,7 +84,7 @@ public class MVStoreManagerImpl
 			public void close()
 				throws IOException
 			{
-				if(--snapshotsOpen == 0)
+				if(snapshotsOpen.decrementAndGet() == 0)
 				{
 					store.setReuseSpace(true);
 				}
@@ -93,7 +96,7 @@ public class MVStoreManagerImpl
 	public void installSnapshot(Snapshot snapshot)
 		throws IOException
 	{
-		if(snapshotsOpen > 0)
+		if(snapshotsOpen.get() > 0)
 		{
 			throw new IOException("Can not install snapshot as this store has an open snapshot");
 		}
@@ -119,7 +122,7 @@ public class MVStoreManagerImpl
 	@Override
 	public void recreate() throws IOException
 	{
-		if(snapshotsOpen > 0)
+		if(snapshotsOpen.get() > 0)
 		{
 			throw new IOException("Can not install snapshot as this store has an open snapshot");
 		}

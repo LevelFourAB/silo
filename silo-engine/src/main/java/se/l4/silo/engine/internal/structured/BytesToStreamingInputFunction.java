@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.Function;
 
-import se.l4.aurochs.core.io.Bytes;
-import se.l4.aurochs.serialization.format.BinaryInput;
-import se.l4.aurochs.serialization.format.StreamingInput;
+import se.l4.commons.io.Bytes;
+import se.l4.commons.serialization.format.BinaryInput;
+import se.l4.commons.serialization.format.StreamingInput;
 import se.l4.silo.StorageException;
 
 public class BytesToStreamingInputFunction

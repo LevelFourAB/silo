@@ -2,7 +2,7 @@ package se.l4.silo.engine;
 
 import java.io.IOException;
 
-import se.l4.aurochs.core.io.Bytes;
+import se.l4.commons.io.Bytes;
 
 /**
  * Data storage for raw binary data. Binary data is always associated with an

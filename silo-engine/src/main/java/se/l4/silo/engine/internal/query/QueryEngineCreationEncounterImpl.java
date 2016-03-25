@@ -67,6 +67,20 @@ public class QueryEngineCreationEncounterImpl<C extends QueryEngineConfig>
 	}
 	
 	@Override
+	public Path getDataDirectory()
+	{
+		try
+		{
+			Files.createDirectories(root);
+			return root;
+		}
+		catch(IOException e)
+		{
+			throw new StorageException("Unable to create data directory: " + root + "; " + e.getMessage(), e);
+		}
+	}
+	
+	@Override
 	public MVStoreManager openMVStore(String name)
 	{
 		try

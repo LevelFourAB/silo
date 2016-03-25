@@ -26,10 +26,10 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 
-import se.l4.aurochs.core.id.LongIdGenerator;
-import se.l4.aurochs.core.id.SequenceLongIdGenerator;
-import se.l4.aurochs.core.io.Bytes;
-import se.l4.aurochs.serialization.SerializerCollection;
+import se.l4.commons.id.LongIdGenerator;
+import se.l4.commons.id.SequenceLongIdGenerator;
+import se.l4.commons.io.Bytes;
+import se.l4.commons.serialization.SerializerCollection;
 import se.l4.silo.Entity;
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.EntityCreationEncounter;

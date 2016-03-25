@@ -4,9 +4,9 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 
-import se.l4.aurochs.core.io.Bytes;
-import se.l4.aurochs.core.io.BytesBuilder;
-import se.l4.aurochs.core.io.ExtendedDataInput;
+import se.l4.commons.io.Bytes;
+import se.l4.commons.io.BytesBuilder;
+import se.l4.commons.io.ExtendedDataInput;
 
 public abstract class AbstractExtendedDataInput
 	implements ExtendedDataInput

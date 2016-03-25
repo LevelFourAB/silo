@@ -2,8 +2,8 @@ package se.l4.silo.engine.internal.log;
 
 import java.io.IOException;
 
-import se.l4.aurochs.core.id.LongIdGenerator;
-import se.l4.aurochs.core.io.Bytes;
+import se.l4.commons.id.LongIdGenerator;
+import se.l4.commons.io.Bytes;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.StorageException;
 import se.l4.silo.StoreResult;

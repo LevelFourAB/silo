@@ -5,18 +5,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import com.google.common.collect.ImmutableSet;
 
-import se.l4.aurochs.core.io.Bytes;
-import se.l4.aurochs.core.io.IoConsumer;
-import se.l4.aurochs.core.io.IoFunction;
-import se.l4.aurochs.serialization.format.BinaryInput;
-import se.l4.aurochs.serialization.format.StreamingInput;
-import se.l4.aurochs.serialization.format.StreamingInput.Token;
+import se.l4.commons.io.Bytes;
+import se.l4.commons.io.IoConsumer;
+import se.l4.commons.io.IoFunction;
+import se.l4.commons.serialization.format.BinaryInput;
+import se.l4.commons.serialization.format.StreamingInput;
+import se.l4.commons.serialization.format.Token;
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.DataEncounter;
 
@@ -82,8 +84,23 @@ public class DataEncounterImpl
 	@Override
 	public Map<String, Object> findStructuredKeys(Collection<String> keys)
 	{
-		// TODO Auto-generated method stub
-		return null;
+		return withStreamingInput(in -> {
+			Map<String, Object> result = new HashMap<>();
+			
+			new StructuredKeyFetcher(ImmutableSet.copyOf(keys), result::put).accept(in);
+			
+			return result;
+		});
+	}
+	
+	@Override
+	public void findStructuredKeys(Collection<String> keys, BiConsumer<String, Object> receiver)
+	{
+		withStreamingInput(in -> {
+			new StructuredKeyFetcher(ImmutableSet.copyOf(keys), receiver).accept(in);
+			
+			return null;
+		});
 	}
 	
 	@Override
@@ -128,21 +145,13 @@ public class DataEncounterImpl
 		}
 	}
 	
-	private interface KeyValueReceiver
-	{
-		void receive(String key, Object value);
-	}
-	
 	private static class StructuredKeyFetcher
 		implements IoConsumer<StreamingInput>
 	{
 		private Set<String> keys;
-		private KeyValueReceiver receiver;
+		private BiConsumer<String, Object> receiver;
 		
-		private String key;
-		private int listDepth;
-		
-		public StructuredKeyFetcher(Set<String> keys, KeyValueReceiver receiver)
+		public StructuredKeyFetcher(Set<String> keys, BiConsumer<String, Object> receiver)
 		{
 			this.keys = keys;
 			this.receiver = receiver;
@@ -215,7 +224,7 @@ public class DataEncounterImpl
 			
 			if(keys.contains(key))
 			{
-				receiver.receive(key, in.getValue());
+				receiver.accept(key, in.getValue());
 			}
 		}
 		
@@ -226,7 +235,7 @@ public class DataEncounterImpl
 			
 			if(keys.contains(key))
 			{
-				receiver.receive(key, null);
+				receiver.accept(key, null);
 			}
 		}
 			

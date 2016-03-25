@@ -8,7 +8,7 @@ import org.h2.mvstore.MVMap;
 
 import com.google.common.collect.ImmutableList;
 
-import se.l4.aurochs.core.io.Bytes;
+import se.l4.commons.io.Bytes;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.QueryEngine;
 import se.l4.silo.engine.internal.DataEncounterImpl;
@@ -67,7 +67,7 @@ public class QueryEngineUpdater
 			{
 				// This query engine is up to date, continue indexing
 				def.engine.update(id, new DataEncounterImpl(bytes));
-				state.put(def.name, id);
+				state.put(def.name, Math.max(previous, id));
 			}
 		}
 	}

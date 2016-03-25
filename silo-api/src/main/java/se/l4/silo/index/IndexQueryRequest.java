@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import se.l4.aurochs.serialization.AllowAny;
-import se.l4.aurochs.serialization.Expose;
-import se.l4.aurochs.serialization.ReflectionSerializer;
-import se.l4.aurochs.serialization.Use;
+import se.l4.commons.serialization.AllowAny;
+import se.l4.commons.serialization.Expose;
+import se.l4.commons.serialization.ReflectionSerializer;
+import se.l4.commons.serialization.Use;
 
 @Use(ReflectionSerializer.class)
 public class IndexQueryRequest

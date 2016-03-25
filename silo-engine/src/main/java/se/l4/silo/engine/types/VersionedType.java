@@ -2,13 +2,13 @@ package se.l4.silo.engine.types;
 
 import java.io.IOException;
 
+import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
-import com.carrotsearch.hppc.IntObjectOpenHashMap;
 import com.carrotsearch.hppc.cursors.IntCursor;
 
-import se.l4.aurochs.core.io.ExtendedDataInput;
-import se.l4.aurochs.core.io.ExtendedDataOutput;
-import se.l4.aurochs.serialization.Serializer;
+import se.l4.commons.io.ExtendedDataInput;
+import se.l4.commons.io.ExtendedDataOutput;
+import se.l4.commons.serialization.Serializer;
 
 public class VersionedType<T>
 	implements FieldType<T>
@@ -32,7 +32,7 @@ public class VersionedType<T>
 	
 	public static <T> FieldType<T> singleVersion(FieldType<T> other)
 	{
-		IntObjectOpenHashMap<FieldType<T>> versions = new IntObjectOpenHashMap<>();
+		IntObjectHashMap<FieldType<T>> versions = new IntObjectHashMap<>();
 		versions.put(1, other);
 		return new VersionedType<>(versions);
 	}

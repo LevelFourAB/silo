@@ -4,15 +4,14 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-import se.l4.aurochs.core.AutoLoader;
-import se.l4.aurochs.serialization.DefaultSerializerCollection;
-import se.l4.aurochs.serialization.SerializerCollection;
-import se.l4.crayon.ConfigurationException;
+import se.l4.commons.config.ConfigException;
+import se.l4.commons.serialization.DefaultSerializerCollection;
+import se.l4.commons.serialization.SerializerCollection;
+import se.l4.commons.types.TypeFinder;
 import se.l4.silo.engine.EntityTypeFactory;
 import se.l4.silo.engine.IndexQueryEngineFactory;
 import se.l4.silo.engine.LocalSilo;
 import se.l4.silo.engine.QueryEngineFactory;
-import se.l4.silo.engine.SearchIndexQueryEngineFactory;
 import se.l4.silo.engine.builder.EntityBuilder;
 import se.l4.silo.engine.builder.SiloBuilder;
 import se.l4.silo.engine.config.EngineConfig;
@@ -39,7 +38,7 @@ public class LocalSiloBuilder
 	
 	private EngineConfig config;
 	private SerializerCollection serializers;
-	private AutoLoader autoLoader;
+	private TypeFinder typeFinder;
 
 	public LocalSiloBuilder(LogBuilder logBuilder, Path dataPath)
 	{
@@ -56,7 +55,6 @@ public class LocalSiloBuilder
 		addEntityType(new StructuredEntityFactory());
 		
 		addQueryEngine(IndexQueryEngineFactory.type());
-		addQueryEngine(SearchIndexQueryEngineFactory.type());
 		
 		addFieldType(BooleanFieldType.INSTANCE);
 		addFieldType(ByteArrayFieldType.INSTANCE);
@@ -69,7 +67,7 @@ public class LocalSiloBuilder
 	{
 		if(map.containsKey(name))
 		{
-			throw new ConfigurationException("Can not register " + instance + " with id " + name);
+			throw new ConfigException("Can not register " + instance + " with id " + name);
 		}
 		
 		map.put(name, instance);
@@ -83,9 +81,9 @@ public class LocalSiloBuilder
 	}
 	
 	@Override
-	public SiloBuilder withAutoLoader(AutoLoader loader)
+	public SiloBuilder withTypeFinder(TypeFinder typeFinder)
 	{
-		this.autoLoader = loader;
+		this.typeFinder = typeFinder;
 		return this;
 	}
 	
@@ -130,22 +128,22 @@ public class LocalSiloBuilder
 
 	private void autoLoad()
 	{
-		if(autoLoader == null) return;
+		if(typeFinder == null) return;
 		
 		// Locate any query engine types available
-		for(QueryEngineFactory<?, ?> qe : autoLoader.getSubTypesAsInstances(QueryEngineFactory.class))
+		for(QueryEngineFactory<?, ?> qe : typeFinder.getSubTypesAsInstances(QueryEngineFactory.class))
 		{
 			addQueryEngine(qe);
 		}
 		
 		// Find all available field types
-		for(FieldType<?> ft : autoLoader.getSubTypesAsInstances(FieldType.class))
+		for(FieldType<?> ft : typeFinder.getSubTypesAsInstances(FieldType.class))
 		{
 			addFieldType(ft);
 		}
 		
 		// Find all entity types
-		for(EntityTypeFactory<?, ?> et : autoLoader.getSubTypesAsInstances(EntityTypeFactory.class))
+		for(EntityTypeFactory<?, ?> et : typeFinder.getSubTypesAsInstances(EntityTypeFactory.class))
 		{
 			addEntityType(et);
 		}

@@ -7,7 +7,7 @@ import java.util.LinkedList;
 
 import com.google.common.base.Throwables;
 
-import se.l4.aurochs.core.io.Bytes;
+import se.l4.commons.io.Bytes;
 
 /**
  * Helper to check against actual operations against a set of expected

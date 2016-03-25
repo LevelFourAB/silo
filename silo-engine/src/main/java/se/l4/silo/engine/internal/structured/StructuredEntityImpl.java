@@ -3,11 +3,11 @@ package se.l4.silo.engine.internal.structured;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import se.l4.aurochs.core.io.Bytes;
-import se.l4.aurochs.serialization.SerializerCollection;
-import se.l4.aurochs.serialization.format.BinaryOutput;
-import se.l4.aurochs.serialization.format.StreamingInput;
-import se.l4.aurochs.serialization.format.StreamingInput.Token;
+import se.l4.commons.io.Bytes;
+import se.l4.commons.serialization.SerializerCollection;
+import se.l4.commons.serialization.format.BinaryOutput;
+import se.l4.commons.serialization.format.StreamingInput;
+import se.l4.commons.serialization.format.Token;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.FetchResult;
 import se.l4.silo.StorageException;

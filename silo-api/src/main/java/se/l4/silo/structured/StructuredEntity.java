@@ -1,8 +1,8 @@
 package se.l4.silo.structured;
 
-import se.l4.aurochs.serialization.Serializer;
-import se.l4.aurochs.serialization.SerializerCollection;
-import se.l4.aurochs.serialization.format.StreamingInput;
+import se.l4.commons.serialization.Serializer;
+import se.l4.commons.serialization.SerializerCollection;
+import se.l4.commons.serialization.format.StreamingInput;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.Entity;
 import se.l4.silo.FetchResult;

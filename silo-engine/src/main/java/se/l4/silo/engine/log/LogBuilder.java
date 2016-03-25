@@ -1,6 +1,6 @@
 package se.l4.silo.engine.log;
 
-import se.l4.aurochs.core.io.IoConsumer;
+import se.l4.commons.io.IoConsumer;
 
 /**
  * Builder that can create an instance of a {@link Log}.

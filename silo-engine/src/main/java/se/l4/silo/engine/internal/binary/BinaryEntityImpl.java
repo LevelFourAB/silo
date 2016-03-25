@@ -1,6 +1,6 @@
 package se.l4.silo.engine.internal.binary;
 
-import se.l4.aurochs.core.io.Bytes;
+import se.l4.commons.io.Bytes;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.FetchResult;
 import se.l4.silo.StoreResult;

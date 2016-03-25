@@ -11,7 +11,7 @@ import java.util.Arrays;
 
 import com.google.common.base.Throwables;
 
-import se.l4.aurochs.core.io.Bytes;
+import se.l4.commons.io.Bytes;
 
 public class DataUtils
 {

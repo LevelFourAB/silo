@@ -9,8 +9,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import se.l4.aurochs.serialization.DefaultSerializerCollection;
-import se.l4.aurochs.serialization.Serializer;
 import se.l4.silo.FetchResult;
 import se.l4.silo.Silo;
 import se.l4.silo.engine.IndexQueryEngineFactory;
@@ -45,16 +43,14 @@ public class ObjectEntityTest
 				.done()
 			.build();
 		
-		DefaultSerializerCollection collection = new DefaultSerializerCollection();
-		Serializer<TestUserData> serializer = collection.find(TestUserData.class);
-		entity = silo.structured("test").asObject(serializer);
+		entity = silo.structured("test").asObject(TestUserData.class);
 	}
 	
 	@After
 	public void after()
 		throws Exception
 	{
-		silo.stop();
+		silo.close();
 		DataUtils.removeRecursive(tmp);
 	}
 	

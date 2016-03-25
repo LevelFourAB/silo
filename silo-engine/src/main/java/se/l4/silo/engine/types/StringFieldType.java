@@ -2,9 +2,9 @@ package se.l4.silo.engine.types;
 
 import java.io.IOException;
 
-import se.l4.aurochs.core.io.ExtendedDataInput;
-import se.l4.aurochs.core.io.ExtendedDataOutput;
-import se.l4.aurochs.serialization.Serializer;
+import se.l4.commons.io.ExtendedDataInput;
+import se.l4.commons.io.ExtendedDataOutput;
+import se.l4.commons.serialization.Serializer;
 
 public class StringFieldType
 	implements FieldType<String>
@@ -20,7 +20,6 @@ public class StringFieldType
 	@Override
 	public int compare(String o1, String o2)
 	{
-		if(o1 == o2) return 0;
 		if(o1 == null) return -1;
 		if(o2 == null) return 1;
 		

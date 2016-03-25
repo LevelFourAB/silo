@@ -3,8 +3,8 @@ package se.l4.silo.engine.config;
 import java.util.HashMap;
 import java.util.Map;
 
-import se.l4.aurochs.serialization.Expose;
-import se.l4.aurochs.serialization.collections.StringKey;
+import se.l4.commons.serialization.Expose;
+import se.l4.commons.serialization.collections.StringKey;
 import se.l4.silo.Entity;
 import se.l4.silo.engine.QueryEngine;
 

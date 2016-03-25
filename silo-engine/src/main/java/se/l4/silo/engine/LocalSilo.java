@@ -6,9 +6,10 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-import se.l4.aurochs.serialization.SerializerCollection;
+import se.l4.commons.serialization.SerializerCollection;
 import se.l4.silo.ResourceHandle;
 import se.l4.silo.Silo;
+import se.l4.silo.StorageException;
 import se.l4.silo.Transaction;
 import se.l4.silo.binary.BinaryEntity;
 import se.l4.silo.engine.builder.SiloBuilder;
@@ -96,17 +97,16 @@ public class LocalSilo
 	}
 
 	@Override
-	public void start()
-		throws Exception
+	public void close()
 	{
-		
-	}
-
-	@Override
-	public void stop()
-		throws Exception
-	{
-		storageEngine.close();
+		try
+		{
+			storageEngine.close();
+		}
+		catch(IOException e)
+		{
+			throw new StorageException("Unable to close; " + e.getMessage(), e);
+		}
 	}
 	
 	private TransactionSupport createTransactionSupport()

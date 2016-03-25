@@ -53,6 +53,14 @@ public interface QueryEngineCreationEncounter<Config extends QueryEngineConfig>
 	Path resolveDataFile(Path path);
 	
 	/**
+	 * Get the data directory for this query engine. This will create the
+	 * directory if it does not exist.
+	 * 
+	 * @return
+	 */
+	Path getDataDirectory();
+	
+	/**
 	 * Open a new MVStore with the given name. The name will be passed to
 	 * {@link #resolveDataFile(String)} to find where the data should be
 	 * stored.
@@ -60,5 +68,5 @@ public interface QueryEngineCreationEncounter<Config extends QueryEngineConfig>
 	 * @param name
 	 * @return
 	 */
-	MVStoreManager openMVStore(String name); 
+	MVStoreManager openMVStore(String name);
 }

@@ -1,10 +1,10 @@
 package se.l4.silo;
 
+import java.io.Closeable;
 import java.util.function.Supplier;
 
 import com.google.common.base.Throwables;
 
-import se.l4.crayon.services.ManagedService;
 import se.l4.silo.binary.BinaryEntity;
 import se.l4.silo.structured.StructuredEntity;
 
@@ -59,7 +59,7 @@ import se.l4.silo.structured.StructuredEntity;
  *
  */
 public interface Silo
-	extends ManagedService
+	extends Closeable
 {
 	/**
 	 * Create a new instance of the specified interface for usage with the
@@ -169,4 +169,7 @@ public interface Silo
 		
 		throw firstException;
 	}
+	
+	@Override
+	void close();
 }

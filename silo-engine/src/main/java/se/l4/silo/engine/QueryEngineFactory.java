@@ -43,5 +43,5 @@ public interface QueryEngineFactory<Builder extends BuilderWithParent<?>, Config
 	 * @param config
 	 * @return
 	 */
-	QueryEngine<?> create(QueryEngineCreationEncounter<Config> config);
+	QueryEngine<?> create(QueryEngineCreationEncounter<Config> encounter);
 }

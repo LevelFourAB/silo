@@ -9,7 +9,7 @@ import java.util.function.Function;
 
 import com.google.common.collect.ImmutableMap;
 
-import se.l4.aurochs.core.io.Bytes;
+import se.l4.commons.io.Bytes;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.StorageException;
 import se.l4.silo.StoreResult;
@@ -208,6 +208,7 @@ public class StorageImpl
 	{
 		long previous = primary.latest();
 		long internalId = primary.store(id);
+		
 		storage.store(internalId, bytes);
 		
 		Bytes storedBytes = storage.get(internalId);

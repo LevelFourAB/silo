@@ -14,8 +14,8 @@ import org.h2.mvstore.MVStore;
 import com.carrotsearch.hppc.LongArrayList;
 import com.google.common.annotations.VisibleForTesting;
 
-import se.l4.aurochs.core.io.ByteArrayConsumer;
-import se.l4.aurochs.core.io.Bytes;
+import se.l4.commons.io.ByteArrayConsumer;
+import se.l4.commons.io.Bytes;
 import se.l4.silo.engine.DataStorage;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.types.ByteArrayFieldType;

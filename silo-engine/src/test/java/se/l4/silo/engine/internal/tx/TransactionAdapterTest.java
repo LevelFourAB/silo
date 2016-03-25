@@ -10,8 +10,8 @@ import org.junit.Test;
 
 import com.google.common.base.Throwables;
 
-import se.l4.aurochs.core.id.SimpleLongIdGenerator;
-import se.l4.aurochs.core.io.Bytes;
+import se.l4.commons.id.SimpleLongIdGenerator;
+import se.l4.commons.io.Bytes;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.internal.OpChecker;
 import se.l4.silo.engine.internal.StorageApplier;

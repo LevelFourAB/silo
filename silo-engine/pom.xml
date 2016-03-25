@@ -22,15 +22,33 @@
 		</dependency>
 		
 		<dependency>
-			<groupId>se.l4.aurochs</groupId>
-			<artifactId>aurochs-core</artifactId>
-			<version>${aurochs-version}</version>
+			<groupId>se.l4.commons</groupId>
+			<artifactId>commons-main</artifactId>
+			<version>0.2-SNAPSHOT</version>
+		</dependency>
+		
+		<dependency>
+		    <groupId>com.carrotsearch</groupId>
+		    <artifactId>hppc</artifactId>
+		    <version>0.7.1</version>
 		</dependency>
 		
 		<dependency>
 		    <groupId>com.h2database</groupId>
 		    <artifactId>h2-mvstore</artifactId>
 		    <version>1.4.191</version>
+		</dependency>
+		
+		<dependency>
+		    <groupId>org.apache.lucene</groupId>
+		    <artifactId>lucene-core</artifactId>
+		    <version>${lucene-version}</version>
+		</dependency>
+		
+		<dependency>
+		    <groupId>org.apache.lucene</groupId>
+		    <artifactId>lucene-analyzers-common</artifactId>
+		    <version>${lucene-version}</version>
 		</dependency>
 	</dependencies>
 	

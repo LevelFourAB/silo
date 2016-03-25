@@ -1,6 +1,6 @@
 package se.l4.silo.engine.internal;
 
-import se.l4.aurochs.serialization.SerializerCollection;
+import se.l4.commons.serialization.SerializerCollection;
 import se.l4.silo.engine.EntityCreationEncounter;
 import se.l4.silo.engine.builder.StorageBuilder;
 

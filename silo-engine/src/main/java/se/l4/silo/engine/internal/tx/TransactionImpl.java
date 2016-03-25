@@ -2,7 +2,7 @@ package se.l4.silo.engine.internal.tx;
 
 import java.util.function.Consumer;
 
-import se.l4.aurochs.core.io.Bytes;
+import se.l4.commons.io.Bytes;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.StoreResult;
 import se.l4.silo.Transaction;

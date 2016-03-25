@@ -1,8 +1,8 @@
 package se.l4.silo.engine.builder;
 
-import se.l4.aurochs.core.AutoLoader;
-import se.l4.aurochs.serialization.DefaultSerializerCollection;
-import se.l4.aurochs.serialization.SerializerCollection;
+import se.l4.commons.serialization.DefaultSerializerCollection;
+import se.l4.commons.serialization.SerializerCollection;
+import se.l4.commons.types.TypeFinder;
 import se.l4.silo.Silo;
 import se.l4.silo.engine.LocalSilo;
 import se.l4.silo.engine.QueryEngine;
@@ -33,7 +33,7 @@ public interface SiloBuilder
 	 * @param loader
 	 * @return
 	 */
-	SiloBuilder withAutoLoader(AutoLoader loader);
+	SiloBuilder withTypeFinder(TypeFinder finder);
 	
 	/**
 	 * Add a new entity to this instance.

@@ -2,8 +2,8 @@ package se.l4.silo.engine.types;
 
 import java.io.IOException;
 
-import se.l4.aurochs.core.io.Bytes;
-import se.l4.aurochs.core.io.ExtendedDataOutput;
+import se.l4.commons.io.Bytes;
+import se.l4.commons.io.ExtendedDataOutput;
 
 public abstract class AbstractExtendedDataOutput
 	implements ExtendedDataOutput

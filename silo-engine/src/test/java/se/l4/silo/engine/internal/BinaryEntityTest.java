@@ -10,7 +10,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import se.l4.aurochs.core.io.Bytes;
+import se.l4.commons.io.Bytes;
 import se.l4.silo.FetchResult;
 import se.l4.silo.Silo;
 import se.l4.silo.Transaction;
@@ -39,7 +39,7 @@ public class BinaryEntityTest
 	@After
 	public void after() throws Exception
 	{
-		silo.stop();
+		silo.close();
 		DataUtils.removeRecursive(tmp);
 	}
 	

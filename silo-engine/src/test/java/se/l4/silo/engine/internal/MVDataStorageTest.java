@@ -8,8 +8,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.carrotsearch.randomizedtesting.RandomizedTest;
+
 import junit.framework.Assert;
-import se.l4.aurochs.core.io.Bytes;
+import se.l4.commons.io.Bytes;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.internal.mvstore.MVStoreManagerImpl;
 
@@ -20,6 +22,7 @@ import se.l4.silo.engine.internal.mvstore.MVStoreManagerImpl;
  *
  */
 public class MVDataStorageTest
+	extends RandomizedTest
 {
 	private MVDataStorage storage;
 	private MVStoreManager storeManager;
@@ -163,5 +166,18 @@ public class MVDataStorageTest
 		storage.delete(1);
 		DataUtils.assertBytesEquals(storage.get(2), b2);
 		DataUtils.assertBytesEquals(storage.get(3), b3);
+	}
+	
+	@Test
+	public void testRandomSizeData()
+		throws IOException
+	{
+		for(int i=0, n=scaledRandomIntBetween(100, 1000); i<n; i++)
+		{
+			int id = randomIntBetween(0, n / 2);
+			byte[] data = randomBytesOfLength(512 * 1024);
+			storage.store(id, Bytes.create(data));
+			DataUtils.assertBytesEquals(Bytes.create(data), storage.get(id));
+		}
 	}
 }

@@ -11,7 +11,7 @@ import org.junit.Test;
 
 import com.google.common.io.ByteStreams;
 
-import se.l4.aurochs.core.io.Bytes;
+import se.l4.commons.io.Bytes;
 import se.l4.silo.FetchResult;
 import se.l4.silo.binary.BinaryEntity;
 import se.l4.silo.binary.BinaryEntry;
@@ -53,7 +53,7 @@ public class SnapshotTest
 			check(entity.get("e2"), DataUtils.generate(40212));
 			
 			// Stop Silo
-			silo.stop();
+			silo.close();
 		}
 		finally
 		{
@@ -91,7 +91,7 @@ public class SnapshotTest
 			silo.installSnapshot(new FileSnapshot(tmpFile));
 			
 			// Stop the instance
-			silo.stop();
+			silo.close();
 			
 			// Restart
 			silo = LocalSilo.open(tmp)
@@ -103,7 +103,7 @@ public class SnapshotTest
 			check(entity.get("e2"), DataUtils.generate(40212));
 			
 			// Stop Silo
-			silo.stop();
+			silo.close();
 		}
 		finally
 		{
@@ -139,7 +139,7 @@ public class SnapshotTest
 			}
 			
 			// Stop current Silo
-			silo.stop();
+			silo.close();
 			
 			// Create a new instance in another directory
 			silo = LocalSilo.open(tmp2)
@@ -154,7 +154,7 @@ public class SnapshotTest
 			check(entity.get("e2"), DataUtils.generate(40212));
 			
 			// Stop the instance
-			silo.stop();
+			silo.close();
 		}
 		finally
 		{
@@ -201,7 +201,7 @@ public class SnapshotTest
 			Assert.assertEquals(new TestUserData("jane", 22, false), entity.get("e2"));
 			
 			// Stop Silo
-			silo.stop();
+			silo.close();
 		}
 		finally
 		{
@@ -245,7 +245,7 @@ public class SnapshotTest
 			silo.installSnapshot(new FileSnapshot(tmpFile));
 			
 			// Stop Silo
-			silo.stop();
+			silo.close();
 			
 			silo = LocalSilo.open(tmp)
 				.addEntity("test")
@@ -262,7 +262,7 @@ public class SnapshotTest
 			Assert.assertEquals(new TestUserData("jane", 22, false), entity.get("e2"));
 			
 			// Stop Silo
-			silo.stop();
+			silo.close();
 		}
 		finally
 		{
@@ -304,7 +304,7 @@ public class SnapshotTest
 			}
 			
 			// Stop Silo
-			silo.stop();
+			silo.close();
 			
 			silo = LocalSilo.open(tmp2)
 				.addEntity("test")
@@ -324,7 +324,7 @@ public class SnapshotTest
 			Assert.assertEquals(new TestUserData("jane", 22, false), entity.get("e2"));
 			
 			// Stop Silo
-			silo.stop();
+			silo.close();
 		}
 		finally
 		{

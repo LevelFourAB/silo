@@ -8,9 +8,9 @@ import java.util.Iterator;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Predicate;
 
-import org.apache.commons.lang3.mutable.MutableInt;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.type.DataType;
 import org.slf4j.Logger;
@@ -282,7 +282,8 @@ public class IndexQueryEngine
 		int limit = request.getLimit();
 		int offset = request.getOffset();
 		
-		MutableInt total = new MutableInt();
+		
+		LongAdder total = new LongAdder();
 		int maxSize = limit > 0 ? offset + limit : 0;
 		TreeSet<Result> tree = new TreeSet<>(sort);
 		parts[fields.length] = new ResultCollector(index, fields.length, hasSort)

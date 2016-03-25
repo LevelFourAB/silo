@@ -2,9 +2,10 @@ package se.l4.silo.engine;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
-import se.l4.aurochs.core.io.Bytes;
-import se.l4.aurochs.serialization.format.StreamingInput;
+import se.l4.commons.io.Bytes;
+import se.l4.commons.serialization.format.StreamingInput;
 
 public interface DataEncounter
 {
@@ -29,6 +30,14 @@ public interface DataEncounter
 	 * @return
 	 */
 	Map<String, Object> findStructuredKeys(Collection<String> keys);
+	
+	/**
+	 * Get all of the values associated with the given keys.
+	 * 
+	 * @param keys
+	 * @param receiver
+	 */
+	void findStructuredKeys(Collection<String> keys, BiConsumer<String, Object> receiver);
 	
 	/**
 	 * Get an array with the values of the given keys.

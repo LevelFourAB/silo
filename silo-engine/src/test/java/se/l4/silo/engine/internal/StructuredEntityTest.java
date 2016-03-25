@@ -13,10 +13,10 @@ import org.junit.Test;
 
 import com.google.common.base.Throwables;
 
-import se.l4.aurochs.serialization.format.BinaryInput;
-import se.l4.aurochs.serialization.format.BinaryOutput;
-import se.l4.aurochs.serialization.format.StreamingInput;
-import se.l4.aurochs.serialization.format.StreamingInput.Token;
+import se.l4.commons.serialization.format.BinaryInput;
+import se.l4.commons.serialization.format.BinaryOutput;
+import se.l4.commons.serialization.format.StreamingInput;
+import se.l4.commons.serialization.format.Token;
 import se.l4.silo.FetchResult;
 import se.l4.silo.Silo;
 import se.l4.silo.engine.IndexQueryEngineFactory;
@@ -53,7 +53,7 @@ public class StructuredEntityTest
 	public void after()
 		throws Exception
 	{
-		silo.stop();
+		silo.close();
 		DataUtils.removeRecursive(tmp);
 	}
 	

@@ -2,8 +2,8 @@ package se.l4.silo.engine.internal;
 
 import java.io.IOException;
 
-import se.l4.aurochs.core.io.ExtendedDataInput;
-import se.l4.aurochs.core.io.ExtendedDataOutput;
+import se.l4.commons.io.ExtendedDataInput;
+import se.l4.commons.io.ExtendedDataOutput;
 import se.l4.silo.StorageException;
 
 /**
@@ -47,7 +47,7 @@ public class IOUtils
 		}
 		else
 		{
-			throw new StorageException("Unsupported identifier of type " + id.getClass().getName());
+			throw new StorageException("Unsupported identifier of type " + id.getClass().getName() + ", value is " + id);
 		}
 	}
 	
