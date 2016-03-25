@@ -21,6 +21,7 @@ import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.types.ByteArrayFieldType;
 import se.l4.silo.engine.types.LongArrayFieldType;
 import se.l4.silo.engine.types.LongFieldType;
+import se.l4.silo.engine.types.VersionedType;
 
 /**
  * Data storage that uses {@link MVStore} to store all of the data. This
@@ -48,7 +49,7 @@ public class MVDataStorage
 	
 	public void reopen()
 	{
-		keys = store.openMap("data.keys", LongFieldType.INSTANCE, new LongArrayFieldType());
+		keys = store.openMap("data.keys", LongFieldType.INSTANCE, VersionedType.singleVersion(new LongArrayFieldType()));
 		chunks = store.openMap("data.chunks", LongFieldType.INSTANCE, ByteArrayFieldType.INSTANCE);
 	}
 
