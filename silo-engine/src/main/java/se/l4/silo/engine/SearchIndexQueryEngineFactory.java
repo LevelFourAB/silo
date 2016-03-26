@@ -8,13 +8,19 @@ import se.l4.silo.StorageException;
 import se.l4.silo.engine.builder.SearchIndexBuilder;
 import se.l4.silo.engine.config.QueryEngineConfig;
 import se.l4.silo.engine.config.SearchIndexConfig;
+import se.l4.silo.engine.internal.search.SearchEngine;
 import se.l4.silo.engine.internal.search.SearchIndexBuilderImpl;
 import se.l4.silo.engine.internal.search.SearchIndexQueryEngine;
 
 public class SearchIndexQueryEngineFactory
 	implements QueryEngineFactory<SearchIndexBuilder<?>, SearchIndexConfig>
 {
-	private static final SearchIndexQueryEngineFactory INSTANCE = new SearchIndexQueryEngineFactory();
+	private final SearchEngine engine;
+
+	public SearchIndexQueryEngineFactory(SearchEngine engine)
+	{
+		this.engine = engine;
+	}
 	
 	@Override
 	public String getId()
@@ -40,22 +46,11 @@ public class SearchIndexQueryEngineFactory
 		Path path = encounter.getDataDirectory();
 		try
 		{
-			return new SearchIndexQueryEngine(path, encounter.getConfig());
+			return new SearchIndexQueryEngine(engine, path, encounter.getConfig());
 		}
 		catch(IOException e)
 		{
 			throw new StorageException("Unable to setup search index; " + e.getMessage(), e);
 		}
-	}
-
-	/**
-	 * Get an instance of this factory for use with builders.
-	 * 
-	 * @return
-	 */
-	@SuppressWarnings("unchecked")
-	public static <T> QueryEngineFactory<SearchIndexBuilder<T>, ?> type()
-	{
-		return (QueryEngineFactory) INSTANCE;
 	}
 }

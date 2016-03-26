@@ -10,6 +10,7 @@ import org.apache.lucene.store.NRTCachingDirectory;
 import se.l4.commons.serialization.Expose;
 import se.l4.commons.serialization.ReflectionSerializer;
 import se.l4.commons.serialization.Use;
+import se.l4.silo.engine.search.SearchFieldType;
 
 public class SearchIndexConfig
 	extends QueryEngineConfig
@@ -44,15 +45,71 @@ public class SearchIndexConfig
 	public static class FieldConfig
 	{
 		private final String name;
+		private final boolean languageSpecific;
+		private final boolean multiValued;
+		private final SearchFieldType type;
+		private final boolean stored;
+		private final boolean indexed;
+		private final boolean highlighted;
+		private final boolean sorted;
 		
-		public FieldConfig(String name)
+		public FieldConfig(String name,
+				SearchFieldType type,
+				boolean languageSpecific,
+				boolean multiValued,
+				boolean stored,
+				boolean indexed,
+				boolean highlighted,
+				boolean sorted)
 		{
 			this.name = name;
+			this.type = type;
+			this.languageSpecific = languageSpecific;
+			this.multiValued = multiValued;
+			this.stored = stored;
+			this.indexed = indexed;
+			this.highlighted = highlighted;
+			this.sorted = sorted;
 		}
 		
 		public String getName()
 		{
 			return name;
+		}
+
+		public SearchFieldType getType()
+		{
+			return type;
+		}
+		
+		public boolean isLanguageSpecific()
+		{
+			return languageSpecific;
+		}
+		
+		public boolean isMultiValued()
+		{
+			return multiValued;
+		}
+		
+		public boolean isStored()
+		{
+			return stored;
+		}
+		
+		public boolean isIndexed()
+		{
+			return indexed;
+		}
+		
+		public boolean isHighlighted()
+		{
+			return highlighted;
+		}
+		
+		public boolean isSorted()
+		{
+			return sorted;
 		}
 	}
 	

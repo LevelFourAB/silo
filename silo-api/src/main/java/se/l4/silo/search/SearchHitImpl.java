@@ -1,5 +1,7 @@
 package se.l4.silo.search;
 
+import com.google.common.base.MoreObjects;
+
 public class SearchHitImpl<T>
 	implements SearchHit<T>
 {
@@ -16,4 +18,11 @@ public class SearchHitImpl<T>
 		return item;
 	}
 
+	@Override
+	public String toString()
+	{
+		return MoreObjects.toStringHelper(this)
+			.add("item", item)
+			.toString();
+	}
 }

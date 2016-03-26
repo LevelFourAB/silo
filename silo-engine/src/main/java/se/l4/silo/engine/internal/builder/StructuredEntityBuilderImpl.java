@@ -3,6 +3,7 @@ package se.l4.silo.engine.internal.builder;
 import java.util.function.Function;
 
 import se.l4.silo.engine.IndexQueryEngineFactory;
+import se.l4.silo.engine.QueryEngineBuilderFactory;
 import se.l4.silo.engine.QueryEngineFactory;
 import se.l4.silo.engine.builder.BuilderWithParent;
 import se.l4.silo.engine.builder.FieldDefBuilder;
@@ -62,4 +63,13 @@ public class StructuredEntityBuilderImpl<Parent>
 		});
 	}
 
+	@Override
+	public <T extends BuilderWithParent<StructuredEntityBuilder<Parent>>> T add(String name,
+			QueryEngineBuilderFactory<StructuredEntityBuilder<Parent>, T> factory)
+	{
+		return factory.create(queryConfig -> {
+			config.addQueryEngine(name, queryConfig);
+			return this;
+		});
+	}
 }

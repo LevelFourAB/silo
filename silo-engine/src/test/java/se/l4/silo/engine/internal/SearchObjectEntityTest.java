@@ -10,7 +10,8 @@ import org.junit.Test;
 
 import se.l4.silo.Silo;
 import se.l4.silo.engine.LocalSilo;
-import se.l4.silo.engine.SearchIndexQueryEngineFactory;
+import se.l4.silo.engine.SearchIndex;
+import se.l4.silo.engine.search.SearchFields;
 import se.l4.silo.search.SearchIndexQuery;
 import se.l4.silo.search.SearchResult;
 import se.l4.silo.structured.ObjectEntity;
@@ -27,15 +28,16 @@ public class SearchObjectEntityTest
 	{
 		tmp = Files.createTempDirectory("silo");
 		silo = LocalSilo.open(tmp)
+			.addQueryEngine(SearchIndex.builder().build())
 			.addEntity("test")
 				.asStructured()
 				.defineField("name", "string")
 				.defineField("age", "int")
 				.defineField("active", "boolean")
-				.add("index", SearchIndexQueryEngineFactory.type())
-					.addField("name")
-					.addField("age")
-					.addField("active")
+				.add("index", SearchIndex.engine())
+					.addField("name").type(SearchFields.TEXT).done()
+					.addField("age").type(SearchFields.INTEGER).done()
+					.addField("active").type(SearchFields.BOOLEAN).done()
 					.done()
 				.done()
 			.build();
@@ -70,11 +72,12 @@ public class SearchObjectEntityTest
 		}
 		
 		try(SearchResult<TestUserData> fr = entity.query("index", SearchIndexQuery.type())
+			.user("donna")
+			.number("age").range(18, 21)
 			.run())
 		{
-			System.out.println(fr);
-			
 			System.out.println("Got " + fr.getSize() + ", total is " + fr.getTotal());
+			System.out.println(fr.iterator().next());
 		}
 	}
 }

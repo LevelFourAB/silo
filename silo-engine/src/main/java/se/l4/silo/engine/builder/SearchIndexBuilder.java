@@ -1,13 +1,15 @@
 package se.l4.silo.engine.builder;
 
+import se.l4.silo.engine.search.builder.FieldBuilder;
+
 public interface SearchIndexBuilder<Parent>
 	extends BuilderWithParent<Parent>
 {
 	/**
-	 * Add the specified field to the index.
+	 * Starting adding a field to this index.
 	 * 
 	 * @param field
 	 * @return
 	 */
-	SearchIndexBuilder<Parent> addField(String field);
+	FieldBuilder<SearchIndexBuilder<Parent>> addField(String field);
 }

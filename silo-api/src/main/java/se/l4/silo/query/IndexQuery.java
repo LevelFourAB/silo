@@ -11,7 +11,7 @@ import se.l4.silo.index.IndexQueryType;
  * @param <T>
  */
 public interface IndexQuery<T>
-	extends Query<FetchResult<T>>
+	extends Query<FetchResult<T>>, LimitableQuery<IndexQuery<T>>
 {
 	static <T> QueryType<T, T, IndexQuery<T>> type()
 	{
@@ -79,20 +79,4 @@ public interface IndexQuery<T>
 	 * @return
 	 */
 	IndexQuery<T> sortDescending();
-	
-	/**
-	 * Limit the number of results returned.
-	 * 
-	 * @param limit
-	 * @return
-	 */
-	IndexQuery<T> limit(int limit);
-	
-	/**
-	 * Set the offset for the query.
-	 * 
-	 * @param intValue
-	 * @return
-	 */
-	IndexQuery<T> offset(int offset);
 }
