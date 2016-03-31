@@ -1,6 +1,7 @@
 package se.l4.silo.engine.search;
 
 import java.util.Locale;
+import java.util.Set;
 
 import se.l4.silo.engine.internal.search.SearchIndexQueryEngine;
 
@@ -57,4 +58,20 @@ public interface IndexDefinition
 	 * @return
 	 */
 	Iterable<FieldDefinition> getFields();
+	
+	/**
+	 * Get a facet based on its identifier.
+	 * 
+	 * @param facetId
+	 * @return
+	 */
+	FacetDefinition getFacet(String facetId);
+
+	/**
+	 * Get all fields that will store values.
+	 * 
+	 * @see SearchFieldType#createValuesField(String, Language, Object)
+	 * @return
+	 */
+	Set<String> getValueFields();
 }

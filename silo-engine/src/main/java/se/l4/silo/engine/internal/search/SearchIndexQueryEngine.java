@@ -52,11 +52,14 @@ import se.l4.silo.engine.DataEncounter;
 import se.l4.silo.engine.QueryEncounter;
 import se.l4.silo.engine.QueryEngine;
 import se.l4.silo.engine.config.SearchIndexConfig;
+import se.l4.silo.engine.search.FacetDefinition;
 import se.l4.silo.engine.search.FieldDefinition;
 import se.l4.silo.engine.search.IndexDefinition;
 import se.l4.silo.engine.search.Language;
+import se.l4.silo.engine.search.facets.FacetCollectionEncounter;
 import se.l4.silo.engine.search.query.QueryParseEncounter;
 import se.l4.silo.engine.search.query.QueryParser;
+import se.l4.silo.search.FacetEntry;
 import se.l4.silo.search.FacetItem;
 import se.l4.silo.search.FacetsImpl;
 import se.l4.silo.search.QueryItem;
@@ -224,8 +227,9 @@ public class SearchIndexQueryEngine
 				}
 			}
 			
-			encounter.setMetadata(request.getOffset(), request.getLimit(), hits);
+			encounter.addMetadata("facets", facets);
 			
+			encounter.setMetadata(request.getOffset(), request.getLimit(), hits);
 			
 		}
 		catch(IOException e)
@@ -260,6 +264,7 @@ public class SearchIndexQueryEngine
 		return new Sort(fields);
 	}
 	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private FacetsImpl search(SearchIndexQueryRequest request, IndexSearcher searcher, Collector collector, boolean score, boolean withFacets)
 		throws IOException
 	{
@@ -272,7 +277,6 @@ public class SearchIndexQueryEngine
 		
 		Query query = createQuery(request);
 		
-		System.out.println(query);
 		/*
 		if(score && request.getScoring() != null)
 		{
@@ -290,26 +294,50 @@ public class SearchIndexQueryEngine
 		
 		if(withFacets && ! request.getFacetItems().isEmpty())
 		{
+			FacetsCollector fc = facetsCollector;
 			FacetsImpl results = new FacetsImpl();
 			for(FacetItem fi : request.getFacetItems())
 			{
-				/*
 				FacetDefinition fdef = def.getFacet(fi.getId());
 				if(fdef == null)
 				{
-					throw new IOException("Unknown facet: " + fi.getId());
+					throw new StorageException("Unknown facet: " + fi.getId());
 				}
 				
-				QueryFacet qf = queryExtensions.facet(fdef.getType());
-				if(qf == null)
+				List<FacetEntry> entries = fdef.getInstance().collect(new FacetCollectionEncounter()
 				{
-					throw new IOException("Unknown facet type: " + fdef.getType());
-				}
+					@Override
+					public Locale getLocale()
+					{
+						return null;
+					}
+					
+					@Override
+					public IndexDefinition getIndexDefinition()
+					{
+						return def;
+					}
+					
+					@Override
+					public FacetsCollector getCollector()
+					{
+						return fc;
+					}
+					
+					@Override
+					public IndexReader getIndexReader()
+					{
+						return searcher.getIndexReader();
+					}
+					
+					@Override
+					public Object getQueryParameters()
+					{
+						return fi.getPayload();
+					}
+				});
 				
-				Map<String, String> params = fi.getParameters();
-				List<FacetEntry> entries = qf.collect("v:" + fdef.getField() + ":_", params, searcher.getIndexReader(), facetsCollector);
 				results.addAll(fi.getId(), entries);
-				*/
 			}
 			
 			return results;
@@ -470,6 +498,7 @@ public class SearchIndexQueryEngine
 		
 		doc.add(new Field("_:lang", locale.toLanguageTag(), StringField.TYPE_STORED));
 		
+		
 		Language langObj = engine.getLanguage(locale);
 		Language defaultLangObj = engine.getLanguage(def.getDefaultLanguage());
 		
@@ -495,6 +524,8 @@ public class SearchIndexQueryEngine
 	{
 		if(object == null) return;
 		
+		boolean needValues = def.getValueFields().contains(name);
+		
 		if(field.isLanguageSpecific())
 		{
 			// Create language specific fields
@@ -502,11 +533,21 @@ public class SearchIndexQueryEngine
 			{
 				IndexableField f1 = field.createIndexableField(name, current, object);
 				document.add(f1);
+				
+				if(needValues)
+				{
+					document.add(field.createValuesField(name, current, object));
+				}
 			}
 			
 			// Add a field for the default language
 			IndexableField f2 = field.createIndexableField(name, fallback, object);
 			document.add(f2);
+			
+			if(needValues)
+			{
+				document.add(field.createValuesField(name, fallback, object));
+			}
 			
 			if(field.isSorted())
 			{
@@ -516,8 +557,13 @@ public class SearchIndexQueryEngine
 		else
 		{
 			// Create standard field
-			IndexableField f2 = field.createIndexableField(name, fallback, object);
+			IndexableField f2 = field.createIndexableField(name, current, object);
 			document.add(f2);
+			
+			if(needValues)
+			{
+				document.add(field.createValuesField(name, current, object));
+			}
 			
 			if(field.isSorted())
 			{

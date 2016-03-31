@@ -1,25 +1,23 @@
 package se.l4.silo.search;
 
-import java.util.Map;
-
 public class FacetItem
 {
 	private final String id;
-	private final Map<String, String> parameters;
+	private final Object payload;
 	
-	public FacetItem(String id, Map<String, String> parameters)
+	public FacetItem(String id, Object payload)
 	{
 		this.id = id;
-		this.parameters = parameters;
+		this.payload = payload;
 	}
 	
 	public String getId()
 	{
 		return id;
 	}
-	
-	public Map<String, String> getParameters()
+
+	public Object getPayload()
 	{
-		return parameters;
+		return payload;
 	}
 }

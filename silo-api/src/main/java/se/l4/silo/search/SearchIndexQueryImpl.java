@@ -1,7 +1,10 @@
 package se.l4.silo.search;
 
+import java.util.function.Supplier;
+
 import se.l4.silo.query.QueryFetchResult;
 import se.l4.silo.query.QueryRunner;
+import se.l4.silo.search.facet.FacetQueryType;
 import se.l4.silo.search.query.QueryReceiver;
 
 public class SearchIndexQueryImpl<T>
@@ -56,6 +59,17 @@ public class SearchIndexQueryImpl<T>
 	}
 	
 	@Override
+	public <C extends FacetQueryBuilder<SearchIndexQuery<T>>> C withFacet(String id, Supplier<C> facetType)
+	{
+		C builder = facetType.get();
+		builder.setReceiver(id, c -> {
+			request.addFacetItem(c);
+			return this;
+		});
+		return builder;
+	}
+	
+	@Override
 	public SearchIndexQuery<T> addSort(String sort, boolean sortAscending)
 	{
 		request.addSortItem(sort, sortAscending);
@@ -70,9 +84,12 @@ public class SearchIndexQueryImpl<T>
 	}
 	
 	@Override
-	public FacetQueryBuilder withFacet(String id)
+	public <C extends FacetQueryBuilder<SearchIndexQuery<T>>> C withFacet(String id, FacetQueryType<SearchIndexQuery<T>, C> type)
 	{
-		return null;
+		return type.create(id, c -> {
+			request.addFacetItem(c);
+			return this;
+		});
 	}
 	
 	@Override
@@ -82,7 +99,12 @@ public class SearchIndexQueryImpl<T>
 			return new SearchHitImpl<>(f.getData()); 
 		});
 		
-		return new SearchResultImpl<>(qr);
+		Facets facets = qr.getMetadata("facets");
+		if(facets == null)
+		{
+			facets = new FacetsImpl();
+		}
+		
+		return new SearchResultImpl<>(qr, facets);
 	}
-
 }

@@ -1,7 +1,9 @@
 package se.l4.silo.engine.config;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.validation.constraints.NotNull;
 
@@ -11,6 +13,7 @@ import se.l4.commons.serialization.Expose;
 import se.l4.commons.serialization.ReflectionSerializer;
 import se.l4.commons.serialization.Use;
 import se.l4.silo.engine.search.SearchFieldType;
+import se.l4.silo.engine.search.facets.Facet;
 
 public class SearchIndexConfig
 	extends QueryEngineConfig
@@ -18,6 +21,7 @@ public class SearchIndexConfig
 	private IndexReloadConfig reload;
 	
 	private List<FieldConfig> fields;
+	private Map<String, Facet<?>> facets;
 	
 	public SearchIndexConfig()
 	{
@@ -25,6 +29,7 @@ public class SearchIndexConfig
 		
 		reload = new IndexReloadConfig();
 		fields = new ArrayList<>();
+		facets = new HashMap<>();
 	}
 	
 	public IndexReloadConfig getReload()
@@ -40,6 +45,16 @@ public class SearchIndexConfig
 	public void addField(FieldConfig fc)
 	{
 		fields.add(fc);
+	}
+	
+	public Map<String, Facet<?>> getFacets()
+	{
+		return facets;
+	}
+	
+	public void addFacet(String id, Facet<?> facet)
+	{
+		facets.put(id, facet);
 	}
 
 	public static class FieldConfig

@@ -2,7 +2,6 @@ package se.l4.silo.search;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class SearchIndexQueryRequest
 {
@@ -75,11 +74,6 @@ public class SearchIndexQueryRequest
 	public void addFacetItem(FacetItem item)
 	{
 		facetItems.add(item);
-	}
-	
-	public void addFacetItem(String id, Map<String, String> parameters)
-	{
-		facetItems.add(new FacetItem(id, parameters));
 	}
 	
 	public String getScoring()

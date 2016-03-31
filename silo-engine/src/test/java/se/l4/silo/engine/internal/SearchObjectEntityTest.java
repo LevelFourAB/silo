@@ -1,5 +1,8 @@
 package se.l4.silo.engine.internal;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,8 +15,10 @@ import se.l4.silo.Silo;
 import se.l4.silo.engine.LocalSilo;
 import se.l4.silo.engine.SearchIndex;
 import se.l4.silo.engine.search.SearchFields;
+import se.l4.silo.engine.search.facets.category.CategoryFacet;
 import se.l4.silo.search.SearchIndexQuery;
 import se.l4.silo.search.SearchResult;
+import se.l4.silo.search.facet.CategoryFacetQuery;
 import se.l4.silo.structured.ObjectEntity;
 
 public class SearchObjectEntityTest
@@ -34,10 +39,13 @@ public class SearchObjectEntityTest
 				.defineField("name", "string")
 				.defineField("age", "int")
 				.defineField("active", "boolean")
-				.add("index", SearchIndex.engine())
+				.add("index", SearchIndex::newIndex)
 					.addField("name").type(SearchFields.TEXT).done()
 					.addField("age").type(SearchFields.INTEGER).done()
 					.addField("active").type(SearchFields.BOOLEAN).done()
+					.addFacet("ageFacet", CategoryFacet::newFacet)
+						.setField("age")
+						.done()
 					.done()
 				.done()
 			.build();
@@ -74,10 +82,12 @@ public class SearchObjectEntityTest
 		try(SearchResult<TestUserData> fr = entity.query("index", SearchIndexQuery.type())
 			.user("donna")
 			.number("age").range(18, 21)
+			.withFacet("ageFacet", CategoryFacetQuery::new)
+				.done()
 			.run())
 		{
-			System.out.println("Got " + fr.getSize() + ", total is " + fr.getTotal());
-			System.out.println(fr.iterator().next());
+			assertThat(fr.getSize(), is(10));
+			assertThat(fr.getTotal(), is(50));
 		}
 	}
 }

@@ -4,14 +4,23 @@ import java.util.Iterator;
 
 import se.l4.silo.FetchResult;
 
+/**
+ * Implementation of {@link SearchResult}.
+ * 
+ * @author Andreas Holstenson
+ *
+ * @param <T>
+ */
 public class SearchResultImpl<T>
 	implements SearchResult<T>
 {
-	private FetchResult<SearchHit<T>> results;
+	private final FetchResult<SearchHit<T>> results;
+	private final Facets facets;
 
-	public SearchResultImpl(FetchResult<SearchHit<T>> results)
+	public SearchResultImpl(FetchResult<SearchHit<T>> results, Facets facets)
 	{
 		this.results = results;
+		this.facets = facets;
 	}
 
 	@Override
@@ -48,6 +57,12 @@ public class SearchResultImpl<T>
 	public boolean isEmpty()
 	{
 		return results.isEmpty();
+	}
+	
+	@Override
+	public Facets facets()
+	{
+		return facets;
 	}
 
 	@Override

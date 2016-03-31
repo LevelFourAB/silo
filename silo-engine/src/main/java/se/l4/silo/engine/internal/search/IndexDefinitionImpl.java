@@ -1,24 +1,34 @@
 package se.l4.silo.engine.internal.search;
 
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexableField;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 
+import se.l4.silo.StorageException;
 import se.l4.silo.engine.config.SearchIndexConfig;
+import se.l4.silo.engine.search.FacetDefinition;
 import se.l4.silo.engine.search.FieldDefinition;
 import se.l4.silo.engine.search.IndexDefinition;
+import se.l4.silo.engine.search.IndexDefinitionEncounter;
 import se.l4.silo.engine.search.Language;
 import se.l4.silo.engine.search.SearchFieldType;
+import se.l4.silo.engine.search.facets.Facet;
 
 public class IndexDefinitionImpl
 	implements IndexDefinition
 {
 	private final Locale locale;
-	private ImmutableMap<String, FieldDefinition> fields;
+	private final Map<String, FieldDefinition> fields;
+	private final Map<String, FacetDefinition> facets;
+	private final Set<String> valueFields;
 
 	public IndexDefinitionImpl(SearchIndexConfig config)
 	{
@@ -31,6 +41,20 @@ public class IndexDefinitionImpl
 		}
 		
 		this.fields = fields.build();
+		
+		IndexDefinitionEncounterImpl encounter = new IndexDefinitionEncounterImpl(this.fields);
+		
+		ImmutableMap.Builder<String, FacetDefinition> facets = ImmutableMap.builder();
+		for(Map.Entry<String, Facet<?>> f : config.getFacets().entrySet())
+		{
+			String id = f.getKey();
+			Facet<?> instance = f.getValue();
+			instance.setup(encounter);
+			facets.put(id, new FacetDefinitionImpl(id, instance));
+		}
+		this.facets = facets.build();
+		
+		this.valueFields = ImmutableSet.copyOf(encounter.valueFields);
 	}
 	
 	@Override
@@ -74,6 +98,42 @@ public class IndexDefinitionImpl
 	public Iterable<FieldDefinition> getFields()
 	{
 		return fields.values();
+	}
+	
+	@Override
+	public FacetDefinition getFacet(String facetId)
+	{
+		return facets.get(facetId);
+	}
+	
+	@Override
+	public Set<String> getValueFields()
+	{
+		return valueFields;
+	}
+	
+	private static class IndexDefinitionEncounterImpl
+		implements IndexDefinitionEncounter
+	{
+		private final Set<String> valueFields;
+		private final Map<String, FieldDefinition> currentFields;
+		
+		public IndexDefinitionEncounterImpl(Map<String, FieldDefinition> currentFields)
+		{
+			this.currentFields = currentFields;
+			valueFields = new HashSet<>();
+		}
+		
+		@Override
+		public void addValuesField(String field)
+		{
+			if(! currentFields.containsKey(field))
+			{
+				throw new StorageException("The field `" + field + "` has not been defined");
+			}
+			
+			valueFields.add(field);
+		}
 	}
 	
 	private static class FieldDefinitionImpl
@@ -210,6 +270,31 @@ public class IndexDefinitionImpl
 			ft.setStoreTermVectors(false);
 			ft.setTokenized(defaults.tokenized());
 			return ft;
+		}
+	}
+	
+	private static class FacetDefinitionImpl
+		implements FacetDefinition
+	{
+		private final String id;
+		private final Facet<?> instance;
+
+		public FacetDefinitionImpl(String id, Facet<?> instance)
+		{
+			this.id = id;
+			this.instance = instance;
+		}
+		
+		@Override
+		public String getId()
+		{
+			return id;
+		}
+		
+		@Override
+		public Facet<?> getInstance()
+		{
+			return instance;
 		}
 	}
 }

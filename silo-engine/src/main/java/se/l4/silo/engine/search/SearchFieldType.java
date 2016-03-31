@@ -82,11 +82,11 @@ public interface SearchFieldType
 	
 	default IndexableField createValuesField(String field, Language lang, Object object)
 	{
-		return null;
+		throw new UnsupportedOperationException("The field type " + getClass().getSimpleName() + " does not support values and can not be used for things such as faceting and scoring");
 	}
 	
 	default IndexableField createSortingField(String field, Language lang, Object object)
 	{
-		return null;
+		throw new UnsupportedOperationException("The field type " + getClass().getSimpleName() + " does not support scoring");
 	}
 }

@@ -78,7 +78,7 @@ public class DefaultObjectEntity<T>
 		}
 		catch(Exception e)
 		{
-			throw new StorageException("Unable to store object; " + e.getMessage());
+			throw new StorageException("Unable to store object; " + e.getMessage(), e);
 		}
 	}
 

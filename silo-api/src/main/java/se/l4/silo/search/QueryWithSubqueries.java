@@ -1,5 +1,7 @@
 package se.l4.silo.search;
 
+import java.util.function.Supplier;
+
 import se.l4.silo.search.query.AndQuery;
 import se.l4.silo.search.query.ConstantScoreQuery;
 import se.l4.silo.search.query.FieldQuery;
@@ -14,6 +16,11 @@ public interface QueryWithSubqueries<Self extends QueryWithSubqueries<Self, Retu
 	extends QueryPart<ReturnPath>, QueryReceiver
 {
 	<P extends QueryPart<Self>> P query(P q);
+	
+	default <P extends QueryPart<Self>> P query(Supplier<P> supplier)
+	{
+		return query(supplier.get());
+	}
 	
 	ReturnPath done();
 	

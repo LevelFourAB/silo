@@ -1,8 +1,11 @@
 package se.l4.silo.engine;
 
+import java.util.function.Function;
+
 import se.l4.silo.engine.builder.SearchEngineBuilder;
 import se.l4.silo.engine.builder.SearchIndexBuilder;
 import se.l4.silo.engine.builder.SiloBuilder;
+import se.l4.silo.engine.config.QueryEngineConfig;
 import se.l4.silo.engine.internal.search.SearchIndexBuilderImpl;
 import se.l4.silo.engine.internal.search.SearchIndexQueryEngine;
 import se.l4.silo.engine.search.internal.SearchEngineBuilderImpl;
@@ -42,12 +45,16 @@ public class SearchIndex
 		return new SearchEngineBuilderImpl();
 	}
 	
+
 	/**
+	 * Create a new {@link SearchIndexBuilder}. This method is used by
+	 * entities when constructing indexes.
 	 * 
+	 * @param f
 	 * @return
 	 */
-	public static <T> QueryEngineBuilderFactory<T, SearchIndexBuilder<T>> engine()
+	public static <Parent> SearchIndexBuilder<Parent> newIndex(Function<QueryEngineConfig, Parent> configReceiver)
 	{
-		return (c) -> new SearchIndexBuilderImpl<T>(c);
+		return new SearchIndexBuilderImpl<>(configReceiver);
 	}
 }

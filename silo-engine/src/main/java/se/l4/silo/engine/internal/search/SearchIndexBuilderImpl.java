@@ -3,12 +3,14 @@ package se.l4.silo.engine.internal.search;
 import java.util.Objects;
 import java.util.function.Function;
 
+import se.l4.silo.engine.builder.BuilderWithParent;
 import se.l4.silo.engine.builder.SearchIndexBuilder;
 import se.l4.silo.engine.config.QueryEngineConfig;
 import se.l4.silo.engine.config.SearchIndexConfig;
 import se.l4.silo.engine.config.SearchIndexConfig.FieldConfig;
 import se.l4.silo.engine.search.SearchFieldType;
 import se.l4.silo.engine.search.builder.FieldBuilder;
+import se.l4.silo.engine.search.facets.FacetBuilderFactory;
 
 public class SearchIndexBuilderImpl<Parent>
 	implements SearchIndexBuilder<Parent>
@@ -33,7 +35,17 @@ public class SearchIndexBuilderImpl<Parent>
 			return this;
 		});
 	}
-
+	
+	@Override
+	public <T extends BuilderWithParent<SearchIndexBuilder<Parent>>> T addFacet(String facetId,
+			FacetBuilderFactory<SearchIndexBuilder<Parent>, T> factory)
+	{
+		return factory.create(c -> {
+			config.addFacet(facetId, c);
+			return this;
+		});
+	}
+	
 	@Override
 	public Parent done()
 	{

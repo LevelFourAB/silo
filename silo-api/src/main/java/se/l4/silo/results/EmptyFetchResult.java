@@ -1,8 +1,7 @@
 package se.l4.silo.results;
 
+import java.util.Collections;
 import java.util.Iterator;
-
-import com.google.common.collect.Iterators;
 
 import se.l4.silo.FetchResult;
 
@@ -25,7 +24,7 @@ public class EmptyFetchResult<T>
 	@Override
 	public Iterator<T> iterator()
 	{
-		return Iterators.emptyIterator();
+		return Collections.emptyIterator();
 	}
 
 	@Override

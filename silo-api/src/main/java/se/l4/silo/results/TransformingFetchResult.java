@@ -15,7 +15,9 @@ import se.l4.silo.FetchResult;
 public class TransformingFetchResult<T>
 	implements FetchResult<T>
 {
+	@SuppressWarnings("rawtypes")
 	private FetchResult in;
+	@SuppressWarnings("rawtypes")
 	private Function func;
 
 	public <I> TransformingFetchResult(FetchResult<I> in, Function<I, T> func)
@@ -66,6 +68,7 @@ public class TransformingFetchResult<T>
 		return new TransformingIterator(in.iterator());
 	}
 	
+	@SuppressWarnings("rawtypes")
 	private class TransformingIterator
 		implements Iterator<T>
 	{
@@ -82,6 +85,7 @@ public class TransformingFetchResult<T>
 			return it.hasNext();
 		}
 		
+		@SuppressWarnings("unchecked")
 		@Override
 		public T next()
 		{
