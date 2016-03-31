@@ -4,7 +4,7 @@ import java.util.Locale;
 
 import org.apache.lucene.index.IndexableField;
 
-import se.l4.silo.engine.internal.search.SearchIndexQueryEngine;
+import se.l4.silo.engine.search.internal.SearchIndexQueryEngine;
 
 /**
  * Definition of a field in a {@link SearchIndexQueryEngine}.

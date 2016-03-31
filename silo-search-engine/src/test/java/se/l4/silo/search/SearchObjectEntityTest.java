@@ -1,4 +1,4 @@
-package se.l4.silo.engine.internal;
+package se.l4.silo.search;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -13,8 +13,10 @@ import org.junit.Test;
 
 import se.l4.silo.Silo;
 import se.l4.silo.engine.LocalSilo;
-import se.l4.silo.engine.SearchIndex;
+import se.l4.silo.engine.internal.DataUtils;
+import se.l4.silo.engine.internal.TestUserData;
 import se.l4.silo.engine.search.SearchFields;
+import se.l4.silo.engine.search.SearchIndex;
 import se.l4.silo.engine.search.facets.category.CategoryFacet;
 import se.l4.silo.search.SearchIndexQuery;
 import se.l4.silo.search.SearchResult;

@@ -1,4 +1,4 @@
-package se.l4.silo.engine.config;
+package se.l4.silo.engine.search;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,7 +12,7 @@ import org.apache.lucene.store.NRTCachingDirectory;
 import se.l4.commons.serialization.Expose;
 import se.l4.commons.serialization.ReflectionSerializer;
 import se.l4.commons.serialization.Use;
-import se.l4.silo.engine.search.SearchFieldType;
+import se.l4.silo.engine.config.QueryEngineConfig;
 import se.l4.silo.engine.search.facets.Facet;
 
 public class SearchIndexConfig

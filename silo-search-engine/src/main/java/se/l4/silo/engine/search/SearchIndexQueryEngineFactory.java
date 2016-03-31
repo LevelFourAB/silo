@@ -1,16 +1,17 @@
-package se.l4.silo.engine;
+package se.l4.silo.engine.search;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.function.Function;
 
 import se.l4.silo.StorageException;
-import se.l4.silo.engine.builder.SearchIndexBuilder;
+import se.l4.silo.engine.QueryEngine;
+import se.l4.silo.engine.QueryEngineCreationEncounter;
+import se.l4.silo.engine.QueryEngineFactory;
 import se.l4.silo.engine.config.QueryEngineConfig;
-import se.l4.silo.engine.config.SearchIndexConfig;
-import se.l4.silo.engine.internal.search.SearchEngine;
-import se.l4.silo.engine.internal.search.SearchIndexBuilderImpl;
-import se.l4.silo.engine.internal.search.SearchIndexQueryEngine;
+import se.l4.silo.engine.search.internal.SearchEngine;
+import se.l4.silo.engine.search.internal.SearchIndexBuilderImpl;
+import se.l4.silo.engine.search.internal.SearchIndexQueryEngine;
 
 public class SearchIndexQueryEngineFactory
 	implements QueryEngineFactory<SearchIndexBuilder<?>, SearchIndexConfig>

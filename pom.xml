@@ -18,6 +18,9 @@
 	<modules>
 		<module>silo-api</module>
 		<module>silo-engine</module>
+
+		<module>silo-search-api</module>
+		<module>silo-search-engine</module>
  	</modules>
  	
  	<dependencies>

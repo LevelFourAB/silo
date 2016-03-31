@@ -1,4 +1,4 @@
-package se.l4.silo.engine.internal.search;
+package se.l4.silo.engine.search.internal;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -51,11 +51,11 @@ import se.l4.silo.StorageException;
 import se.l4.silo.engine.DataEncounter;
 import se.l4.silo.engine.QueryEncounter;
 import se.l4.silo.engine.QueryEngine;
-import se.l4.silo.engine.config.SearchIndexConfig;
 import se.l4.silo.engine.search.FacetDefinition;
 import se.l4.silo.engine.search.FieldDefinition;
 import se.l4.silo.engine.search.IndexDefinition;
 import se.l4.silo.engine.search.Language;
+import se.l4.silo.engine.search.SearchIndexConfig;
 import se.l4.silo.engine.search.facets.FacetCollectionEncounter;
 import se.l4.silo.engine.search.query.QueryParseEncounter;
 import se.l4.silo.engine.search.query.QueryParser;

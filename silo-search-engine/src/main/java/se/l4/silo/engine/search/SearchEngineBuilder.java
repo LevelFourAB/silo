@@ -1,8 +1,6 @@
-package se.l4.silo.engine.builder;
+package se.l4.silo.engine.search;
 
-import se.l4.silo.engine.SearchIndexQueryEngineFactory;
-import se.l4.silo.engine.internal.search.SearchIndexQueryEngine;
-import se.l4.silo.engine.search.Language;
+import se.l4.silo.engine.search.internal.SearchIndexQueryEngine;
 
 /**
  * Builder for setting up shared information used by instances of

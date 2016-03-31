@@ -1,14 +1,14 @@
-package se.l4.silo.engine.internal.search;
+package se.l4.silo.engine.search.internal;
 
 import java.util.Objects;
 import java.util.function.Function;
 
 import se.l4.silo.engine.builder.BuilderWithParent;
-import se.l4.silo.engine.builder.SearchIndexBuilder;
 import se.l4.silo.engine.config.QueryEngineConfig;
-import se.l4.silo.engine.config.SearchIndexConfig;
-import se.l4.silo.engine.config.SearchIndexConfig.FieldConfig;
 import se.l4.silo.engine.search.SearchFieldType;
+import se.l4.silo.engine.search.SearchIndexBuilder;
+import se.l4.silo.engine.search.SearchIndexConfig;
+import se.l4.silo.engine.search.SearchIndexConfig.FieldConfig;
 import se.l4.silo.engine.search.builder.FieldBuilder;
 import se.l4.silo.engine.search.facets.FacetBuilderFactory;
 

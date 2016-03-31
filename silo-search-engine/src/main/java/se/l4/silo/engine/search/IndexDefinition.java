@@ -3,7 +3,7 @@ package se.l4.silo.engine.search;
 import java.util.Locale;
 import java.util.Set;
 
-import se.l4.silo.engine.internal.search.SearchIndexQueryEngine;
+import se.l4.silo.engine.search.internal.SearchIndexQueryEngine;
 
 /**
  * Definition used for a single {@link SearchIndexQueryEngine}.

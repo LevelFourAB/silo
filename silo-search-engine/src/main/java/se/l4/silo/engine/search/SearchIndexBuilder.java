@@ -1,5 +1,6 @@
-package se.l4.silo.engine.builder;
+package se.l4.silo.engine.search;
 
+import se.l4.silo.engine.builder.BuilderWithParent;
 import se.l4.silo.engine.search.builder.FieldBuilder;
 import se.l4.silo.engine.search.facets.FacetBuilderFactory;
 

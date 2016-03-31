@@ -1,4 +1,4 @@
-package se.l4.silo.engine.internal.search;
+package se.l4.silo.engine.search.internal;
 
 import java.util.Locale;
 import java.util.Map;

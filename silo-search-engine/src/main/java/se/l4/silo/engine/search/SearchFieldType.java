@@ -5,7 +5,6 @@ import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.search.SortField;
 
-import se.l4.silo.engine.SearchIndex;
 import se.l4.silo.engine.search.builder.FieldBuilder;
 
 /**

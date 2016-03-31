@@ -1,4 +1,4 @@
-package se.l4.silo.engine.internal.search;
+package se.l4.silo.engine.search.internal;
 
 import java.util.HashSet;
 import java.util.Locale;
@@ -13,13 +13,13 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import se.l4.silo.StorageException;
-import se.l4.silo.engine.config.SearchIndexConfig;
 import se.l4.silo.engine.search.FacetDefinition;
 import se.l4.silo.engine.search.FieldDefinition;
 import se.l4.silo.engine.search.IndexDefinition;
 import se.l4.silo.engine.search.IndexDefinitionEncounter;
 import se.l4.silo.engine.search.Language;
 import se.l4.silo.engine.search.SearchFieldType;
+import se.l4.silo.engine.search.SearchIndexConfig;
 import se.l4.silo.engine.search.facets.Facet;
 
 public class IndexDefinitionImpl

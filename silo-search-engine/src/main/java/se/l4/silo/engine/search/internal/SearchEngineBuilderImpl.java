@@ -5,10 +5,9 @@ import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
 
-import se.l4.silo.engine.SearchIndexQueryEngineFactory;
-import se.l4.silo.engine.builder.SearchEngineBuilder;
-import se.l4.silo.engine.internal.search.SearchEngine;
 import se.l4.silo.engine.search.Language;
+import se.l4.silo.engine.search.SearchEngineBuilder;
+import se.l4.silo.engine.search.SearchIndexQueryEngineFactory;
 import se.l4.silo.engine.search.lang.EnglishLanguage;
 import se.l4.silo.engine.search.query.AndQueryParser;
 import se.l4.silo.engine.search.query.ConstantScoreQueryParser;
