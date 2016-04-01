@@ -41,7 +41,7 @@ public class SearchObjectEntityTest
 				.defineField("name", "string")
 				.defineField("age", "int")
 				.defineField("active", "boolean")
-				.add("index", SearchIndex::newIndex)
+				.add("index", SearchIndex::queryEngine)
 					.addField("name").type(SearchFields.TEXT).done()
 					.addField("age").type(SearchFields.INTEGER).done()
 					.addField("active").type(SearchFields.BOOLEAN).done()

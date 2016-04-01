@@ -3,10 +3,10 @@ package se.l4.silo.engine.config;
 import se.l4.commons.serialization.Expose;
 import se.l4.commons.serialization.ReflectionSerializer;
 import se.l4.commons.serialization.Use;
-import se.l4.silo.engine.IndexQueryEngineFactory;
+import se.l4.silo.engine.internal.index.IndexQueryEngine;
 
 /**
- * Configuration for {@link IndexQueryEngineFactory}.
+ * Configuration for {@link IndexQueryEngine}.
  * 
  * @author Andreas Holstenson
  *

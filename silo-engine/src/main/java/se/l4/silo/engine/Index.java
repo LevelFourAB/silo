@@ -9,16 +9,14 @@ import se.l4.silo.engine.internal.index.IndexQueryBuilderImpl;
 import se.l4.silo.engine.internal.index.IndexQueryEngine;
 
 /**
- * Query engine that supports indexing and querying a set of fields.
+ * {@link QueryEngine} implementation that creates indexes.
  * 
  * @author Andreas Holstenson
  *
  */
-public class IndexQueryEngineFactory
+public class Index
 	implements QueryEngineFactory<IndexBuilder<?>, IndexConfig>
 {
-	private static final IndexQueryEngineFactory INSTANCE = new IndexQueryEngineFactory();
-	
 	@Override
 	public String getId()
 	{
@@ -45,15 +43,17 @@ public class IndexQueryEngineFactory
 		MVStoreManager store = encounter.openMVStore(encounter.getName());
 		return new IndexQueryEngine(encounter.getName(), fields, store, config);
 	}
+	
 
 	/**
-	 * Get an instance of this factory for use with builders.
+	 * Create a new {@link SearchIndexBuilder}. This method is used by
+	 * entities when constructing indexes.
 	 * 
+	 * @param f
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
-	public static <T> QueryEngineFactory<IndexBuilder<T>, ?> type()
+	public static <Parent> IndexBuilder<Parent> queryEngine(Function<QueryEngineConfig, Parent> configReceiver)
 	{
-		return (QueryEngineFactory) INSTANCE;
+		return new IndexQueryBuilderImpl<>(configReceiver);
 	}
 }

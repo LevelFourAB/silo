@@ -5,9 +5,10 @@ import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
 
+import se.l4.silo.engine.QueryEngineFactory;
 import se.l4.silo.engine.search.Language;
 import se.l4.silo.engine.search.SearchEngineBuilder;
-import se.l4.silo.engine.search.SearchIndexQueryEngineFactory;
+import se.l4.silo.engine.search.SearchIndex;
 import se.l4.silo.engine.search.lang.EnglishLanguage;
 import se.l4.silo.engine.search.query.AndQueryParser;
 import se.l4.silo.engine.search.query.ConstantScoreQueryParser;
@@ -19,6 +20,12 @@ import se.l4.silo.engine.search.query.StandardQueryParser;
 import se.l4.silo.engine.search.query.SuggestQueryParser;
 import se.l4.silo.engine.search.query.UserQueryParserSpi;
 
+/**
+ * Implementation of {@link SearchEngineBuilder}.
+ * 
+ * @author Andreas Holstenson
+ *
+ */
 public class SearchEngineBuilderImpl
 	implements SearchEngineBuilder
 {
@@ -56,10 +63,10 @@ public class SearchEngineBuilderImpl
 	}
 
 	@Override
-	public SearchIndexQueryEngineFactory build()
+	public QueryEngineFactory<?, ?> build()
 	{
 		SearchEngine engine = new SearchEngine(ImmutableMap.copyOf(langs), ImmutableMap.copyOf(queryTypes));
-		return new SearchIndexQueryEngineFactory(engine);
+		return new SearchIndex(engine);
 	}
 
 }

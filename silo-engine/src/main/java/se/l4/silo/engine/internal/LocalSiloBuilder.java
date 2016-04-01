@@ -4,12 +4,11 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-import se.l4.commons.config.ConfigException;
 import se.l4.commons.serialization.DefaultSerializerCollection;
 import se.l4.commons.serialization.SerializerCollection;
 import se.l4.commons.types.TypeFinder;
 import se.l4.silo.engine.EntityTypeFactory;
-import se.l4.silo.engine.IndexQueryEngineFactory;
+import se.l4.silo.engine.Index;
 import se.l4.silo.engine.LocalSilo;
 import se.l4.silo.engine.QueryEngineFactory;
 import se.l4.silo.engine.builder.EntityBuilder;
@@ -54,7 +53,7 @@ public class LocalSiloBuilder
 		addEntityType(new BinaryEntityFactory());
 		addEntityType(new StructuredEntityFactory());
 		
-		addQueryEngine(IndexQueryEngineFactory.type());
+		addQueryEngine(new Index());
 		
 		addFieldType(BooleanFieldType.INSTANCE);
 		addFieldType(ByteArrayFieldType.INSTANCE);
@@ -65,11 +64,6 @@ public class LocalSiloBuilder
 	
 	private <T> void put(Map<String, T> map, T instance, String name)
 	{
-		if(map.containsKey(name))
-		{
-			throw new ConfigException("Can not register " + instance + " with id " + name);
-		}
-		
 		map.put(name, instance);
 	}
 	
@@ -129,12 +123,6 @@ public class LocalSiloBuilder
 	private void autoLoad()
 	{
 		if(typeFinder == null) return;
-		
-		// Locate any query engine types available
-		for(QueryEngineFactory<?, ?> qe : typeFinder.getSubTypesAsInstances(QueryEngineFactory.class))
-		{
-			addQueryEngine(qe);
-		}
 		
 		// Find all available field types
 		for(FieldType<?> ft : typeFinder.getSubTypesAsInstances(FieldType.class))

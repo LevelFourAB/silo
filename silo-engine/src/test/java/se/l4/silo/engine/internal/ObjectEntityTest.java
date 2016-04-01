@@ -11,7 +11,7 @@ import org.junit.Test;
 
 import se.l4.silo.FetchResult;
 import se.l4.silo.Silo;
-import se.l4.silo.engine.IndexQueryEngineFactory;
+import se.l4.silo.engine.Index;
 import se.l4.silo.engine.LocalSilo;
 import se.l4.silo.query.IndexQuery;
 import se.l4.silo.structured.ObjectEntity;
@@ -33,10 +33,10 @@ public class ObjectEntityTest
 				.defineField("name", "string")
 				.defineField("age", "int")
 				.defineField("active", "boolean")
-				.add("byName", IndexQueryEngineFactory.type())
+				.add("byName", Index::queryEngine)
 					.addField("name")
 					.done()
-				.add("byAge", IndexQueryEngineFactory.type())
+				.add("byAge", Index::queryEngine)
 					.addField("age")
 					.addSortField("name")
 					.done()

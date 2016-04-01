@@ -16,6 +16,7 @@ import se.l4.silo.FetchResult;
 import se.l4.silo.binary.BinaryEntity;
 import se.l4.silo.binary.BinaryEntry;
 import se.l4.silo.engine.FileSnapshot;
+import se.l4.silo.engine.Index;
 import se.l4.silo.engine.LocalSilo;
 import se.l4.silo.engine.Snapshot;
 import se.l4.silo.structured.ObjectEntity;
@@ -176,7 +177,7 @@ public class SnapshotTest
 				.addEntity("test")
 					.asStructured()
 					.defineField("name", "string")
-					.addIndex("byName")
+					.add("byName", Index::queryEngine)
 						.addField("name")
 						.done()
 					.done()
@@ -222,7 +223,7 @@ public class SnapshotTest
 				.addEntity("test")
 					.asStructured()
 					.defineField("name", "string")
-					.addIndex("byName")
+					.add("byName", Index::queryEngine)
 						.addField("name")
 						.done()
 					.done()
@@ -251,7 +252,7 @@ public class SnapshotTest
 				.addEntity("test")
 					.asStructured()
 					.defineField("name", "string")
-					.addIndex("byName")
+					.add("byName", Index::queryEngine)
 						.addField("name")
 						.done()
 					.done()
@@ -284,7 +285,7 @@ public class SnapshotTest
 				.addEntity("test")
 					.asStructured()
 					.defineField("name", "string")
-					.addIndex("byName")
+					.add("byName", Index::queryEngine)
 						.addField("name")
 						.done()
 					.done()
@@ -310,7 +311,7 @@ public class SnapshotTest
 				.addEntity("test")
 					.asStructured()
 					.defineField("name", "string")
-					.addIndex("byName")
+					.add("byName", Index::queryEngine)
 						.addField("name")
 						.done()
 					.done()

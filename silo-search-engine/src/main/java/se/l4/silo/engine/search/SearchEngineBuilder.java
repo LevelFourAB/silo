@@ -1,5 +1,6 @@
 package se.l4.silo.engine.search;
 
+import se.l4.silo.engine.QueryEngineFactory;
 import se.l4.silo.engine.search.internal.SearchIndexQueryEngine;
 
 /**
@@ -25,5 +26,5 @@ public interface SearchEngineBuilder
 	 * 
 	 * @return
 	 */
-	SearchIndexQueryEngineFactory build();
+	QueryEngineFactory<?, ?> build();
 }

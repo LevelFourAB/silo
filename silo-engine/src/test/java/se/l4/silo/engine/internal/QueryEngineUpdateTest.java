@@ -17,7 +17,7 @@ import se.l4.commons.serialization.format.StreamingInput;
 import se.l4.commons.serialization.format.Token;
 import se.l4.silo.FetchResult;
 import se.l4.silo.Silo;
-import se.l4.silo.engine.IndexQueryEngineFactory;
+import se.l4.silo.engine.Index;
 import se.l4.silo.engine.LocalSilo;
 import se.l4.silo.query.IndexQuery;
 import se.l4.silo.structured.StructuredEntity;
@@ -45,7 +45,7 @@ public class QueryEngineUpdateTest
 			.addEntity("test")
 				.asStructured()
 				.defineField("field", "string")
-				.add("byField", IndexQueryEngineFactory.type())
+				.add("byField", Index::queryEngine)
 					.addField("field")
 					.done()
 				.done()

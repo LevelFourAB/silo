@@ -15,6 +15,7 @@ import se.l4.silo.FetchResult;
 import se.l4.silo.Silo;
 import se.l4.silo.binary.BinaryEntity;
 import se.l4.silo.binary.BinaryEntry;
+import se.l4.silo.engine.Index;
 import se.l4.silo.engine.LocalSilo;
 import se.l4.silo.structured.ObjectEntity;
 
@@ -87,7 +88,7 @@ public class ThreadSafetyTest
 			.addEntity("test")
 				.asStructured()
 				.defineField("name", "string")
-				.addIndex("byName")
+				.add("byName", Index::queryEngine)
 					.addField("name")
 					.done()
 				.done()
