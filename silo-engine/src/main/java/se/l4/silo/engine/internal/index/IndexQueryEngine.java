@@ -122,10 +122,16 @@ public class IndexQueryEngine
 		// Generate the sort data
 		Object[] data = encounter.getStructuredArray(sortFields);
 		
+		if(logger.isTraceEnabled())
+		{
+			logger.trace("  key=" + Arrays.toString(key) + ", sort=" + Arrays.toString(data));
+		}
+		
 		// Look up our previously indexed key to see if we need to delete it
 		Object[] previousKey = indexedData.get(id);
 		if(previousKey != null)
 		{
+			logger.trace("  removing " + Arrays.toString(previousKey));
 			index.remove(previousKey);
 		}
 		

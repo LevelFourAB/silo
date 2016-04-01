@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import se.l4.commons.id.LongIdGenerator;
 import se.l4.commons.id.SequenceLongIdGenerator;
@@ -187,7 +188,10 @@ public class StorageEngine
 		storages = new ConcurrentHashMap<>();
 		entities = new ConcurrentHashMap<>();
 		
-		executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 2);
+		executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 2, new ThreadFactoryBuilder()
+			.setNameFormat("Silo Background Thread %d")
+			.build()
+		);
 		
 		loadConfig(config);
 		
