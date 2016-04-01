@@ -26,13 +26,15 @@ public class IndexDefinitionImpl
 	implements IndexDefinition
 {
 	private final Locale locale;
+	private final String languageField;
 	private final Map<String, FieldDefinition> fields;
 	private final Map<String, FacetDefinition> facets;
 	private final Set<String> valueFields;
 
-	public IndexDefinitionImpl(SearchIndexConfig config)
+	public IndexDefinitionImpl(SearchEngine engine, SearchIndexConfig config)
 	{
-		locale = Locale.ENGLISH;
+		locale = engine.getDefaultLanguage();
+		languageField = config.getLanguageField();
 		
 		ImmutableMap.Builder<String, FieldDefinition> fields = ImmutableMap.builder();
 		for(SearchIndexConfig.FieldConfig fc : config.getFields())
@@ -66,7 +68,7 @@ public class IndexDefinitionImpl
 	@Override
 	public String getLanguageField()
 	{
-		return null;
+		return languageField;
 	}
 	
 	@Override

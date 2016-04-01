@@ -20,6 +20,7 @@ public class SearchIndexConfig
 {
 	private IndexReloadConfig reload;
 	
+	private String languageField;
 	private List<FieldConfig> fields;
 	private Map<String, Facet<?>> facets;
 	
@@ -30,6 +31,16 @@ public class SearchIndexConfig
 		reload = new IndexReloadConfig();
 		fields = new ArrayList<>();
 		facets = new HashMap<>();
+	}
+	
+	public String getLanguageField()
+	{
+		return languageField;
+	}
+	
+	public void setLanguageField(String field)
+	{
+		this.languageField = field;
 	}
 	
 	public IndexReloadConfig getReload()

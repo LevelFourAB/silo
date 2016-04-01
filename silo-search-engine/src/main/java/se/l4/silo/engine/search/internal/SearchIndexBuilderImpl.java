@@ -24,6 +24,13 @@ public class SearchIndexBuilderImpl<Parent>
 		
 		config = new SearchIndexConfig();
 	}
+	
+	@Override
+	public SearchIndexBuilder<Parent> setLanguageField(String name)
+	{
+		config.setLanguageField(null);
+		return this;
+	}
 
 	@Override
 	public FieldBuilder<SearchIndexBuilder<Parent>> addField(String field)

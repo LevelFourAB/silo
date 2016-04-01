@@ -89,7 +89,7 @@ public class SearchIndexQueryEngine
 		throws IOException
 	{
 		this.engine = engine;
-		def = new IndexDefinitionImpl(config);
+		def = new IndexDefinitionImpl(engine, config);
 		
 		// Create the directory implementation to use
 		this.directory = createDirectory(FSDirectory.open(directory), config);
@@ -126,6 +126,12 @@ public class SearchIndexQueryEngine
 		for(SearchIndexConfig.FieldConfig fc : config.getFields())
 		{
 			fieldNames.add(fc.getName());
+		}
+		
+		if(def.getLanguageField() != null)
+		{
+			// Add the language field if we have one
+			fieldNames.add(def.getLanguageField());
 		}
 		
 		this.fieldNames = fieldNames.build();

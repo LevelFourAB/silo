@@ -1,5 +1,7 @@
 package se.l4.silo.engine.search;
 
+import java.util.Locale;
+
 import se.l4.silo.engine.QueryEngineFactory;
 import se.l4.silo.engine.search.internal.SearchIndexQueryEngine;
 
@@ -12,6 +14,14 @@ import se.l4.silo.engine.search.internal.SearchIndexQueryEngine;
  */
 public interface SearchEngineBuilder
 {
+	/**
+	 * Set the default language for this engine.
+	 * 
+	 * @param locale
+	 * @return
+	 */
+	SearchEngineBuilder setDefaultLanguage(Locale locale);
+	
 	/**
 	 * Add a custom language implementation to this engine. This is for
 	 * advanced usage with custom language implementations.
