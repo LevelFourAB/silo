@@ -22,6 +22,13 @@ public interface QueryEngineCreationEncounter<Config extends QueryEngineConfig>
 	String getName();
 	
 	/**
+	 * Get the name of this engine unique to the system.
+	 * 
+	 * @return
+	 */
+	String getUniqueName();
+	
+	/**
 	 * Get the configuration of this query engine.
 	 * 
 	 * @return

@@ -25,17 +25,19 @@ import se.l4.silo.engine.internal.mvstore.SharedStorages;
 public class QueryEngineCreationEncounterImpl<C extends QueryEngineConfig>
 	implements QueryEngineCreationEncounter<C>
 {
+	private final SharedStorages storages;
 	private final Path root;
 	private final String name;
+	private final String uniqueName;
 	private final C config;
 	private final Fields fields;
-	private final SharedStorages storages;
 
-	public QueryEngineCreationEncounterImpl(SharedStorages storages, Path root, String name, C config, Fields fields)
+	public QueryEngineCreationEncounterImpl(SharedStorages storages, Path root, String name, String uniqueName, C config, Fields fields)
 	{
 		this.storages = storages;
 		this.root = root;
 		this.name = name;
+		this.uniqueName = uniqueName;
 		this.config = config;
 		this.fields = fields;
 	}
@@ -44,6 +46,12 @@ public class QueryEngineCreationEncounterImpl<C extends QueryEngineConfig>
 	public String getName()
 	{
 		return name;
+	}
+	
+	@Override
+	public String getUniqueName()
+	{
+		return uniqueName;
 	}
 	
 	@Override

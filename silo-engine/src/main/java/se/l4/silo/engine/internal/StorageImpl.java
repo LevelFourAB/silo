@@ -77,6 +77,7 @@ public class StorageImpl
 				storages,
 				dataDir,
 				key,
+				name + "-" + key,
 				config.as(factory.getConfigClass()),
 				fields
 			));
