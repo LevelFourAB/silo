@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.document.Document;
@@ -44,6 +45,8 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.NRTCachingDirectory;
 import org.apache.lucene.util.BytesRef;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -56,6 +59,7 @@ import se.l4.silo.engine.search.FieldDefinition;
 import se.l4.silo.engine.search.IndexDefinition;
 import se.l4.silo.engine.search.Language;
 import se.l4.silo.engine.search.SearchIndexConfig;
+import se.l4.silo.engine.search.SearchIndexConfig.CommitConfig;
 import se.l4.silo.engine.search.facets.FacetCollectionEncounter;
 import se.l4.silo.engine.search.query.QueryParseEncounter;
 import se.l4.silo.engine.search.query.QueryParser;
@@ -74,6 +78,8 @@ import se.l4.silo.search.SearchIndexQueryRequest;
 public class SearchIndexQueryEngine
 	implements QueryEngine<SearchIndexQueryRequest>
 {
+	private static final Logger log = LoggerFactory.getLogger(SearchIndexQueryEngine.class);
+	
 	private final IndexDefinitionImpl def;
 	private final SearchEngine engine;
 	
@@ -85,7 +91,9 @@ public class SearchIndexQueryEngine
 	private final ImmutableSet<String> fieldNames;
 	private ControlledRealTimeReopenThread<IndexSearcher> thread;
 
-	public SearchIndexQueryEngine(SearchEngine engine, Path directory, SearchIndexConfig config)
+	private CommitPolicy commitPolicy;
+
+	public SearchIndexQueryEngine(SearchEngine engine, ScheduledExecutorService executor, String name, Path directory, SearchIndexConfig config)
 		throws IOException
 	{
 		this.engine = engine;
@@ -121,6 +129,9 @@ public class SearchIndexQueryEngine
 		thread.setDaemon(true);
 		thread.start();
 		
+		CommitConfig commit = config.getCommit();
+		commitPolicy = new CommitPolicy(log, name, executor, writer, commit.getMaxUpdates(), commit.getMaxTime());
+		
 		// Figure out which fields that are going to be indexed
 		ImmutableSet.Builder<String> fieldNames = ImmutableSet.builder();
 		for(SearchIndexConfig.FieldConfig fc : config.getFields())
@@ -154,6 +165,9 @@ public class SearchIndexQueryEngine
 	public void close()
 		throws IOException
 	{
+		commitPolicy.commit();
+		commitPolicy.close();
+		
 		thread.interrupt();
 		manager.close();
 		writer.close();
@@ -263,7 +277,7 @@ public class SearchIndexQueryEngine
 			.stream()
 			.map(s -> {
 				FieldDefinition fdef = def.getField(s.getField());
-				return new SortField(fdef.docValuesName(null), fdef.getType().getSortType(), ! s.isAscending());
+				return new SortField(fdef.sortValuesName(null), fdef.getType().getSortType(), ! s.isAscending());
 			})
 			.toArray(c -> new SortField[c]);
 			
@@ -524,6 +538,9 @@ public class SearchIndexQueryEngine
 		{
 			throw new StorageException("Unable to update search index; " + e.getMessage(), e);
 		}
+		
+		// Tell our commit policy that we have modified the index
+		commitPolicy.indexModified();
 	}
 	
 	private void addField(Document document, Language fallback, Language current, FieldDefinition field, String name, Object object)
@@ -591,6 +608,9 @@ public class SearchIndexQueryEngine
 		{
 			throw new StorageException("Unable to delete from search index; " + e.getMessage(), e);
 		}
+		
+		// Tell our commit policy that we have modified the index
+		commitPolicy.indexModified();
 	}
 
 	private byte[] longToBytes(long id)

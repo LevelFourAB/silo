@@ -71,6 +71,14 @@ public interface FieldDefinition
 	 * @return
 	 */
 	String docValuesName(Locale language);
+	
+	/**
+	 * Get under which names a doc values field is stored.
+	 * 
+	 * @param language
+	 * @return
+	 */
+	String sortValuesName(Locale language);
 
 	/**
 	 * Get under which name this field is stored for the specific language.

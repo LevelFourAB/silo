@@ -19,6 +19,7 @@ public class SearchIndexConfig
 	extends QueryEngineConfig
 {
 	private IndexReloadConfig reload;
+	private CommitConfig commit;
 	
 	private String languageField;
 	private List<FieldConfig> fields;
@@ -29,6 +30,8 @@ public class SearchIndexConfig
 		super("silo:search-index");
 		
 		reload = new IndexReloadConfig();
+		commit = new CommitConfig();
+		
 		fields = new ArrayList<>();
 		facets = new HashMap<>();
 	}
@@ -46,6 +49,11 @@ public class SearchIndexConfig
 	public IndexReloadConfig getReload()
 	{
 		return reload;
+	}
+	
+	public CommitConfig getCommit()
+	{
+		return commit;
 	}
 	
 	public List<FieldConfig> getFields()
@@ -383,6 +391,32 @@ public class SearchIndexConfig
 			this.minStale = minStale;
 			
 			return this;
+		}
+	}
+	
+	@Use(ReflectionSerializer.class)
+	public class CommitConfig
+	{
+		@Expose
+		private int maxUpdates;
+		
+		@Expose
+		private int maxTime;
+		
+		public CommitConfig()
+		{
+			maxUpdates = 1000;
+			maxTime = 60;
+		}
+		
+		public int getMaxUpdates()
+		{
+			return maxUpdates;
+		}
+		
+		public int getMaxTime()
+		{
+			return maxTime;
 		}
 	}
 }

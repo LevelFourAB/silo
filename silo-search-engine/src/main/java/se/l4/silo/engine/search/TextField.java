@@ -7,6 +7,7 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.SortedDocValuesField;
 import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.util.BytesRef;
 
@@ -85,5 +86,11 @@ public class TextField
 	public Object extract(IndexableField field)
 	{
 		return field.stringValue();
+	}
+	
+	@Override
+	public Query createEqualsQuery(String field, Object value)
+	{
+		return null;
 	}
 }

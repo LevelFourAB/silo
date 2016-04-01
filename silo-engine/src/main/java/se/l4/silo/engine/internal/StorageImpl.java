@@ -75,6 +75,7 @@ public class StorageImpl
 			QueryEngineFactory<?, ?> factory = factories.forQueryEngine(type);
 			QueryEngine<?> engine = factory.create(new QueryEngineCreationEncounterImpl(
 				storages,
+				executor,
 				dataDir,
 				key,
 				name + "-" + key,

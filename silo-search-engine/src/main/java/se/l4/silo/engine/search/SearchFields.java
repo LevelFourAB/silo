@@ -16,8 +16,13 @@ import org.apache.lucene.document.SortedSetDocValuesField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SortField;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.BytesRefBuilder;
+import org.apache.lucene.util.NumericUtils;
 
 import se.l4.silo.engine.search.internal.SearchIndexQueryEngine;
 import se.l4.silo.search.query.SuggestQuery;
@@ -91,6 +96,12 @@ public class SearchFields
 		{
 			return field.stringValue();
 		}
+		
+		@Override
+		public Query createEqualsQuery(String field, Object value)
+		{
+			return new TermQuery(new Term(field, value.toString()));
+		}
 	};
 	
 	/**
@@ -127,6 +138,31 @@ public class SearchFields
 		{
 			return SortField.Type.INT;
 		}
+		
+		private int toInteger(Object value)
+		{
+			if(value instanceof Number)
+			{
+				return ((Number) value).intValue();
+			}
+			
+			return Integer.parseInt(value.toString());
+		}
+		
+		@Override
+		public Query createEqualsQuery(String field, Object value)
+		{
+			BytesRefBuilder bytesRef = new BytesRefBuilder();
+			int v = toInteger(value);
+			NumericUtils.intToPrefixCoded(v, 0, bytesRef);
+			return new TermQuery(new Term(field, bytesRef.get()));
+		}
+		
+		@Override
+		public IndexableField createSortingField(String field, Language lang, Object object)
+		{
+			return new NumericDocValuesField(field, toInteger(object));
+		}
 	};
 	
 	/**
@@ -151,6 +187,31 @@ public class SearchFields
 		public SortField.Type getSortType()
 		{
 			return SortField.Type.LONG;
+		}
+		
+		private long toLong(Object value)
+		{
+			if(value instanceof Number)
+			{
+				return ((Number) value).longValue();
+			}
+			
+			return Long.parseLong(value.toString());
+		}
+		
+		@Override
+		public Query createEqualsQuery(String field, Object value)
+		{
+			BytesRefBuilder bytesRef = new BytesRefBuilder();
+			long v = toLong(value);
+			NumericUtils.longToPrefixCoded(v, 0, bytesRef);
+			return new TermQuery(new Term(field, bytesRef.get()));
+		}
+		
+		@Override
+		public IndexableField createSortingField(String field, Language lang, Object object)
+		{
+			return new NumericDocValuesField(field, toLong(object));
 		}
 	};
 	
@@ -197,6 +258,14 @@ public class SearchFields
 		{
 			byte[] data = object == null ? null : new byte[] { (byte) (((Boolean) object).booleanValue() ? 1 : 0) };
 			return new Field(field, data, type);
+		}
+		
+		@Override
+		public Query createEqualsQuery(String field, Object value)
+		{
+			BytesRefBuilder bytesRef = new BytesRefBuilder();
+			bytesRef.append((byte) (((Boolean) value).booleanValue() ? 1 : 0));
+			return new TermQuery(new Term(field, bytesRef.get()));
 		}
 	};
 	
@@ -257,6 +326,12 @@ public class SearchFields
 		{
 			BytesRef bytes = field.binaryValue();
 			return Arrays.copyOfRange(bytes.bytes, bytes.offset, bytes.offset + bytes.length);
+		}
+		
+		@Override
+		public Query createEqualsQuery(String field, Object value)
+		{
+			return new TermQuery(new Term(field, new BytesRef((byte[]) value)));
 		}
 	};
 

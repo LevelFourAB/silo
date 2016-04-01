@@ -64,4 +64,11 @@ public abstract class NumericSearchField
 	{
 		return field.numericValue();
 	}
+	
+	@Override
+	public IndexableField createSortingField(String field, Language lang, Object object)
+	{
+		// TODO Auto-generated method stub
+		return SearchFieldType.super.createSortingField(field, lang, object);
+	}
 }

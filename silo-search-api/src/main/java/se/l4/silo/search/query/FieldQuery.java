@@ -12,33 +12,9 @@ public class FieldQuery<R>
 		this.field = field;
 	}
 	
-	public R value(String value)
+	public R is(Object value)
 	{
-		receiver.addQuery(new QueryItem("standard", escape(field) + ":\"" + escape(value) + "\""));
+		receiver.addQuery(new QueryItem("field", new FieldQueryData(field, value)));
 		return parent;
-	}
-	
-	/**
-	 * Escape a query part.
-	 * 
-	 * @param in
-	 * @return
-	 */
-	static String escape(String in)
-	{
-		StringBuilder sb = new StringBuilder(in.length() * 2);
-		for(int i=0; i<in.length(); i++)
-		{
-			char c = in.charAt(i);
-			if (c == '\\' || c == '+' || c == '-' || c == '!' || c == '('
-				|| c == ')' || c == ':' || c == '^' || c == '[' || c == ']'
-				|| c == '\"' || c == '{' || c == '}' || c == '~'
-				|| c == '*' || c == '?' || c == '|' || c == '&' || c == '/')
-			{
-				sb.append('\\');
-			}
-			sb.append(c);
-		}
-		return sb.toString();
 	}
 }

@@ -1,6 +1,7 @@
 package se.l4.silo.engine;
 
 import java.nio.file.Path;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.h2.mvstore.MVStore;
 
@@ -92,4 +93,15 @@ public interface QueryEngineCreationEncounter<Config extends QueryEngineConfig>
 	 * @return
 	 */
 	MVStoreManager openStorageWideMVStore(String name);
+	
+	/**
+	 * Get an executor that can be used for background tasks.
+	 * 
+	 * <p>
+	 * When a query engine is closed it must stop any background tasks that
+	 * are queued or running.
+	 * 
+	 * @return
+	 */
+	ScheduledExecutorService getExecutor();
 }

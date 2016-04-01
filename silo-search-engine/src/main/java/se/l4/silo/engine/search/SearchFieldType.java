@@ -3,6 +3,7 @@ package se.l4.silo.engine.search;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SortField;
 
 import se.l4.silo.engine.search.builder.FieldBuilder;
@@ -79,6 +80,15 @@ public interface SearchFieldType
 	 */
 	Object extract(IndexableField field);
 	
+	/**
+	 * Get a query that represents the given field name matching the given
+	 * value.
+	 * 
+	 * @param value
+	 * @return
+	 */
+	Query createEqualsQuery(String field, Object value);
+	
 	default IndexableField createValuesField(String field, Language lang, Object object)
 	{
 		throw new UnsupportedOperationException("The field type " + getClass().getSimpleName() + " does not support values and can not be used for things such as faceting and scoring");
@@ -86,6 +96,6 @@ public interface SearchFieldType
 	
 	default IndexableField createSortingField(String field, Language lang, Object object)
 	{
-		throw new UnsupportedOperationException("The field type " + getClass().getSimpleName() + " does not support scoring");
+		throw new UnsupportedOperationException("The field type " + getClass().getSimpleName() + " does not support sorting");
 	}
 }

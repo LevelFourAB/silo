@@ -55,7 +55,7 @@ public class SearchIndex
 		Path path = encounter.getDataDirectory();
 		try
 		{
-			return new SearchIndexQueryEngine(engine, path, encounter.getConfig());
+			return new SearchIndexQueryEngine(engine, encounter.getExecutor(), encounter.getUniqueName(), path, encounter.getConfig());
 		}
 		catch(IOException e)
 		{

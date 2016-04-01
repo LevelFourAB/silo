@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.h2.mvstore.MVStore;
 
@@ -26,15 +27,18 @@ public class QueryEngineCreationEncounterImpl<C extends QueryEngineConfig>
 	implements QueryEngineCreationEncounter<C>
 {
 	private final SharedStorages storages;
+	private final ScheduledExecutorService executor;
 	private final Path root;
 	private final String name;
 	private final String uniqueName;
 	private final C config;
 	private final Fields fields;
 
-	public QueryEngineCreationEncounterImpl(SharedStorages storages, Path root, String name, String uniqueName, C config, Fields fields)
+	public QueryEngineCreationEncounterImpl(SharedStorages storages, ScheduledExecutorService executor,
+			Path root, String name, String uniqueName, C config, Fields fields)
 	{
 		this.storages = storages;
+		this.executor = executor;
 		this.root = root;
 		this.name = name;
 		this.uniqueName = uniqueName;
@@ -114,5 +118,11 @@ public class QueryEngineCreationEncounterImpl<C extends QueryEngineConfig>
 	public MVStoreManager openStorageWideMVStore(String name)
 	{
 		return storages.get(Paths.get("query-engine").resolve(name));
+	}
+	
+	@Override
+	public ScheduledExecutorService getExecutor()
+	{
+		return executor;
 	}
 }

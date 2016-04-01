@@ -14,6 +14,7 @@ import se.l4.silo.engine.search.SearchIndex;
 import se.l4.silo.engine.search.lang.EnglishLanguage;
 import se.l4.silo.engine.search.query.AndQueryParser;
 import se.l4.silo.engine.search.query.ConstantScoreQueryParser;
+import se.l4.silo.engine.search.query.FieldQueryParser;
 import se.l4.silo.engine.search.query.NegateQueryParser;
 import se.l4.silo.engine.search.query.OrQueryParser;
 import se.l4.silo.engine.search.query.QueryParser;
@@ -46,6 +47,7 @@ public class SearchEngineBuilderImpl
 		queryTypes = new HashMap<>();
 		addQueryParser(new AndQueryParser());
 		addQueryParser(new OrQueryParser());
+		addQueryParser(new FieldQueryParser());
 		addQueryParser(new ConstantScoreQueryParser());
 		addQueryParser(new NegateQueryParser());
 		addQueryParser(new RangeQueryParser());

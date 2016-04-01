@@ -208,6 +208,12 @@ public class IndexDefinitionImpl
 		}
 		
 		@Override
+		public String sortValuesName(Locale language)
+		{
+			return name('s', getName(), language);
+		}
+		
+		@Override
 		public String name(String field, Language language)
 		{
 			return name('f', field, language == null ? null : language.getLocale());
@@ -255,7 +261,7 @@ public class IndexDefinitionImpl
 		@Override
 		public IndexableField createSortingField(String name, Language language, Object data)
 		{
-			String fieldName = name('v', name, language == null ? null : language.getLocale());
+			String fieldName = name('s', name, language == null ? null : language.getLocale());
 			return fc.getType().createSortingField(fieldName, language, data);
 		}
 		
