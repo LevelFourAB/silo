@@ -3,6 +3,7 @@ package se.l4.silo.engine.internal.query;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import org.h2.mvstore.MVStore;
 
@@ -12,6 +13,7 @@ import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.QueryEngineCreationEncounter;
 import se.l4.silo.engine.config.QueryEngineConfig;
 import se.l4.silo.engine.internal.mvstore.MVStoreManagerImpl;
+import se.l4.silo.engine.internal.mvstore.SharedStorages;
 
 /**
  * Implementation of {@link QueryEngineCreationEncounter}.
@@ -27,9 +29,11 @@ public class QueryEngineCreationEncounterImpl<C extends QueryEngineConfig>
 	private final String name;
 	private final C config;
 	private final Fields fields;
+	private final SharedStorages storages;
 
-	public QueryEngineCreationEncounterImpl(Path root, String name, C config, Fields fields)
+	public QueryEngineCreationEncounterImpl(SharedStorages storages, Path root, String name, C config, Fields fields)
 	{
+		this.storages = storages;
 		this.root = root;
 		this.name = name;
 		this.config = config;
@@ -96,5 +100,11 @@ public class QueryEngineCreationEncounterImpl<C extends QueryEngineConfig>
 		return new MVStoreManagerImpl(new MVStore.Builder()
 			.fileName(resolveDataFile(name).toString())
 			.compress());
+	}
+	
+	@Override
+	public MVStoreManager openStorageWideMVStore(String name)
+	{
+		return storages.get(Paths.get("query-engine").resolve(name));
 	}
 }

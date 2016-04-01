@@ -48,6 +48,7 @@ import se.l4.silo.engine.config.QueryableEntityConfig;
 import se.l4.silo.engine.internal.log.TransactionLog;
 import se.l4.silo.engine.internal.log.TransactionLogImpl;
 import se.l4.silo.engine.internal.mvstore.MVStoreManagerImpl;
+import se.l4.silo.engine.internal.mvstore.SharedStorages;
 import se.l4.silo.engine.log.Log;
 import se.l4.silo.engine.log.LogBuilder;
 
@@ -141,6 +142,11 @@ public class StorageEngine
 	 * Executor for performing asynchronous tasks for this engine.
 	 */
 	private final ScheduledExecutorService executor;
+
+	/**
+	 * Instance of {@link SharedStorages} for use by things such as indexes.
+	 */
+	private final SharedStorages sharedStorages;
 	
 	public StorageEngine(EngineFactories factories,
 			SerializerCollection serializers,
@@ -155,6 +161,7 @@ public class StorageEngine
 		this.serializers = serializers;
 		this.transactionSupport = transactionSupport;
 		this.root = root;
+		this.sharedStorages = new SharedStorages(root);
 		
 		mutationLock = new ReentrantLock();
 	
@@ -361,7 +368,7 @@ public class StorageEngine
 
 	private Path resolveDataPath(String name, String subName)
 	{
-		return root.resolve(name).resolve(subName);
+		return root.resolve("storage").resolve(name).resolve(subName);
 	}
 
 	/**
@@ -532,6 +539,7 @@ public class StorageEngine
 				return new FieldDefImpl(c.getName(), factories.getFieldType(type), c.isCollection());
 			}));
 			StorageImpl impl = new StorageImpl(
+				sharedStorages,
 				factories,
 				executor,
 				transactionSupport,

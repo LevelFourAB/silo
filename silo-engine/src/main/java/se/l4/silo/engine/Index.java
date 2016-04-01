@@ -40,7 +40,7 @@ public class Index
 	{
 		Fields fields = encounter.getFields();
 		IndexConfig config = encounter.getConfig();
-		MVStoreManager store = encounter.openMVStore(encounter.getName());
+		MVStoreManager store = encounter.openStorageWideMVStore(encounter.getName());
 		return new IndexQueryEngine(encounter.getName(), fields, store, config);
 	}
 	

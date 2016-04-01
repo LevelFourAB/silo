@@ -2,6 +2,8 @@ package se.l4.silo.engine;
 
 import java.nio.file.Path;
 
+import org.h2.mvstore.MVStore;
+
 import se.l4.silo.engine.config.QueryEngineConfig;
 
 /**
@@ -69,4 +71,18 @@ public interface QueryEngineCreationEncounter<Config extends QueryEngineConfig>
 	 * @return
 	 */
 	MVStoreManager openMVStore(String name);
+	
+	/**
+	 * Open a new shared MVStore for the entire storage. Any caller of this
+	 * method with the same name will receive an {@link MVStoreManager}
+	 * pointing to the same {@link MVStore}.
+	 * 
+	 * <p>
+	 * Any users of this store are required to close the {@link MVStoreManager}
+	 * when they are done using it.
+	 * 
+	 * @param name
+	 * @return
+	 */
+	MVStoreManager openStorageWideMVStore(String name);
 }

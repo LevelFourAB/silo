@@ -20,6 +20,7 @@ import se.l4.silo.engine.QueryEngine;
 import se.l4.silo.engine.QueryEngineFactory;
 import se.l4.silo.engine.Storage;
 import se.l4.silo.engine.config.QueryEngineConfig;
+import se.l4.silo.engine.internal.mvstore.SharedStorages;
 import se.l4.silo.engine.internal.query.QueryEncounterImpl;
 import se.l4.silo.engine.internal.query.QueryEngineCreationEncounterImpl;
 import se.l4.silo.engine.internal.query.QueryEngineUpdater;
@@ -46,6 +47,7 @@ public class StorageImpl
 	private final QueryEngineUpdater queryEngineUpdater;
 
 	public StorageImpl(
+			SharedStorages storages,
 			EngineFactories factories,
 			ScheduledExecutorService executor,
 			TransactionSupport transactionSupport,
@@ -72,6 +74,7 @@ public class StorageImpl
 			String type = config.getType();
 			QueryEngineFactory<?, ?> factory = factories.forQueryEngine(type);
 			QueryEngine<?> engine = factory.create(new QueryEngineCreationEncounterImpl(
+				storages,
 				dataDir,
 				key,
 				config.as(factory.getConfigClass()),
