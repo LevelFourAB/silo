@@ -120,8 +120,6 @@ public class CategoryFacet
 		TreeSet<Result> tree = new TreeSet<>();
 		for(ObjectIntCursor<String> cursor : result)
 		{
-			if(cursor.value == totalHits) continue;
-			
 			Result r = new Result(cursor.key, cursor.value);
 			if(count == 0 || tree.size() < count)
 			{
@@ -139,7 +137,7 @@ public class CategoryFacet
 		while(it.hasNext())
 		{
 			Result r = it.next();
-			entries.add(new DefaultFacetEntry(r.key, r.count, null));
+			entries.add(new DefaultFacetEntry(r.key, r.count, r.key));
 		}
 		
 		return entries;
