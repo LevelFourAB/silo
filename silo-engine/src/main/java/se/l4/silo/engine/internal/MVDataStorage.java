@@ -6,10 +6,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Enumeration;
 
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.carrotsearch.hppc.LongArrayList;
 import com.google.common.annotations.VisibleForTesting;
@@ -34,6 +37,8 @@ import se.l4.silo.engine.types.VersionedType;
 public class MVDataStorage
 	implements DataStorage
 {
+	private static final Logger log = LoggerFactory.getLogger(MVDataStorage.class);
+	
 	private static final int CHUNK_SIZE = 8192;
 	
 	private final MVStoreManager store;
@@ -62,8 +67,28 @@ public class MVDataStorage
 			long nextId = nextInternalId();
 			ids.add(nextId);
 			
-			chunks.put(nextId, Arrays.copyOfRange(data, offset, offset + length));
+			byte[] buf = Arrays.copyOfRange(data, offset, offset + length);
+			chunks.put(nextId, buf);
+			
+			if(log.isTraceEnabled())
+			{
+				log.trace("Store: Wrote " + nextId + " with data " + Base64.getEncoder().encodeToString(buf));
+			}
 		});
+		
+		if(log.isTraceEnabled())
+		{
+			log.trace("Store: Mapped " + id + " to " + Arrays.toString(ids.toArray()));
+		}
+		
+		long[] old = keys.get(id);
+		if(old != null)
+		{
+			for(long chunk : old)
+			{
+				chunks.remove(chunk);
+			}
+		}
 		
 		keys.put(id, ids.toArray());
 	}
@@ -73,6 +98,12 @@ public class MVDataStorage
 		throws IOException
 	{
 		long[] ids = keys.get(id);
+		
+		if(log.isTraceEnabled())
+		{
+			log.trace("Get: Mapped " + id + " to " + Arrays.toString(ids));
+		}
+		
 		if(ids == null) return null;
 		
 		return new ChunkedBytes(ids);
@@ -83,6 +114,11 @@ public class MVDataStorage
 	{
 		long[] ids = keys.get(id);
 		if(ids == null) return;
+		
+		if(log.isTraceEnabled())
+		{
+			log.trace("Delete: Mapped " + id + " to " + Arrays.toString(ids));
+		}
 		
 		for(long chunk : ids)
 		{
@@ -168,6 +204,12 @@ public class MVDataStorage
 		{
 			long id = ids[idx++];
 			byte[] data = chunks.get(id);
+			
+			if(log.isTraceEnabled())
+			{
+				log.trace("read " + id + " with data " + Base64.getEncoder().encodeToString(data));
+			}
+			
 			return new ByteArrayInputStream(data);
 		}
 	}

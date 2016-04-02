@@ -5,11 +5,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 
 import org.h2.mvstore.MVMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
@@ -33,6 +36,8 @@ import se.l4.silo.engine.types.LongArrayFieldType;
 public class TransactionAdapter
 	implements IoConsumer<LogEntry>
 {
+	private static final Logger logger = LoggerFactory.getLogger(TransactionAdapter.class);
+	
 	private final StorageApplier applier;
 	private final MVStoreManager store;
 	
@@ -117,6 +122,11 @@ public class TransactionAdapter
 		// Store the data
 		long[] key = new long[] { tx, nextId };
 		log.put(key, TransactionOperation.store(entity, id, data));
+		
+		if(logger.isTraceEnabled())
+		{
+			logger.trace("[" + tx + "] Wrote " + nextId + " for " + entity + "[" + id + "] with data " + Base64.getEncoder().encodeToString(data));
+		}
 	}
 	
 	/**
@@ -141,6 +151,11 @@ public class TransactionAdapter
 		
 		long[] key = new long[] { tx, nextId };
 		log.put(key, TransactionOperation.delete(entity, id));
+		
+		if(logger.isTraceEnabled())
+		{
+			logger.trace("[" + tx + "] Wrote " + nextId + " as delete of " + entity + "[" + id + "]");
+		}
 	}
 	
 	/**
@@ -163,6 +178,11 @@ public class TransactionAdapter
 		for(Object o : keysToRemove)
 		{
 			log.remove(o);
+		}
+		
+		if(logger.isTraceEnabled())
+		{
+			logger.trace("[" + tx + "] Removing from stored log");
 		}
 	}
 	
@@ -250,6 +270,12 @@ public class TransactionAdapter
 		public InputStream nextElement()
 		{
 			long[] key = it.next();
+			
+			if(logger.isTraceEnabled())
+			{
+				logger.trace("[" + key[0] + "] Reading id " + key[1] + " with data " + Base64.getEncoder().encodeToString(log.get(key).getData()));
+			}
+			
 			return new ByteArrayInputStream(log.get(key).getData());
 		}
 		

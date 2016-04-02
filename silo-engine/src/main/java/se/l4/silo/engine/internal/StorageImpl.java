@@ -7,6 +7,9 @@ import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.collect.ImmutableMap;
 
 import se.l4.commons.io.Bytes;
@@ -37,6 +40,7 @@ import se.l4.silo.query.QueryResult;
 public class StorageImpl
 	implements Storage, Closeable
 {
+	private static final Logger log = LoggerFactory.getLogger(StorageImpl.class);
 	private final String name;
 	private final TransactionSupport transactionSupport;
 	private final DataStorage storage;
@@ -104,6 +108,11 @@ public class StorageImpl
 	@Override
 	public StoreResult store(Object id, Bytes bytes)
 	{
+		if(log.isTraceEnabled())
+		{
+			log.trace("[" + name + "] TX store of " + id);
+		}
+		
 		TransactionExchange tx = transactionSupport.getExchange();
 		try
 		{
@@ -122,6 +131,11 @@ public class StorageImpl
 	@Override
 	public DeleteResult delete(Object id)
 	{
+		if(log.isTraceEnabled())
+		{
+			log.trace("[" + name + "] TX delete of " + id);
+		}
+		
 		TransactionExchange tx = transactionSupport.getExchange();
 		try
 		{
@@ -141,6 +155,12 @@ public class StorageImpl
 	public Bytes get(Object id)
 	{
 		long internalId = primary.get(id);
+		
+		if(log.isTraceEnabled())
+		{
+			log.trace("[" + name + "] Getting " + id + " mapped to internal id " + internalId);
+		}
+		
 		if(internalId == 0) return null;
 		
 		try
@@ -214,6 +234,11 @@ public class StorageImpl
 		long previous = primary.latest();
 		long internalId = primary.store(id);
 		
+		if(log.isTraceEnabled())
+		{
+			log.trace("[" + name + "] Direct store of " + id + " mapped to internal id " + internalId);
+		}
+		
 		storage.store(internalId, bytes);
 		
 		Bytes storedBytes = storage.get(internalId);
@@ -231,6 +256,12 @@ public class StorageImpl
 		throws IOException
 	{
 		long internalId = primary.get(id);
+		
+		if(log.isTraceEnabled())
+		{
+			log.trace("[" + name + "] Direct delete of " + id + " mapped to internal id " + internalId);
+		}
+		
 		if(internalId == 0) return;
 		
 		queryEngineUpdater.delete(internalId);

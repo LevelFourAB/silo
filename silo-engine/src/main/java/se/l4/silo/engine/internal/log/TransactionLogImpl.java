@@ -1,6 +1,10 @@
 package se.l4.silo.engine.internal.log;
 
 import java.io.IOException;
+import java.util.Base64;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import se.l4.commons.id.LongIdGenerator;
 import se.l4.commons.io.Bytes;
@@ -21,6 +25,8 @@ import se.l4.silo.engine.log.Log;
 public class TransactionLogImpl
 	implements TransactionLog
 {
+	private static final Logger logger = LoggerFactory.getLogger(TransactionLogImpl.class);
+	
 	private final Log log;
 	private final LongIdGenerator ids;
 
@@ -36,6 +42,11 @@ public class TransactionLogImpl
 		long tx = ids.next();
 		try
 		{
+			if(logger.isTraceEnabled())
+			{
+				logger.trace("[" + tx + "] Transaction started");
+			}
+			
 			log.append(Bytes.viaDataOutput(out -> {
 				out.write(MessageConstants.START_TRANSACTION);
 				out.writeVLong(tx);
@@ -55,6 +66,11 @@ public class TransactionLogImpl
 		try
 		{
 			bytes.asChunks(8192, (data, offset, length) -> {
+				if(logger.isTraceEnabled())
+				{
+					logger.trace("[" + tx + "] Wrote chunk for " + entity + "[" + id + "]: " + Base64.getEncoder().encodeToString(data));
+				}
+				
 				log.append(Bytes.viaDataOutput(out -> {
 					out.write(MessageConstants.STORE_CHUNK);
 					out.writeVLong(tx);
@@ -65,6 +81,12 @@ public class TransactionLogImpl
 			});
 			
 			// Write a zero length chunk to indicate end of entity
+			
+			if(logger.isTraceEnabled())
+			{
+				logger.trace("[" + tx + "] Wrote end of data for " + entity + "[" + id + "]");
+			}
+			
 			log.append(Bytes.viaDataOutput(out -> {
 				out.write(MessageConstants.STORE_CHUNK);
 				out.writeVLong(tx);
@@ -86,6 +108,11 @@ public class TransactionLogImpl
 	{
 		try
 		{
+			if(logger.isTraceEnabled())
+			{
+				logger.trace("[" + tx + "] Wrote delete for " + entity + "[" + id + "]");
+			}
+			
 			log.append(Bytes.viaDataOutput(out -> {
 				out.write(MessageConstants.DELETE);
 				out.writeVLong(tx);
@@ -114,6 +141,11 @@ public class TransactionLogImpl
 	{
 		try
 		{
+			if(logger.isTraceEnabled())
+			{
+				logger.trace("[" + tx + "] Transaction committed");
+			}
+			
 			log.append(Bytes.viaDataOutput(out -> {
 				out.write(MessageConstants.COMMIT_TRANSACTION);
 				out.writeVLong(tx);
@@ -130,6 +162,11 @@ public class TransactionLogImpl
 	{
 		try
 		{
+			if(logger.isTraceEnabled())
+			{
+				logger.trace("[" + tx + "] Transaction rolled back");
+			}
+			
 			log.append(Bytes.viaDataOutput(out -> {
 				out.write(MessageConstants.ROLLBACK_TRANSACTION);
 				out.writeVLong(tx);
