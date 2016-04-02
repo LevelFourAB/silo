@@ -193,6 +193,7 @@ public class TransactionAdapter
 						// Zero length chunk means end of data
 						ChunkedBytes bytes = new ChunkedBytes(keys);
 						applier.store(op.getEntity(), op.getId(), bytes);
+						keys.clear();
 					}
 					else
 					{
