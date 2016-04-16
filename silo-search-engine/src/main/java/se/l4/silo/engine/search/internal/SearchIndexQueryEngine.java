@@ -48,16 +48,21 @@ import org.apache.lucene.util.BytesRef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.DataEncounter;
 import se.l4.silo.engine.QueryEncounter;
 import se.l4.silo.engine.QueryEngine;
+import se.l4.silo.engine.search.CustomFieldCreator;
 import se.l4.silo.engine.search.FacetDefinition;
+import se.l4.silo.engine.search.FieldCreationEncounter;
 import se.l4.silo.engine.search.FieldDefinition;
 import se.l4.silo.engine.search.IndexDefinition;
+import se.l4.silo.engine.search.IndexedFieldBuilder;
 import se.l4.silo.engine.search.Language;
+import se.l4.silo.engine.search.SearchFieldType;
 import se.l4.silo.engine.search.SearchIndexConfig;
 import se.l4.silo.engine.search.SearchIndexConfig.CommitConfig;
 import se.l4.silo.engine.search.facets.FacetCollectionEncounter;
@@ -89,9 +94,10 @@ public class SearchIndexQueryEngine
 	private final SearcherManager manager;
 	
 	private final ImmutableSet<String> fieldNames;
-	private ControlledRealTimeReopenThread<IndexSearcher> thread;
-
-	private CommitPolicy commitPolicy;
+	private final ImmutableList<CustomFieldCreator> fieldCreators;
+	
+	private final ControlledRealTimeReopenThread<IndexSearcher> thread;
+	private final CommitPolicy commitPolicy;
 
 	public SearchIndexQueryEngine(SearchEngine engine, ScheduledExecutorService executor, String name, Path directory, SearchIndexConfig config)
 		throws IOException
@@ -146,6 +152,8 @@ public class SearchIndexQueryEngine
 		}
 		
 		this.fieldNames = fieldNames.build();
+		
+		this.fieldCreators = ImmutableList.copyOf(config.getFieldCreators());
 	}
 	
 	private static Directory createDirectory(Directory directory, SearchIndexConfig config)
@@ -529,6 +537,13 @@ public class SearchIndexQueryEngine
 			addField(doc, defaultLangObj, langObj, fd, t.key, t.value);
 		}
 		
+		// Run the custom field creators
+		FieldCreationEncounterImpl fe = new FieldCreationEncounterImpl(doc, defaultLangObj, langObj);
+		for(CustomFieldCreator c : fieldCreators)
+		{
+			c.apply(fe);
+		}
+		
 		Term idTerm = new Term("_:id", idRef);
 		try
 		{
@@ -547,7 +562,7 @@ public class SearchIndexQueryEngine
 	{
 		if(object == null) return;
 		
-		boolean needValues = def.getValueFields().contains(name);
+		boolean needValues = def.getValueFields().contains(name) || field.isStoreValues();
 		
 		if(field.isLanguageSpecific())
 		{
@@ -654,5 +669,155 @@ public class SearchIndexQueryEngine
 	private static class MutableString
 	{
 		private String value;
+	}
+	
+	private class FieldCreationEncounterImpl
+		implements FieldCreationEncounter
+	{
+		private final Document doc;
+		private final Language fallbackLang;
+		private final Language currentLang;
+
+		public FieldCreationEncounterImpl(Document doc, Language fallback, Language current)
+		{
+			this.doc = doc;
+			this.fallbackLang = fallback;
+			this.currentLang = current;
+		}
+		
+		@Override
+		public void add(String name, Object value)
+		{
+			FieldDefinition fd = def.getField(name);
+			if(fd == null)
+			{
+				throw new StorageException("The field " + name + " has not been defined");
+			}
+			
+			addField(doc, fallbackLang, currentLang, fd, name, value);
+		}
+		
+		@Override
+		public IndexedFieldBuilder add(String name, Object value, SearchFieldType fieldType)
+		{
+			return new IndexedFieldBuilderImpl(this, doc, fallbackLang, currentLang, name, value, fieldType);
+		}
+	}
+	
+	private class IndexedFieldBuilderImpl
+		extends AbstractFieldDefinition
+		implements IndexedFieldBuilder, FieldDefinition
+	{
+		private final FieldCreationEncounter parent;
+		
+		private final Document doc;
+		private final Language fallbackLang;
+		private final Language currentLang;
+		
+		private final String name;
+		private final Object value;
+		private final SearchFieldType fieldType;
+		
+		private boolean values;
+		private boolean sorting;
+		private boolean languageSpecific;
+		private boolean stored;
+		private boolean highlighted;
+
+		public IndexedFieldBuilderImpl(FieldCreationEncounter parent, Document doc, Language fallback, Language current, String name, Object value, SearchFieldType fieldType)
+		{
+			this.parent = parent;
+			
+			this.doc = doc;
+			this.fallbackLang = fallback;
+			this.currentLang = current;
+			
+			this.name = name;
+			this.value = value;
+			this.fieldType = fieldType;
+		}
+
+		@Override
+		public IndexedFieldBuilder withValues()
+		{
+			this.values = true;
+			return this;
+		}
+
+		@Override
+		public IndexedFieldBuilder withSorting()
+		{
+			this.sorting = true;
+			return this;
+		}
+		
+		@Override
+		public IndexedFieldBuilder withHighlighting()
+		{
+			this.highlighted = true;
+			return this;
+		}
+		
+		@Override
+		public IndexedFieldBuilder languageSpecific()
+		{
+			this.languageSpecific = true;
+			return this;
+		}
+		
+		@Override
+		public FieldCreationEncounter add()
+		{
+			addField(doc, fallbackLang, currentLang, this, name, value);
+			return parent;
+		}
+		
+		@Override
+		public String getName()
+		{
+			return name;
+		}
+		
+		@Override
+		public boolean isIndexed()
+		{
+			return true;
+		}
+		
+		@Override
+		public boolean isHighlighted()
+		{
+			return highlighted;
+		}
+		
+		@Override
+		public boolean isLanguageSpecific()
+		{
+			return languageSpecific;
+		}
+		
+		@Override
+		public boolean isSorted()
+		{
+			return sorting;
+		}
+		
+		@Override
+		public boolean isStored()
+		{
+			return stored;
+		}
+		
+		@Override
+		public boolean isStoreValues()
+		{
+			return values;
+		}
+		
+		@Override
+		public SearchFieldType getType()
+		{
+			return fieldType;
+		}
 	}
 }

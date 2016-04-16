@@ -25,6 +25,8 @@ public class SearchIndexConfig
 	private List<FieldConfig> fields;
 	private Map<String, Facet<?>> facets;
 	
+	private List<CustomFieldCreator> fieldCreators;
+	
 	public SearchIndexConfig()
 	{
 		super("silo:search-index");
@@ -34,6 +36,8 @@ public class SearchIndexConfig
 		
 		fields = new ArrayList<>();
 		facets = new HashMap<>();
+		
+		fieldCreators = new ArrayList<>();
 	}
 	
 	public String getLanguageField()
@@ -74,6 +78,16 @@ public class SearchIndexConfig
 	public void addFacet(String id, Facet<?> facet)
 	{
 		facets.put(id, facet);
+	}
+	
+	public List<CustomFieldCreator> getFieldCreators()
+	{
+		return fieldCreators;
+	}
+	
+	public void addFieldCreator(CustomFieldCreator creator)
+	{
+		fieldCreators.add(creator);
 	}
 
 	public static class FieldConfig
@@ -419,4 +433,5 @@ public class SearchIndexConfig
 			return maxTime;
 		}
 	}
+	
 }

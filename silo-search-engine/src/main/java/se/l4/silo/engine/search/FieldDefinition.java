@@ -29,11 +29,11 @@ public interface FieldDefinition
 	boolean isLanguageSpecific();
 	
 	/**
-	 * Get if the field will allow multiple values.
+	 * Get if the field is indexed.
 	 * 
 	 * @return
 	 */
-	boolean isMultiValued();
+	boolean isIndexed();
 	
 	/**
 	 * Get if this field should be stored.
@@ -55,6 +55,13 @@ public interface FieldDefinition
 	 * @return
 	 */
 	boolean isSorted();
+	
+	/**
+	 * Get if this field should also store values.
+	 * 
+	 * @return
+	 */
+	boolean isStoreValues();
 	
 	/**
 	 * Get under which name this field is stored.

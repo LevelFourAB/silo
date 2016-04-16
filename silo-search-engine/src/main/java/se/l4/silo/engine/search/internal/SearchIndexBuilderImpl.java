@@ -5,6 +5,7 @@ import java.util.function.Function;
 
 import se.l4.silo.engine.builder.BuilderWithParent;
 import se.l4.silo.engine.config.QueryEngineConfig;
+import se.l4.silo.engine.search.CustomFieldCreator;
 import se.l4.silo.engine.search.SearchFieldType;
 import se.l4.silo.engine.search.SearchIndexBuilder;
 import se.l4.silo.engine.search.SearchIndexConfig;
@@ -51,6 +52,13 @@ public class SearchIndexBuilderImpl<Parent>
 			config.addFacet(facetId, c);
 			return this;
 		});
+	}
+	
+	@Override
+	public SearchIndexBuilder<Parent> addCustomFieldCreator(CustomFieldCreator creator)
+	{
+		config.addFieldCreator(creator);
+		return this;
 	}
 	
 	@Override

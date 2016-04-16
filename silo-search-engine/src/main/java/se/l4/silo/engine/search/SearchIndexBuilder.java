@@ -38,4 +38,13 @@ public interface SearchIndexBuilder<Parent>
 	 * @return
 	 */
 	<T extends BuilderWithParent<SearchIndexBuilder<Parent>>> T addFacet(String facetId, FacetBuilderFactory<SearchIndexBuilder<Parent>, T> factory);
+	
+	/**
+	 * Add a {@link CustomFieldCreator} to this index. This allows for 
+	 * adding dynamic fields from the input data.
+	 * 
+	 * @param creator
+	 * @return
+	 */
+	SearchIndexBuilder<Parent> addCustomFieldCreator(CustomFieldCreator creator);
 }
