@@ -3,7 +3,6 @@ package se.l4.silo.engine.search;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.document.FieldType;
-import org.apache.lucene.document.FieldType.NumericType;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexableField;
 
@@ -14,14 +13,13 @@ public abstract class NumericSearchField
 	
 	private final FieldType type;
 	
-	public NumericSearchField(NumericType type)
+	public NumericSearchField()
 	{
 		FieldType ft = new FieldType();
 	    ft.setStored(false);
 	    ft.setTokenized(true);
 	    ft.setOmitNorms(true);
 	    ft.setIndexOptions(IndexOptions.DOCS);
-	    ft.setNumericType(type);
 	    ft.freeze();
 	    
 	    this.type = ft;

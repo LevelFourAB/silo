@@ -7,9 +7,8 @@ import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
-import org.apache.lucene.document.FieldType.NumericType;
-import org.apache.lucene.document.IntField;
-import org.apache.lucene.document.LongField;
+import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.document.SortedDocValuesField;
 import org.apache.lucene.document.SortedSetDocValuesField;
@@ -22,7 +21,6 @@ import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefBuilder;
-import org.apache.lucene.util.NumericUtils;
 
 import se.l4.silo.engine.search.internal.SearchIndexQueryEngine;
 import se.l4.silo.search.query.SuggestQuery;
@@ -118,13 +116,13 @@ public class SearchFields
 	/**
 	 * Field for storing numbers.
 	 */
-	public static final SearchFieldType INTEGER = new NumericSearchField(NumericType.INT)
+	public static final SearchFieldType INTEGER = new NumericSearchField()
 	{
 		@Override
 		protected IndexableField create(String field, Number number,
 				FieldType type)
 		{
-			return new IntField(field, number.intValue(), type);
+			return new IntPoint(field, number.intValue());
 		}
 		
 		@Override
@@ -152,10 +150,7 @@ public class SearchFields
 		@Override
 		public Query createEqualsQuery(String field, Object value)
 		{
-			BytesRefBuilder bytesRef = new BytesRefBuilder();
-			int v = toInteger(value);
-			NumericUtils.intToPrefixCoded(v, 0, bytesRef);
-			return new TermQuery(new Term(field, bytesRef.get()));
+			return IntPoint.newExactQuery(field, toInteger(value));
 		}
 		
 		@Override
@@ -168,13 +163,13 @@ public class SearchFields
 	/**
 	 * Field for storing numbers.
 	 */
-	public static final SearchFieldType LONG = new NumericSearchField(NumericType.LONG)
+	public static final SearchFieldType LONG = new NumericSearchField()
 	{
 		@Override
 		protected IndexableField create(String field, Number number,
 				FieldType type)
 		{
-			return new LongField(field, number.longValue(), type);
+			return new LongPoint(field, number.longValue());
 		}
 		
 		@Override
@@ -202,10 +197,7 @@ public class SearchFields
 		@Override
 		public Query createEqualsQuery(String field, Object value)
 		{
-			BytesRefBuilder bytesRef = new BytesRefBuilder();
-			long v = toLong(value);
-			NumericUtils.longToPrefixCoded(v, 0, bytesRef);
-			return new TermQuery(new Term(field, bytesRef.get()));
+			return LongPoint.newExactQuery(field, toLong(value));
 		}
 		
 		@Override

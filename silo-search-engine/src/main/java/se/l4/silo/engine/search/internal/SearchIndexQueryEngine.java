@@ -41,7 +41,6 @@ import org.apache.lucene.search.TopDocsCollector;
 import org.apache.lucene.search.TopFieldCollector;
 import org.apache.lucene.search.TopScoreDocCollector;
 import org.apache.lucene.search.TotalHitCountCollector;
-import org.apache.lucene.search.similarities.BM25Similarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.NRTCachingDirectory;
@@ -113,7 +112,6 @@ public class SearchIndexQueryEngine
 		
 		// Setup a basic configuration for the index writer
 		IndexWriterConfig conf = new IndexWriterConfig(new SimpleAnalyzer());
-		conf.setSimilarity(new BM25Similarity());
 		
 		// Create the writer and searcher manager
 		writer = new IndexWriter(this.directory, conf);
@@ -121,15 +119,13 @@ public class SearchIndexQueryEngine
 		
 		latestGeneration = new AtomicLong();
 		
-		manager = new SearcherManager(writer, true, new SearcherFactory()
+		manager = new SearcherManager(writer, true, false, new SearcherFactory()
 		{
 			@Override
 			public IndexSearcher newSearcher(IndexReader reader, IndexReader previousReader)
 				throws IOException
 			{
-				IndexSearcher is = new IndexSearcher(reader);
-				is.setSimilarity(new BM25Similarity());
-				return is;
+				return new IndexSearcher(reader);
 			}
 		});
 		

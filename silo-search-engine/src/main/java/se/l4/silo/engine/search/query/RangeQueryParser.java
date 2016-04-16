@@ -2,7 +2,8 @@ package se.l4.silo.engine.search.query;
 
 import java.io.IOException;
 
-import org.apache.lucene.search.NumericRangeQuery;
+import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.search.Query;
 
 import se.l4.silo.engine.search.FieldDefinition;
@@ -28,9 +29,9 @@ public class RangeQueryParser
 		switch(fdef.getType().getSortType())
 		{
 			case LONG:
-				return NumericRangeQuery.newLongRange(name, data.getFrom(), data.getTo(), true, true);
+				return LongPoint.newRangeQuery(name, data.getFrom(), data.getTo());
 			case INT:
-				return NumericRangeQuery.newIntRange(name, (int) data.getFrom(), (int) data.getTo(), true, true);
+				return IntPoint.newRangeQuery(name, (int) data.getFrom(), (int) data.getTo());
 			default:
 				throw new IOException("Unsupported number type: " + fdef.getType().getSortType());
 		}

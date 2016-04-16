@@ -278,7 +278,8 @@ public class UserQueryParser
 					if(positionCount == 1 || !quoted)
 					{
 						// no phrase query:
-						BooleanQuery q = new BooleanQuery(positionCount == 1);
+						BooleanQuery.Builder builder = new BooleanQuery.Builder();
+						builder.setDisableCoord(positionCount == 1);
 	
 						BooleanClause.Occur occur = BooleanClause.Occur.SHOULD;
 	
@@ -302,14 +303,14 @@ public class UserQueryParser
 								: (fuzzy 
 									? new FuzzyQuery(new Term(field, term), 1) 
 									: new TermQuery(new Term(field, term)));
-							q.add(currentQuery, occur);
+							builder.add(currentQuery, occur);
 						}
-						return q;
+						return builder.build();
 					}
 					else
 					{
 						// phrase query:
-						MultiPhraseQuery mpq = new MultiPhraseQuery();
+						MultiPhraseQuery.Builder builder = new MultiPhraseQuery.Builder();
 	//					mpq.setSlop(phraseSlop);
 						List<Term> multiTerms = new ArrayList<Term>();
 						int position = -1;
@@ -336,16 +337,16 @@ public class UserQueryParser
 	
 							if(positionIncrement > 0 && multiTerms.size() > 0)
 							{
-								mpq.add(multiTerms.toArray(EMPTY_TERM), position);
+								builder.add(multiTerms.toArray(EMPTY_TERM), position);
 								multiTerms.clear();
 							}
 							position += positionIncrement;
 							multiTerms.add(new Term(field, term));
 						}
 						
-						mpq.add(multiTerms.toArray(EMPTY_TERM), position);
+						builder.add(multiTerms.toArray(EMPTY_TERM), position);
 						
-						return mpq;
+						return builder.build();
 					}
 				}
 				else
