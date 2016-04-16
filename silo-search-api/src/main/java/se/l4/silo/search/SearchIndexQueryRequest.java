@@ -16,6 +16,7 @@ public class SearchIndexQueryRequest
 	private List<SortItem> sortItems;
 	
 	private String scoring;
+	private boolean waitForLatest;
 	
 	public SearchIndexQueryRequest()
 	{
@@ -24,6 +25,16 @@ public class SearchIndexQueryRequest
 		queryItems = new ArrayList<>();
 		facetItems = new ArrayList<>();
 		sortItems = new ArrayList<>();
+	}
+	
+	public boolean isWaitForLatest()
+	{
+		return waitForLatest;
+	}
+	
+	public void setWaitForLatest(boolean waitForLatest)
+	{
+		this.waitForLatest = waitForLatest;
 	}
 	
 	public int getLimit()
@@ -95,4 +106,6 @@ public class SearchIndexQueryRequest
 	{
 		sortItems.add(new SortItem(field, ascending));
 	}
+
+	
 }

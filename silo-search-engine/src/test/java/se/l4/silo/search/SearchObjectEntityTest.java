@@ -90,4 +90,25 @@ public class SearchObjectEntityTest
 			assertThat(fr.getTotal(), is(50));
 		}
 	}
+	
+	@Test
+	public void testWaitForLatest()
+	{
+		for(int i=0; i<1000; i++)
+		{
+			entity.store(i, new TestUserData(i % 2 == 0 ? "Donna" : "Eric", 18 + i % 40, i % 2 == 0));
+		}
+		
+		try(SearchResult<TestUserData> fr = entity.query("index", SearchIndexQuery.type())
+			.waitForLatest()
+			.user("name").text("donna")
+			.number("age").range(18, 21)
+			.withFacet("ageFacet", CategoryFacetQuery::new)
+				.done()
+			.run())
+		{
+			assertThat(fr.getSize(), is(10));
+			assertThat(fr.getTotal(), is(50));
+		}
+	}
 }

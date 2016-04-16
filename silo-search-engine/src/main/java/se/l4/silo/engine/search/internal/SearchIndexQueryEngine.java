@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.document.Document;
@@ -98,6 +99,8 @@ public class SearchIndexQueryEngine
 	
 	private final ControlledRealTimeReopenThread<IndexSearcher> thread;
 	private final CommitPolicy commitPolicy;
+	
+	private final AtomicLong latestGeneration;
 
 	public SearchIndexQueryEngine(SearchEngine engine, ScheduledExecutorService executor, String name, Path directory, SearchIndexConfig config)
 		throws IOException
@@ -115,6 +118,8 @@ public class SearchIndexQueryEngine
 		// Create the writer and searcher manager
 		writer = new IndexWriter(this.directory, conf);
 		tiw = new TrackingIndexWriter(writer);
+		
+		latestGeneration = new AtomicLong();
 		
 		manager = new SearcherManager(writer, true, new SearcherFactory()
 		{
@@ -199,6 +204,11 @@ public class SearchIndexQueryEngine
 		IndexSearcher searcher = null;
 		try
 		{
+			if(request.isWaitForLatest())
+			{
+				thread.waitForGeneration(latestGeneration.get());
+			}
+			
 			searcher = manager.acquire();
 			
 			Collector resultCollector;
@@ -262,6 +272,11 @@ public class SearchIndexQueryEngine
 		}
 		catch(IOException e)
 		{
+			throw new StorageException("Unable to search; " + e.getMessage(), e);
+		}
+		catch(InterruptedException e)
+		{
+			Thread.currentThread().interrupt();
 			throw new StorageException("Unable to search; " + e.getMessage(), e);
 		}
 		finally
@@ -547,7 +562,8 @@ public class SearchIndexQueryEngine
 		Term idTerm = new Term("_:id", idRef);
 		try
 		{
-			tiw.updateDocument(idTerm, doc);
+			long generation = tiw.updateDocument(idTerm, doc);
+			latestGeneration.set(generation);
 		}
 		catch(IOException e)
 		{

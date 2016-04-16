@@ -20,6 +20,13 @@ public class SearchIndexQueryImpl<T>
 	}
 	
 	@Override
+	public SearchIndexQuery<T> waitForLatest()
+	{
+		request.setWaitForLatest(true);
+		return this;
+	}
+	
+	@Override
 	public SearchIndexQuery<T> offset(int offset)
 	{
 		request.setOffset(offset);
