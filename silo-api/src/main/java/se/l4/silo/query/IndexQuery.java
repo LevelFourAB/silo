@@ -79,4 +79,19 @@ public interface IndexQuery<T>
 	 * @return
 	 */
 	IndexQuery<T> sortDescending();
+	
+	/**
+	 * Sort by the specified field in the given order.
+	 * 
+	 * @param ascending
+	 * @return
+	 */
+	IndexQuery<T> sort(boolean ascending);
+	
+	/**
+	 * Indicate the default sort should be reversed.
+	 * 
+	 * @return
+	 */
+	IndexQuery<T> reverseDefaultSort();
 }

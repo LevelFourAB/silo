@@ -21,6 +21,8 @@ public class IndexQueryRequest
 	private List<Criterion> criterias;
 	@Expose
 	private List<SortOnField> sort;
+	@Expose
+	private boolean reverseDefaultSort;
 	
 	public IndexQueryRequest()
 	{
@@ -83,6 +85,16 @@ public class IndexQueryRequest
 		s.ascending = ascending;
 		
 		sort.add(s);
+	}
+	
+	public boolean isReverseDefaultSort()
+	{
+		return reverseDefaultSort;
+	}
+	
+	public void setReverseDefaultSort(boolean reverseDefaultSort)
+	{
+		this.reverseDefaultSort = reverseDefaultSort;
 	}
 	
 	@Use(ReflectionSerializer.class)

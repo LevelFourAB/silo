@@ -281,7 +281,7 @@ public class IndexQueryEngine
 		}
 		
 		Comparator<Result> sort = sortBuilder
-			.id(true)
+			.id(! request.isReverseDefaultSort())
 			.build();
 		
 		// Fetch the limits and setup collection of results

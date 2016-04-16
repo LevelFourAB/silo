@@ -101,6 +101,19 @@ public class IndexQueryImpl<T>
 	{
 		return addSort(false);
 	}
+	
+	@Override
+	public IndexQuery<T> sort(boolean ascending)
+	{
+		return addSort(ascending);
+	}
+	
+	@Override
+	public IndexQuery<T> reverseDefaultSort()
+	{
+		request.setReverseDefaultSort(true);
+		return this;
+	}
 
 	@Override
 	public IndexQuery<T> limit(int limit)
