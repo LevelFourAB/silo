@@ -14,9 +14,9 @@ public interface QueryWithSubquery<Self extends QueryWithSubquery<Self, ReturnPa
 {
 	<P extends QueryPart<ReturnPath>> P query(P q);
 	
-	default ReturnPath user(String text)
+	default UserQuery<ReturnPath> user(String... fields)
 	{
-		return query(new UserQuery<>()).text(text);
+		return query(new UserQuery<>(fields));
 	}
 	
 	default OrQuery<ReturnPath> or()

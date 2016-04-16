@@ -24,9 +24,9 @@ public interface QueryWithSubqueries<Self extends QueryWithSubqueries<Self, Retu
 	
 	ReturnPath done();
 	
-	default Self user(String text)
+	default UserQuery<Self> user(String... fields)
 	{
-		return query(new UserQuery<>()).text(text);
+		return query(new UserQuery<>(fields));
 	}
 	
 	default OrQuery<Self> or()

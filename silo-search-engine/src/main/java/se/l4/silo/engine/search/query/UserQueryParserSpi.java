@@ -4,11 +4,10 @@ import java.io.IOException;
 
 import org.apache.lucene.search.Query;
 
-import se.l4.silo.engine.search.FieldDefinition;
-import se.l4.silo.engine.search.SearchFields;
+import se.l4.silo.search.query.UserQueryData;
 
 public class UserQueryParserSpi
-	implements QueryParser<String>
+	implements QueryParser<UserQueryData>
 {
 
 	@Override
@@ -18,18 +17,10 @@ public class UserQueryParserSpi
 	}
 
 	@Override
-	public Query parse(QueryParseEncounter<String> encounter)
+	public Query parse(QueryParseEncounter<UserQueryData> encounter)
 		throws IOException
 	{
 		UserQueryParser userQueryParser = new UserQueryParser(encounter.def(), false);
-		for(FieldDefinition fd : encounter.def().getFields())
-		{
-			if(fd.getType() == SearchFields.TEXT)
-			{
-				userQueryParser.addField(fd.getName(), 1f);
-			}
-		}
-		
 		return userQueryParser.parse(encounter);
 	}
 

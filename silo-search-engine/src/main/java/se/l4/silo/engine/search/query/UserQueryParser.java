@@ -28,6 +28,7 @@ import se.l4.silo.engine.search.FieldDefinition;
 import se.l4.silo.engine.search.IndexDefinition;
 import se.l4.silo.engine.search.Language;
 import se.l4.silo.engine.search.SearchFieldType;
+import se.l4.silo.search.query.UserQueryData;
 
 public class UserQueryParser
 {
@@ -52,10 +53,16 @@ public class UserQueryParser
 		return this;
 	}
 	
-	public Query parse(QueryParseEncounter<String> encounter)
+	public Query parse(QueryParseEncounter<UserQueryData> encounter)
 		throws IOException
 	{
-		String query = encounter.data().trim();
+		UserQueryData data = encounter.data();
+		for(String f : data.getFields())
+		{
+			addField(f, 1f);
+		}
+		
+		String query = data.getQuery().trim();
 		
 		if(! encounter.isSpecificLanguage())
 		{

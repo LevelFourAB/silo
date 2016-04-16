@@ -18,8 +18,6 @@ import se.l4.silo.engine.internal.TestUserData;
 import se.l4.silo.engine.search.SearchFields;
 import se.l4.silo.engine.search.SearchIndex;
 import se.l4.silo.engine.search.facets.category.CategoryFacet;
-import se.l4.silo.search.SearchIndexQuery;
-import se.l4.silo.search.SearchResult;
 import se.l4.silo.search.facet.CategoryFacetQuery;
 import se.l4.silo.structured.ObjectEntity;
 
@@ -82,7 +80,7 @@ public class SearchObjectEntityTest
 		}
 		
 		try(SearchResult<TestUserData> fr = entity.query("index", SearchIndexQuery.type())
-			.user("donna")
+			.user("name").text("donna")
 			.number("age").range(18, 21)
 			.withFacet("ageFacet", CategoryFacetQuery::new)
 				.done()
