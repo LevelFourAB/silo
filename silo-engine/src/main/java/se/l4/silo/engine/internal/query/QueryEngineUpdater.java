@@ -141,31 +141,38 @@ public class QueryEngineUpdater
 	{
 		log.info("Restoring index {} for {} ", def.name, name);
 		
-		long current = state.getOrDefault(def.name, DEFAULT);
-		if(log.isTraceEnabled())
+		try
 		{
-			log.trace("[" + name + "] Running through and updating " + def.name + ", currently at " + current + " with storage at " + storage.getLatest());
-		}
-		
-		// TODO: Thread safety?
-		
-		while(current < storage.getLatest() && ! Thread.interrupted())
-		{
-			long id = storage.nextId(current);
-		
+			long current = state.getOrDefault(def.name, DEFAULT);
 			if(log.isTraceEnabled())
 			{
-				log.trace("[" + name + "] Updating for " + id);
+				log.trace("[" + name + "] Running through and updating " + def.name + ", currently at " + current + " with storage at " + storage.getLatest());
 			}
 			
-			Bytes bytes = storage.getInternal(id);
-			def.engine.update(id, new DataEncounterImpl(bytes));
-			state.put(def.name, id);
+			// TODO: Thread safety?
 			
-			current = id;
-		}
+			while(current < storage.getLatest() && ! Thread.interrupted())
+			{
+				long id = storage.nextId(current);
+			
+				if(log.isTraceEnabled())
+				{
+					log.trace("[" + name + "] Updating for " + id);
+				}
+				
+				Bytes bytes = storage.getInternal(id);
+				def.engine.update(id, new DataEncounterImpl(bytes));
+				state.put(def.name, id);
+				
+				current = id;
+			}
 		
-		log.info("Index {} for {} is now up to date", def.name, name);
+			log.info("Index {} for {} is now up to date", def.name, name);
+		}
+		catch(Throwable t)
+		{
+			log.error("Index {} failed to build; " + t.getMessage(), t);
+		}
 	}
 	
 	public boolean isAllUpDate()
