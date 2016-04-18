@@ -549,7 +549,7 @@ public class SearchIndexQueryEngine
 		}
 		
 		// Run the custom field creators
-		FieldCreationEncounterImpl fe = new FieldCreationEncounterImpl(doc, defaultLangObj, langObj);
+		FieldCreationEncounterImpl fe = new FieldCreationEncounterImpl(encounter, doc, defaultLangObj, langObj);
 		for(CustomFieldCreator c : fieldCreators)
 		{
 			c.apply(fe);
@@ -689,12 +689,20 @@ public class SearchIndexQueryEngine
 		private final Document doc;
 		private final Language fallbackLang;
 		private final Language currentLang;
+		private final DataEncounter encounter;
 
-		public FieldCreationEncounterImpl(Document doc, Language fallback, Language current)
+		public FieldCreationEncounterImpl(DataEncounter encounter, Document doc, Language fallback, Language current)
 		{
+			this.encounter = encounter;
 			this.doc = doc;
 			this.fallbackLang = fallback;
 			this.currentLang = current;
+		}
+		
+		@Override
+		public DataEncounter data()
+		{
+			return encounter;
 		}
 		
 		@Override
