@@ -17,4 +17,10 @@ public class FieldQuery<R>
 		receiver.addQuery(new QueryItem("field", new FieldQueryData(field, value)));
 		return parent;
 	}
+
+	public R isEmpty()
+	{
+		receiver.addQuery(new QueryItem("field", new FieldQueryData(field, null)));
+		return parent;
+	}
 }

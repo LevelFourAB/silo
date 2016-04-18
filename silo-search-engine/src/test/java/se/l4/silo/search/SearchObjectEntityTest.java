@@ -111,4 +111,64 @@ public class SearchObjectEntityTest
 			assertThat(fr.getTotal(), is(50));
 		}
 	}
+	
+	@Test
+	public void testNull()
+	{
+		for(int i=0; i<1000; i++)
+		{
+			entity.store(i, new TestUserData(i % 2 == 0 ? "Donna" : null, 18 + i % 40, i % 2 == 0));
+		}
+		
+		try
+		{
+			Thread.sleep(1000);
+		}
+		catch(InterruptedException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		try(SearchResult<TestUserData> fr = entity.query("index", SearchIndexQuery.type())
+			.field("name").isEmpty()
+			.number("age").range(18, 21)
+			.withFacet("ageFacet", CategoryFacetQuery::new)
+				.done()
+			.run())
+		{
+			assertThat(fr.getSize(), is(10));
+			assertThat(fr.getTotal(), is(50));
+		}
+	}
+	
+	@Test
+	public void testNullVsEmpty()
+	{
+		for(int i=0; i<1000; i++)
+		{
+			entity.store(i, new TestUserData(i % 2 == 0 ? "" : null, 18 + i % 40, i % 2 == 0));
+		}
+		
+		try
+		{
+			Thread.sleep(1000);
+		}
+		catch(InterruptedException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		try(SearchResult<TestUserData> fr = entity.query("index", SearchIndexQuery.type())
+			.field("name").isEmpty()
+			.number("age").range(18, 21)
+			.withFacet("ageFacet", CategoryFacetQuery::new)
+				.done()
+			.run())
+		{
+			assertThat(fr.getSize(), is(10));
+			assertThat(fr.getTotal(), is(50));
+		}
+	}
 }

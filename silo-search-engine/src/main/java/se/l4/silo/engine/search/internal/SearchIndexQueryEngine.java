@@ -507,8 +507,6 @@ public class SearchIndexQueryEngine
 		MutableString lang = new MutableString();
 		List<Tuple> fields = new ArrayList<>();
 		encounter.findStructuredKeys(fieldNames, (k, v) -> {
-			if(v == null) return;
-			
 			fields.add(new Tuple(k, v));
 			
 			if(k.equals(def.getLanguageField()))
@@ -572,7 +570,17 @@ public class SearchIndexQueryEngine
 	
 	private void addField(Document document, Language fallback, Language current, FieldDefinition field, String name, Object object)
 	{
-		if(object == null) return;
+		if(object == null)
+		{
+			String fieldName = field.name(name, fallback);
+			FieldType ft = new FieldType();
+			ft.setStored(false);
+			ft.setIndexOptions(IndexOptions.DOCS);
+			ft.setTokenized(false);
+			ft.setOmitNorms(true);
+			document.add(new Field(fieldName, BytesRef.EMPTY_BYTES, ft));
+			return;
+		}
 		
 		boolean needValues = def.getValueFields().contains(name) || field.isStoreValues();
 		
