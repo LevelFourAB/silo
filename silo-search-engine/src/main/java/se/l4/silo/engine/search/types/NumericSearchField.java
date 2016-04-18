@@ -1,4 +1,4 @@
-package se.l4.silo.engine.search;
+package se.l4.silo.engine.search.types;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
@@ -6,6 +6,15 @@ import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexableField;
 
+import se.l4.silo.engine.search.Language;
+import se.l4.silo.engine.search.SearchFieldType;
+
+/**
+ * Abstract base for field types for numeric values.
+ * 
+ * @author Andreas Holstenson
+ *
+ */
 public abstract class NumericSearchField
 	implements SearchFieldType
 {
@@ -63,10 +72,5 @@ public abstract class NumericSearchField
 		return field.numericValue();
 	}
 	
-	@Override
-	public IndexableField createSortingField(String field, Language lang, Object object)
-	{
-		// TODO Auto-generated method stub
-		return SearchFieldType.super.createSortingField(field, lang, object);
-	}
+	
 }

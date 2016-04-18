@@ -1,6 +1,7 @@
 package se.l4.silo.engine.search;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Function;
 
@@ -52,9 +53,10 @@ public class SearchIndex
 	@Override
 	public QueryEngine<?> create(QueryEngineCreationEncounter<SearchIndexConfig> encounter)
 	{
-		Path path = encounter.getDataDirectory();
+		Path path = encounter.resolveDataFile(encounter.getUniqueName());
 		try
 		{
+			Files.createDirectories(path);
 			return new SearchIndexQueryEngine(engine, encounter.getExecutor(), encounter.getUniqueName(), path, encounter.getConfig());
 		}
 		catch(IOException e)

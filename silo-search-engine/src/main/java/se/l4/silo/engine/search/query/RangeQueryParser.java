@@ -26,15 +26,7 @@ public class RangeQueryParser
 		RangeQueryData data = encounter.data();
 		FieldDefinition fdef = encounter.def().getField(data.getField());
 		String name = fdef.name(data.getField(), encounter.currentLanguage());
-		switch(fdef.getType().getSortType())
-		{
-			case LONG:
-				return LongPoint.newRangeQuery(name, data.getFrom(), data.getTo());
-			case INT:
-				return IntPoint.newRangeQuery(name, (int) data.getFrom(), (int) data.getTo());
-			default:
-				throw new IOException("Unsupported number type: " + fdef.getType().getSortType());
-		}
+		return fdef.getType().createRangeQuery(name, data.getFrom(), data.getTo());
 	}
 
 }

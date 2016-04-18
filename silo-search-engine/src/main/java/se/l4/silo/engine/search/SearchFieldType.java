@@ -53,12 +53,6 @@ public interface SearchFieldType
 	}
 	
 	/**
-	 * Get the type of sorting to use for this field.
-	 * @return
-	 */
-	SortField.Type getSortType();
-	
-	/**
 	 * Create the field from the given object.
 	 * 
 	 * @param object
@@ -88,6 +82,28 @@ public interface SearchFieldType
 	 * @return
 	 */
 	Query createEqualsQuery(String field, Object value);
+	
+	/**
+	 * Create a range query for the given field name.
+	 * 
+	 * @param field
+	 * @param from
+	 * @param to
+	 * @return
+	 */
+	Query createRangeQuery(String field, Object from, Object to);
+	
+	/**
+	 * Create a {@link SortField} for this type.
+	 * 
+	 * @param field
+	 * @param ascending
+	 * @return
+	 */
+	default SortField createSortField(String field, boolean ascending)
+	{
+		throw new UnsupportedOperationException("The field type " + getClass().getSimpleName() + " does not support sorting");
+	}
 	
 	default IndexableField createValuesField(String field, Language lang, Object object)
 	{

@@ -296,7 +296,9 @@ public class SearchIndexQueryEngine
 			.stream()
 			.map(s -> {
 				FieldDefinition fdef = def.getField(s.getField());
-				return new SortField(fdef.sortValuesName(null), fdef.getType().getSortType(), ! s.isAscending());
+				
+				String name = fdef.sortValuesName(null);
+				return fdef.getType().createSortField(name, s.isAscending());
 			})
 			.toArray(c -> new SortField[c]);
 			

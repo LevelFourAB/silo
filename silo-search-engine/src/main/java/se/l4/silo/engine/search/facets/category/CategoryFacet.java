@@ -20,10 +20,10 @@ import com.google.common.collect.Lists;
 
 import se.l4.silo.engine.search.FieldDefinition;
 import se.l4.silo.engine.search.IndexDefinitionEncounter;
-import se.l4.silo.engine.search.NumericSearchField;
 import se.l4.silo.engine.search.SearchFields;
 import se.l4.silo.engine.search.facets.Facet;
 import se.l4.silo.engine.search.facets.FacetCollectionEncounter;
+import se.l4.silo.engine.search.types.NumericSearchField;
 import se.l4.silo.search.DefaultFacetEntry;
 import se.l4.silo.search.FacetEntry;
 import se.l4.silo.search.facet.SimpleFacetQuery;
