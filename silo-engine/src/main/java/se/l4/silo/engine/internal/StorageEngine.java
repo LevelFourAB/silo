@@ -179,9 +179,11 @@ public class StorageEngine
 			.compress()
 			.fileName(root.resolve("storage.mv.bin").toString()));
 		
+		Path derivedState = root.resolve("derived-state.mv.bin");
+		boolean hasDerivedState = Files.exists(derivedState);
 		this.stateStore = new MVStoreManagerImpl(new MVStore.Builder()
 			.compress()
-			.fileName(root.resolve("derived-state.mv.bin").toString()));
+			.fileName(derivedState.toString()));
 		
 		ids = new SequenceLongIdGenerator();
 		dataStorage = new MVDataStorage(this.store);
@@ -200,6 +202,17 @@ public class StorageEngine
 		log = logBuilder.build(transactionAdapter);
 		
 		transactionLog = new TransactionLogImpl(log, ids);
+		
+		if(! hasDerivedState)
+		{
+			logger.warn("Blocking until query engines have been restored");
+			// We seem to have been restored from a backup, wait for all of our query engines
+			for(StorageDef def : storages.values())
+			{
+				def.awaitQueryEngines();
+			}
+			logger.info("Query engines have been restored");
+		}
 	}
 	
 	/**
