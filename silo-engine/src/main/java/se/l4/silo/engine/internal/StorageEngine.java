@@ -177,12 +177,20 @@ public class StorageEngine
 		
 		this.store = new MVStoreManagerImpl(new MVStore.Builder()
 			.compress()
+			.backgroundExceptionHandler((thread, t) -> {
+				logger.error("Error occured in background for data store; " + t.getMessage(), t);
+			})
 			.fileName(root.resolve("storage.mv.bin").toString()));
 		
 		Path derivedState = root.resolve("derived-state.mv.bin");
 		boolean hasDerivedState = Files.exists(derivedState);
 		this.stateStore = new MVStoreManagerImpl(new MVStore.Builder()
+			.cacheSize(4)
+			.backgroundExceptionHandler((thread, t) -> {
+				logger.error("Error occured in background for state store; " + t.getMessage(), t);
+			})
 			.compress()
+			.autoCompactFillRate(20)
 			.fileName(derivedState.toString()));
 		
 		ids = new SequenceLongIdGenerator();
