@@ -43,7 +43,7 @@ public class TransactionAdapterTest
 		
 		ops = new OpChecker();
 		
-		adapter = new TransactionAdapter(store, new StorageApplier()
+		adapter = new TransactionAdapter(null, store, new StorageApplier()
 		{
 			@Override
 			public void store(String entity, Object id, Bytes data)

@@ -111,6 +111,10 @@ public class TransactionOperationType
 		{
 			IOUtils.writeByteArray(instance.getData(), out);
 		}
+		else if(instance.getType() == TransactionOperation.Type.START)
+		{
+			out.writeVLong(instance.getTimestamp());
+		}
 	}
 
 	@Override
@@ -136,6 +140,9 @@ public class TransactionOperationType
 					IOUtils.readId(in),
 					IOUtils.readByteArray(in)
 				);
+			case START:
+				long timestamp = in.readVLong();
+				return TransactionOperation.start(timestamp);
 		}
 		
 		return null;

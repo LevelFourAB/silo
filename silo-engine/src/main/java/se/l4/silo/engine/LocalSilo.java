@@ -24,6 +24,7 @@ import se.l4.silo.engine.internal.tx.WrappedTransaction;
 import se.l4.silo.engine.log.DirectApplyLog;
 import se.l4.silo.engine.log.LogBuilder;
 import se.l4.silo.structured.StructuredEntity;
+import se.l4.vibe.Vibe;
 
 /**
  * {@link Silo} instance that stores data locally. You can use this to embed
@@ -41,7 +42,7 @@ public class LocalSilo
 	private final StorageEngine storageEngine;
 	private final ThreadLocal<TransactionImpl> transactions;
 
-	public LocalSilo(LocalEngineFactories factories, SerializerCollection serializers, LogBuilder logBuilder, Path storage, EngineConfig config)
+	public LocalSilo(LocalEngineFactories factories, SerializerCollection serializers, Vibe vibe, LogBuilder logBuilder, Path storage, EngineConfig config)
 	{
 		Objects.requireNonNull(factories, "factories is required");
 		Objects.requireNonNull(serializers, "serializers is required");
@@ -54,7 +55,7 @@ public class LocalSilo
 		tx = createTransactionSupport();
 		transactions = new ThreadLocal<>();
 		
-		storageEngine = new StorageEngine(factories, serializers, tx, logBuilder, storage, config);
+		storageEngine = new StorageEngine(factories, serializers, vibe, tx, logBuilder, storage, config);
 	}
 	
 	/**

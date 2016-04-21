@@ -8,6 +8,7 @@ import se.l4.silo.engine.LocalSilo;
 import se.l4.silo.engine.QueryEngine;
 import se.l4.silo.engine.QueryEngineFactory;
 import se.l4.silo.engine.types.FieldType;
+import se.l4.vibe.Vibe;
 
 /**
  * Builder for instances of {@link Silo}.
@@ -34,6 +35,17 @@ public interface SiloBuilder
 	 * @return
 	 */
 	SiloBuilder withTypeFinder(TypeFinder finder);
+	
+	/**
+	 * Set the {@link Vibe} instance to use. Setting this will enable reporting
+	 * of health values. If no path is specified the metrics will be stored
+	 * with the prefix {@code silo}. 
+	 * 
+	 * @param vibe
+	 * @param path
+	 * @return
+	 */
+	SiloBuilder withVibe(Vibe vibe, String... path);
 	
 	/**
 	 * Add a new entity to this instance.

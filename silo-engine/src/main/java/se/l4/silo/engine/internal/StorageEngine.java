@@ -36,7 +36,6 @@ import se.l4.silo.StorageException;
 import se.l4.silo.engine.EntityCreationEncounter;
 import se.l4.silo.engine.EntityTypeFactory;
 import se.l4.silo.engine.Fields;
-import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.QueryEngineFactory;
 import se.l4.silo.engine.Snapshot;
 import se.l4.silo.engine.Storage;
@@ -48,10 +47,17 @@ import se.l4.silo.engine.config.QueryEngineConfig;
 import se.l4.silo.engine.config.QueryableEntityConfig;
 import se.l4.silo.engine.internal.log.TransactionLog;
 import se.l4.silo.engine.internal.log.TransactionLogImpl;
+import se.l4.silo.engine.internal.mvstore.MVStoreCacheHealth;
+import se.l4.silo.engine.internal.mvstore.MVStoreHealth;
 import se.l4.silo.engine.internal.mvstore.MVStoreManagerImpl;
 import se.l4.silo.engine.internal.mvstore.SharedStorages;
 import se.l4.silo.engine.log.Log;
 import se.l4.silo.engine.log.LogBuilder;
+import se.l4.vibe.Vibe;
+import se.l4.vibe.percentile.CombinedProbes;
+import se.l4.vibe.percentile.CombinedProbes.CombinedData;
+import se.l4.vibe.probes.CountingProbe;
+import se.l4.vibe.probes.SampledProbe;
 
 /**
  * Storage engine implementation over a streaming log.
@@ -94,7 +100,7 @@ public class StorageEngine
 	/**
 	 * The store used for storing main data. 
 	 */
-	private final MVStoreManager store;
+	private final MVStoreManagerImpl store;
 	
 	/**
 	 * Abstraction over {@link MVStore} to make data storage simpler.
@@ -104,7 +110,7 @@ public class StorageEngine
 	/**
 	 * Store used for state data that is derived.  
 	 */
-	private final MVStoreManager stateStore;
+	private final MVStoreManagerImpl stateStore;
 
 	/**
 	 * The generator used for creating identifiers for transactions and
@@ -148,9 +154,14 @@ public class StorageEngine
 	 * Instance of {@link SharedStorages} for use by things such as indexes.
 	 */
 	private final SharedStorages sharedStorages;
+
+	private final CountingProbe stores;
+	private final CountingProbe deletes;
+	private final CountingProbe reads;
 	
 	public StorageEngine(EngineFactories factories,
 			SerializerCollection serializers,
+			Vibe vibe,
 			TransactionSupport transactionSupport,
 			LogBuilder logBuilder,
 			Path root,
@@ -203,10 +214,48 @@ public class StorageEngine
 			.build()
 		);
 		
+		stores = new CountingProbe();
+		deletes = new CountingProbe();
+		reads = new CountingProbe();
+		
+		if(vibe != null)
+		{
+			// Monitor the operations
+			SampledProbe<CombinedData<Long>> probe = CombinedProbes.<Long>builder()
+				.add("stores", stores)
+				.add("deletes", deletes)
+				.add("reads", reads)
+				.create();
+			
+			vibe.sample(probe)
+				.at("ops", "summary")
+				.export();
+			
+			// Monitor our main store
+			MVStore store = this.store.getStore();
+			vibe.sample(MVStoreCacheHealth.createProbe(store))
+				.at("store", "cache")
+				.export();
+			
+			vibe.sample(MVStoreHealth.createProbe(store))
+				.at("store", "data")
+				.export();
+			
+			// Monitor our derived state
+			store = this.stateStore.getStore();
+			vibe.sample(MVStoreCacheHealth.createProbe(store))
+				.at("state", "cache")
+				.export();
+			
+			vibe.sample(MVStoreHealth.createProbe(store))
+				.at("state", "data")
+				.export();
+		}
+		
 		loadConfig(config);
 		
 		// Build log and start receiving log entries
-		transactionAdapter = new TransactionAdapter(store, createApplier());
+		transactionAdapter = new TransactionAdapter(vibe, store, createApplier());
 		log = logBuilder.build(transactionAdapter);
 		
 		transactionLog = new TransactionLogImpl(log, ids);
@@ -238,6 +287,7 @@ public class StorageEngine
 			{
 				try
 				{
+					stores.increase();
 					mutationLock.lock();
 					resolveStorage(entity).directStore(id, data);
 				}
@@ -253,6 +303,7 @@ public class StorageEngine
 			{
 				try
 				{
+					deletes.increase();
 					mutationLock.lock();
 					resolveStorage(entity).directDelete(id);
 				}
@@ -486,7 +537,15 @@ public class StorageEngine
 		{
 			this.storageName = name;
 			this.dataPath = dataPath;
-			storage = new DelegatingStorage();
+			storage = new DelegatingStorage()
+			{
+				@Override
+				public Bytes get(Object id)
+				{
+					reads.increase();
+					return super.get(id);
+				}
+			};
 		}
 		
 		public StorageImpl getImpl()

@@ -41,6 +41,11 @@ public class MVStoreManagerImpl
 		
 		snapshotsOpen = new AtomicLong();
 	}
+	
+	public MVStore getStore()
+	{
+		return store;
+	}
 
 	@Override
 	public <K, V> MVMap<K, V> openMap(String name, FieldType<K> key, FieldType<V> value)

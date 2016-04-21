@@ -25,6 +25,9 @@ import se.l4.silo.engine.internal.tx.TransactionOperation;
 import se.l4.silo.engine.internal.tx.TransactionOperationType;
 import se.l4.silo.engine.log.LogEntry;
 import se.l4.silo.engine.types.LongArrayFieldType;
+import se.l4.vibe.Vibe;
+import se.l4.vibe.percentile.CombinedProbes;
+import se.l4.vibe.probes.CountingProbe;
 
 /**
  * Adapter that handles the translation from individual transaction events
@@ -43,10 +46,42 @@ public class TransactionAdapter
 	
 	private volatile MVMap<long[], TransactionOperation> log;
 
-	public TransactionAdapter(MVStoreManager store, StorageApplier applier)
+	private final CountingProbe activeTx;
+	private final CountingProbe logEvents;
+
+	private final CountingProbe txStarts;
+	private final CountingProbe txCommits;
+	private final CountingProbe txRollbacks;
+
+	public TransactionAdapter(Vibe vibe, MVStoreManager store, StorageApplier applier)
 	{
 		this.store = store;
 		this.applier = applier;
+		
+		activeTx = new CountingProbe();
+		
+		txStarts = new CountingProbe();
+		txCommits = new CountingProbe();
+		txRollbacks = new CountingProbe();
+		
+		logEvents = new CountingProbe();
+		
+		if(vibe != null)
+		{
+			vibe.sample(CombinedProbes.<Long>builder()
+					.add("active", activeTx)
+					.add("starts", txStarts)
+					.add("commits", txCommits)
+					.add("rollbacks", txRollbacks)
+					.create()
+				)
+				.at("tx/summary")
+				.export();
+			
+			vibe.sample(logEvents)
+				.at("log/events")
+				.export();
+		}
 		
 		reopen();
 	}
@@ -54,12 +89,27 @@ public class TransactionAdapter
 	public void reopen()
 	{
 		log = store.openMap("tx.log", new LongArrayFieldType(), new TransactionOperationType());
+		if(! log.isEmpty())
+		{
+			Iterator<long[]> it = log.keyIterator(log.firstKey());
+			while(it.hasNext())
+			{
+				long[] key = it.next();
+				TransactionOperation op = log.get(key);
+				if(op.getType() == TransactionOperation.Type.START)
+				{
+					activeTx.increase();
+				}
+			}
+		}
 	}
 	
 	@Override
 	public void accept(LogEntry item)
 		throws IOException
 	{
+		logEvents.increase();
+		
 		try(ExtendedDataInput in = item.getData().asDataInput())
 		{
 			int msgType = in.readVInt();
@@ -68,6 +118,8 @@ public class TransactionAdapter
 			{
 				case MessageConstants.START_TRANSACTION:
 					// TODO: This should start an automatic transaction rollback timer
+					start(tx, item.getTimestamp());
+					txStarts.increase();
 					break;
 				case MessageConstants.STORE_CHUNK:
 					// Store data
@@ -86,12 +138,49 @@ public class TransactionAdapter
 					}
 					break;
 				case MessageConstants.COMMIT_TRANSACTION:
+					txCommits.increase();
 					applyTransaction(tx);
 					break;
 				case MessageConstants.ROLLBACK_TRANSACTION:
+					txRollbacks.increase();
 					removeTransaction(tx);
 					break;
 			}
+		}
+	}
+	
+	/**
+	 * Start of transaction.
+	 * 
+	 * @param tx
+	 * @param entity
+	 * @param id
+	 * @param data
+	 * @throws IOException
+	 */
+	private void start(long tx, long timestamp)
+		throws IOException
+	{
+		// Locate the next local id for this transaction
+		Iterator<long[]> it = log.keyIterator(new long[] { tx, 0l });
+		long nextId = 0;
+		while(it.hasNext())
+		{
+			long[] key = it.next();
+			if(key[0] != tx) break;
+			
+			nextId = (key[1]) + 1;
+		}
+		
+		// Store the data
+		long[] key = new long[] { tx, nextId };
+		log.put(key, TransactionOperation.start(timestamp));
+		
+		activeTx.increase();
+		
+		if(logger.isTraceEnabled())
+		{
+			logger.trace("[" + tx + "] Starting transaction");
 		}
 	}
 	
@@ -179,6 +268,8 @@ public class TransactionAdapter
 		{
 			log.remove(o);
 		}
+		
+		activeTx.decrease();
 		
 		if(logger.isTraceEnabled())
 		{

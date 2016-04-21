@@ -32,6 +32,12 @@
 		    <artifactId>h2-mvstore</artifactId>
 		    <version>1.4.191</version>
 		</dependency>
+		
+		<dependency>
+			<groupId>se.l4.vibe</groupId>
+			<artifactId>vibe-api</artifactId>
+			<version>0.2.1</version>
+		</dependency>
 	</dependencies>
 	
 	<build>

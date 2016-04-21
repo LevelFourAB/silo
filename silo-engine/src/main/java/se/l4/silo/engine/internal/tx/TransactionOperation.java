@@ -16,17 +16,20 @@ public class TransactionOperation
 		COMMIT,
 		ROLLBACK,
 		STORE_CHUNK,
-		DELETE
+		DELETE,
+		START
 	}
 	
 	private final Type type;
+	private final long timestamp;
 	private final String entity;
 	private final Object id;
 	private final byte[] data;
 	
-	private TransactionOperation(Type type, String entity, Object id, byte[] data)
+	private TransactionOperation(Type type, long timestamp, String entity, Object id, byte[] data)
 	{
 		this.type = type;
+		this.timestamp = timestamp;
 		this.entity = entity;
 		this.id = id;
 		this.data = data;
@@ -52,23 +55,33 @@ public class TransactionOperation
 		return data;
 	}
 	
+	public long getTimestamp()
+	{
+		return timestamp;
+	}
+	
+	public static TransactionOperation start(long timestamp)
+	{
+		return new TransactionOperation(Type.START, timestamp, null, null, null);
+	}
+	
 	public static TransactionOperation commit()
 	{
-		return new TransactionOperation(Type.COMMIT, null, null, null);
+		return new TransactionOperation(Type.COMMIT, 0, null, null, null);
 	}
 	
 	public static TransactionOperation rollback()
 	{
-		return new TransactionOperation(Type.ROLLBACK, null, null, null);
+		return new TransactionOperation(Type.ROLLBACK, 0, null, null, null);
 	}
 	
 	public static TransactionOperation store(String entity, Object id, byte[] chunk)
 	{
-		return new TransactionOperation(Type.STORE_CHUNK, entity, id, chunk);
+		return new TransactionOperation(Type.STORE_CHUNK, 0, entity, id, chunk);
 	}
 	
 	public static TransactionOperation delete(String entity, Object id)
 	{
-		return new TransactionOperation(Type.DELETE, entity, id, null);
+		return new TransactionOperation(Type.DELETE, 0, entity, id, null);
 	}
 }

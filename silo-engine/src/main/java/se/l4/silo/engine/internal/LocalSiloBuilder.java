@@ -4,6 +4,8 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.common.base.Joiner;
+
 import se.l4.commons.serialization.DefaultSerializerCollection;
 import se.l4.commons.serialization.SerializerCollection;
 import se.l4.commons.types.TypeFinder;
@@ -24,6 +26,7 @@ import se.l4.silo.engine.types.FieldType;
 import se.l4.silo.engine.types.IntFieldType;
 import se.l4.silo.engine.types.LongFieldType;
 import se.l4.silo.engine.types.StringFieldType;
+import se.l4.vibe.Vibe;
 
 public class LocalSiloBuilder
 	implements SiloBuilder
@@ -38,6 +41,7 @@ public class LocalSiloBuilder
 	private EngineConfig config;
 	private SerializerCollection serializers;
 	private TypeFinder typeFinder;
+	private Vibe vibe;
 
 	public LocalSiloBuilder(LogBuilder logBuilder, Path dataPath)
 	{
@@ -82,6 +86,21 @@ public class LocalSiloBuilder
 	}
 	
 	@Override
+	public SiloBuilder withVibe(Vibe vibe, String... path)
+	{
+		if(path.length == 0)
+		{
+			this.vibe = vibe.scope("silo");
+		}
+		else
+		{
+			this.vibe = vibe.scope(Joiner.on('/').join(path));
+		}
+			
+		return this;
+	}
+	
+	@Override
 	public EntityBuilder<SiloBuilder> addEntity(String name)
 	{
 		return new EntityBuilderImpl<>(c -> {
@@ -117,7 +136,7 @@ public class LocalSiloBuilder
 		
 		LocalEngineFactories factories = new LocalEngineFactories(entityTypes.values(), queryEngineTypes.values(), fieldTypes.values());
 		SerializerCollection serializers = this.serializers == null ? new DefaultSerializerCollection() : this.serializers;
-		return new LocalSilo(factories, serializers, logBuilder, dataPath, config);
+		return new LocalSilo(factories, serializers, vibe, logBuilder, dataPath, config);
 	}
 
 	private void autoLoad()
