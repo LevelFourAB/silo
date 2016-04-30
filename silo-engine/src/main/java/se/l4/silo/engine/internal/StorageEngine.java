@@ -619,8 +619,15 @@ public class StorageEngine
 			// Create a new storage instance
 			PrimaryIndex primaryIndex = new PrimaryIndex(store, ids, storageName);
 			Fields fields = new FieldsImpl(Iterables.transform(fieldConfigs, c -> {
-				String type = c.getType();
-				return new FieldDefImpl(c.getName(), factories.getFieldType(type), c.isCollection());
+				try
+				{
+					String type = c.getType();
+					return new FieldDefImpl(c.getName(), factories.getFieldType(type), c.isCollection());
+				}
+				catch(StorageException e)
+				{
+					throw new StorageException("Unable to create field information for " + c.getName() + " in entity " + storageName + ": " + e.getMessage());
+				}
 			}));
 			StorageImpl impl = new StorageImpl(
 				sharedStorages,
