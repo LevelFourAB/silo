@@ -5,6 +5,7 @@ import java.util.function.Function;
 import se.l4.commons.io.Bytes;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.Entity;
+import se.l4.silo.FetchResult;
 import se.l4.silo.StorageException;
 import se.l4.silo.StoreResult;
 import se.l4.silo.engine.Snapshot;
@@ -76,4 +77,10 @@ public class DelegatingStorage
 		return storage.query(engine, query, dataLoader);
 	}
 
+	@Override
+	public FetchResult<Bytes> stream()
+	{
+		check();
+		return storage.stream();
+	}
 }

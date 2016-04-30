@@ -52,6 +52,13 @@ public interface StructuredEntity
 	 * @return
 	 */
 	<RT, Q extends Query<?>> Q query(String engine, QueryType<StreamingInput, RT, Q> type);
+	
+	/**
+	 * Stream everything in this entry. 
+	 * 
+	 * @return
+	 */
+	FetchResult<StreamingInput> stream();
 
 	/**
 	 * Get an entity that translates the structured data into objects. This

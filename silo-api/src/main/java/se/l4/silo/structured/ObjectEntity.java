@@ -1,6 +1,7 @@
 package se.l4.silo.structured;
 
 import se.l4.silo.Entity;
+import se.l4.silo.FetchResult;
 import se.l4.silo.query.Query;
 import se.l4.silo.query.QueryType;
 
@@ -43,4 +44,11 @@ public interface ObjectEntity<T>
 	 * @return
 	 */
 	<RT, Q extends Query<?>> Q query(String engine, QueryType<T, RT, Q> type);
+	
+	/**
+	 * Stream all of the objects stored in this entity.
+	 * 
+	 * @return
+	 */
+	FetchResult<T> stream();
 }

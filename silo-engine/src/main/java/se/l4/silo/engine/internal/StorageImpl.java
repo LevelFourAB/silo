@@ -3,7 +3,9 @@ package se.l4.silo.engine.internal;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
 
@@ -14,6 +16,7 @@ import com.google.common.collect.ImmutableMap;
 
 import se.l4.commons.io.Bytes;
 import se.l4.silo.DeleteResult;
+import se.l4.silo.FetchResult;
 import se.l4.silo.StorageException;
 import se.l4.silo.StoreResult;
 import se.l4.silo.engine.DataStorage;
@@ -30,6 +33,7 @@ import se.l4.silo.engine.internal.query.QueryEngineUpdater;
 import se.l4.silo.engine.internal.tx.TransactionExchange;
 import se.l4.silo.query.QueryFetchResult;
 import se.l4.silo.query.QueryResult;
+import se.l4.silo.results.IteratorFetchResult;
 
 /**
  * Implementation of {@link Storage}.
@@ -219,6 +223,47 @@ public class StorageImpl
 		qe.query(encounter);
 		
 		return encounter.getResult();
+	}
+	
+	@Override
+	public FetchResult<Bytes> stream()
+	{
+		long first = primary.first();
+		if(first == 0)
+		{
+			return FetchResult.empty();
+		}
+		
+		return new IteratorFetchResult<>(new Iterator<Bytes>()
+		{
+			private long current = first;
+			
+			@Override
+			public boolean hasNext()
+			{
+				return current != 0;
+			}
+			
+			@Override
+			public Bytes next()
+			{
+				if(current == 0)
+				{
+					throw new NoSuchElementException();
+				}
+				
+				try
+				{
+					long toFetch = current;
+					current = primary.nextAfter(current);
+					return storage.get(toFetch);
+				}
+				catch(IOException e)
+				{
+					throw new StorageException("Unable to get next item; " + e.getMessage(), e);
+				}
+			}
+		}, -1, 0, -1, -1);
 	}
 
 	/**

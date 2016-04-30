@@ -5,6 +5,7 @@ import java.util.function.Function;
 import se.l4.commons.io.Bytes;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.Entity;
+import se.l4.silo.FetchResult;
 import se.l4.silo.StoreResult;
 import se.l4.silo.query.QueryFetchResult;
 import se.l4.silo.query.QueryResult;
@@ -50,4 +51,11 @@ public interface Storage
 	 * @return 
 	 */
 	<R> QueryFetchResult<QueryResult<R>> query(String engine, Object query, Function<Bytes, R> dataLoader);
+
+	/**
+	 * Stream everything stored in this storage.
+	 * 
+	 * @return
+	 */
+	FetchResult<Bytes> stream();
 }

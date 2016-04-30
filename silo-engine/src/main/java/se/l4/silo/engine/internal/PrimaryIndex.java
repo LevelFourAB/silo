@@ -80,6 +80,12 @@ public class PrimaryIndex
 		}
 	}
 	
+	public long first()
+	{
+		Long first = reverse.firstKey();
+		return first == null ? 0l : first;
+	}
+	
 	/**
 	 * Get the latest internal identifier.
 	 * 

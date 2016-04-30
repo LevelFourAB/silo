@@ -85,26 +85,35 @@ public class DefaultObjectEntity<T>
 	@Override
 	public <RT, Q extends Query<?>> Q query(String engine, QueryType<T, RT, Q> type)
 	{
-		return parent.query(engine, new TransformingQueryType<StreamingInput, T, RT, Q>(type, in -> {
+		return parent.query(engine, new TransformingQueryType<StreamingInput, T, RT, Q>(type, this::transform));
+	}
+	
+	@Override
+	public FetchResult<T> stream()
+	{
+		return parent.stream().transform(this::transform);
+	}
+	
+	private T transform(StreamingInput in)
+	{
+		try
+		{
+			return serializer.read(in);
+		}
+		catch(IOException e)
+		{
+			throw new StorageException("Unable to read object; " + e.getMessage());
+		}
+		finally
+		{
 			try
 			{
-				return serializer.read(in);
+				in.close();
 			}
-			catch(IOException e)
+			catch(Exception e)
 			{
-				throw new StorageException("Unable to read object; " + e.getMessage());
 			}
-			finally
-			{
-				try
-				{
-					in.close();
-				}
-				catch(Exception e)
-				{
-				}
-			}
-		}));
+		}
 	}
 
 	private static class TransformingQueryType<TransformedFrom, EntityDataType, ResultType, Q extends Query<?>>

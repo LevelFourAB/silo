@@ -80,6 +80,12 @@ public class StructuredEntityImpl
 	}
 	
 	@Override
+	public FetchResult<StreamingInput> stream()
+	{
+		return entity.stream().transform(BytesToStreamingInputFunction.INSTANCE);
+	}
+	
+	@Override
 	public <T> ObjectEntity<T> asObject(Class<T> type)
 	{
 		return asObject(serializers.find(type));
