@@ -185,7 +185,7 @@ public class QueryEngineUpdater
 		}
 		catch(Throwable t)
 		{
-			log.error("Index {} failed to build; " + t.getMessage(), t);
+			log.error("Index " + def.name + " for " + name + " failed to build; " + t.getMessage(), t);
 		}
 	}
 	
