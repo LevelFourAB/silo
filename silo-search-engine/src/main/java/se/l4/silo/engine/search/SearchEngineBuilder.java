@@ -4,6 +4,7 @@ import java.util.Locale;
 
 import se.l4.silo.engine.QueryEngineFactory;
 import se.l4.silo.engine.search.internal.SearchIndexQueryEngine;
+import se.l4.silo.engine.search.query.QueryParser;
 
 /**
  * Builder for setting up shared information used by instances of
@@ -30,6 +31,14 @@ public interface SearchEngineBuilder
 	 * @return
 	 */
 	SearchEngineBuilder addLanguage(Language language);
+	
+	/**
+	 * Add a query parser to this engine.
+	 * 
+	 * @param parser
+	 * @return
+	 */
+	SearchEngineBuilder addQueryParser(QueryParser<?> parser);
 	
 	/**
 	 * Create the factory for {@link SearchIndexQueryEngine}s.
