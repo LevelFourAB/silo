@@ -14,6 +14,7 @@ import se.l4.commons.io.Bytes;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.QueryEngine;
 import se.l4.silo.engine.internal.DataEncounterImpl;
+import se.l4.silo.engine.internal.StorageEngine;
 import se.l4.silo.engine.internal.StorageImpl;
 import se.l4.silo.engine.types.LongFieldType;
 import se.l4.silo.engine.types.StringFieldType;
@@ -32,18 +33,21 @@ public class QueryEngineUpdater
 	
 	private static final Long DEFAULT = 0l;
 	
+	private final StorageEngine engine;
 	private final StorageImpl storage;
 	private final String name;
 	
 	private final List<EngineDef> engines;
 	private final MVMap<String, Long> state;
 
-	public QueryEngineUpdater(MVStoreManager store,
+	public QueryEngineUpdater(StorageEngine engine,
+			MVStoreManager store,
 			StorageImpl storage, 
 			ScheduledExecutorService executor,
 			String name,
 			Map<String, QueryEngine<?>> engines)
 	{
+		this.engine = engine;
 		this.storage = storage;
 		this.name = name;
 		
@@ -99,7 +103,7 @@ public class QueryEngineUpdater
 				}
 				
 				// This query engine is up to date, continue indexing
-				def.engine.update(id, new DataEncounterImpl(bytes));
+				def.engine.update(id, new DataEncounterImpl(engine, bytes));
 				state.put(def.name, Math.max(previous, id));
 			}
 			else if(log.isTraceEnabled())

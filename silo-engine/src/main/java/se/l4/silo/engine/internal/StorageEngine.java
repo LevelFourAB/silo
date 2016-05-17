@@ -441,6 +441,22 @@ public class StorageEngine
 			}
 		};
 	}
+	
+	public Storage getStorage(String name)
+	{
+		return getStorage(name, "main");
+	}
+	
+	public Storage getStorage(String name, String subName)
+	{
+		String storageName = name + "::" + subName;
+		StorageDef def = storages.get(storageName);
+		if(def == null)
+		{
+			throw new StorageException("The storage " + subName + " for entity " + name + " does not exist");
+		}
+		return def.getStorage();
+	}
 
 	private Path resolveDataPath(String name, String subName)
 	{
@@ -630,6 +646,7 @@ public class StorageEngine
 				}
 			}));
 			StorageImpl impl = new StorageImpl(
+				StorageEngine.this,
 				sharedStorages,
 				factories,
 				executor,

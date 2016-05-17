@@ -55,6 +55,7 @@ public class StorageImpl
 	private final QueryEngineUpdater queryEngineUpdater;
 
 	public StorageImpl(
+			StorageEngine engine,
 			SharedStorages storages,
 			EngineFactories factories,
 			ScheduledExecutorService executor,
@@ -74,28 +75,28 @@ public class StorageImpl
 		this.fields = fields;
 		
 		ImmutableMap.Builder<String, QueryEngine<?>> builder = ImmutableMap.builder();
-		for(Map.Entry<String, QueryEngineConfig> qe : queryEngines.entrySet())
+		for(Map.Entry<String, QueryEngineConfig> queryEngineConfig : queryEngines.entrySet())
 		{
-			String key = qe.getKey();
-			QueryEngineConfig config = qe.getValue();
+			String key = queryEngineConfig.getKey();
+			QueryEngineConfig config = queryEngineConfig.getValue();
 			
 			String type = config.getType();
-			QueryEngineFactory<?, ?> factory = factories.forQueryEngine(type);
-			QueryEngine<?> engine = factory.create(new QueryEngineCreationEncounterImpl(
+			QueryEngineFactory<?, ?> queryEngineFactory = factories.forQueryEngine(type);
+			QueryEngine<?> queryEngine = queryEngineFactory.create(new QueryEngineCreationEncounterImpl(
 				storages,
 				executor,
 				dataDir,
 				key,
 				name + "-" + key,
-				config.as(factory.getConfigClass()),
+				config.as(queryEngineFactory.getConfigClass()),
 				fields
 			));
 			
-			builder.put(key, engine);
+			builder.put(key, queryEngine);
 		}
 		
 		this.queryEngines = builder.build();
-		this.queryEngineUpdater = new QueryEngineUpdater(stateStore, this, executor, name, this.queryEngines);
+		this.queryEngineUpdater = new QueryEngineUpdater(engine, stateStore, this, executor, name, this.queryEngines);
 	}
 	
 	@Override

@@ -57,4 +57,22 @@ public interface DataEncounter
 	 * @return
 	 */
 	Object[] getStructuredArray(String[] keys, int appendCount);
+	
+	/**
+	 * <strong>Expert</strong>: Get the main {@link Storage} instance for an entity.
+	 *  
+	 * @param entity
+	 * @return
+	 */
+	Storage getStorage(String entity);
+	
+	/**
+	 * <strong>Expert</strong>: Get a {@link Storage} instance for an entity.
+	 *  
+	 * @param entity
+	 * @param name
+	 * @return
+	 */
+	Storage getStorage(String entity, String name);
+	
 }

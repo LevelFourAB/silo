@@ -21,15 +21,19 @@ import se.l4.commons.serialization.format.StreamingInput;
 import se.l4.commons.serialization.format.Token;
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.DataEncounter;
+import se.l4.silo.engine.Storage;
 
 public class DataEncounterImpl
 	implements DataEncounter, AutoCloseable
 {
+	private final StorageEngine engine;
+	
 	private final Bytes data;
 	private final List<Closeable> opened;
 
-	public DataEncounterImpl(Bytes data)
+	public DataEncounterImpl(StorageEngine engine, Bytes data)
 	{
+		this.engine = engine;
 		this.data = data;
 		opened = new ArrayList<>();
 	}
@@ -128,6 +132,18 @@ public class DataEncounterImpl
 			
 			return result;
 		});
+	}
+	
+	@Override
+	public Storage getStorage(String entity)
+	{
+		return engine.getStorage(entity);
+	}
+	
+	@Override
+	public Storage getStorage(String entity, String name)
+	{
+		return engine.getStorage(entity, name);
 	}
 
 	@Override
