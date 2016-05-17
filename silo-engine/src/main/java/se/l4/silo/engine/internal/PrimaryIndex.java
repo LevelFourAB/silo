@@ -108,4 +108,9 @@ public class PrimaryIndex
 		Long higher = reverse.higherKey(id);
 		return higher == null ? 0l : higher;
 	}
+
+	public int size()
+	{
+		return map.size();
+	}
 }

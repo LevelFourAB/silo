@@ -199,6 +199,11 @@ public class StorageImpl
 		return primary.nextAfter(id);
 	}
 	
+	public int size()
+	{
+		return primary.size();
+	}
+	
 	@Override
 	public <R> QueryFetchResult<QueryResult<R>> query(String engine, Object query, Function<Bytes, R> dataLoader)
 	{

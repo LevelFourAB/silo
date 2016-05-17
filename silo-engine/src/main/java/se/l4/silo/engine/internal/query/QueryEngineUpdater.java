@@ -150,6 +150,8 @@ public class QueryEngineUpdater
 			}
 			
 			// TODO: Thread safety?
+			long time = System.currentTimeMillis();
+			int count = 0;
 			
 			while(current < storage.getLatest() && ! Thread.interrupted())
 			{
@@ -161,10 +163,18 @@ public class QueryEngineUpdater
 				}
 				
 				Bytes bytes = storage.getInternal(id);
-				def.engine.update(id, new DataEncounterImpl(bytes));
+				def.engine.update(id, new DataEncounterImpl(engine, bytes));
 				state.put(def.name, id);
 				
 				current = id;
+				count++;
+				
+				long now = System.currentTimeMillis();
+				if(now - time >= 10000)
+				{
+					time = now;
+					log.info("Index " + def.name + " for " + name + ": Restore progress " + count + "/" + storage.size() + " (latest internal id is " + id + ")");
+				}
 			}
 		
 			log.info("Index {} for {} is now up to date", def.name, name);
