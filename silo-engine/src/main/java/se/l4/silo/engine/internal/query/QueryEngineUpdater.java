@@ -125,7 +125,7 @@ public class QueryEngineUpdater
 				log.trace("[" + name + "] " + def.name + " is at " + latest + ", " + (latest>id ? "updating" : "skipping"));
 			}
 			
-			if(latest > id)
+			if(latest >= id)
 			{
 				/*
 				 * If we have already indexed the item we can delete it
