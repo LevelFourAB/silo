@@ -317,6 +317,7 @@ public class SearchIndexQueryEngine
 		}
 		
 		Query query = createQuery(request);
+		log.debug("Searching with query {}", query);
 		
 		/*
 		if(score && request.getScoring() != null)

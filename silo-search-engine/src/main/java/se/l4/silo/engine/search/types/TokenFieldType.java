@@ -83,6 +83,6 @@ public class TokenFieldType
 	@Override
 	public Query createRangeQuery(String field, Object from, Object to)
 	{
-		throw new UnsupportedOperationException("Token fields do not support range queries");
+		throw new UnsupportedOperationException("Token fields do not support range queries; Internal field name was " + field);
 	}
 }
