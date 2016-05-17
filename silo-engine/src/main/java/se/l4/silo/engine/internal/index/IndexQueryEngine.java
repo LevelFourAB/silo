@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Predicate;
@@ -16,6 +17,10 @@ import org.h2.mvstore.type.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimap;
+
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.DataEncounter;
 import se.l4.silo.engine.FieldDef;
@@ -24,6 +29,7 @@ import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.QueryEncounter;
 import se.l4.silo.engine.QueryEngine;
 import se.l4.silo.engine.config.IndexConfig;
+import se.l4.silo.engine.types.ArrayFieldType;
 import se.l4.silo.engine.types.FieldType;
 import se.l4.silo.engine.types.LongFieldType;
 import se.l4.silo.engine.types.MaxMin;
@@ -51,6 +57,7 @@ public class IndexQueryEngine
 	private final MVMap<Object[], Object[]> index;
 	
 	private final String[] fields;
+	private final Set<String> fieldsSet;
 	private final FieldType[] fieldTypes;
 	private final String[] sortFields;
 	private final FieldType[] sortFieldTypes;
@@ -63,9 +70,13 @@ public class IndexQueryEngine
 		this.fields = config.getFields();
 		this.sortFields = config.getSortFields();
 		
+		this.fieldsSet = ImmutableSet.copyOf(this.fields);
+		
+		MergedFieldType dataFieldType = createMultiFieldType(name, fields, config.getFields(), false);
+		indexedData = store.openMap("data:" + name, LongFieldType.INSTANCE, dataFieldType);
+		
 		MergedFieldType indexKey = createFieldType(name, fields, config.getFields(), true);
 		this.fieldTypes = indexKey.getTypes();
-		indexedData = store.openMap("data:" + name, LongFieldType.INSTANCE, indexKey);
 		
 		MergedFieldType indexData = createFieldType(name, fields, config.getSortFields(), false);
 		this.sortFieldTypes = indexData.getTypes();
@@ -103,6 +114,39 @@ public class IndexQueryEngine
 		return new MergedFieldType(result);
 	}
 	
+	/**
+	 * Create a {@link MergedFieldType} that allows multiple values for
+	 * every field.
+	 * 
+	 * @param name
+	 * @param fields
+	 * @param fieldNames
+	 * @param appendId
+	 * @return
+	 */
+	private MergedFieldType createMultiFieldType(String name, Fields fields, String[] fieldNames, boolean appendId)
+	{
+		FieldType[] result = new FieldType[fieldNames.length + (appendId ? 1 : 0)];
+		for(int i=0, n=fieldNames.length; i<n; i++)
+		{
+			String field = fieldNames[i];
+			Optional<FieldDef> def = fields.get(field);
+			if(! def.isPresent())
+			{
+				throw new StorageException("Problem creating index query engine `" + name + "`, trying to use unknown field `" + field + "`");
+			}
+			result[i] = new ArrayFieldType(def.get().getType());
+		}
+		
+		if(appendId)
+		{
+			result[fieldNames.length] = LongFieldType.INSTANCE;
+		}
+		
+		return new MergedFieldType(result);
+	}
+	
+	
 	@Override
 	public void close()
 		throws IOException
@@ -114,29 +158,96 @@ public class IndexQueryEngine
 	public void update(long id, DataEncounter encounter)
 	{
 		logger.debug("{}: Update entry for id {}", name, id);
-		
-		// Generate the key for the map
-		Object[] key = encounter.getStructuredArray(fields, 1);
-		key[key.length - 1] = id;
+
+		// Fetch all the values that need to be indexed
+		Multimap<String, Object> values = HashMultimap.create();
+		encounter.findStructuredKeys(fieldsSet, values::put);
 		
 		// Generate the sort data
 		Object[] data = encounter.getStructuredArray(sortFields);
 		
-		if(logger.isTraceEnabled())
-		{
-			logger.trace("  key=" + Arrays.toString(key) + ", sort=" + Arrays.toString(data));
-		}
-		
 		// Look up our previously indexed key to see if we need to delete it
 		Object[] previousKey = indexedData.get(id);
-		if(previousKey != null)
-		{
-			logger.trace("  removing " + Arrays.toString(previousKey));
-			index.remove(previousKey);
-		}
+		remove(previousKey, id);
 		
 		// Store the new key
-		index.put(key, data);
+		store(values, data, id);
+	}
+	
+	private void store(Multimap<String, Object> values, Object[] sortData, long id)
+	{
+		Object[] generatedKey = new Object[fields.length + 1];
+		generatedKey[fields.length] = id;
+		
+		recursiveStore(values, sortData, generatedKey, 0);
+		
+		// Create a combined key for indexedData
+		Object[][] data = new Object[fields.length][];
+		for(int i=0, n=fields.length; i<n; i++)
+		{
+			data[i] = values.get(fields[i]).toArray();
+		}
+		indexedData.put(id, data);
+	}
+	
+	private void recursiveStore(Multimap<String, Object> values, Object[] sortData, Object[] generatedKey, int i)
+	{
+		String fieldName = fields[i];
+		if(i == fields.length - 1)
+		{
+			for(Object o : values.get(fieldName))
+			{
+				generatedKey[i] = o;
+				if(logger.isTraceEnabled())
+				{
+					logger.trace("  storing key=" + Arrays.toString(generatedKey) + ", sort=" + Arrays.toString(sortData));
+				}
+				index.put(generatedKey, sortData);
+			}
+		}
+		else
+		{
+			for(Object o : values.get(fieldName))
+			{
+				generatedKey[i] = o;
+				recursiveStore(values, sortData, generatedKey, i + 1);
+			}
+		}
+	}
+	
+	private void remove(Object[] data, long id)
+	{
+		if(data == null) return;
+		
+		Object[] generatedKey = new Object[data.length + 1];
+		generatedKey[data.length] = id;
+		recursiveRemove(data, generatedKey, 0);
+	}
+	
+	private void recursiveRemove(Object[] data, Object[] generatedKey, int i)
+	{
+		Object[] values = (Object[]) data[i];
+		if(i == data.length - 1)
+		{
+			// Last item, perform actual remove
+			for(Object o : values)
+			{
+				generatedKey[i] = o;
+				if(logger.isTraceEnabled())
+				{
+					logger.trace("  removing " + Arrays.toString(generatedKey));
+				}
+				index.remove(generatedKey);
+			}
+		}
+		else
+		{
+			for(Object o : values)
+			{
+				generatedKey[i] = o;
+				recursiveRemove(data, generatedKey, i + 1);
+			}
+		}
 	}
 
 	@Override
@@ -144,10 +255,7 @@ public class IndexQueryEngine
 	{
 		logger.debug("{}: Delete entry for id {}", name, id);
 		Object[] previousKey = indexedData.get(id);
-		if(previousKey != null)
-		{
-			index.remove(previousKey);
-		}
+		remove(previousKey, id);
 	}
 	
 	private int findField(String name, boolean errorOnNoFind)
