@@ -69,6 +69,7 @@ public class MVStoreManagerImpl
 		store.setReuseSpace(false);
 		return new Snapshot()
 		{
+			private boolean closed = false;
 			
 			@Override
 			public InputStream asStream()
@@ -77,6 +78,11 @@ public class MVStoreManagerImpl
 				if(store.getReuseSpace())
 				{
 					throw new IOException("Can not use this snapshot, the underlying storage might be in an incosistent state");
+				}
+				
+				if(closed)
+				{
+					throw new IOException("This snapshot has already been closed");
 				}
 				
 				return new FileChannelInputStream(
@@ -89,6 +95,9 @@ public class MVStoreManagerImpl
 			public void close()
 				throws IOException
 			{
+				if(closed) return;
+				
+				closed = true;
 				if(snapshotsOpen.decrementAndGet() == 0)
 				{
 					store.setReuseSpace(true);
@@ -129,7 +138,7 @@ public class MVStoreManagerImpl
 	{
 		if(snapshotsOpen.get() > 0)
 		{
-			throw new IOException("Can not install snapshot as this store has an open snapshot");
+			throw new IOException("Can not recreate as this store has an open snapshot");
 		}
 		
 		// Get the file name we are replacing
