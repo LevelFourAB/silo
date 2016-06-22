@@ -4,6 +4,7 @@ import se.l4.silo.engine.builder.BuilderWithParent;
 import se.l4.silo.engine.search.builder.FieldBuilder;
 import se.l4.silo.engine.search.facets.FacetBuilderFactory;
 import se.l4.silo.engine.search.internal.SearchIndexQueryEngine;
+import se.l4.silo.engine.search.scoring.ScoringProvider;
 
 /**
  * Builder for {@link SearchIndexQueryEngine}.
@@ -47,4 +48,12 @@ public interface SearchIndexBuilder<Parent>
 	 * @return
 	 */
 	SearchIndexBuilder<Parent> addCustomFieldCreator(CustomFieldCreator creator);
+	
+	/**
+	 * Add a scoring provider that can be used for this index.
+	 * 
+	 * @param provider
+	 * @return
+	 */
+	SearchIndexBuilder<Parent> addScoringProvider(ScoringProvider<?> provider);
 }

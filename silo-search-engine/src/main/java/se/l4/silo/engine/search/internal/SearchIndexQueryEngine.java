@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -49,6 +50,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import se.l4.silo.StorageException;
@@ -68,10 +70,12 @@ import se.l4.silo.engine.search.SearchIndexConfig.CommitConfig;
 import se.l4.silo.engine.search.facets.FacetCollectionEncounter;
 import se.l4.silo.engine.search.query.QueryParseEncounter;
 import se.l4.silo.engine.search.query.QueryParser;
+import se.l4.silo.engine.search.scoring.ScoringProvider;
 import se.l4.silo.search.FacetEntry;
 import se.l4.silo.search.FacetItem;
 import se.l4.silo.search.FacetsImpl;
 import se.l4.silo.search.QueryItem;
+import se.l4.silo.search.ScoringItem;
 import se.l4.silo.search.SearchIndexQueryRequest;
 
 /**
@@ -100,6 +104,8 @@ public class SearchIndexQueryEngine
 	private final CommitPolicy commitPolicy;
 	
 	private final AtomicLong latestGeneration;
+
+	private final Map<String, ScoringProvider<?>> scoringProviders;
 
 	public SearchIndexQueryEngine(SearchEngine engine, ScheduledExecutorService executor, String name, Path directory, SearchIndexConfig config)
 		throws IOException
@@ -155,6 +161,8 @@ public class SearchIndexQueryEngine
 		this.fieldNames = fieldNames.build();
 		
 		this.fieldCreators = ImmutableList.copyOf(config.getFieldCreators());
+		
+		this.scoringProviders = ImmutableMap.copyOf(config.getScoringProviders());
 	}
 	
 	private static Directory createDirectory(Directory directory, SearchIndexConfig config)
@@ -319,18 +327,17 @@ public class SearchIndexQueryEngine
 		Query query = createQuery(request);
 		log.debug("Searching with query {}", query);
 		
-		/*
 		if(score && request.getScoring() != null)
 		{
-			QueryScoringProvider provider = queryExtensions.scoring(request.getScoring());
+			ScoringItem item = request.getScoring();
+			ScoringProvider provider = scoringProviders.get(item.getId());
 			if(provider == null)
 			{
-				throw new IOException("Unknown scoring: " + request.getScoring());
+				throw new StorageException("Unknown scoring provider with id " + item.getId());
 			}
 			
-			query = new CustomScoreAdapter(request, query, provider);
+			query = new CustomScoreAdapter(def, query, provider, item.getPayload());
 		}
-		*/
 		
 		searcher.search(query, collector);
 		

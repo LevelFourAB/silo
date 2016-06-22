@@ -16,6 +16,7 @@ import se.l4.silo.engine.search.IndexDefinitionEncounter;
 import se.l4.silo.engine.search.SearchFieldType;
 import se.l4.silo.engine.search.SearchIndexConfig;
 import se.l4.silo.engine.search.facets.Facet;
+import se.l4.silo.engine.search.scoring.ScoringProvider;
 
 public class IndexDefinitionImpl
 	implements IndexDefinition
@@ -50,6 +51,11 @@ public class IndexDefinitionImpl
 			facets.put(id, new FacetDefinitionImpl(id, instance));
 		}
 		this.facets = facets.build();
+		
+		for(ScoringProvider<?> sp : config.getScoringProviders().values())
+		{
+			sp.setup(encounter);
+		}
 		
 		this.valueFields = ImmutableSet.copyOf(encounter.valueFields);
 	}

@@ -21,7 +21,9 @@ public class SearchEngine
 	private final Map<String, Language> languages;
 	private final Map<String, QueryParser<?>> queryParsers;
 
-	public SearchEngine(Locale defaultLanguage, Map<String, Language> languages, Map<String, QueryParser<?>> queryParsers)
+	public SearchEngine(Locale defaultLanguage,
+			Map<String, Language> languages,
+			Map<String, QueryParser<?>> queryParsers)
 	{
 		this.defaultLanguage = defaultLanguage;
 		this.languages = languages;

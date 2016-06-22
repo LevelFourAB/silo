@@ -84,10 +84,14 @@ public class SearchIndexQueryImpl<T>
 	}
 	
 	@Override
-	public SearchIndexQuery<T> setScoring(String scoring)
+	public <C extends ScoringQueryBuilder<SearchIndexQuery<T>>> C setScoring(Supplier<C> scoring)
 	{
-		request.setScoring(scoring);
-		return this;
+		C builder = scoring.get();
+		builder.setReceiver(c -> {
+			request.setScoring(c);
+			return this;
+		});
+		return builder;
 	}
 	
 	@Override

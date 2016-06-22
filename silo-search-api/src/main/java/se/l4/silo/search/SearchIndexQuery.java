@@ -68,5 +68,5 @@ public interface SearchIndexQuery<T>
 	 * @param scoring
 	 * @return
 	 */
-	SearchIndexQuery<T> setScoring(String scoring);
+	<C extends ScoringQueryBuilder<SearchIndexQuery<T>>> C setScoring(Supplier<C> scoring);
 }

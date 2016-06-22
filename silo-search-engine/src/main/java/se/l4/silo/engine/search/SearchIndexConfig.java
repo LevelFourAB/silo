@@ -14,6 +14,7 @@ import se.l4.commons.serialization.ReflectionSerializer;
 import se.l4.commons.serialization.Use;
 import se.l4.silo.engine.config.QueryEngineConfig;
 import se.l4.silo.engine.search.facets.Facet;
+import se.l4.silo.engine.search.scoring.ScoringProvider;
 
 public class SearchIndexConfig
 	extends QueryEngineConfig
@@ -26,6 +27,7 @@ public class SearchIndexConfig
 	private Map<String, Facet<?>> facets;
 	
 	private List<CustomFieldCreator> fieldCreators;
+	private Map<String, ScoringProvider<?>> scoringProviders;
 	
 	public SearchIndexConfig()
 	{
@@ -38,6 +40,7 @@ public class SearchIndexConfig
 		facets = new HashMap<>();
 		
 		fieldCreators = new ArrayList<>();
+		scoringProviders = new HashMap<>();
 	}
 	
 	public String getLanguageField()
@@ -88,6 +91,16 @@ public class SearchIndexConfig
 	public void addFieldCreator(CustomFieldCreator creator)
 	{
 		fieldCreators.add(creator);
+	}
+	
+	public Map<String, ScoringProvider<?>> getScoringProviders()
+	{
+		return scoringProviders;
+	}
+	
+	public void addScoringProvider(String id, ScoringProvider<?> provider)
+	{
+		scoringProviders.put(id, provider);
 	}
 
 	public static class FieldConfig

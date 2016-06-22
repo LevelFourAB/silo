@@ -12,6 +12,7 @@ import se.l4.silo.engine.search.SearchIndexConfig;
 import se.l4.silo.engine.search.SearchIndexConfig.FieldConfig;
 import se.l4.silo.engine.search.builder.FieldBuilder;
 import se.l4.silo.engine.search.facets.FacetBuilderFactory;
+import se.l4.silo.engine.search.scoring.ScoringProvider;
 
 public class SearchIndexBuilderImpl<Parent>
 	implements SearchIndexBuilder<Parent>
@@ -58,6 +59,13 @@ public class SearchIndexBuilderImpl<Parent>
 	public SearchIndexBuilder<Parent> addCustomFieldCreator(CustomFieldCreator creator)
 	{
 		config.addFieldCreator(creator);
+		return this;
+	}
+	
+	@Override
+	public SearchIndexBuilder<Parent> addScoringProvider(ScoringProvider<?> provider)
+	{
+		config.addScoringProvider(provider.id(), provider);
 		return this;
 	}
 	

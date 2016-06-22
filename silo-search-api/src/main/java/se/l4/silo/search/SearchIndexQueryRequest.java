@@ -15,7 +15,7 @@ public class SearchIndexQueryRequest
 	
 	private List<SortItem> sortItems;
 	
-	private String scoring;
+	private ScoringItem scoring;
 	private boolean waitForLatest;
 	
 	public SearchIndexQueryRequest()
@@ -87,12 +87,12 @@ public class SearchIndexQueryRequest
 		facetItems.add(item);
 	}
 	
-	public String getScoring()
+	public ScoringItem getScoring()
 	{
 		return scoring;
 	}
 	
-	public void setScoring(String scoring)
+	public void setScoring(ScoringItem scoring)
 	{
 		this.scoring = scoring;
 	}

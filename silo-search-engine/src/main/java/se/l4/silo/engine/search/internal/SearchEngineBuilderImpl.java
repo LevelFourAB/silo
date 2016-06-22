@@ -71,6 +71,7 @@ public class SearchEngineBuilderImpl
 		return this;
 	}
 	
+	@Override
 	public SearchEngineBuilder addQueryParser(QueryParser<?> parser)
 	{
 		queryTypes.put(parser.id(), parser);
@@ -81,7 +82,10 @@ public class SearchEngineBuilderImpl
 	@Override
 	public QueryEngineFactory<?, ?> build()
 	{
-		SearchEngine engine = new SearchEngine(defaultLanguage, ImmutableMap.copyOf(langs), ImmutableMap.copyOf(queryTypes));
+		SearchEngine engine = new SearchEngine(defaultLanguage,
+			ImmutableMap.copyOf(langs),
+			ImmutableMap.copyOf(queryTypes)
+		);
 		return new SearchIndex(engine);
 	}
 
