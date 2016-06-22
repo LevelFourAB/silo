@@ -113,7 +113,7 @@ public class QueryEngineUpdater
 		}
 	}
 	
-	public void delete(long id)
+	public void delete(long previous, long id)
 	{
 		if(log.isTraceEnabled())
 		{
@@ -137,6 +137,15 @@ public class QueryEngineUpdater
 				 * all.
 				 */
 				def.engine.delete(id);
+			}
+			
+			if(latest == id)
+			{
+				/*
+				 * We are deleting the latest item so we need to update the
+				 * state.
+				 */
+				state.put(def.name, previous);
 			}
 		}
 	}

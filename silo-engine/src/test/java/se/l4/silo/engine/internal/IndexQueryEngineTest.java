@@ -169,4 +169,38 @@ public class IndexQueryEngineTest
 			assertThat(fr.getSize(), is(2));
 		}
 	}
+	
+	@Test
+	public void testStoreDeleteStore()
+	{
+		entity.store("test", generateList());
+		
+		try(FetchResult<StreamingInput> fr = entity.query("byField1", IndexQuery.type())
+			.field("field1")
+			.isEqualTo("value1")
+			.run())
+		{
+			assertThat(fr.getSize(), is(1));
+		}
+		
+		entity.delete("test");
+		
+		try(FetchResult<StreamingInput> fr = entity.query("byField1", IndexQuery.type())
+			.field("field1")
+			.isEqualTo("value1")
+			.run())
+		{
+			assertThat(fr.getSize(), is(0));
+		}
+		
+		entity.store("test", generateList());
+		
+		try(FetchResult<StreamingInput> fr = entity.query("byField1", IndexQuery.type())
+			.field("field1")
+			.isEqualTo("value1")
+			.run())
+		{
+			assertThat(fr.getSize(), is(1));
+		}
+	}
 }

@@ -315,7 +315,8 @@ public class StorageImpl
 		
 		if(internalId == 0) return;
 		
-		queryEngineUpdater.delete(internalId);
+		long previous = primary.before(internalId);
+		queryEngineUpdater.delete(previous, internalId);
 		
 		storage.delete(internalId);
 		primary.remove(id);

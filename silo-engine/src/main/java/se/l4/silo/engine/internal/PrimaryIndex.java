@@ -108,6 +108,12 @@ public class PrimaryIndex
 		Long higher = reverse.higherKey(id);
 		return higher == null ? 0l : higher;
 	}
+	
+	public long before(long id)
+	{
+		Long lower = reverse.lowerKey(id);
+		return lower == null ? 0l : lower;
+	}
 
 	public int size()
 	{
