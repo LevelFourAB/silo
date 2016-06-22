@@ -81,6 +81,11 @@ public class IndexQueryEngine
 		MergedFieldType indexData = createFieldType(name, fields, config.getSortFields(), false);
 		this.sortFieldTypes = indexData.getTypes();
 		index = store.openMap("index:" + name, indexKey, indexData);
+		
+		if(logger.isDebugEnabled())
+		{
+			logger.debug(name + ": fields=" + Arrays.toString(this.fields) + ", sortFields=" + Arrays.toString(this.sortFields));
+		}
 	}
 	
 	/**
@@ -179,7 +184,19 @@ public class IndexQueryEngine
 		Object[] generatedKey = new Object[fields.length + 1];
 		generatedKey[fields.length] = id;
 		
-		recursiveStore(values, sortData, generatedKey, 0);
+		if(fields.length == 0)
+		{
+			// Special case for only sort data
+			if(logger.isTraceEnabled())
+			{
+				logger.trace("  storing key=" + Arrays.toString(generatedKey) + ", sort=" + Arrays.toString(sortData));
+			}
+			index.put(generatedKey, sortData);
+		}
+		else
+		{
+			recursiveStore(values, sortData, generatedKey, 0);
+		}
 		
 		// Create a combined key for indexedData
 		Object[][] data = new Object[fields.length][];
