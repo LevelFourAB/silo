@@ -238,7 +238,15 @@ public class IndexQueryEngine
 		
 		Object[] generatedKey = new Object[data.length + 1];
 		generatedKey[data.length] = id;
-		recursiveRemove(data, generatedKey, 0);
+		
+		if(fields.length == 0)
+		{
+			index.remove(generatedKey);
+		}
+		else
+		{
+			recursiveRemove(data, generatedKey, 0);
+		}
 	}
 	
 	private void recursiveRemove(Object[] data, Object[] generatedKey, int i)
@@ -273,6 +281,7 @@ public class IndexQueryEngine
 		logger.debug("{}: Delete entry for id {}", name, id);
 		Object[] previousKey = indexedData.get(id);
 		remove(previousKey, id);
+		indexedData.remove(id);
 	}
 	
 	private int findField(String name, boolean errorOnNoFind)
