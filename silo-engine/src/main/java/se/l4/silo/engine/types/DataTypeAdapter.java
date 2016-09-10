@@ -171,6 +171,12 @@ public class DataTypeAdapter
 			this.buf = buf;
 		}
 		
+		@Override
+		public int read() throws IOException
+		{
+			if(! buf.hasRemaining()) return -1;
+			return buf.get() & 0xFF;
+		}
 		
 		@Override
 		public byte readByte()
