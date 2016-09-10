@@ -109,6 +109,7 @@ public class LocalSiloBuilder
 		});
 	}
 	
+	@Override
 	public SiloBuilder addEntityType(EntityTypeFactory<?, ?> type)
 	{
 		put(entityTypes, type, type.getId());

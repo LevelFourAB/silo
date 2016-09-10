@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import se.l4.commons.serialization.SerializerCollection;
+import se.l4.silo.Entity;
 import se.l4.silo.ResourceHandle;
 import se.l4.silo.Silo;
 import se.l4.silo.StorageException;
@@ -157,21 +158,39 @@ public class LocalSilo
 		throw new UnsupportedOperationException();
 	}
 	
-	private <T> T entity(String entityName)
+	@Override
+	public boolean hasEntity(String entityName)
 	{
-		return storageEngine.getEntity(entityName);
+		return storageEngine.getEntity(entityName) != null;
 	}
-
+	
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T extends Entity> T entity(String entityName, Class<T> type)
+	{
+		Object instance = storageEngine.getEntity(entityName);
+		if(instance == null)
+		{
+			throw new StorageException("The entity `" + entityName + "` does not exist");
+		}
+		
+		if(! type.isAssignableFrom(instance.getClass()))
+		{
+			throw new StorageException("The entity `" + entityName + "` is not of type " + type + ", instead it is of type " + instance.getClass());
+		}
+		return (T) instance;
+	}
+	
 	@Override
 	public BinaryEntity binary(String entityName)
 	{
-		return entity(entityName);
+		return entity(entityName, BinaryEntity.class);
 	}
 	
 	@Override
 	public StructuredEntity structured(String entityName)
 	{
-		return entity(entityName);
+		return entity(entityName, StructuredEntity.class);
 	}
 	
 	@Override

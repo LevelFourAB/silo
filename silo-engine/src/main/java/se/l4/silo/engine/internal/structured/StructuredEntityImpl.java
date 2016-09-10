@@ -91,7 +91,7 @@ public class StructuredEntityImpl
 		return asObject(serializers.find(type));
 	}
 	
-	private Bytes toBytes(StreamingInput in)
+	protected Bytes toBytes(StreamingInput in)
 		throws IOException
 	{
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();

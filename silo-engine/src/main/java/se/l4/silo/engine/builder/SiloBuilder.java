@@ -4,6 +4,7 @@ import se.l4.commons.serialization.DefaultSerializerCollection;
 import se.l4.commons.serialization.SerializerCollection;
 import se.l4.commons.types.TypeFinder;
 import se.l4.silo.Silo;
+import se.l4.silo.engine.EntityTypeFactory;
 import se.l4.silo.engine.LocalSilo;
 import se.l4.silo.engine.QueryEngine;
 import se.l4.silo.engine.QueryEngineFactory;
@@ -48,6 +49,14 @@ public interface SiloBuilder
 	SiloBuilder withVibe(Vibe vibe, String... path);
 	
 	/**
+	 * Add a new type of entity.
+	 * 
+	 * @param type
+	 * @return
+	 */
+	SiloBuilder addEntityType(EntityTypeFactory<?, ?> type);
+	
+	/**
 	 * Add a new entity to this instance.
 	 * 
 	 * @param name
@@ -80,4 +89,5 @@ public interface SiloBuilder
 	 * @return
 	 */
 	LocalSilo build();
+
 }

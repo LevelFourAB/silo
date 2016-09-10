@@ -71,6 +71,22 @@ public interface Silo
 	<T> T create(Class<T> siloInterface);
 	
 	/**
+	 * Check if the given entity is available.
+	 * 
+	 * @param entityName
+	 * @return
+	 */
+	boolean hasEntity(String entityName);
+	
+	/**
+	 * Get an entity of the given type.
+	 * 
+	 * @param entityName
+	 * @param type
+	 */
+	<T extends Entity> T entity(String entityName, Class<T> type);
+	
+	/**
 	 * Get access to the binary entity with the given name.
 	 * 
 	 * @param entityName
