@@ -22,7 +22,6 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TrackingIndexWriter;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
@@ -94,7 +93,6 @@ public class SearchIndexQueryEngine
 	
 	private final Directory directory;
 	private final IndexWriter writer;
-	private final TrackingIndexWriter tiw;
 	private final SearcherManager manager;
 	
 	private final ImmutableSet<String> fieldNames;
@@ -121,7 +119,6 @@ public class SearchIndexQueryEngine
 		
 		// Create the writer and searcher manager
 		writer = new IndexWriter(this.directory, conf);
-		tiw = new TrackingIndexWriter(writer);
 		
 		latestGeneration = new AtomicLong();
 		
@@ -137,7 +134,7 @@ public class SearchIndexQueryEngine
 		
 
 		SearchIndexConfig.Freshness freshness = config.getReload().getFreshness();
-		thread = new ControlledRealTimeReopenThread<IndexSearcher>(tiw, manager, freshness.getMaxStale(), freshness.getMinStale());
+		thread = new ControlledRealTimeReopenThread<IndexSearcher>(writer, manager, freshness.getMaxStale(), freshness.getMinStale());
 		thread.setPriority(Math.min(Thread.currentThread().getPriority()+2, Thread.MAX_PRIORITY));
 		thread.setDaemon(true);
 		thread.start();
@@ -566,7 +563,7 @@ public class SearchIndexQueryEngine
 		Term idTerm = new Term("_:id", idRef);
 		try
 		{
-			long generation = tiw.updateDocument(idTerm, doc);
+			long generation = writer.updateDocument(idTerm, doc);
 			latestGeneration.set(generation);
 		}
 		catch(IOException e)
@@ -647,7 +644,7 @@ public class SearchIndexQueryEngine
 		BytesRef idRef = new BytesRef(longToBytes(id));
 		try
 		{
-			tiw.deleteDocuments(new Term("_:id", idRef));
+			writer.deleteDocuments(new Term("_:id", idRef));
 		}
 		catch(IOException e)
 		{
