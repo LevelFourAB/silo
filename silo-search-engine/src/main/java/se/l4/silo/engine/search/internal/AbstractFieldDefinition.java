@@ -54,6 +54,12 @@ public abstract class AbstractFieldDefinition
 	}
 	
 	@Override
+	public String nullName(String field)
+	{
+		return name('n', field, null);
+	}
+	
+	@Override
 	public IndexableField createIndexableField(String name, Language language, Object data)
 	{
 		FieldType ft = createFieldType();

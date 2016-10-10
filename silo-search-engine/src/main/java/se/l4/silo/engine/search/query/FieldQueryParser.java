@@ -26,13 +26,14 @@ public class FieldQueryParser
 	{
 		FieldQueryData data = encounter.data();
 		FieldDefinition fdef = encounter.def().getField(data.getField());
-		String name = fdef.name(data.getField(), encounter.currentLanguage());
 		if(data.getValue() == null)
 		{
+			String name = fdef.nullName(data.getField());
 			return new TermQuery(new Term(name, new BytesRef(BytesRef.EMPTY_BYTES)));
 		}
 		else
 		{
+			String name = fdef.name(data.getField(), encounter.currentLanguage());
 			return fdef.getType().createEqualsQuery(name, data.getValue());
 		}
 	}

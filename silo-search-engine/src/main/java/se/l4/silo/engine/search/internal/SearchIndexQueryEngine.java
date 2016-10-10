@@ -579,7 +579,7 @@ public class SearchIndexQueryEngine
 	{
 		if(object == null)
 		{
-			String fieldName = field.name(name, fallback);
+			String fieldName = field.nullName(name);
 			FieldType ft = new FieldType();
 			ft.setStored(false);
 			ft.setIndexOptions(IndexOptions.DOCS);

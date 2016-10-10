@@ -106,6 +106,14 @@ public interface FieldDefinition
 	String name(String field, Locale language);
 	
 	/**
+	 * Get the name of this field when stored a {@code null} value.
+	 * 
+	 * @param field
+	 * @return
+	 */
+	String nullName(String field);
+	
+	/**
 	 * Get information about the type of the field.
 	 * 
 	 * @return
