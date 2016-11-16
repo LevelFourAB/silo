@@ -353,7 +353,7 @@ public class StorageEngine
 			// TODO: Check if the configuration has actually changed for existing entities before recreating
 			
 			EntityTypeFactory<?, ?> factory = factories.forEntity(ec.getType());
-			Entity entity = factory.create(createEncounter(key, ec.as(factory.getConfigType())));
+			Entity entity = (Entity) factory.create(createEncounter(key, ec.as(factory.getConfigType())));
 			entities.put(key, entity);
 		}
 		
