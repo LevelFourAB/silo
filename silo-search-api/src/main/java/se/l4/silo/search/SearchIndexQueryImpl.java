@@ -107,7 +107,8 @@ public class SearchIndexQueryImpl<T>
 	public SearchResult<T> run()
 	{
 		QueryFetchResult<SearchHit<T>> qr = runner.fetchResults(request, (f) -> {
-			return new SearchHitImpl<>(f.getData()); 
+			float score = f.getMetadata("score", 0f);
+			return new SearchHitImpl<>(f.getData(), score); 
 		});
 		
 		Facets facets = qr.getMetadata("facets");

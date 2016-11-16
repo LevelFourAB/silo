@@ -22,5 +22,19 @@ public interface QueryResult<T>
 	 * @param key
 	 * @return
 	 */
-	Object getMetadata(String key);
+	<R> R getMetadata(String key);
+	
+	/**
+	 * Get some metadata from this query result.
+	 * 
+	 * @param key
+	 * @param defaultValue
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	default <R> R getMetadata(String key, R defaultValue)
+	{
+		Object v = getMetadata(key);
+		return v == null ? defaultValue : (R) v;
+	}
 }
