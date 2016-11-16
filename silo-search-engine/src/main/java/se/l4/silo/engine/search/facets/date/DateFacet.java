@@ -83,7 +83,7 @@ public class DateFacet
 			between("yesterday", midnightYesterday, midnight),
 			between("lastWeek", lastWeek, midnightYesterday),
 			between("lastMonth", lastMonth, lastWeek),
-			new LongRange("other", 0, true, System.currentTimeMillis(), true)
+			new LongRange("past", 0, true, System.currentTimeMillis(), true)
 		);
 		
 		List<FacetEntry> entries = Lists.newArrayList();
