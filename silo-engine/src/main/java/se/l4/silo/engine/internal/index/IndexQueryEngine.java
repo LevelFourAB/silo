@@ -219,7 +219,8 @@ public class IndexQueryEngine
 				{
 					logger.trace("  storing key=" + Arrays.toString(generatedKey) + ", sort=" + Arrays.toString(sortData));
 				}
-				index.put(generatedKey, sortData);
+				Object[] keyCopy = Arrays.copyOf(generatedKey, generatedKey.length);
+				index.put(keyCopy, sortData);
 			}
 		}
 		else
@@ -680,12 +681,14 @@ public class IndexQueryEngine
 				logger.trace("  Query: lower= " + Arrays.toString(lower) + " " + Arrays.toString(types(lower)));
 				logger.trace("  Query: upper= " + Arrays.toString(upper) + " " + Arrays.toString(types(upper)));
 				logger.trace("  Query: lower <> upper = " + keyType.compare(lower, upper));
+				logger.trace("  Map size: " + map.size());
 			}
 			
 			Object[] previous = map.lowerKey(lower);
 			if(previous == null)
 			{
 				previous = map.firstKey();
+				logger.trace("  First key updated to {}", previous);
 			}
 			
 			if(previous == null)
