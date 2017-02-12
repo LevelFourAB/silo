@@ -1,5 +1,6 @@
 package se.l4.silo.search;
 
+import java.util.Locale;
 import java.util.function.Supplier;
 
 import se.l4.silo.query.LimitableQuery;
@@ -24,6 +25,15 @@ public interface SearchIndexQuery<T>
 	{
 		return new SearchIndexQueryType<>();
 	}
+	
+	/**
+	 * Set the locale this query is being performed from. This is used for
+	 * query parsing in the correct language.
+	 * 
+	 * @param locale
+	 * @return
+	 */
+	SearchIndexQuery<T> fromLocale(Locale locale);
 	
 	/**
 	 * Indicate that this query should wait for the absolute freshest index

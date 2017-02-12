@@ -30,7 +30,7 @@ public class SearchIndexBuilderImpl<Parent>
 	@Override
 	public SearchIndexBuilder<Parent> setLanguageField(String name)
 	{
-		config.setLanguageField(null);
+		config.setLanguageField(name);
 		return this;
 	}
 

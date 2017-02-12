@@ -1,5 +1,6 @@
 package se.l4.silo.search;
 
+import java.util.Locale;
 import java.util.function.Supplier;
 
 import se.l4.silo.query.QueryFetchResult;
@@ -17,6 +18,13 @@ public class SearchIndexQueryImpl<T>
 	{
 		this.runner = runner;
 		request = new SearchIndexQueryRequest();
+	}
+	
+	@Override
+	public SearchIndexQuery<T> fromLocale(Locale locale)
+	{
+		request.setLanguage(locale.toLanguageTag());
+		return this;
 	}
 	
 	@Override
