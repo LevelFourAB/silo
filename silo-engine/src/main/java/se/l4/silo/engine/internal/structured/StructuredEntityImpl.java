@@ -66,7 +66,6 @@ public class StructuredEntityImpl
 			return FetchResult.empty();
 		}
 		
-		
 		return FetchResult.single(bytes).transform(BytesToStreamingInputFunction.INSTANCE);
 	}
 	
@@ -94,7 +93,7 @@ public class StructuredEntityImpl
 	protected Bytes toBytes(StreamingInput in)
 		throws IOException
 	{
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		ByteArrayOutputStream baos = new ByteArrayOutputStream(1024);
 		// Tag with a version
 		baos.write(0);
 		
