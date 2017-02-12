@@ -156,7 +156,7 @@ public class IndexQueryEngineTest
 	}
 	
 	@Test
-	public void testStoreMultiple()
+	public void testStoreMultiple1()
 	{
 		entity.store("test1", generateList());
 		entity.store("test2", generateList());
@@ -164,6 +164,21 @@ public class IndexQueryEngineTest
 		try(FetchResult<StreamingInput> fr = entity.query("byField1", IndexQuery.type())
 			.field("field1")
 			.isEqualTo("value1")
+			.run())
+		{
+			assertThat(fr.getSize(), is(2));
+		}
+	}
+	
+	@Test
+	public void testStoreMultiple2()
+	{
+		entity.store("test1", generateList());
+		entity.store("test2", generateList());
+		
+		try(FetchResult<StreamingInput> fr = entity.query("byField1", IndexQuery.type())
+			.field("field1")
+			.isEqualTo("value2")
 			.run())
 		{
 			assertThat(fr.getSize(), is(2));
