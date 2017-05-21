@@ -34,8 +34,11 @@ public class MVStoreCacheHealth
 	@Override
 	public void mapToKeyValues(KeyValueReceiver receiver)
 	{
+		long total = hits + misses;
 		receiver.add("hits", hits);
 		receiver.add("misses", misses);
+		receiver.add("hitRate", total == 0l ? 1.0 : hits / (double) (hits + misses));
+		receiver.add("missRate", total == 0l ? 0.0 : misses / (double) (hits + misses));
 		receiver.add("memoryUsed", usedMemory);
 		receiver.add("memoryMax", maxMemory);
 		receiver.add("memoryUsageAsFraction", usedMemory / (double) maxMemory);
