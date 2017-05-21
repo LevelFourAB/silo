@@ -9,11 +9,17 @@ import java.util.Base64;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.h2.mvstore.MVMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.carrotsearch.hppc.LongHashSet;
+import com.carrotsearch.hppc.LongSet;
+import com.carrotsearch.hppc.cursors.LongCursor;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 
@@ -39,6 +45,9 @@ import se.l4.vibe.probes.CountingProbe;
 public class TransactionAdapter
 	implements IoConsumer<LogEntry>
 {
+	// Timeout to use for removing stale transactions
+	private static final long TIMEOUT = TimeUnit.HOURS.toMillis(24);
+	
 	private static final Logger logger = LoggerFactory.getLogger(TransactionAdapter.class);
 	
 	private final StorageApplier applier;
@@ -53,12 +62,12 @@ public class TransactionAdapter
 	private final CountingProbe txCommits;
 	private final CountingProbe txRollbacks;
 
-	public TransactionAdapter(Vibe vibe, MVStoreManager store, StorageApplier applier)
+	public TransactionAdapter(Vibe vibe, ScheduledExecutorService executor, MVStoreManager store, StorageApplier applier)
 	{
 		this.store = store;
 		this.applier = applier;
 		
-		activeTx = new CountingProbe();
+		activeTx = new CountingProbe(false);
 		
 		txStarts = new CountingProbe();
 		txCommits = new CountingProbe();
@@ -84,6 +93,11 @@ public class TransactionAdapter
 		}
 		
 		reopen();
+		
+		if(executor != null)
+		{
+			executor.scheduleAtFixedRate(this::removeStale, 1, 5, TimeUnit.MINUTES);
+		}
 	}
 	
 	public void reopen()
@@ -102,6 +116,8 @@ public class TransactionAdapter
 				}
 			}
 		}
+		
+		logger.info(activeTx.peek() + " active transactions spread over " + log.size() + " entries in the log");
 	}
 	
 	@Override
@@ -145,6 +161,42 @@ public class TransactionAdapter
 					txRollbacks.increase();
 					removeTransaction(tx);
 					break;
+			}
+		}
+	}
+	
+	@VisibleForTesting
+	public void removeStale()
+	{
+		logger.trace("Looking for stale transactions");
+		if(! log.isEmpty())
+		{
+			LongSet toRemove = new LongHashSet();
+			Iterator<long[]> it = log.keyIterator(log.firstKey());
+			while(it.hasNext())
+			{
+				long[] key = it.next();
+				TransactionOperation op = log.get(key);
+				if(op.getType() == TransactionOperation.Type.START)
+				{
+					long time = System.currentTimeMillis();
+					if(time - op.getTimestamp() >= TIMEOUT)
+					{
+						toRemove.add(key[0]);
+					}
+				}
+			}
+			
+			if(! toRemove.isEmpty())
+			{
+				logger.info("Removing " + toRemove.size() + " stale transactions");
+			
+				for(LongCursor c : toRemove)
+				{
+					removeTransaction(c.value);
+				}
+				
+				logger.info("Reduced to " + activeTx.peek() + " active transactions");
 			}
 		}
 	}

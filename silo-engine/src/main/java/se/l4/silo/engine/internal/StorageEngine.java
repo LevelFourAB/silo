@@ -256,7 +256,7 @@ public class StorageEngine
 		loadConfig(config);
 		
 		// Build log and start receiving log entries
-		transactionAdapter = new TransactionAdapter(vibe, store, createApplier());
+		transactionAdapter = new TransactionAdapter(vibe, executor, store, createApplier());
 		log = logBuilder.build(transactionAdapter);
 		
 		transactionLog = new TransactionLogImpl(log, ids);

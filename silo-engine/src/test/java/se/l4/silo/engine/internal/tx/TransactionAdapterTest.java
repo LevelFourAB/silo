@@ -43,7 +43,7 @@ public class TransactionAdapterTest
 		
 		ops = new OpChecker();
 		
-		adapter = new TransactionAdapter(null, store, new StorageApplier()
+		adapter = new TransactionAdapter(null, null, store, new StorageApplier()
 		{
 			@Override
 			public void store(String entity, Object id, Bytes data)
@@ -236,6 +236,26 @@ public class TransactionAdapterTest
 		tx.store(t1, "test", 1, Bytes.empty());
 		tx.store(t2, "test", 2, Bytes.empty());
 		tx.rollbackTransaction(t2);
+		tx.commitTransaction(t1);
+		
+		ops.checkEmpty();
+	}
+	
+	@Test
+	public void testMultipleCommits2()
+	{
+		Bytes d1 = generateData(1024);
+		Bytes d2 = generateData(512);
+		expectStore("test", 2, Bytes.empty());
+		expectStore("test", 2, d2);
+		expectStore("test", 1, d1);
+		
+		long t1 = tx.startTransaction();
+		long t2 = tx.startTransaction();
+		tx.store(t2, "test", 2, Bytes.empty());
+		tx.store(t1, "test", 1, d1);
+		tx.store(t2, "test", 2, d2);
+		tx.commitTransaction(t2);
 		tx.commitTransaction(t1);
 		
 		ops.checkEmpty();
