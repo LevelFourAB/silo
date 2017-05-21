@@ -540,6 +540,11 @@ public class StorageEngine
 		}
 	}
 	
+	public void compact(long time, TimeUnit unit)
+	{
+		store.compact(unit.toMillis(time));
+	}
+	
 	private class StorageDef
 	{
 		private final DelegatingStorage storage;

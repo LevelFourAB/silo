@@ -170,6 +170,13 @@ public class MVStoreManagerImpl
 
 	public void compact(long targetTime)
 	{
+		if(snapshotsOpen.get() > 0)
+		{
+			return;
+		}
+		
+		// TODO: This should really be smarter
+		
 		int retentionTime = store.getRetentionTime();
 		store.setRetentionTime(0);
 

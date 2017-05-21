@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import se.l4.commons.serialization.SerializerCollection;
 import se.l4.silo.Entity;
@@ -37,8 +37,6 @@ import se.l4.vibe.Vibe;
 public class LocalSilo
 	implements Silo
 {
-	private final ConcurrentHashMap<String, Object> entities;
-	
 	private final TransactionSupport tx;
 	private final StorageEngine storageEngine;
 	private final ThreadLocal<TransactionImpl> transactions;
@@ -50,8 +48,6 @@ public class LocalSilo
 		Objects.requireNonNull(logBuilder, "logBuilder is required");
 		Objects.requireNonNull(storage, "storage path is required");
 		Objects.requireNonNull(config, "configuration is required");
-		
-		entities = new ConcurrentHashMap<>();
 		
 		tx = createTransactionSupport();
 		transactions = new ThreadLocal<>();
@@ -226,5 +222,10 @@ public class LocalSilo
 		throws IOException
 	{
 		storageEngine.installSnapshot(snapshot);
+	}
+	
+	public void compact(long time, TimeUnit unit)
+	{
+		storageEngine.compact(time, unit);
 	}
 }
