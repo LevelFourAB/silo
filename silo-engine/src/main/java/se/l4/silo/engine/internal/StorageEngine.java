@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -191,6 +192,7 @@ public class StorageEngine
 			.backgroundExceptionHandler((thread, t) -> {
 				logger.error("Error occured in background for data store; " + t.getMessage(), t);
 			})
+			.cacheSize(config.getCacheSizeInMb())
 			.fileName(root.resolve("storage.mv.bin").toString()));
 		
 		Path derivedState = root.resolve("derived-state.mv.bin");

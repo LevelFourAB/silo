@@ -18,15 +18,17 @@ import se.l4.silo.engine.builder.SiloBuilder;
 public class EngineConfig
 {
 	private final Map<String, EntityConfig> entities;
+	private final int cacheSizeInMb;
 	
 	public EngineConfig()
 	{
-		this(new HashMap<>());
+		this(new HashMap<>(), 128);
 	}
 	
-	public EngineConfig(Map<String, EntityConfig> entities)
+	public EngineConfig(Map<String, EntityConfig> entities, int cacheSizeInMb)
 	{
 		this.entities = entities;
+		this.cacheSizeInMb = cacheSizeInMb;
 	}
 	
 	/**
@@ -51,6 +53,16 @@ public class EngineConfig
 	{
 		HashMap<String, EntityConfig> newEntities = new HashMap<>(entities);
 		newEntities.put(entity, config);
-		return new EngineConfig(newEntities);
+		return new EngineConfig(newEntities, cacheSizeInMb);
+	}
+	
+	public int getCacheSizeInMb()
+	{
+		return cacheSizeInMb;
+	}
+	
+	public EngineConfig setCacheSizeInMb(int cacheSizeInMb)
+	{
+		return new EngineConfig(entities, cacheSizeInMb);
 	}
 }

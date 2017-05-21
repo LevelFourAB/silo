@@ -131,6 +131,13 @@ public class LocalSiloBuilder
 	}
 	
 	@Override
+	public SiloBuilder withCacheSize(int cacheSizeInMb)
+	{
+		config = config.setCacheSizeInMb(cacheSizeInMb);
+		return this;
+	}
+	
+	@Override
 	public LocalSilo build()
 	{
 		autoLoad();

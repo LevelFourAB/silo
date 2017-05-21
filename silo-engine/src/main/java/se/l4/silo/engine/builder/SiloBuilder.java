@@ -83,6 +83,15 @@ public interface SiloBuilder
 	SiloBuilder addFieldType(FieldType<?> fieldType);
 	
 	/**
+	 * Set the size used to cache data in this instance. This controls the cache size of the main storage, but does
+	 * do anything for indexes.
+	 * 
+	 * @param cacheSizeInMb
+	 * @return
+	 */
+	SiloBuilder withCacheSize(int cacheSizeInMb);
+	
+	/**
 	 * Create this instance.
 	 * 
 	 * @param configSet
