@@ -198,14 +198,15 @@ public class TransactionAdapter
 		throws IOException
 	{
 		// Locate the next local id for this transaction
-		Iterator<long[]> it = log.keyIterator(new long[] { tx, 0l });
-		long nextId = 0;
-		while(it.hasNext())
+		long[] ceil = log.floorKey(new long[] { tx, Integer.MAX_VALUE });
+		long nextId;
+		if(ceil == null || ceil[0] != tx)
 		{
-			long[] key = it.next();
-			if(key[0] != tx) break;
-			
-			nextId = (key[1]) + 1;
+			nextId = 0;
+		}
+		else
+		{
+			nextId = ceil[1] + 1;
 		}
 		
 		// Store the data
