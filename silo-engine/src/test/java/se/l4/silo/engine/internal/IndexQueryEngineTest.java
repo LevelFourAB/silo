@@ -47,11 +47,17 @@ public class IndexQueryEngineTest
 				.defineField("field2")
 					.setType("boolean")
 					.done()
+				.defineField("field3.test")
+					.setType("string")
+					.done()
 				.add("byField1", Index::queryEngine)
 					.addField("field1")
 					.done()
 				.add("byField2", Index::queryEngine)
 					.addField("field2")
+					.done()
+				.add("byField3", Index::queryEngine)
+					.addField("field3.test")
 					.done()
 				.add("multiple", Index::queryEngine)
 					.addField("field2")
@@ -216,6 +222,49 @@ public class IndexQueryEngineTest
 			.run())
 		{
 			assertThat(fr.getSize(), is(1));
+		}
+	}
+	
+	@Test
+	public void testStoreWithPath()
+	{
+		BinaryInput in;
+		try
+		{
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			BinaryOutput out = new BinaryOutput(baos);
+			out.writeObjectStart("");
+			out.writeObjectStart("field3");
+			out.write("test", "hello");
+			out.writeObjectEnd("field3");
+			out.writeObjectEnd("");
+			out.flush();
+			
+			in = new BinaryInput(new ByteArrayInputStream(baos.toByteArray()));
+		}
+		catch(IOException e)
+		{
+			throw Throwables.propagate(e);
+		}
+		
+		entity.store("test", in);
+		
+		try(FetchResult<StreamingInput> fr = entity.query("byField3", IndexQuery.type())
+			.field("field3.test")
+			.isEqualTo("hello")
+			.run())
+		{
+			assertThat(fr.getSize(), is(1));
+		}
+		
+		entity.delete("test");
+		
+		try(FetchResult<StreamingInput> fr = entity.query("byField3", IndexQuery.type())
+			.field("field3.test")
+			.isEqualTo("value1")
+			.run())
+		{
+			assertThat(fr.getSize(), is(0));
 		}
 	}
 }

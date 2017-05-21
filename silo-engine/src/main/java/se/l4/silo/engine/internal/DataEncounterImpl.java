@@ -164,13 +164,37 @@ public class DataEncounterImpl
 	private static class StructuredKeyFetcher
 		implements IoConsumer<StreamingInput>
 	{
-		private Set<String> keys;
-		private BiConsumer<String, Object> receiver;
+		private final Set<String> keys;
+		private final BiConsumer<String, Object> receiver;
+		private final Set<String> paths;
 		
 		public StructuredKeyFetcher(Set<String> keys, BiConsumer<String, Object> receiver)
 		{
 			this.keys = keys;
 			this.receiver = receiver;
+			
+			ImmutableSet.Builder<String> paths = ImmutableSet.builder();
+			for(String s : keys)
+			{
+				paths.add(s);
+				
+				int start = 0;
+				while(true)
+				{
+					int idx = s.indexOf('.', start);
+					if(idx > 0)
+					{
+						paths.add(s.substring(0, idx));
+						start = idx + 1;
+					}
+					else
+					{
+						break;
+					}
+				}
+			}
+			
+			this.paths = paths.build();
 		}
 
 		@Override
@@ -206,6 +230,12 @@ public class DataEncounterImpl
 		private void handleObject(StreamingInput in, String key)
 			throws IOException
 		{
+			if(key != null && ! paths.contains(key))
+			{
+				in.skipValue();
+				return;
+			}
+			
 			in.next(Token.OBJECT_START);
 			
 			while(in.peek() != Token.OBJECT_END)
@@ -223,6 +253,12 @@ public class DataEncounterImpl
 		private void handleList(StreamingInput in, String key)
 			throws IOException
 		{
+			if(key != null && ! paths.contains(key))
+			{
+				in.skipValue();
+				return;
+			}
+			
 			in.next(Token.LIST_START);
 			
 			while(in.peek() != Token.LIST_END)

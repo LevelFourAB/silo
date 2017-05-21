@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.Optional;
@@ -61,6 +62,7 @@ public class IndexQueryEngine
 	private final FieldType[] fieldTypes;
 	private final String[] sortFields;
 	private final FieldType[] sortFieldTypes;
+	private final Set<String> allFields;
 
 	public IndexQueryEngine(String name, Fields fields, MVStoreManager store, IndexConfig config)
 	{
@@ -81,6 +83,12 @@ public class IndexQueryEngine
 		MergedFieldType indexData = createFieldType(name, fields, config.getSortFields(), false);
 		this.sortFieldTypes = indexData.getTypes();
 		index = store.openMap("index:" + name, indexKey, indexData);
+		
+		allFields = new HashSet<>(fieldsSet);
+		for(String field : sortFields)
+		{
+			allFields.add(field);
+		}
 		
 		if(logger.isDebugEnabled())
 		{
@@ -166,10 +174,18 @@ public class IndexQueryEngine
 
 		// Fetch all the values that need to be indexed
 		Multimap<String, Object> values = HashMultimap.create();
-		encounter.findStructuredKeys(fieldsSet, values::put);
+		encounter.findStructuredKeys(allFields, values::put);
 		
 		// Generate the sort data
-		Object[] data = encounter.getStructuredArray(sortFields);
+		Object[] data = new Object[sortFields.length];
+		for(int i=0, n=sortFields.length; i<n; i++)
+		{
+			Collection<Object> value = values.get(sortFields[i]);
+			if(! value.isEmpty())
+			{
+				data[i] = value.iterator().next();
+			}
+		}
 		
 		// Look up our previously indexed key to see if we need to delete it
 		Object[] previousKey = indexedData.get(id);
