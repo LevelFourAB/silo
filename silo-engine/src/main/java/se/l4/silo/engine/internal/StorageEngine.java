@@ -202,7 +202,6 @@ public class StorageEngine
 			.backgroundExceptionHandler((thread, t) -> {
 				logger.error("Error occured in background for state store; " + t.getMessage(), t);
 			})
-			.compress()
 			.autoCompactFillRate(20)
 			.fileName(derivedState.toString()));
 		
