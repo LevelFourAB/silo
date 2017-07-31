@@ -33,7 +33,7 @@ import se.l4.silo.search.query.UserQueryData;
 public class UserQueryParser
 {
 	private static final Term[] EMPTY_TERM = new Term[0];
-	
+
 	private final IndexDefinition def;
 	private final List<FieldWithBoost> fields;
 	private final boolean usePrefix;
@@ -42,17 +42,24 @@ public class UserQueryParser
 	{
 		this.def = def;
 		this.usePrefix = usePrefix;
-		
+
 		fields = new ArrayList<>();
 	}
-	
+
 	public UserQueryParser addField(String name, float boost)
 	{
 		fields.add(new FieldWithBoost(def.getField(name), boost));
-		
+
 		return this;
 	}
-	
+
+	public UserQueryParser addField(FieldDefinition def, float boost)
+	{
+		fields.add(new FieldWithBoost(def, boost));
+
+		return this;
+	}
+
 	public Query parse(QueryParseEncounter<UserQueryData> encounter)
 		throws IOException
 	{
@@ -61,9 +68,9 @@ public class UserQueryParser
 		{
 			addField(f, 1f);
 		}
-		
+
 		String query = data.getQuery().trim();
-		
+
 		if(! encounter.isSpecificLanguage())
 		{
 			return parseQuery(query, encounter.currentLanguage());
@@ -77,7 +84,26 @@ public class UserQueryParser
 			return result;
 		}
 	}
-	
+
+	public Query parseDirect(QueryParseEncounter<String> encounter)
+		throws IOException
+	{
+		String query = encounter.data().trim();
+
+		if(! encounter.isSpecificLanguage())
+		{
+			return parseQuery(query, encounter.currentLanguage());
+		}
+		else
+		{
+			DisjunctionMaxQuery result = new DisjunctionMaxQuery(ImmutableList.of(
+				parseQuery(query, encounter.currentLanguage()),
+				parseQuery(query, encounter.defaultLanguage())
+			), 0.0f);
+			return result;
+		}
+	}
+
 	private Query parseQuery(String query, Language lang)
 		throws IOException
 	{
@@ -105,7 +131,7 @@ public class UserQueryParser
 						result.add(fq, BooleanClause.Occur.MUST);
 					}
 				}
-				
+
 				last = i+1;
 				inQuote = ! inQuote;
 			}
@@ -119,11 +145,11 @@ public class UserQueryParser
 						result.add(fq, BooleanClause.Occur.MUST);
 					}
 				}
-				
+
 				last = i+1;
 			}
 		}
-		
+
 		if(inQuote)
 		{
 			Query fq = getFieldQuery(query.substring(last, query.length()), lang, true);
@@ -140,10 +166,10 @@ public class UserQueryParser
 				result.add(fq, BooleanClause.Occur.MUST);
 			}
 		}
-		
+
 		return result.build();
 	}
-	
+
 	protected DisjunctionMaxQuery getFieldQuery(String queryText, Language lang, boolean quoted)
 		throws IOException
 	{
@@ -158,7 +184,7 @@ public class UserQueryParser
 				queries.add(q);
 				hasResults = true;
 			}
-//			
+//
 //			q = getFieldQuery(queryText, language, false, fb.field, true);
 //			if(q != null)
 //			{
@@ -166,10 +192,10 @@ public class UserQueryParser
 //				result.add(q);
 //			}
 		}
-		
+
 		return hasResults ? new DisjunctionMaxQuery(queries, 0.0f) : null;
 	}
-	
+
 	protected Query getFieldQuery(String queryText, Language lang, boolean quoted, FieldDefinition fdef, boolean fuzzy)
 		throws IOException
 	{
@@ -180,17 +206,17 @@ public class UserQueryParser
 		SearchFieldType ft = fdef.getType();
 		Analyzer analyzer = ft.getAnalyzer(lang);
 		TokenStream source = analyzer.tokenStream(field, new StringReader(queryText));
-		
+
 		try(CachingTokenFilter buffer = new CachingTokenFilter(source))
 		{
 			CharTermAttribute termAtt = null;
 			PositionIncrementAttribute posIncrAtt = null;
 			int numTokens = 0;
-	
+
 			boolean success = false;
 			buffer.reset();
 			success = true;
-			
+
 			if(success)
 			{
 				if(buffer.hasAttribute(CharTermAttribute.class))
@@ -203,10 +229,10 @@ public class UserQueryParser
 							.getAttribute(PositionIncrementAttribute.class);
 				}
 			}
-	
+
 			int positionCount = 0;
 			boolean severalTokensAtSamePosition = false;
-	
+
 			boolean hasMoreTokens = false;
 			if(termAtt != null)
 			{
@@ -216,9 +242,9 @@ public class UserQueryParser
 					while(hasMoreTokens)
 					{
 						numTokens++;
-						int positionIncrement = (posIncrAtt != null) ? 
+						int positionIncrement = (posIncrAtt != null) ?
 							posIncrAtt.getPositionIncrement() : 1;
-							
+
 						if(positionIncrement != 0)
 						{
 							positionCount += positionIncrement;
@@ -239,7 +265,7 @@ public class UserQueryParser
 			{
 				// rewind the buffer stream
 				buffer.reset();
-	
+
 				// close original stream - all tokens buffered
 				source.close();
 			}
@@ -247,7 +273,7 @@ public class UserQueryParser
 			{
 				// ignore
 			}
-	
+
 			if(numTokens == 0)
 			{
 				return null;
@@ -267,8 +293,8 @@ public class UserQueryParser
 				}
 				return usePrefix
 					? new PrefixQuery(new Term(field, term))
-					: (fuzzy 
-						? new FuzzyQuery(new Term(field, term), 1) 
+					: (fuzzy
+						? new FuzzyQuery(new Term(field, term), 1)
 						: new TermQuery(new Term(field, term)));
 			}
 			else
@@ -280,9 +306,9 @@ public class UserQueryParser
 						// no phrase query:
 						BooleanQuery.Builder builder = new BooleanQuery.Builder();
 						builder.setDisableCoord(positionCount == 1);
-	
+
 						BooleanClause.Occur occur = BooleanClause.Occur.SHOULD;
-	
+
 						for(int i = 0; i < numTokens; i++)
 						{
 							String term = null;
@@ -297,11 +323,11 @@ public class UserQueryParser
 								// safe to ignore, because we know the number of
 								// tokens
 							}
-	
+
 							Query currentQuery = usePrefix
 								? new PrefixQuery(new Term(field, term))
-								: (fuzzy 
-									? new FuzzyQuery(new Term(field, term), 1) 
+								: (fuzzy
+									? new FuzzyQuery(new Term(field, term), 1)
 									: new TermQuery(new Term(field, term)));
 							builder.add(currentQuery, occur);
 						}
@@ -312,7 +338,7 @@ public class UserQueryParser
 						// phrase query:
 						MultiPhraseQuery.Builder builder = new MultiPhraseQuery.Builder();
 	//					mpq.setSlop(phraseSlop);
-						List<Term> multiTerms = new ArrayList<Term>();
+						List<Term> multiTerms = new ArrayList<>();
 						int position = -1;
 						for(int i = 0; i < numTokens; i++)
 						{
@@ -334,7 +360,7 @@ public class UserQueryParser
 								// safe to ignore, because we know the number of
 								// tokens
 							}
-	
+
 							if(positionIncrement > 0 && multiTerms.size() > 0)
 							{
 								builder.add(multiTerms.toArray(EMPTY_TERM), position);
@@ -343,9 +369,9 @@ public class UserQueryParser
 							position += positionIncrement;
 							multiTerms.add(new Term(field, term));
 						}
-						
+
 						builder.add(multiTerms.toArray(EMPTY_TERM), position);
-						
+
 						return builder.build();
 					}
 				}
@@ -354,12 +380,12 @@ public class UserQueryParser
 					PhraseQuery.Builder pq = new PhraseQuery.Builder();
 	//				pq.setSlop(phraseSlop);
 					int position = -1;
-	
+
 					for(int i = 0; i < numTokens; i++)
 					{
 						String term = null;
 						int positionIncrement = 1;
-	
+
 						try
 						{
 							boolean hasNext = buffer.incrementToken();
@@ -374,17 +400,17 @@ public class UserQueryParser
 						{
 							// safe to ignore, because we know the number of tokens
 						}
-	
+
 						position += positionIncrement;
 						pq.add(new Term(field, term), position);
 					}
-					
+
 					return pq.build();
 				}
 			}
 		}
 	}
-	
+
 	private static class FieldWithBoost
 	{
 		private final FieldDefinition field;
