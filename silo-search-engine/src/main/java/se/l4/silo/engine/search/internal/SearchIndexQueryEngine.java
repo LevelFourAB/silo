@@ -303,7 +303,7 @@ public class SearchIndexQueryEngine
 				FieldDefinition fdef = def.getField(s.getField());
 
 				String name = fdef.sortValuesName(null);
-				return fdef.getType().createSortField(name, s.isAscending());
+				return fdef.getType().createSortField(name, s.isAscending(), s.getParams());
 			})
 			.toArray(c -> new SortField[c]);
 

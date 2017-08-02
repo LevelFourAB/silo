@@ -73,6 +73,17 @@ public interface SearchIndexQuery<T>
 	SearchIndexQuery<T> addSort(String sort, boolean sortAscending);
 	
 	/**
+	 * Request that this pipeline should sort its result with some extra
+	 * parameters.
+	 * 
+	 * @param field
+	 * @param ascending
+	 * @param scoring
+	 * @return
+	 */
+	<C extends ScoringQueryBuilder<SearchIndexQuery<T>>> C addSort(String field, boolean ascending, Supplier<C> scoring);
+	
+	/**
 	 * Request that we should use custom scoring.
 	 * 
 	 * @param scoring

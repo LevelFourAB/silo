@@ -98,9 +98,10 @@ public interface SearchFieldType
 	 * 
 	 * @param field
 	 * @param ascending
+	 * @param params TODO
 	 * @return
 	 */
-	default SortField createSortField(String field, boolean ascending)
+	default SortField createSortField(String field, boolean ascending, Object params)
 	{
 		throw new UnsupportedOperationException("The field type " + getClass().getSimpleName() + " does not support sorting");
 	}

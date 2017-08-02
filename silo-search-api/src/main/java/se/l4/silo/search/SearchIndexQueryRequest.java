@@ -102,9 +102,9 @@ public class SearchIndexQueryRequest
 		return sortItems;
 	}
 	
-	public void addSortItem(String field, boolean ascending)
+	public void addSortItem(String field, boolean ascending, Object params)
 	{
-		sortItems.add(new SortItem(field, ascending));
+		sortItems.add(new SortItem(field, ascending, params));
 	}
 
 	

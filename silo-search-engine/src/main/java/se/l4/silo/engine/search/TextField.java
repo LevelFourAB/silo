@@ -77,7 +77,7 @@ public class TextField
 	}
 	
 	@Override
-	public SortField createSortField(String field, boolean ascending)
+	public SortField createSortField(String field, boolean ascending, Object params)
 	{
 		return new SortField(field, SortField.Type.STRING, ! ascending);
 	}
