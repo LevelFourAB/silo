@@ -114,6 +114,13 @@ public class FieldDefinitionImpl
 			this.languageSpecific = languageSpecific;
 			return this;
 		}
+		
+		@Override
+		public Builder setSorted(boolean sorted)
+		{
+			this.sorted = sorted;
+			return this;
+		}
 
 		@Override
 		public FieldDefinition build()
