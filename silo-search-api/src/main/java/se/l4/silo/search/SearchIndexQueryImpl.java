@@ -92,12 +92,11 @@ public class SearchIndexQueryImpl<T>
 	}
 	
 	@Override
-	public <C extends ScoringQueryBuilder<SearchIndexQuery<T>>> C addSort(
-			String field, boolean ascending, Supplier<C> scoring)
+	public <C extends SortingQueryBuilder<SearchIndexQuery<T>>> C addSort(String field, Supplier<C> scoring)
 	{
 		C builder = scoring.get();
-		builder.setReceiver(c -> {
-			request.addSortItem(field, ascending, c);
+		builder.setReceiver((ascending, params) -> {
+			request.addSortItem(field, ascending, params);
 			return this;
 		});
 		return builder;

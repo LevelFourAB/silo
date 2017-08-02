@@ -77,11 +77,10 @@ public interface SearchIndexQuery<T>
 	 * parameters.
 	 * 
 	 * @param field
-	 * @param ascending
-	 * @param scoring
+	 * @param sorter
 	 * @return
 	 */
-	<C extends ScoringQueryBuilder<SearchIndexQuery<T>>> C addSort(String field, boolean ascending, Supplier<C> scoring);
+	<C extends SortingQueryBuilder<SearchIndexQuery<T>>> C addSort(String field, Supplier<C> sorter);
 	
 	/**
 	 * Request that we should use custom scoring.
