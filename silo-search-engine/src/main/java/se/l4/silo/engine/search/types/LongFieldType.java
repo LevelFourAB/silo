@@ -10,7 +10,7 @@ import org.apache.lucene.search.SortField;
 import se.l4.silo.engine.search.Language;
 
 public class LongFieldType
-	extends NumericSearchField
+	extends NumericFieldType
 {
 	@Override
 	protected IndexableField create(String field, Number number,

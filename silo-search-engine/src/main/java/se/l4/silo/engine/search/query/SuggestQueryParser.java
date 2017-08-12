@@ -35,16 +35,16 @@ public class SuggestQueryParser
 		String value = encounter.data().getText();
 		FieldDefinition fdef = encounter.def().getField(field);
 		String name = fdef.name(field, encounter.currentLanguage());
-		
-		Analyzer analyzer = fdef.getType().getSuggestAnalyzer(encounter.currentLanguage());
-		
+
+		Analyzer analyzer = fdef.getType().getAnalyzer(encounter.currentLanguage());
+
 		BooleanQuery.Builder q = new BooleanQuery.Builder();
 	    try(TokenStream ts = analyzer.tokenStream("", new StringReader(value)))
 	    {
 			ts.reset();
 			CharTermAttribute termAtt = ts.addAttribute(CharTermAttribute.class);
 			OffsetAttribute offsetAtt = ts.addAttribute(OffsetAttribute.class);
-			
+
 			String lastToken = null;
 			int maxEndOffset = -1;
 			while(ts.incrementToken())
@@ -53,9 +53,9 @@ public class SuggestQueryParser
 				{
 					q.add(new TermQuery(new Term(name, lastToken)), BooleanClause.Occur.MUST);
 				}
-				
+
 				lastToken = termAtt.toString();
-				
+
 				if(lastToken != null)
 				{
 					maxEndOffset = Math.max(maxEndOffset, offsetAtt.endOffset());
@@ -74,14 +74,14 @@ public class SuggestQueryParser
 				{
 					lastQuery = new TermQuery(new Term(name, lastToken));
 				}
-				
+
 				if(lastQuery != null)
 				{
 					q.add(lastQuery, BooleanClause.Occur.MUST);
 				}
 			}
 	    }
-	    
+
 	    return q.build();
 	}
 

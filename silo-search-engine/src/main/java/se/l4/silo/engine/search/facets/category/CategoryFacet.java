@@ -23,7 +23,7 @@ import se.l4.silo.engine.search.IndexDefinitionEncounter;
 import se.l4.silo.engine.search.SearchFields;
 import se.l4.silo.engine.search.facets.Facet;
 import se.l4.silo.engine.search.facets.FacetCollectionEncounter;
-import se.l4.silo.engine.search.types.NumericSearchField;
+import se.l4.silo.engine.search.types.NumericFieldType;
 import se.l4.silo.search.DefaultFacetEntry;
 import se.l4.silo.search.FacetEntry;
 import se.l4.silo.search.facet.SimpleFacetQuery;
@@ -82,7 +82,7 @@ public class CategoryFacet
 			totalHits += docs.totalHits;
 			LeafReader reader = docs.context.reader();
 			
-			if(fieldDef.getType() instanceof NumericSearchField)
+			if(fieldDef.getType() instanceof NumericFieldType)
 			{
 				// NumericSearchfield uses NumericDocValues
 				NumericDocValues values = reader.getNumericDocValues(field);

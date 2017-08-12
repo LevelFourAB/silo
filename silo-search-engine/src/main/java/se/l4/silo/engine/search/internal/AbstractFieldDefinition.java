@@ -6,6 +6,7 @@ import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexableField;
 
+import se.l4.silo.engine.search.AnalyzerField;
 import se.l4.silo.engine.search.FieldDefinition;
 import se.l4.silo.engine.search.Language;
 
@@ -87,7 +88,15 @@ public abstract class AbstractFieldDefinition
 
 		// TODO: Set stored/indexed values
 		String fieldName = name(name, language);
-		return getType().create(fieldName, ft, language, data);
+		IndexableField field = getType().create(fieldName, ft, language, data);
+		if(ft.tokenized())
+		{
+			return new AnalyzerField(field, getType().getAnalyzer(language));
+		}
+		else
+		{
+			return field;
+		}
 	}
 
 	@Override

@@ -11,7 +11,7 @@ import org.apache.lucene.util.BytesRef;
 /**
  * Wrapper for {@link IndexableField}, used to provide custom analyzers and
  * token filters on a per field basis.
- *  
+ *
  * @author Andreas Holstenson
  *
  */
@@ -68,7 +68,7 @@ public class AnalyzerField
 	{
 		return other.numericValue();
 	}
-	
+
 	@Override
 	public TokenStream tokenStream(Analyzer analyzer, TokenStream reuse)
 	{

@@ -15,14 +15,14 @@ import se.l4.silo.engine.search.SearchFieldType;
  * @author Andreas Holstenson
  *
  */
-public abstract class NumericSearchField
+public abstract class NumericFieldType
 	implements SearchFieldType
 {
 	private static final Analyzer ANALYZER = new KeywordAnalyzer();
 	
 	private final FieldType type;
 	
-	public NumericSearchField()
+	public NumericFieldType()
 	{
 		FieldType ft = new FieldType();
 	    ft.setStored(false);
