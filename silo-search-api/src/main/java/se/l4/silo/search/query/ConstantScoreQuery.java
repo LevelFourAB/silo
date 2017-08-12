@@ -1,12 +1,12 @@
 package se.l4.silo.search.query;
 
+import se.l4.silo.search.QueryCriteriaBuilder;
 import se.l4.silo.search.QueryItem;
 import se.l4.silo.search.QueryPart;
-import se.l4.silo.search.QueryWithSubquery;
 
 public class ConstantScoreQuery<R>
 	extends AbstractQueryPart<R>
-	implements QueryWithSubquery<ConstantScoreQuery<R>, R>
+	implements QueryCriteriaBuilder<R>
 {
 	private final float score;
 

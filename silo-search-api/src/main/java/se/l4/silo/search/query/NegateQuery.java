@@ -1,12 +1,12 @@
 package se.l4.silo.search.query;
 
+import se.l4.silo.search.QueryCriteriaBuilder;
 import se.l4.silo.search.QueryItem;
 import se.l4.silo.search.QueryPart;
-import se.l4.silo.search.QueryWithSubquery;
 
 public class NegateQuery<R>
 	extends AbstractQueryPart<R>
-	implements QueryWithSubquery<NegateQuery<R>, R>
+	implements QueryCriteriaBuilder<R>
 {
 	public NegateQuery()
 	{
