@@ -82,6 +82,69 @@ public class FieldDefinitionImpl
 		return type;
 	}
 
+	@Override
+	public String toString()
+	{
+		return getClass().getSimpleName() + "[name=" + name + ", isLanguageSpecific=" + isLanguageSpecific + ", isIndexed="
+			+ isIndexed + ", isStored=" + isStored + ", isHighlighted=" + isHighlighted + ", isSorted=" + isSorted
+			+ ", isStoreValues=" + isStoreValues + ", type=" + type + "]";
+	}
+
+	@Override
+	public int hashCode()
+	{
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (isHighlighted ? 1231 : 1237);
+		result = prime * result + (isIndexed ? 1231 : 1237);
+		result = prime * result + (isLanguageSpecific ? 1231 : 1237);
+		result = prime * result + (isSorted ? 1231 : 1237);
+		result = prime * result + (isStoreValues ? 1231 : 1237);
+		result = prime * result + (isStored ? 1231 : 1237);
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj)
+	{
+		if(this == obj)
+			return true;
+		if(obj == null)
+			return false;
+		if(getClass() != obj.getClass())
+			return false;
+		FieldDefinitionImpl other = (FieldDefinitionImpl) obj;
+		if(isHighlighted != other.isHighlighted)
+			return false;
+		if(isIndexed != other.isIndexed)
+			return false;
+		if(isLanguageSpecific != other.isLanguageSpecific)
+			return false;
+		if(isSorted != other.isSorted)
+			return false;
+		if(isStoreValues != other.isStoreValues)
+			return false;
+		if(isStored != other.isStored)
+			return false;
+		if(name == null)
+		{
+			if(other.name != null)
+				return false;
+		}
+		else if(!name.equals(other.name))
+			return false;
+		if(type == null)
+		{
+			if(other.type != null)
+				return false;
+		}
+		else if(!type.equals(other.type))
+			return false;
+		return true;
+	}
+
 	public static class BuilderImpl
 		implements Builder
 	{
@@ -105,6 +168,7 @@ public class FieldDefinitionImpl
 		public Builder setType(SearchFieldType type)
 		{
 			this.type = type;
+			languageSpecific = type.isLanguageSpecific();
 			return this;
 		}
 
@@ -114,7 +178,7 @@ public class FieldDefinitionImpl
 			this.languageSpecific = languageSpecific;
 			return this;
 		}
-		
+
 		@Override
 		public Builder setSorted(boolean sorted)
 		{

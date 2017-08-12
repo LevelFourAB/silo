@@ -18,9 +18,14 @@ import se.l4.silo.engine.search.Language;
 public abstract class AbstractFieldDefinition
 	implements FieldDefinition
 {
+	public static String name(char p, String field, Locale language, boolean languageSpecific)
+	{
+		return (! languageSpecific || language == null) ? p + ":" + field + ":_" : p + ":" + field + ":" + language;
+	}
+
 	private String name(char p, String field, Locale language)
 	{
-		return (! isLanguageSpecific() || language == null) ? p + ":" + field + ":_" : p + ":" + field + ":" + language;
+		return name(p, field, language, isLanguageSpecific());
 	}
 
 	@Override

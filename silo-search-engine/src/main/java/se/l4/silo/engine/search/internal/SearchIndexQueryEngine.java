@@ -301,9 +301,15 @@ public class SearchIndexQueryEngine
 			.stream()
 			.map(s -> {
 				FieldDefinition fdef = def.getField(s.getField());
-
-				String name = fdef.sortValuesName(null);
-				return fdef.getType().createSortField(name, s.isAscending(), s.getParams());
+				if(fdef == null)
+				{
+					throw new StorageException("Field with name `" + s.getField() + "` could not be found");
+				}
+				else
+				{
+					String name = fdef.sortValuesName(null);
+					return fdef.getType().createSortField(name, s.isAscending(), s.getParams());
+				}
 			})
 			.toArray(c -> new SortField[c]);
 
@@ -737,12 +743,21 @@ public class SearchIndexQueryEngine
 			this.name = name;
 			this.value = value;
 			this.fieldType = fieldType;
+
+			languageSpecific = fieldType.isLanguageSpecific();
 		}
 
 		@Override
 		public IndexedFieldBuilder withValues()
 		{
 			this.values = true;
+			return this;
+		}
+
+		@Override
+		public IndexedFieldBuilder withValues(boolean values)
+		{
+			this.values = values;
 			return this;
 		}
 
@@ -754,6 +769,13 @@ public class SearchIndexQueryEngine
 		}
 
 		@Override
+		public IndexedFieldBuilder withSorting(boolean sorted)
+		{
+			this.sorting = sorted;
+			return this;
+		}
+
+		@Override
 		public IndexedFieldBuilder withHighlighting()
 		{
 			this.highlighted = true;
@@ -761,9 +783,23 @@ public class SearchIndexQueryEngine
 		}
 
 		@Override
+		public IndexedFieldBuilder withHighlighting(boolean highlighted)
+		{
+			this.highlighted = highlighted;
+			return this;
+		}
+
+		@Override
 		public IndexedFieldBuilder languageSpecific()
 		{
 			this.languageSpecific = true;
+			return this;
+		}
+
+		@Override
+		public IndexedFieldBuilder languageSpecific(boolean isSpecific)
+		{
+			this.languageSpecific = isSpecific;
 			return this;
 		}
 
