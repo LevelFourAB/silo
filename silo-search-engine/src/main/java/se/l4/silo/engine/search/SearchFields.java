@@ -1,5 +1,7 @@
 package se.l4.silo.engine.search;
 
+import java.util.Locale;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 
@@ -7,6 +9,7 @@ import se.l4.silo.engine.search.internal.SearchIndexQueryEngine;
 import se.l4.silo.engine.search.types.BinaryFieldType;
 import se.l4.silo.engine.search.types.BooleanFieldType;
 import se.l4.silo.engine.search.types.IntFieldType;
+import se.l4.silo.engine.search.types.LocaleFieldType;
 import se.l4.silo.engine.search.types.LongFieldType;
 import se.l4.silo.engine.search.types.TextFieldType;
 import se.l4.silo.engine.search.types.TokenFieldType;
@@ -58,6 +61,11 @@ public class SearchFields
 	 * Binary field.
 	 */
 	public static final SearchFieldType BINARY = new BinaryFieldType();
+
+	/**
+	 * Field suitable for storing {@link Locale}s.
+	 */
+	public static final SearchFieldType LOCALE = new LocaleFieldType();
 
 	private SearchFields()
 	{
