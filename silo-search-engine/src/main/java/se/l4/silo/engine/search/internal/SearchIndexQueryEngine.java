@@ -888,7 +888,7 @@ public class SearchIndexQueryEngine
 		@Override
 		public Language currentLanguage()
 		{
-			return current;
+			return current == null ? defaultLanguage : current;
 		}
 
 		@Override
