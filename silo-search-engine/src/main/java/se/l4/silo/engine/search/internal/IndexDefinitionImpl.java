@@ -194,7 +194,7 @@ public class IndexDefinitionImpl
 		@Override
 		public boolean isStoreValues()
 		{
-			return false;
+			return fc.isStoreValues();
 		}
 	}
 	

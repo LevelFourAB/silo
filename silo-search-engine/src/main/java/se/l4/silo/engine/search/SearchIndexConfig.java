@@ -113,6 +113,7 @@ public class SearchIndexConfig
 		private final boolean indexed;
 		private final boolean highlighted;
 		private final boolean sorted;
+		private final boolean storeValues;
 
 		public FieldConfig(String name,
 				SearchFieldType type,
@@ -121,7 +122,8 @@ public class SearchIndexConfig
 				boolean stored,
 				boolean indexed,
 				boolean highlighted,
-				boolean sorted)
+				boolean sorted,
+				boolean storeValues)
 		{
 			this.name = name;
 			this.type = type;
@@ -131,6 +133,7 @@ public class SearchIndexConfig
 			this.indexed = indexed;
 			this.highlighted = highlighted;
 			this.sorted = sorted;
+			this.storeValues = storeValues;
 		}
 
 		public String getName()
@@ -171,6 +174,11 @@ public class SearchIndexConfig
 		public boolean isSorted()
 		{
 			return sorted;
+		}
+
+		public boolean isStoreValues()
+		{
+			return storeValues;
 		}
 	}
 
