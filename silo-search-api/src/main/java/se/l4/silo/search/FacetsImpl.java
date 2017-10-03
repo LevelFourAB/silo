@@ -19,14 +19,20 @@ public class FacetsImpl
 	{
 		return items.get(id);
 	}
-	
+
 	public void add(String facet, String label, int count, Object extra)
 	{
 		items.put(facet, new DefaultFacetEntry(label, count, extra));
 	}
-	
+
 	public void addAll(String facet, List<FacetEntry> entries)
 	{
 		items.putAll(facet, entries);
+	}
+
+	@Override
+	public String toString()
+	{
+		return getClass().getSimpleName() + items;
 	}
 }

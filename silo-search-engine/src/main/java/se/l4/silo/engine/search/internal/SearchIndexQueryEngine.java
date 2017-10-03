@@ -383,6 +383,12 @@ public class SearchIndexQueryEngine
 					}
 
 					@Override
+					public IndexSearcher getIndexSearcher()
+					{
+						return searcher;
+					}
+
+					@Override
 					public Object getQueryParameters()
 					{
 						return fi.getPayload();
