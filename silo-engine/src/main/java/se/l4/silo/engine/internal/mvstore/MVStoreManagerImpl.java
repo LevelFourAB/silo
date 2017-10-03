@@ -164,7 +164,6 @@ public class MVStoreManagerImpl
 	public void close()
 		throws IOException
 	{
-		compact(CLOSE_COMPACT_TIME);
 		store.close();
 	}
 
