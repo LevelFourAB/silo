@@ -205,9 +205,9 @@ public class UserQueryParser
 		String field = fdef.name(fdef.getName(), lang);
 		SearchFieldType ft = fdef.getType();
 		Analyzer analyzer = ft.getAnalyzer(lang);
-		TokenStream source = analyzer.tokenStream(field, new StringReader(queryText));
 
-		try(CachingTokenFilter buffer = new CachingTokenFilter(source))
+		try(TokenStream source = analyzer.tokenStream(field, new StringReader(queryText));
+			CachingTokenFilter buffer = new CachingTokenFilter(source))
 		{
 			CharTermAttribute termAtt = null;
 			PositionIncrementAttribute posIncrAtt = null;
