@@ -5,10 +5,16 @@
 
 	<groupId>se.l4.silo</groupId>
 	<artifactId>silo-base</artifactId>
-	<version>0.1-SNAPSHOT</version>
+	<version>0.1.0</version>
 	<packaging>pom</packaging>
 
 	<name>${project.artifactId}</name>
+	
+	<url>https://github.com/LevelFourAB/silo</url>
+	
+	<description>
+		Log-based locale storage with query functionality
+	</description>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

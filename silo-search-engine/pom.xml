@@ -7,12 +7,16 @@
 	<parent>
 		<artifactId>silo-base</artifactId>
 		<groupId>se.l4.silo</groupId>
-		<version>0.1-SNAPSHOT</version>
+		<version>0.1.0</version>
 		<relativePath>..</relativePath>
 	</parent>
 	
 	<artifactId>silo-search-engine</artifactId>
 	<name>${project.artifactId}</name>
+	
+	<description>
+		Implementation of Lucene-based querying for Silo.
+	</description>
 	
 	<dependencies>
 		<dependency>
