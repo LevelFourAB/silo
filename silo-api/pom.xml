@@ -18,7 +18,7 @@
 		<dependency>
 			<groupId>se.l4.commons</groupId>
 			<artifactId>commons-main</artifactId>
-			<version>0.3</version>
+			<version>0.4.1</version>
 		</dependency>
 	</dependencies>
 	
