@@ -1,5 +1,6 @@
 package se.l4.silo.engine.internal.mvstore;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,48 +17,64 @@ import se.l4.silo.StorageException;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.Snapshot;
 import se.l4.silo.engine.types.FieldType;
+import se.l4.vibe.Vibe;
 
 /**
  * Utility for managing {@link MVStoreManager}s that are shared.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
 public class SharedStorages
 {
+	private final Path root;
+	private final Vibe vibe;
+
 	private final Lock fetchLock;
 	private final Map<String, ManagerInfo> storages;
-	private final Path root;
-	
-	public SharedStorages(Path root)
+
+	public SharedStorages(Path root, Vibe vibe)
 	{
 		this.root = root;
+		this.vibe = vibe;
 		fetchLock = new ReentrantLock();
 		storages = new HashMap<>();
 	}
-	
-	public MVStoreManager get(Path path)
+
+	public MVStoreManager get(String name)
 	{
-		path = root.resolve(path).normalize();
-		String key = path.toString();
-		
+		Path absolutePath = root.resolve(name.replace('/', File.pathSeparatorChar) + ".mv.bin").normalize();
+
 		fetchLock.lock();
 		try
 		{
-			ManagerInfo info = storages.get(key);
+			ManagerInfo info = storages.get(name);
 			if(info != null)
 			{
 				return info.get();
 			}
-			
+
 			// Create a new storage for the given path
-			Files.createDirectories(path.getParent());
+			Files.createDirectories(absolutePath.getParent());
 			MVStoreManagerImpl manager = new MVStoreManagerImpl(new MVStore.Builder()
-				.fileName(path.toString())
+				.fileName(absolutePath.toString())
 				.compress());
-			
-			info = new ManagerInfo(key, manager);
-			storages.put(key, info);
+
+			// Register health monitoring if in use
+			if(vibe != null)
+			{
+				MVStore store = manager.getStore();
+				vibe.sample(MVStoreCacheHealth.createProbe(store))
+					.at(name + "/cache")
+					.export();
+
+				vibe.sample(MVStoreHealth.createProbe(store))
+					.at(name + "/data")
+					.export();
+			}
+
+			info = new ManagerInfo(name, manager);
+			storages.put(name, info);
 			return info.get();
 		}
 		catch(IOException e)
@@ -69,10 +86,10 @@ public class SharedStorages
 			fetchLock.unlock();
 		}
 	}
-	
+
 	/**
 	 * Controller for the created instances of {@link MVStoreManager}.
-	 * 
+	 *
 	 * @author Andreas Holstenson
 	 *
 	 */
@@ -80,15 +97,15 @@ public class SharedStorages
 	{
 		private final String key;
 		private final MVStoreManager manager;
-		
+
 		private int count;
-		
+
 		public ManagerInfo(String key, MVStoreManager actualManager)
 		{
 			this.key = key;
 			manager = actualManager;
 		}
-		
+
 		public SharedManager get()
 		{
 			SharedManager sm = new SharedManager(this);
@@ -101,10 +118,10 @@ public class SharedStorages
 			{
 				fetchLock.unlock();
 			}
-			
+
 			return sm;
 		}
-		
+
 		public void release(SharedManager sharedManager)
 			throws IOException
 		{
@@ -123,10 +140,10 @@ public class SharedStorages
 			}
 		}
 	}
-	
+
 	private static class SharedManager
 		implements MVStoreManager
-		
+
 	{
 		private final ManagerInfo control;
 		private boolean open;
@@ -134,10 +151,10 @@ public class SharedStorages
 		public SharedManager(ManagerInfo control)
 		{
 			this.control = control;
-			
+
 			open = true;
 		}
-		
+
 		@Override
 		public void close()
 			throws IOException
@@ -145,7 +162,7 @@ public class SharedStorages
 			synchronized(this)
 			{
 				if(! open) return;
-				
+
 				open = false;
 				control.release(this);
 			}

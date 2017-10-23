@@ -62,7 +62,7 @@ import se.l4.vibe.probes.SampledProbe;
 
 /**
  * Storage engine implementation over a streaming log.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -70,46 +70,46 @@ public class StorageEngine
 	implements Closeable
 {
 	private static final Logger logger = LoggerFactory.getLogger(StorageEngine.class);
-	
+
 	/**
 	 * Factories that can be used to fetch registered factories.
 	 */
 	private final EngineFactories factories;
-	
+
 	/**
 	 * The {@link SerializerCollection} in use for this Silo instance.
 	 */
 	private SerializerCollection serializers;
-	
+
 	/**
 	 * The log to use for replicating data. Created via the log builder passed
 	 * to the storage engine.
 	 */
 	private final Log log;
-	
+
 	/**
 	 * All instances of {@link Storage} that have been created by
 	 * {@link Entity entities}.
 	 */
 	private final Map<String, StorageDef> storages;
-	
+
 	/**
 	 * Instances of {@link Entity} created via configuration.
 	 */
 	private final Map<String, Entity> entities;
-	
+
 	/**
-	 * The store used for storing main data. 
+	 * The store used for storing main data.
 	 */
 	private final MVStoreManagerImpl store;
-	
+
 	/**
 	 * Abstraction over {@link MVStore} to make data storage simpler.
 	 */
 	private final MVDataStorage dataStorage;
-	
+
 	/**
-	 * Store used for state data that is derived.  
+	 * Store used for state data that is derived.
 	 */
 	private final MVStoreManagerImpl stateStore;
 
@@ -124,13 +124,13 @@ public class StorageEngine
 	 * that can be passed to {@link #log}.
 	 */
 	private final TransactionLog transactionLog;
-	
+
 	/**
 	 * The adapter that receives transaction parts and turns them into
 	 * storage operations.
 	 */
 	private final TransactionAdapter transactionAdapter;
-	
+
 	/**
 	 * Helper for working with transactions.
 	 */
@@ -159,7 +159,7 @@ public class StorageEngine
 	private final CountingProbe stores;
 	private final CountingProbe deletes;
 	private final CountingProbe reads;
-	
+
 	public StorageEngine(EngineFactories factories,
 			SerializerCollection serializers,
 			Vibe vibe,
@@ -169,15 +169,15 @@ public class StorageEngine
 			EngineConfig config)
 	{
 		logger.debug("Creating new storage engine in {}", root);
-		
+
 		this.factories = factories;
 		this.serializers = serializers;
 		this.transactionSupport = transactionSupport;
 		this.root = root;
-		this.sharedStorages = new SharedStorages(root);
-		
+		this.sharedStorages = new SharedStorages(root, vibe);
+
 		mutationLock = new ReentrantLock();
-	
+
 		try
 		{
 			Files.createDirectories(root);
@@ -186,7 +186,7 @@ public class StorageEngine
 		{
 			throw Throwables.propagate(e);
 		}
-		
+
 		this.store = new MVStoreManagerImpl(new MVStore.Builder()
 			.compress()
 			.backgroundExceptionHandler((thread, t) -> {
@@ -194,7 +194,7 @@ public class StorageEngine
 			})
 			.cacheSize(config.getCacheSizeInMb())
 			.fileName(root.resolve("storage.mv.bin").toString()));
-		
+
 		Path derivedState = root.resolve("derived-state.mv.bin");
 		boolean hasDerivedState = Files.exists(derivedState);
 		this.stateStore = new MVStoreManagerImpl(new MVStore.Builder()
@@ -204,21 +204,21 @@ public class StorageEngine
 			})
 			.autoCompactFillRate(20)
 			.fileName(derivedState.toString()));
-		
+
 		ids = new SequenceLongIdGenerator();
 		dataStorage = new MVDataStorage(this.store);
 		storages = new ConcurrentHashMap<>();
 		entities = new ConcurrentHashMap<>();
-		
+
 		executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 2, new ThreadFactoryBuilder()
 			.setNameFormat("Silo Background Thread %d")
 			.build()
 		);
-		
+
 		stores = new CountingProbe();
 		deletes = new CountingProbe();
 		reads = new CountingProbe();
-		
+
 		if(vibe != null)
 		{
 			// Monitor the operations
@@ -227,40 +227,40 @@ public class StorageEngine
 				.add("deletes", deletes)
 				.add("reads", reads)
 				.create();
-			
+
 			vibe.sample(probe)
 				.at("ops", "summary")
 				.export();
-			
+
 			// Monitor our main store
 			MVStore store = this.store.getStore();
 			vibe.sample(MVStoreCacheHealth.createProbe(store))
 				.at("store", "cache")
 				.export();
-			
+
 			vibe.sample(MVStoreHealth.createProbe(store))
 				.at("store", "data")
 				.export();
-			
+
 			// Monitor our derived state
 			store = this.stateStore.getStore();
 			vibe.sample(MVStoreCacheHealth.createProbe(store))
 				.at("state", "cache")
 				.export();
-			
+
 			vibe.sample(MVStoreHealth.createProbe(store))
 				.at("state", "data")
 				.export();
 		}
-		
+
 		loadConfig(config);
-		
+
 		// Build log and start receiving log entries
 		transactionAdapter = new TransactionAdapter(vibe, executor, store, createApplier());
 		log = logBuilder.build(transactionAdapter);
-		
+
 		transactionLog = new TransactionLogImpl(log, ids);
-		
+
 		if(! hasDerivedState)
 		{
 			logger.warn("Blocking until query engines have been restored");
@@ -272,11 +272,11 @@ public class StorageEngine
 			logger.info("Query engines have been restored");
 		}
 	}
-	
+
 	/**
 	 * Create the instance of {@link StorageApplier} that is used for this
 	 * engine.
-	 * 
+	 *
 	 * @return
 	 */
 	private StorageApplier createApplier()
@@ -296,9 +296,9 @@ public class StorageEngine
 				{
 					mutationLock.unlock();
 				}
-				
+
 			}
-			
+
 			@Override
 			public void delete(String entity, Object id) throws IOException
 			{
@@ -315,32 +315,32 @@ public class StorageEngine
 			}
 		};
 	}
-	
+
 	@Override
 	public void close()
 			throws IOException
 	{
 		executor.shutdownNow();
 		log.close();
-		
+
 		for(StorageDef def : storages.values())
 		{
 			def.getImpl().close();
 		}
-		
+
 		store.close();
 		stateStore.close();
 	}
-	
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private EntityCreationEncounter createEncounter(String name, Object config)
 	{
 		return new EntityCreationEncounterImpl(serializers, this, name, config);
 	}
-	
+
 	/**
 	 * Load the given configuration.
-	 * 
+	 *
 	 * @param config
 	 */
 	@SuppressWarnings("unchecked")
@@ -350,17 +350,17 @@ public class StorageEngine
 		{
 			String key = entry.getKey();
 			EntityConfig ec = entry.getValue();
-			
+
 			// TODO: Check if the configuration has actually changed for existing entities before recreating
-			
+
 			EntityTypeFactory<?, ?> factory = factories.forEntity(ec.getType());
 			Entity entity = (Entity) factory.create(createEncounter(key, ec.as(factory.getConfigType())));
 			entities.put(key, entity);
 		}
-		
+
 		// TODO: Support for entity removal
 	}
-	
+
 	private StorageImpl resolveStorage(String entity)
 	{
 		StorageDef result = storages.get(entity);
@@ -370,20 +370,20 @@ public class StorageEngine
 		}
 		return result.getImpl();
 	}
-	
+
 	/**
 	 * Get the {@link TransactionLog} this engine uses.
-	 * 
+	 *
 	 * @return
 	 */
 	public TransactionLog getTransactionLog()
 	{
 		return transactionLog;
 	}
-	
+
 	/**
 	 * Create a new main storage.
-	 * 
+	 *
 	 * @param name
 	 * @return
 	 */
@@ -394,7 +394,7 @@ public class StorageEngine
 
 	/**
 	 * Create a new storage.
-	 * 
+	 *
 	 * @param name
 	 * @param subName
 	 * @return
@@ -408,7 +408,7 @@ public class StorageEngine
 		{
 			private final Map<String, QueryEngineConfig> queryEngines = new HashMap<>();
 			private final List<FieldConfig> fields = new ArrayList<>();
-			
+
 			@Override
 			public StorageBuilder withFields(Iterable<FieldConfig> fields)
 			{
@@ -418,21 +418,21 @@ public class StorageEngine
 				}
 				return this;
 			}
-			
+
 			@Override
 			public StorageBuilder withQueryEngines(QueryableEntityConfig config)
 			{
 				queryEngines.putAll(config.getQueryEngines());
 				return this;
 			}
-			
+
 			@Override
 			public <C extends QueryEngineConfig> StorageBuilder withQueryEngine(QueryEngineFactory<?, C> factory, C config)
 			{
 				queryEngines.put(factory.getId(), config);
 				return this;
 			}
-			
+
 			@Override
 			public Storage build()
 			{
@@ -442,12 +442,12 @@ public class StorageEngine
 			}
 		};
 	}
-	
+
 	public Storage getStorage(String name)
 	{
 		return getStorage(name, "main");
 	}
-	
+
 	public Storage getStorage(String name, String subName)
 	{
 		String storageName = name + "::" + subName;
@@ -466,7 +466,7 @@ public class StorageEngine
 
 	/**
 	 * Get an entity from this engine.
-	 * 
+	 *
 	 * @param entityName
 	 * @return
 	 */
@@ -474,21 +474,21 @@ public class StorageEngine
 	{
 		return (T) entities.get(entityName);
 	}
-	
+
 	/**
 	 * Create a snapshot of the data stored in this storage engine. This
 	 * can be transfered to another engine or used as a backup.
-	 * 
+	 *
 	 * @return
 	 */
 	public Snapshot createSnapshot()
 	{
 		return store.createSnapshot();
 	}
-	
+
 	/**
 	 * Install a snapshot into this {@link StorageEngine}.
-	 * 
+	 *
 	 * @param snapshot
 	 * @throws IOException
 	 */
@@ -498,10 +498,10 @@ public class StorageEngine
 		try
 		{
 			mutationLock.lock();
-			
+
 			long t1 = System.currentTimeMillis();
 			logger.info("Installing a snapshot into the storage engine");
-			
+
 			// First lock all of our delegating storage instances
 			for(StorageDef def : storages.values())
 			{
@@ -510,28 +510,28 @@ public class StorageEngine
 
 			// Install the snapshot into the main engine
 			store.installSnapshot(snapshot);
-			
+
 			// Destroy our derived data
 			stateStore.recreate();
-			
+
 			// Reopen our data storage
 			dataStorage.reopen();
-			
+
 			// Recreate all of the storages
 			for(StorageDef def : storages.values())
 			{
 				def.recreate();
 			}
-			
+
 			// Wait for all of the query engines to become up to date
 			for(StorageDef def : storages.values())
 			{
 				def.awaitQueryEngines();
 			}
-			
+
 			// Reopen our transaction adapter
 			transactionAdapter.reopen();
-			
+
 			long t2 = System.currentTimeMillis();
 			logger.info("Fully installed snapshot. Took " + Duration.of(t2 - t1, ChronoUnit.MILLIS).toString());
 		}
@@ -540,21 +540,21 @@ public class StorageEngine
 			mutationLock.unlock();
 		}
 	}
-	
+
 	public void compact(long time, TimeUnit unit)
 	{
 		store.compact(unit.toMillis(time));
 	}
-	
+
 	private class StorageDef
 	{
 		private final DelegatingStorage storage;
 		private final String storageName;
 		private final Path dataPath;
-		
+
 		private Map<String, QueryEngineConfig> queryEngines;
 		private List<FieldConfig> fieldConfigs;
-		
+
 		public StorageDef(String name, Path dataPath)
 		{
 			this.storageName = name;
@@ -569,7 +569,7 @@ public class StorageEngine
 				}
 			};
 		}
-		
+
 		public StorageImpl getImpl()
 		{
 			return (StorageImpl) storage.getStorage();
@@ -579,14 +579,14 @@ public class StorageEngine
 		{
 			return storage;
 		}
-		
+
 		public void lock()
 			throws IOException
 		{
 			getImpl().close();
 			storage.setStorage(null);
 		}
-		
+
 		public void recreate()
 			throws IOException
 		{
@@ -602,7 +602,7 @@ public class StorageEngine
 						Files.delete(file);
 						return FileVisitResult.CONTINUE;
 					}
-	
+
 					@Override
 					public FileVisitResult postVisitDirectory(Path dir, IOException exc)
 						throws IOException
@@ -612,16 +612,16 @@ public class StorageEngine
 					}
 				});
 			}
-			
+
 			// Recreate it as we last saw it
 			update(this.fieldConfigs, this.queryEngines);
 		}
-		
+
 		public void awaitQueryEngines()
 		{
 			getImpl().awaitQueryEngines();
 		}
-		
+
 		public void update(List<FieldConfig> fieldConfigs, Map<String, QueryEngineConfig> queryEngines)
 		{
 			if(storage.getStorage() != null)
@@ -637,7 +637,7 @@ public class StorageEngine
 					throw new StorageException("Unable to close existing storage; " + e.getMessage(), e);
 				}
 			}
-			
+
 			// Create a new storage instance
 			PrimaryIndex primaryIndex = new PrimaryIndex(store, ids, storageName);
 			Fields fields = new FieldsImpl(Iterables.transform(fieldConfigs, c -> {
@@ -665,11 +665,11 @@ public class StorageEngine
 				fields,
 				queryEngines
 			);
-			
+
 			// Save the configuration for later usage
 			this.fieldConfigs = fieldConfigs;
 			this.queryEngines = queryEngines;
-			
+
 			// Set the implementation used
 			storage.setStorage(impl);
 		}
