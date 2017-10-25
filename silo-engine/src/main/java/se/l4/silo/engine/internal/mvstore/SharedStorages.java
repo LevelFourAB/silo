@@ -43,7 +43,7 @@ public class SharedStorages
 
 	public MVStoreManager get(String name)
 	{
-		Path absolutePath = root.resolve(name.replace('/', File.pathSeparatorChar) + ".mv.bin").normalize();
+		Path absolutePath = root.resolve(name.replace('/', File.separatorChar) + ".mv.bin").normalize();
 
 		fetchLock.lock();
 		try
