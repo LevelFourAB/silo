@@ -4,11 +4,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 
+import com.google.common.collect.ImmutableList;
+
 import org.h2.mvstore.MVMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.ImmutableList;
 
 import se.l4.commons.io.Bytes;
 import se.l4.silo.engine.MVStoreManager;
@@ -187,8 +187,8 @@ public class QueryEngineUpdater
 				{
 					time = now;
 					log.info("Index " + def.name + " for " + name
-						+ ": Restore progress " + String.format("%.2f", count / (double) storage.size())
-						+ " (" + count + "/" + storage.size() + "), latest internal id is " + id);
+						+ ": Restore progress " + String.format("%.2f", (count / (double) storage.size()) * 100)
+						+ "% (" + count + "/" + storage.size() + "), latest internal id is " + id);
 				}
 			}
 		
