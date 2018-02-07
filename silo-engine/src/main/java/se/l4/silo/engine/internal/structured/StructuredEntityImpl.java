@@ -93,34 +93,36 @@ public class StructuredEntityImpl
 	protected Bytes toBytes(StreamingInput in)
 		throws IOException
 	{
-		ByteArrayOutputStream baos = new ByteArrayOutputStream(1024);
-		// Tag with a version
-		baos.write(0);
-		
-		BinaryOutput out = new BinaryOutput(baos);
-		switch(in.next())
+		try(ByteArrayOutputStream baos = new ByteArrayOutputStream(1024);
+			BinaryOutput out = new BinaryOutput(baos))
 		{
-			case OBJECT_START:
-				copyObject(in, out, "");
-				break;
-			case LIST_START:
-				copyList(in, out, "");
-				break;
-			case OBJECT_END:
-			case LIST_END:
-			case KEY:
-				throw new IOException("The given input was invalid, structured data can not start with OBJECT_END, LIST_END or KEY");
-			case NULL:
-				out.writeNull("");
-				break;
-			case VALUE:
-				copyValue(in, out, "");
-				break;
+			// Tag with a version
+			baos.write(0);
+			
+			switch(in.next())
+			{
+				case OBJECT_START:
+					copyObject(in, out, "");
+					break;
+				case LIST_START:
+					copyList(in, out, "");
+					break;
+				case OBJECT_END:
+				case LIST_END:
+				case KEY:
+					throw new IOException("The given input was invalid, structured data can not start with OBJECT_END, LIST_END or KEY");
+				case NULL:
+					out.writeNull("");
+					break;
+				case VALUE:
+					copyValue(in, out, "");
+					break;
+			}
+			
+			out.flush();
+			
+			return Bytes.create(baos.toByteArray());
 		}
-		
-		out.flush();
-		
-		return Bytes.create(baos.toByteArray());
 	}
 
 	private void copyObject(StreamingInput in, BinaryOutput out, String key)

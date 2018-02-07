@@ -10,6 +10,8 @@ package se.l4.silo;
 public class StorageTransactionException
 	extends StorageException
 {
+	private static final long serialVersionUID = 5892740863745544304L;
+
 	public StorageTransactionException(String message, Throwable cause)
 	{
 		super(message, cause);

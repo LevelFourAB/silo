@@ -12,16 +12,16 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.h2.mvstore.MVMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.carrotsearch.hppc.LongHashSet;
 import com.carrotsearch.hppc.LongSet;
 import com.carrotsearch.hppc.cursors.LongCursor;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
+
+import org.h2.mvstore.MVMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import se.l4.commons.io.Bytes;
 import se.l4.commons.io.ExtendedDataInput;
@@ -364,6 +364,8 @@ public class TransactionAdapter
 						keys.add(key);
 					}
 					break;
+				default:
+					// Do nothing for other types
 			}
 		}
 		

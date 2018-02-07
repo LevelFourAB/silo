@@ -21,6 +21,7 @@ public class Sort
 		{
 		}
 		
+		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public Builder key(int field, FieldType ft, boolean ascending)
 		{
 			Comparator<Result> newComp = null;
@@ -46,6 +47,7 @@ public class Sort
 			return this;
 		}
 		
+		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public Builder value(int field, FieldType ft, boolean ascending)
 		{
 			Comparator<Result> newComp = null;

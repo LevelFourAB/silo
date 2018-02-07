@@ -8,8 +8,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.base.Throwables;
-
 import se.l4.commons.id.SimpleLongIdGenerator;
 import se.l4.commons.io.Bytes;
 import se.l4.silo.engine.MVStoreManager;
@@ -86,7 +84,7 @@ public class TransactionAdapterTest
 		}
 		catch(IOException e)
 		{
-			throw Throwables.propagate(e);
+			throw new RuntimeException(e);
 		}
 	}
 	

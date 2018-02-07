@@ -6,8 +6,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.base.Throwables;
-
 import se.l4.commons.config.ConfigException;
 import se.l4.commons.config.internal.RawFormatReader;
 import se.l4.commons.config.internal.streaming.MapInput;
@@ -71,7 +69,7 @@ public class ConvertableConfig
 		}
 		catch(IOException e)
 		{
-			throw Throwables.propagate(e);
+			throw new ConfigException("Unable to convert to " + type.getName() + "; " + e.getMessage(), e);
 		}
 	}
 	

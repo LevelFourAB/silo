@@ -6,17 +6,17 @@ import java.util.List;
 import java.util.TreeSet;
 import java.util.function.Function;
 
+import com.carrotsearch.hppc.ObjectIntHashMap;
+import com.carrotsearch.hppc.ObjectIntMap;
+import com.carrotsearch.hppc.cursors.ObjectIntCursor;
+import com.google.common.collect.Lists;
+
 import org.apache.lucene.facet.FacetsCollector.MatchingDocs;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.util.BytesRef;
-
-import com.carrotsearch.hppc.ObjectIntHashMap;
-import com.carrotsearch.hppc.ObjectIntMap;
-import com.carrotsearch.hppc.cursors.ObjectIntCursor;
-import com.google.common.collect.Lists;
 
 import se.l4.silo.engine.search.FieldDefinition;
 import se.l4.silo.engine.search.IndexDefinitionEncounter;
@@ -75,11 +75,9 @@ public class CategoryFacet
 		SimpleFacetQuery parameters = encounter.getQueryParameters();
 		int count = parameters.getCount();
 		
-		int totalHits = 0;
 		ObjectIntMap<String> result = new ObjectIntHashMap<>();
 		for(MatchingDocs docs : encounter.getCollector().getMatchingDocs())
 		{
-			totalHits += docs.totalHits;
 			LeafReader reader = docs.context.reader();
 			
 			if(fieldDef.getType() instanceof NumericFieldType)

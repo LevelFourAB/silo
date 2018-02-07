@@ -13,8 +13,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.base.Throwables;
-
 import se.l4.commons.serialization.format.BinaryInput;
 import se.l4.commons.serialization.format.BinaryOutput;
 import se.l4.commons.serialization.format.StreamingInput;
@@ -79,10 +77,9 @@ public class IndexQueryEngineTest
 	
 	private BinaryInput generateList()
 	{
-		try
+		try(ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			BinaryOutput out = new BinaryOutput(baos))
 		{
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			BinaryOutput out = new BinaryOutput(baos);
 			out.writeObjectStart("");
 			out.writeListStart("field1");
 			out.write("entry", "value1");
@@ -96,7 +93,7 @@ public class IndexQueryEngineTest
 		}
 		catch(IOException e)
 		{
-			throw Throwables.propagate(e);
+			throw new RuntimeException(e);
 		}
 	}
 	
@@ -229,10 +226,9 @@ public class IndexQueryEngineTest
 	public void testStoreWithPath()
 	{
 		BinaryInput in;
-		try
+		try(ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			BinaryOutput out = new BinaryOutput(baos))
 		{
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			BinaryOutput out = new BinaryOutput(baos);
 			out.writeObjectStart("");
 			out.writeObjectStart("field3");
 			out.write("test", "hello");
@@ -244,7 +240,7 @@ public class IndexQueryEngineTest
 		}
 		catch(IOException e)
 		{
-			throw Throwables.propagate(e);
+			throw new RuntimeException(e);
 		}
 		
 		entity.store("test", in);

@@ -8,12 +8,12 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.common.io.ByteStreams;
+
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVMap.Builder;
 import org.h2.mvstore.MVStore;
 import org.h2.store.fs.FileChannelInputStream;
-
-import com.google.common.io.ByteStreams;
 
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.Snapshot;
@@ -33,8 +33,6 @@ public class MVStoreManagerImpl
 	private static final int TARGET_RATE = 95;
 	/** Data size to move when compacting */
 	private static final int DATA_SIZE = 16 * 1024 * 1024;
-	/** The time to spend compacting when closing the store */
-	private static final long CLOSE_COMPACT_TIME = 200;
 
 	private final MVStore.Builder builder;
 	

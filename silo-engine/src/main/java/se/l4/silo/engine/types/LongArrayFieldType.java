@@ -66,6 +66,7 @@ public class LongArrayFieldType
 	}
 
 	@Override
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public long[] convert(Object in)
 	{
 		if(in instanceof Collection)

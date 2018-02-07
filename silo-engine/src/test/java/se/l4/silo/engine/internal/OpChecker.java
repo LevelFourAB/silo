@@ -5,8 +5,6 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.LinkedList;
 
-import com.google.common.base.Throwables;
-
 import se.l4.commons.io.Bytes;
 
 /**
@@ -77,7 +75,7 @@ public class OpChecker
 				}
 				catch(IOException e)
 				{
-					throw Throwables.propagate(e);
+					throw new RuntimeException(e);
 				}
 			}
 			else if(! a.equals(b))

@@ -127,7 +127,6 @@ public class IndexQueryRequest
 	public enum Op
 	{
 		EQUAL,
-		NOT_EQUAL,
 		LESS_THAN,
 		LESS_THAN_OR_EQUAL_TO,
 		MORE_THAN,

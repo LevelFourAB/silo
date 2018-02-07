@@ -3,8 +3,6 @@ package se.l4.silo;
 import java.io.Closeable;
 import java.util.function.Supplier;
 
-import com.google.common.base.Throwables;
-
 import se.l4.silo.binary.BinaryEntity;
 import se.l4.silo.structured.StructuredEntity;
 
@@ -143,8 +141,12 @@ public interface Silo
 			catch(Throwable t)
 			{
 				tx.rollback();
-				Throwables.propagateIfPossible(t);
-				throw Throwables.propagate(t);
+				if(t instanceof RuntimeException)
+				{
+					throw (RuntimeException) t;
+				}
+
+				throw new StorageException("Uncaught error while handling transaction; " + t.getMessage(), t);
 			}
 		}
 		
@@ -178,8 +180,12 @@ public interface Silo
 			catch(Throwable t)
 			{
 				tx.rollback();
-				Throwables.propagateIfPossible(t);
-				throw Throwables.propagate(t);
+				if(t instanceof RuntimeException)
+				{
+					throw (RuntimeException) t;
+				}
+
+				throw new StorageException("Uncaught error while handling transaction; " + t.getMessage(), t);
 			}
 		}
 		

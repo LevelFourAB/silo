@@ -9,8 +9,6 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 
-import com.google.common.base.Throwables;
-
 import se.l4.commons.io.Bytes;
 
 public class DataUtils
@@ -32,7 +30,7 @@ public class DataUtils
 		}
 		catch(IOException e)
 		{
-			throw Throwables.propagate(e);
+			throw new RuntimeException(e);
 		}
 	}
 	
@@ -84,7 +82,7 @@ public class DataUtils
 		}
 		catch(IOException e)
 		{
-			throw Throwables.propagate(e);
+			throw new RuntimeException(e);
 		}
 	}
 

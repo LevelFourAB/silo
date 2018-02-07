@@ -113,6 +113,7 @@ public abstract class AbstractFieldDefinition
 		return getType().createSortingField(fieldName, language, data);
 	}
 
+	@SuppressWarnings("deprecation")
 	private FieldType createFieldType()
 	{
 		FieldType ft = new FieldType();

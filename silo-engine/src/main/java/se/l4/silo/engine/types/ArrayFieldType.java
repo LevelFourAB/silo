@@ -15,6 +15,7 @@ public class ArrayFieldType
 	private static final byte NULL = 0;
 	private static final byte VALUE = 1;
 	
+	@SuppressWarnings("rawtypes")
 	private final FieldType type;
 
 	@SuppressWarnings("rawtypes")
@@ -56,6 +57,7 @@ public class ArrayFieldType
 				return -1;
 			}
 			
+			@SuppressWarnings("unchecked")
 			int c = type.compare(a, b);
 			if(c != 0)
 			{
@@ -67,6 +69,7 @@ public class ArrayFieldType
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public int estimateMemory(Object[] instance)
 	{
 		int size = 64;
@@ -91,6 +94,7 @@ public class ArrayFieldType
 	}
 
 	@Override
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Object[] convert(Object in)
 	{
 		if(in instanceof Collection)
@@ -119,6 +123,7 @@ public class ArrayFieldType
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public void write(Object[] instance, ExtendedDataOutput out)
 		throws IOException
 	{

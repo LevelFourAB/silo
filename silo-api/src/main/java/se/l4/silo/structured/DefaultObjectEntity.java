@@ -122,6 +122,7 @@ public class DefaultObjectEntity<T>
 		private QueryType<EntityDataType, ResultType, Q> qt;
 		private Function<TransformedFrom, EntityDataType> translator;
 
+		@SuppressWarnings("unchecked")
 		public TransformingQueryType(QueryType<?, ?, Q> qt, Function<TransformedFrom, EntityDataType> translator)
 		{
 			this.qt = (QueryType<EntityDataType, ResultType, Q>) qt;
@@ -158,7 +159,7 @@ public class DefaultObjectEntity<T>
 		}
 		
 		@Override
-		public Object getMetadata(String key)
+		public <R> R getMetadata(String key)
 		{
 			return other.getMetadata(key);
 		}

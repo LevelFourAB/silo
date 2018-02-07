@@ -111,9 +111,10 @@ public class QueryEncounterImpl<T, R>
 		}
 
 		@Override
-		public Object getMetadata(String key)
+		@SuppressWarnings({ "unchecked" })
+		public <M> M getMetadata(String key)
 		{
-			return metadata.get(key);
+			return (M) metadata.get(key);
 		}
 		
 	}

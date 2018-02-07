@@ -117,6 +117,7 @@ public class LocalSiloBuilder
 	}
 	
 	@Override
+	@SuppressWarnings("rawtypes")
 	public SiloBuilder addQueryEngine(QueryEngineFactory factory)
 	{
 		put(queryEngineTypes, factory, factory.getId());

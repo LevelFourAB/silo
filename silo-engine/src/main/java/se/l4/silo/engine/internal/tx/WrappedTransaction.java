@@ -12,6 +12,7 @@ import se.l4.silo.Transaction;
 public class WrappedTransaction
 	implements Transaction
 {
+	@SuppressWarnings("unused")
 	private final Transaction parent;
 
 	public WrappedTransaction(Transaction parent)

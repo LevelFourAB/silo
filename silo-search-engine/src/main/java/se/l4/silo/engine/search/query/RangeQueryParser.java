@@ -2,8 +2,6 @@ package se.l4.silo.engine.search.query;
 
 import java.io.IOException;
 
-import org.apache.lucene.document.IntPoint;
-import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.search.Query;
 
 import se.l4.silo.engine.search.FieldDefinition;

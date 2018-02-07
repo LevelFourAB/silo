@@ -20,13 +20,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.google.common.collect.Iterables;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import org.h2.mvstore.MVStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Throwables;
-import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import se.l4.commons.id.LongIdGenerator;
 import se.l4.commons.id.SequenceLongIdGenerator;
@@ -184,7 +183,7 @@ public class StorageEngine
 		}
 		catch(IOException e)
 		{
-			throw Throwables.propagate(e);
+			throw new StorageException("Could not create initial directory; " + e.getMessage(), e);
 		}
 
 		this.store = new MVStoreManagerImpl(new MVStore.Builder()
@@ -470,6 +469,7 @@ public class StorageEngine
 	 * @param entityName
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	public <T> T getEntity(String entityName)
 	{
 		return (T) entities.get(entityName);

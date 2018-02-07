@@ -11,8 +11,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.base.Throwables;
-
 import se.l4.commons.serialization.format.BinaryInput;
 import se.l4.commons.serialization.format.BinaryOutput;
 import se.l4.commons.serialization.format.StreamingInput;
@@ -59,10 +57,9 @@ public class StructuredEntityTest
 	
 	private BinaryInput generateTestData()
 	{
-		try
+		try(ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			BinaryOutput out = new BinaryOutput(baos))
 		{
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			BinaryOutput out = new BinaryOutput(baos);
 			out.writeObjectStart("");
 			out.write("field", "value");
 			out.writeObjectEnd("");
@@ -72,7 +69,7 @@ public class StructuredEntityTest
 		}
 		catch(IOException e)
 		{
-			throw Throwables.propagate(e);
+			throw new RuntimeException(e);
 		}
 	}
 	
@@ -109,7 +106,7 @@ public class StructuredEntityTest
 		}
 		catch(IOException e)
 		{
-			throw Throwables.propagate(e);
+			throw new RuntimeException(e);
 		}
 			
 		fr.close();

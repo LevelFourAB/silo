@@ -13,19 +13,23 @@ public class DataTypeAdapter
 	private static final byte NULL = 0;
 	private static final byte VALUE = 1;
 	
+	@SuppressWarnings("rawtypes")
 	private final FieldType type;
 
+	@SuppressWarnings("rawtypes")
 	public DataTypeAdapter(FieldType type)
 	{
 		this.type = type;
 	}
 	
+	@SuppressWarnings("rawtypes")
 	public FieldType getType()
 	{
 		return type;
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public int compare(Object a, Object b)
 	{
 		if(a == b) return 0;
@@ -51,11 +55,13 @@ public class DataTypeAdapter
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public int getMemory(Object obj)
 	{
 		return type.estimateMemory(obj);
 	}
 	
+	@SuppressWarnings("unchecked")
 	private void write(Object obj, ExtendedDataOutputImpl out)
 	{
 		try

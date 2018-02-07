@@ -11,7 +11,6 @@ import se.l4.commons.io.ExtendedDataInput;
 public abstract class AbstractExtendedDataInput
 	implements ExtendedDataInput
 {
-	private static final int FALSE = 0;
 	private static final int TRUE = 1;
 	
 	@Override

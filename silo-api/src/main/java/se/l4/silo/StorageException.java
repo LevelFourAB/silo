@@ -9,6 +9,7 @@ package se.l4.silo;
 public class StorageException
 	extends RuntimeException
 {
+	private static final long serialVersionUID = 7258084593814673954L;
 
 	public StorageException()
 	{

@@ -12,6 +12,7 @@ public class MergedFieldType
 	private static final byte NULL = 0;
 	private static final byte VALUE = 1;
 	
+	@SuppressWarnings("rawtypes")
 	private final FieldType[] types;
 
 	@SuppressWarnings("rawtypes")
@@ -20,6 +21,7 @@ public class MergedFieldType
 		this.types = types;
 	}
 	
+	@SuppressWarnings("rawtypes")
 	public FieldType[] getTypes()
 	{
 		return types;
@@ -32,6 +34,7 @@ public class MergedFieldType
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public int compare(Object[] o1, Object[] o2)
 	{
 		for(int i=0, n=types.length; i<n; i++)
@@ -69,6 +72,7 @@ public class MergedFieldType
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public int estimateMemory(Object[] instance)
 	{
 		int size = 64;
@@ -102,6 +106,7 @@ public class MergedFieldType
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public void write(Object[] instance, ExtendedDataOutput out)
 		throws IOException
 	{

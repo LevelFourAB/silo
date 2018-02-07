@@ -13,14 +13,14 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Predicate;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimap;
+
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.type.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Multimap;
 
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.DataEncounter;
@@ -59,8 +59,10 @@ public class IndexQueryEngine
 	
 	private final String[] fields;
 	private final Set<String> fieldsSet;
+	@SuppressWarnings("rawtypes")
 	private final FieldType[] fieldTypes;
 	private final String[] sortFields;
+	@SuppressWarnings("rawtypes")
 	private final FieldType[] sortFieldTypes;
 	private final Set<String> allFields;
 
@@ -105,6 +107,7 @@ public class IndexQueryEngine
 	 * @param appendId
 	 * @return
 	 */
+	@SuppressWarnings("rawtypes")
 	private MergedFieldType createFieldType(String name, Fields fields, String[] fieldNames, boolean appendId)
 	{
 		FieldType[] result = new FieldType[fieldNames.length + (appendId ? 1 : 0)];
@@ -137,6 +140,7 @@ public class IndexQueryEngine
 	 * @param appendId
 	 * @return
 	 */
+	@SuppressWarnings("rawtypes")
 	private MergedFieldType createMultiFieldType(String name, Fields fields, String[] fieldNames, boolean appendId)
 	{
 		FieldType[] result = new FieldType[fieldNames.length + (appendId ? 1 : 0)];
@@ -597,7 +601,10 @@ public class IndexQueryEngine
 		{
 			if(value instanceof Iterable)
 			{
-				for(Object o : ((Iterable) value))
+				@SuppressWarnings("rawtypes")
+				Iterable it = (Iterable) value;
+
+				for(Object o : it)
 				{
 					// Set our bounds to this exact value
 					lower[field] = o;
@@ -656,6 +663,7 @@ public class IndexQueryEngine
 		}
 	}
 	
+	@SuppressWarnings("rawtypes")
 	private static Class[] types(Object[] in)
 	{
 		Class[] result = new Class[in.length];

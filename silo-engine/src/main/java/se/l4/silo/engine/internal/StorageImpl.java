@@ -9,10 +9,10 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
 
+import com.google.common.collect.ImmutableMap;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.ImmutableMap;
 
 import se.l4.commons.io.Bytes;
 import se.l4.silo.DeleteResult;
@@ -49,7 +49,6 @@ public class StorageImpl
 	private final TransactionSupport transactionSupport;
 	private final DataStorage storage;
 	private final PrimaryIndex primary;
-	private final Fields fields;
 	
 	private final ImmutableMap<String, QueryEngine<?>> queryEngines;
 	private final QueryEngineUpdater queryEngineUpdater;
@@ -72,7 +71,6 @@ public class StorageImpl
 		this.transactionSupport = transactionSupport;
 		this.storage = storage;
 		this.primary = primary;
-		this.fields = fields;
 		
 		ImmutableMap.Builder<String, QueryEngine<?>> builder = ImmutableMap.builder();
 		for(Map.Entry<String, QueryEngineConfig> queryEngineConfig : queryEngines.entrySet())
@@ -82,6 +80,8 @@ public class StorageImpl
 			
 			String type = config.getType();
 			QueryEngineFactory<?, ?> queryEngineFactory = factories.forQueryEngine(type);
+
+			@SuppressWarnings({ "rawtypes", "unchecked" })
 			QueryEngine<?> queryEngine = queryEngineFactory.create(new QueryEngineCreationEncounterImpl(
 				storages,
 				executor,
@@ -206,6 +206,7 @@ public class StorageImpl
 	}
 	
 	@Override
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public <R> QueryFetchResult<QueryResult<R>> query(String engine, Object query, Function<Bytes, R> dataLoader)
 	{
 		QueryEngine<?> qe = queryEngines.get(engine);
