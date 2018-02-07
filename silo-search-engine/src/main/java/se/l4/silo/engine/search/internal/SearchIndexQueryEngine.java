@@ -51,6 +51,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.primitives.Longs;
 
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.DataEncounter;
@@ -257,7 +258,7 @@ public class SearchIndexQueryEngine
 					Document doc = searcher.doc(d.doc);
 					BytesRef idRef = doc.getBinaryValue("_:id");
 
-					long id = bytesToLong(idRef.bytes);
+					long id = Longs.fromByteArray(idRef.bytes);
 					encounter.receive(id, v -> {
 						v.accept("score", d.score);
 					});
@@ -481,7 +482,7 @@ public class SearchIndexQueryEngine
 	{
 		Document doc = new Document();
 
-		BytesRef idRef = new BytesRef(longToBytes(id));
+		BytesRef idRef = new BytesRef(Longs.toByteArray(id));
 
 		FieldType ft = new FieldType();
 		ft.setStored(true);
@@ -620,7 +621,7 @@ public class SearchIndexQueryEngine
 	@Override
 	public void delete(long id)
 	{
-		BytesRef idRef = new BytesRef(longToBytes(id));
+		BytesRef idRef = new BytesRef(Longs.toByteArray((id)));
 		try
 		{
 			writer.deleteDocuments(new Term("_:id", idRef));
@@ -632,32 +633,6 @@ public class SearchIndexQueryEngine
 
 		// Tell our commit policy that we have modified the index
 		commitPolicy.indexModified();
-	}
-
-	private byte[] longToBytes(long id)
-	{
-		byte[] result = new byte[8];
-		result[0] = (byte) (id >>> 56);
-		result[1] = (byte) (id >>> 48);
-		result[2] = (byte) (id >>> 40);
-		result[3] = (byte) (id >>> 32);
-        result[4] = (byte) (id >>> 24);
-        result[5] = (byte) (id >>> 16);
-        result[6] = (byte) (id >>> 8);
-        result[7] = (byte) (id);
-        return result;
-	}
-
-	private long bytesToLong(byte[] data)
-	{
-		return ((long)data[0] << 56) +
-	        ((long)(data[1] & 255) << 48) +
-	        ((long)(data[2] & 255) << 40) +
-	        ((long)(data[3] & 255) << 32) +
-	        ((long)(data[4] & 255) << 24) +
-	        ((data[5] & 255) << 16) +
-	        ((data[6] & 255) <<  8) +
-	        ((data[7] & 255) <<  0);
 	}
 
 	private static class Tuple
