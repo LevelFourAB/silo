@@ -219,6 +219,10 @@ public class StorageImpl
 			try
 			{
 				Bytes data = storage.get(id);
+				if(data == null)
+				{
+					throw new StorageException("Unable to fetch data for internal id " + id + "; Not available from storage");
+				}
 				return dataLoader.apply(data);
 			}
 			catch(IOException e)
