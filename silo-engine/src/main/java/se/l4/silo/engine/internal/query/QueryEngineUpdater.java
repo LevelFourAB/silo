@@ -186,7 +186,9 @@ public class QueryEngineUpdater
 				if(now - time >= 10000)
 				{
 					time = now;
-					log.info("Index " + def.name + " for " + name + ": Restore progress " + count + "/" + storage.size() + " (latest internal id is " + id + ")");
+					log.info("Index " + def.name + " for " + name
+						+ ": Restore progress " + String.format("%.2f", count / (double) storage.size())
+						+ " (" + count + "/" + storage.size() + "), latest internal id is " + id);
 				}
 			}
 		
