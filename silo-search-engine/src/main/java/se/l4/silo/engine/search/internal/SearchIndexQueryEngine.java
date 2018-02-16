@@ -230,7 +230,8 @@ public class SearchIndexQueryEngine
 					(int) (request.getOffset() + request.getLimit()),
 					false,
 					false,
-					false
+					false,
+					true
 				);
 			}
 

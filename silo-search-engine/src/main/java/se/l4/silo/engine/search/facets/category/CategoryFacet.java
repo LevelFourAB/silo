@@ -90,7 +90,8 @@ public class CategoryFacet
 				int doc;
 				while((doc = it.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS)
 				{
-					long value = values.get(doc);
+					values.advance(doc);
+					long value = values.longValue();
 					result.addTo(String.valueOf(value), 1);
 				}
 			}
@@ -104,12 +105,14 @@ public class CategoryFacet
 				int doc;
 				while((doc = it.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS)
 				{
-					values.setDocument(doc);
-					long ord;
-					while((ord = values.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS)
+					if(values.advanceExact(doc))
 					{
-						BytesRef ref = values.lookupOrd(ord);
-						result.addTo(ref.utf8ToString(), 1);
+						long ord;
+						while((ord = values.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS)
+						{
+							BytesRef ref = values.lookupOrd(ord);
+							result.addTo(ref.utf8ToString(), 1);
+						}
 					}
 				}
 			}

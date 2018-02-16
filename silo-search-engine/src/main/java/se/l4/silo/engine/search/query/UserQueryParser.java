@@ -5,6 +5,8 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.common.collect.ImmutableList;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.CachingTokenFilter;
 import org.apache.lucene.analysis.TokenStream;
@@ -21,8 +23,6 @@ import org.apache.lucene.search.PhraseQuery;
 import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-
-import com.google.common.collect.ImmutableList;
 
 import se.l4.silo.engine.search.FieldDefinition;
 import se.l4.silo.engine.search.IndexDefinition;
@@ -305,7 +305,6 @@ public class UserQueryParser
 					{
 						// no phrase query:
 						BooleanQuery.Builder builder = new BooleanQuery.Builder();
-						builder.setDisableCoord(positionCount == 1);
 
 						BooleanClause.Occur occur = BooleanClause.Occur.SHOULD;
 

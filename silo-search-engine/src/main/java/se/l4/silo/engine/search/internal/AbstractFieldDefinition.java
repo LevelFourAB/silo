@@ -113,14 +113,11 @@ public abstract class AbstractFieldDefinition
 		return getType().createSortingField(fieldName, language, data);
 	}
 
-	@SuppressWarnings("deprecation")
 	private FieldType createFieldType()
 	{
 		FieldType ft = new FieldType();
 		FieldType defaults = getType().getDefaultFieldType();
 		ft.setIndexOptions(defaults.indexOptions());
-		ft.setNumericPrecisionStep(defaults.numericPrecisionStep());
-		ft.setNumericType(defaults.numericType());
 		ft.setOmitNorms(defaults.omitNorms());
 		ft.setStoreTermVectorOffsets(false);
 		ft.setStoreTermVectorPositions(false);

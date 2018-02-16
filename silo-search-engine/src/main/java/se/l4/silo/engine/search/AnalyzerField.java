@@ -40,12 +40,6 @@ public class AnalyzerField
 	}
 
 	@Override
-	public float boost()
-	{
-		return other.boost();
-	}
-
-	@Override
 	public BytesRef binaryValue()
 	{
 		return other.binaryValue();
