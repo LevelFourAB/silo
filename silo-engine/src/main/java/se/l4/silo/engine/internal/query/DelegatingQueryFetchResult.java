@@ -34,19 +34,19 @@ public class DelegatingQueryFetchResult<T>
 	}
 
 	@Override
-	public int getSize()
+	public long getSize()
 	{
 		return fr.getSize();
 	}
 
 	@Override
-	public int getOffset()
+	public long getOffset()
 	{
 		return fr.getOffset();
 	}
 
 	@Override
-	public int getLimit()
+	public long getLimit()
 	{
 		return fr.getLimit();
 	}
@@ -58,7 +58,7 @@ public class DelegatingQueryFetchResult<T>
 	}
 
 	@Override
-	public int getTotal()
+	public long getTotal()
 	{
 		return fr.getTotal();
 	}

@@ -116,14 +116,14 @@ public class IndexQueryImpl<T>
 	}
 
 	@Override
-	public IndexQuery<T> limit(int limit)
+	public IndexQuery<T> limit(long limit)
 	{
 		request.setLimit(limit);
 		return this;
 	}
 
 	@Override
-	public IndexQuery<T> offset(int offset)
+	public IndexQuery<T> offset(long offset)
 	{
 		request.setOffset(offset);
 		return this;

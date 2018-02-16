@@ -440,12 +440,11 @@ public class IndexQueryEngine
 			.build();
 		
 		// Fetch the limits and setup collection of results
-		int limit = request.getLimit();
-		int offset = request.getOffset();
-		
+		long limit = request.getLimit();
+		long offset = request.getOffset();
 		
 		LongAdder total = new LongAdder();
-		int maxSize = limit > 0 ? offset + limit : 0;
+		long maxSize = limit > 0 ? offset + limit : 0;
 		TreeSet<Result> tree = new TreeSet<>(sort);
 		parts[fields.length] = new ResultCollector(index, fields.length, hasSort)
 		{
@@ -480,9 +479,9 @@ public class IndexQueryEngine
 		// Cut down the results if needed
 		if(maxSize != 0 && tree.size() > limit)
 		{
-			int n = tree.size() - offset;
+			long n = tree.size() - offset;
 			Iterator<Result> it = tree.descendingIterator();
-			for(int i=n-1; i>=0; i--)
+			for(long i=n-1; i>=0; i--)
 			{
 				Result result = it.next();
 				encounter.receive(result.getId());

@@ -31,9 +31,9 @@ public class QueryEncounterImpl<T, R>
 	private final List<QueryResult<R>> result;
 	private final Map<String, Object> metadata;
 	
-	private int offset;
-	private int limit;
-	private int totalHits;
+	private long offset;
+	private long limit;
+	private long totalHits;
 
 	public QueryEncounterImpl(T data, LongFunction<R> dataLoader)
 	{
@@ -77,7 +77,7 @@ public class QueryEncounterImpl<T, R>
 	}
 	
 	@Override
-	public void setMetadata(int offset, int limit, int totalHits)
+	public void setMetadata(long offset, long limit, long totalHits)
 	{
 		this.offset = offset;
 		this.limit = limit;

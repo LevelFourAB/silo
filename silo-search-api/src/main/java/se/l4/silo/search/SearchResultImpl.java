@@ -24,19 +24,19 @@ public class SearchResultImpl<T>
 	}
 
 	@Override
-	public int getSize()
+	public long getSize()
 	{
 		return results.getSize();
 	}
 
 	@Override
-	public int getOffset()
+	public long getOffset()
 	{
 		return results.getOffset();
 	}
 
 	@Override
-	public int getLimit()
+	public long getLimit()
 	{
 		return results.getLimit();
 	}
@@ -48,7 +48,7 @@ public class SearchResultImpl<T>
 	}
 
 	@Override
-	public int getTotal()
+	public long getTotal()
 	{
 		return results.getTotal();
 	}

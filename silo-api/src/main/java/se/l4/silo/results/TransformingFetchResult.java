@@ -39,25 +39,25 @@ public class TransformingFetchResult<T>
 	}
 	
 	@Override
-	public int getLimit()
+	public long getLimit()
 	{
 		return in.getLimit();
 	}
 	
 	@Override
-	public int getOffset()
+	public long getOffset()
 	{
 		return in.getOffset();
 	}
 	
 	@Override
-	public int getSize()
+	public long getSize()
 	{
 		return in.getSize();
 	}
 	
 	@Override
-	public int getTotal()
+	public long getTotal()
 	{
 		return in.getTotal();
 	}

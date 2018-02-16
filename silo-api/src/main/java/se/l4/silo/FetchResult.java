@@ -31,28 +31,28 @@ public interface FetchResult<T>
 	 * 
 	 * @return
 	 */
-	int getSize();
+	long getSize();
 	
 	/**
 	 * Get the offset used to fetch these results.
 	 * 
 	 * @return
 	 */
-	int getOffset();
+	long getOffset();
 	
 	/**
 	 * Get the limit used to fetch these results.
 	 * 
 	 * @return
 	 */
-	int getLimit();
+	long getLimit();
 	
 	/**
 	 * Get the total number of results available.
 	 * 
 	 * @return
 	 */
-	int getTotal();
+	long getTotal();
 
 	/**
 	 * Check if these results are empty.

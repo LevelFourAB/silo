@@ -16,12 +16,12 @@ public class IteratorFetchResult<T>
 	implements FetchResult<T>
 {
 	private Iterator<T> it;
-	private int size;
-	private int offset;
-	private int limit;
-	private int total;
+	private long size;
+	private long offset;
+	private long limit;
+	private long total;
 
-	public IteratorFetchResult(Iterator<T> it, int size, int offset, int limit, int total)
+	public IteratorFetchResult(Iterator<T> it, long size, long offset, long limit, long total)
 	{
 		this.it = it;
 		this.size = size;
@@ -30,7 +30,7 @@ public class IteratorFetchResult<T>
 		this.total = total;
 	}
 	
-	public IteratorFetchResult(Collection<T> data, int offset, int limit, int total)
+	public IteratorFetchResult(Collection<T> data, long offset, long limit, long total)
 	{
 		this(data.iterator(), data.size(), offset, limit, total);
 	}
@@ -42,25 +42,25 @@ public class IteratorFetchResult<T>
 	}
 
 	@Override
-	public int getSize()
+	public long getSize()
 	{
 		return size;
 	}
 
 	@Override
-	public int getOffset()
+	public long getOffset()
 	{
 		return offset;
 	}
 
 	@Override
-	public int getLimit()
+	public long getLimit()
 	{
 		return limit;
 	}
 	
 	@Override
-	public int getTotal()
+	public long getTotal()
 	{
 		return total;
 	}

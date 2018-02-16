@@ -15,7 +15,7 @@ public interface LimitableQuery<Self extends LimitableQuery<Self>>
 	 * @param offset
 	 * @return
 	 */
-	Self offset(int offset);
+	Self offset(long offset);
 	
 	/**
 	 * Set the number of results this query can return.
@@ -23,11 +23,11 @@ public interface LimitableQuery<Self extends LimitableQuery<Self>>
 	 * @param limit
 	 * @return
 	 */
-	Self limit(int limit);
+	Self limit(long limit);
 	
 	/**
-	 * Paginate this query, this will invoke {@link #offset(int)} and
-	 * {@link #limit(int)} with arguments calculated from the page.
+	 * Paginate this query, this will invoke {@link #offset(long)} and
+	 * {@link #limit(long)} with arguments calculated from the page.
 	 * 
 	 * @param page
 	 * @param pageSize

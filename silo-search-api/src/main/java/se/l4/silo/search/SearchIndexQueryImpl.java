@@ -35,14 +35,14 @@ public class SearchIndexQueryImpl<T>
 	}
 	
 	@Override
-	public SearchIndexQuery<T> offset(int offset)
+	public SearchIndexQuery<T> offset(long offset)
 	{
 		request.setOffset(offset);
 		return this;
 	}
 	
 	@Override
-	public SearchIndexQuery<T> limit(int limit)
+	public SearchIndexQuery<T> limit(long limit)
 	{
 		request.setLimit(limit);
 		return this;

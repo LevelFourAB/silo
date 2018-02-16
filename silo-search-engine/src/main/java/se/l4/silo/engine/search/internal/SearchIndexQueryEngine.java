@@ -10,6 +10,11 @@ import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.primitives.Longs;
+
 import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -47,11 +52,6 @@ import org.apache.lucene.store.NRTCachingDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.primitives.Longs;
 
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.DataEncounter;
@@ -220,17 +220,23 @@ public class SearchIndexQueryEngine
 			}
 			else if(request.getSortItems().isEmpty())
 			{
-				resultCollector = TopScoreDocCollector.create(request.getOffset() + request.getLimit());
+				resultCollector = TopScoreDocCollector.create((int) (request.getOffset() + request.getLimit()));
 			}
 			else
 			{
 				Sort sort = createSort(request);
-				resultCollector = TopFieldCollector.create(sort, request.getOffset() + request.getLimit(), false, false, false);
+				resultCollector = TopFieldCollector.create(
+					sort,
+					(int) (request.getOffset() + request.getLimit()),
+					false,
+					false,
+					false
+				);
 			}
 
 			FacetsImpl facets = search(request, searcher, resultCollector, request.getLimit() > 0, true);
 
-			int hits;
+			long hits;
 			if(request.getLimit() == 0)
 			{
 				hits = ((TotalHitCountCollector) resultCollector).getTotalHits();
@@ -247,7 +253,11 @@ public class SearchIndexQueryEngine
 					}
 					else
 					{
-						innerDocs = Arrays.copyOfRange(innerDocs, request.getOffset(), Math.min(innerDocs.length, request.getOffset() + request.getLimit()));
+						innerDocs = Arrays.copyOfRange(
+							innerDocs, 
+							(int) request.getOffset(), 
+							Math.min(innerDocs.length, (int) (request.getOffset() + request.getLimit()))
+						);
 					}
 				}
 

@@ -28,25 +28,25 @@ public class EmptyFetchResult<T>
 	}
 
 	@Override
-	public int getSize()
+	public long getSize()
 	{
 		return 0;
 	}
 
 	@Override
-	public int getOffset()
+	public long getOffset()
 	{
 		return 0;
 	}
 
 	@Override
-	public int getLimit()
+	public long getLimit()
 	{
 		return -1;
 	}
 	
 	@Override
-	public int getTotal()
+	public long getTotal()
 	{
 		return 0;
 	}

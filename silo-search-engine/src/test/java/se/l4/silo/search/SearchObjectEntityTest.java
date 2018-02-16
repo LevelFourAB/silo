@@ -86,8 +86,8 @@ public class SearchObjectEntityTest
 				.done()
 			.run())
 		{
-			assertThat(fr.getSize(), is(10));
-			assertThat(fr.getTotal(), is(50));
+			assertThat(fr.getSize(), is(10l));
+			assertThat(fr.getTotal(), is(50l));
 		}
 	}
 	
@@ -107,8 +107,8 @@ public class SearchObjectEntityTest
 				.done()
 			.run())
 		{
-			assertThat(fr.getSize(), is(10));
-			assertThat(fr.getTotal(), is(50));
+			assertThat(fr.getSize(), is(10l));
+			assertThat(fr.getTotal(), is(50l));
 		}
 	}
 	
@@ -137,8 +137,8 @@ public class SearchObjectEntityTest
 				.done()
 			.run())
 		{
-			assertThat(fr.getSize(), is(10));
-			assertThat(fr.getTotal(), is(50));
+			assertThat(fr.getSize(), is(10l));
+			assertThat(fr.getTotal(), is(50l));
 		}
 	}
 	
@@ -167,8 +167,8 @@ public class SearchObjectEntityTest
 				.done()
 			.run())
 		{
-			assertThat(fr.getSize(), is(10));
-			assertThat(fr.getTotal(), is(50));
+			assertThat(fr.getSize(), is(10l));
+			assertThat(fr.getTotal(), is(50l));
 		}
 	}
 }

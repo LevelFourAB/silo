@@ -63,5 +63,5 @@ public interface QueryEncounter<T>
 	 * @param limit
 	 * @param totalHits
 	 */
-	void setMetadata(int offset, int limit, int totalHits);
+	void setMetadata(long offset, long limit, long totalHits);
 }

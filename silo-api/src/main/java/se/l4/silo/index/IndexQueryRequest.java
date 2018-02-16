@@ -13,9 +13,9 @@ import se.l4.commons.serialization.Use;
 public class IndexQueryRequest
 {
 	@Expose
-	private int offset;
+	private long offset;
 	@Expose
-	private int limit;
+	private long limit;
 	
 	@Expose
 	private List<Criterion> criterias;
@@ -28,22 +28,22 @@ public class IndexQueryRequest
 	{
 	}
 	
-	public int getOffset()
+	public long getOffset()
 	{
 		return offset;
 	}
 	
-	public void setOffset(int offset)
+	public void setOffset(long offset)
 	{
 		this.offset = offset;
 	}
 	
-	public int getLimit()
+	public long getLimit()
 	{
 		return limit;
 	}
 	
-	public void setLimit(int limit)
+	public void setLimit(long limit)
 	{
 		this.limit = limit;
 	}

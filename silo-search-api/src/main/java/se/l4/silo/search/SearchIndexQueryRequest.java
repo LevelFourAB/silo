@@ -5,8 +5,8 @@ import java.util.List;
 
 public class SearchIndexQueryRequest
 {
-	private int offset;
-	private int limit;
+	private long offset;
+	private long limit;
 	
 	private String language;
 	
@@ -37,22 +37,22 @@ public class SearchIndexQueryRequest
 		this.waitForLatest = waitForLatest;
 	}
 	
-	public int getLimit()
+	public long getLimit()
 	{
 		return limit;
 	}
 	
-	public void setLimit(int limit)
+	public void setLimit(long limit)
 	{
 		this.limit = limit;
 	}
 	
-	public int getOffset()
+	public long getOffset()
 	{
 		return offset;
 	}
 	
-	public void setOffset(int offset)
+	public void setOffset(long offset)
 	{
 		this.offset = offset;
 	}

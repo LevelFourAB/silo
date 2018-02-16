@@ -107,7 +107,7 @@ public class IndexQueryEngineTest
 			.isEqualTo("value1")
 			.run();
 		
-		assertThat(fr.getSize(), is(1));
+		assertThat(fr.getSize(), is(1l));
 	}
 	
 	@Test
@@ -120,7 +120,7 @@ public class IndexQueryEngineTest
 			.isEqualTo("value1")
 			.run())
 		{
-			assertThat(fr.getSize(), is(1));
+			assertThat(fr.getSize(), is(1l));
 		}
 		
 		entity.delete("test");
@@ -130,7 +130,7 @@ public class IndexQueryEngineTest
 			.isEqualTo("value1")
 			.run())
 		{
-			assertThat(fr.getSize(), is(0));
+			assertThat(fr.getSize(), is(0l));
 		}
 	}
 	
@@ -144,7 +144,7 @@ public class IndexQueryEngineTest
 			.isEqualTo("value1")
 			.run())
 		{
-			assertThat(fr.getSize(), is(1));
+			assertThat(fr.getSize(), is(1l));
 		}
 		
 		entity.store("test", generateList());
@@ -154,7 +154,7 @@ public class IndexQueryEngineTest
 			.isEqualTo("value1")
 			.run())
 		{
-			assertThat(fr.getSize(), is(1));
+			assertThat(fr.getSize(), is(1l));
 		}
 	}
 	
@@ -169,7 +169,7 @@ public class IndexQueryEngineTest
 			.isEqualTo("value1")
 			.run())
 		{
-			assertThat(fr.getSize(), is(2));
+			assertThat(fr.getSize(), is(2l));
 		}
 	}
 	
@@ -184,7 +184,7 @@ public class IndexQueryEngineTest
 			.isEqualTo("value2")
 			.run())
 		{
-			assertThat(fr.getSize(), is(2));
+			assertThat(fr.getSize(), is(2l));
 		}
 	}
 	
@@ -198,7 +198,7 @@ public class IndexQueryEngineTest
 			.isEqualTo("value1")
 			.run())
 		{
-			assertThat(fr.getSize(), is(1));
+			assertThat(fr.getSize(), is(1l));
 		}
 		
 		entity.delete("test");
@@ -208,7 +208,7 @@ public class IndexQueryEngineTest
 			.isEqualTo("value1")
 			.run())
 		{
-			assertThat(fr.getSize(), is(0));
+			assertThat(fr.getSize(), is(0l));
 		}
 		
 		entity.store("test", generateList());
@@ -218,7 +218,7 @@ public class IndexQueryEngineTest
 			.isEqualTo("value1")
 			.run())
 		{
-			assertThat(fr.getSize(), is(1));
+			assertThat(fr.getSize(), is(1l));
 		}
 	}
 	
@@ -250,7 +250,7 @@ public class IndexQueryEngineTest
 			.isEqualTo("hello")
 			.run())
 		{
-			assertThat(fr.getSize(), is(1));
+			assertThat(fr.getSize(), is(1l));
 		}
 		
 		entity.delete("test");
@@ -260,7 +260,7 @@ public class IndexQueryEngineTest
 			.isEqualTo("value1")
 			.run())
 		{
-			assertThat(fr.getSize(), is(0));
+			assertThat(fr.getSize(), is(0l));
 		}
 	}
 }
