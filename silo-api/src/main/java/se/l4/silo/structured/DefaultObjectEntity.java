@@ -27,11 +27,16 @@ public class DefaultObjectEntity<T>
 {
 	private final StructuredEntity parent;
 	private final Serializer<T> serializer;
+	private final Function<T, Object> identityMapper;
 
-	public DefaultObjectEntity(StructuredEntity parent, Serializer<T> serializer)
+	public DefaultObjectEntity(
+		StructuredEntity parent, 
+		Serializer<T> serializer,
+		Function<T, Object> identityMapper)
 	{
 		this.parent = parent;
 		this.serializer = serializer;
+		this.identityMapper = identityMapper;
 	}
 
 	@Override
@@ -63,16 +68,24 @@ public class DefaultObjectEntity<T>
 	}
 
 	@Override
-	public void delete(Object id)
+	public void deleteViaId(Object id)
 	{
+		parent.delete(id);	
+	}
+
+	@Override
+	public void delete(T object)
+	{
+		Object id = identityMapper.apply(object);
 		parent.delete(id);
 	}
 
 	@Override
-	public void store(Object id, T data)
+	public void store(T data)
 	{
 		try
 		{
+			Object id = identityMapper.apply(data);
 			byte[] binary = serializer.toBytes(data);
 			parent.store(id, new BinaryInput(new ByteArrayInputStream(binary)));
 		}

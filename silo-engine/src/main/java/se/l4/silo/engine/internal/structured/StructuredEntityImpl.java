@@ -2,6 +2,7 @@ package se.l4.silo.engine.internal.structured;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.function.Function;
 
 import se.l4.commons.io.Bytes;
 import se.l4.commons.serialization.SerializerCollection;
@@ -85,9 +86,9 @@ public class StructuredEntityImpl
 	}
 	
 	@Override
-	public <T> ObjectEntity<T> asObject(Class<T> type)
+	public <T> ObjectEntity<T> asObject(Class<T> type, Function<T, Object> identityMapper)
 	{
-		return asObject(serializers.find(type));
+		return asObject(serializers.find(type), identityMapper);
 	}
 	
 	protected Bytes toBytes(StreamingInput in)

@@ -1,5 +1,7 @@
 package se.l4.silo.structured;
 
+import java.util.function.Function;
+
 import se.l4.commons.serialization.Serializer;
 import se.l4.commons.serialization.SerializerCollection;
 import se.l4.commons.serialization.format.StreamingInput;
@@ -68,7 +70,7 @@ public interface StructuredEntity
 	 * @param type
 	 * @return
 	 */
-	<T> ObjectEntity<T> asObject(Class<T> type);
+	<T> ObjectEntity<T> asObject(Class<T> type, Function<T, Object> identityMapper);
 	
 	/**
 	 * Get an entity that translates the structured data into objects.
@@ -76,8 +78,8 @@ public interface StructuredEntity
 	 * @param serializer
 	 * @return
 	 */
-	default <T> ObjectEntity<T> asObject(Serializer<T> serializer)
+	default <T> ObjectEntity<T> asObject(Serializer<T> serializer, Function<T, Object> identityMapper)
 	{
-		return new DefaultObjectEntity<>(this, serializer);
+		return new DefaultObjectEntity<>(this, serializer, identityMapper);
 	}
 }

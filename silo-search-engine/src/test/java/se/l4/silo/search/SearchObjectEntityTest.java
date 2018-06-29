@@ -50,7 +50,8 @@ public class SearchObjectEntityTest
 				.done()
 			.build();
 		
-		entity = silo.structured("test").asObject(TestUserData.class);
+		entity = silo.structured("test")
+			.asObject(TestUserData.class, TestUserData::getId);
 	}
 	
 	@After
@@ -66,7 +67,7 @@ public class SearchObjectEntityTest
 	{
 		for(int i=0; i<1000; i++)
 		{
-			entity.store(i, new TestUserData(i % 2 == 0 ? "Donna" : "Eric", 18 + i % 40, i % 2 == 0));
+			entity.store(new TestUserData(i, i % 2 == 0 ? "Donna" : "Eric", 18 + i % 40, i % 2 == 0));
 		}
 		
 		try
@@ -96,7 +97,7 @@ public class SearchObjectEntityTest
 	{
 		for(int i=0; i<1000; i++)
 		{
-			entity.store(i, new TestUserData(i % 2 == 0 ? "Donna" : "Eric", 18 + i % 40, i % 2 == 0));
+			entity.store(new TestUserData(i, i % 2 == 0 ? "Donna" : "Eric", 18 + i % 40, i % 2 == 0));
 		}
 		
 		try(SearchResult<TestUserData> fr = entity.query("index", SearchIndexQuery.type())
@@ -117,7 +118,7 @@ public class SearchObjectEntityTest
 	{
 		for(int i=0; i<1000; i++)
 		{
-			entity.store(i, new TestUserData(i % 2 == 0 ? "Donna" : null, 18 + i % 40, i % 2 == 0));
+			entity.store(new TestUserData(i, i % 2 == 0 ? "Donna" : null, 18 + i % 40, i % 2 == 0));
 		}
 		
 		try
@@ -147,7 +148,7 @@ public class SearchObjectEntityTest
 	{
 		for(int i=0; i<1000; i++)
 		{
-			entity.store(i, new TestUserData(i % 2 == 0 ? "" : null, 18 + i % 40, i % 2 == 0));
+			entity.store(new TestUserData(i, i % 2 == 0 ? "" : null, 18 + i % 40, i % 2 == 0));
 		}
 		
 		try

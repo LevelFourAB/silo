@@ -8,6 +8,8 @@ import se.l4.commons.serialization.Use;
 public class TestUserData
 {
 	@Expose
+	private int id;
+	@Expose
 	private String name;
 	@Expose int age;
 	@Expose
@@ -17,12 +19,18 @@ public class TestUserData
 	{
 	}
 	
-	public TestUserData(String name, int age, boolean active)
+	public TestUserData(int id, String name, int age, boolean active)
 	{
 		super();
+		this.id = id;
 		this.name = name;
 		this.age = age;
 		this.active = active;
+	}
+
+	public int getId()
+	{
+		return id;
 	}
 	
 	@Override

@@ -28,14 +28,22 @@ public interface ObjectEntity<T>
 	 * 
 	 * @param id
 	 */
-	void delete(Object id);
+	void deleteViaId(Object id);
+
+	/**
+	 * Delete the given object.
+	 * 
+	 * @param object
+	 *   the object to delete
+	 */
+	void delete(T object);
 	
 	/**
 	 * Store an object.
 	 * 
 	 * @param data
 	 */
-	void store(Object id, T data);
+	void store(T data);
 	
 	/**
 	 * Query the the query engine.

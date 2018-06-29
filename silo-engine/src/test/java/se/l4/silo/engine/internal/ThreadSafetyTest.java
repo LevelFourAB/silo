@@ -99,7 +99,8 @@ public class ThreadSafetyTest
 		ExecutorService executor = Executors.newFixedThreadPool(randomIntBetween(4, 8));
 		Waiter waiter = new Waiter();
 		
-		ObjectEntity<TestUserData> entity = silo.structured("test").asObject(TestUserData.class);
+		ObjectEntity<TestUserData> entity = silo.structured("test")
+			.asObject(TestUserData.class, TestUserData::getId);
 		
 		int entries = scaledRandomIntBetween(1000, 10000) * 2;
 		for(int i=0, n=entries; i<n; i++)
@@ -107,9 +108,9 @@ public class ThreadSafetyTest
 			executor.submit(() -> {
 				try
 				{
-					String id = randomUnicodeOfLengthBetween(2, 10);
+					int id = randomIntBetween(100, 1000000);
 					String name = randomRealisticUnicodeOfLengthBetween(4, 10);
-					entity.store(id, new TestUserData(name, 1, false));
+					entity.store(new TestUserData(id, name, 1, false));
 					
 					executor.submit(() -> {
 						try
@@ -117,7 +118,7 @@ public class ThreadSafetyTest
 							// Try to read back the data and verify that it was stored correctly
 							
 							TestUserData td = entity.get(id);
-							waiter.assertEquals(new TestUserData(name, 1, false), td);
+							waiter.assertEquals(new TestUserData(id, name, 1, false), td);
 						}
 						catch(Throwable t)
 						{

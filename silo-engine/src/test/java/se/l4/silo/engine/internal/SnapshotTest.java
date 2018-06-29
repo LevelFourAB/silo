@@ -6,10 +6,10 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import com.google.common.io.ByteStreams;
+
 import org.junit.Assert;
 import org.junit.Test;
-
-import com.google.common.io.ByteStreams;
 
 import se.l4.commons.io.Bytes;
 import se.l4.silo.FetchResult;
@@ -183,9 +183,10 @@ public class SnapshotTest
 					.done()
 				.build();
 			
-			ObjectEntity<TestUserData> entity = silo.structured("test").asObject(TestUserData.class);
-			entity.store("e1", new TestUserData("john", 22, true));
-			entity.store("e2", new TestUserData("jane", 22, false));
+			ObjectEntity<TestUserData> entity = silo.structured("test")
+				.asObject(TestUserData.class, TestUserData::getId);
+			entity.store(new TestUserData(1, "john", 22, true));
+			entity.store(new TestUserData(2, "jane", 22, false));
 			
 			// Store the snapshot
 			try(Snapshot snapshot = silo.createSnapshot(); OutputStream out = new FileOutputStream(tmpFile.toString()))
@@ -199,7 +200,7 @@ public class SnapshotTest
 			// Restore the snapshot
 			silo.installSnapshot(new FileSnapshot(tmpFile));
 			
-			Assert.assertEquals(new TestUserData("jane", 22, false), entity.get("e2"));
+			Assert.assertEquals(new TestUserData(2, "jane", 22, false), entity.get(2));
 			
 			// Stop Silo
 			silo.close();
@@ -229,9 +230,10 @@ public class SnapshotTest
 					.done()
 				.build();
 			
-			ObjectEntity<TestUserData> entity = silo.structured("test").asObject(TestUserData.class);
-			entity.store("e1", new TestUserData("john", 22, true));
-			entity.store("e2", new TestUserData("jane", 22, false));
+			ObjectEntity<TestUserData> entity = silo.structured("test")
+				.asObject(TestUserData.class, TestUserData::getId);
+			entity.store(new TestUserData(1, "john", 22, true));
+			entity.store(new TestUserData(2, "jane", 22, false));
 			
 			// Store the snapshot
 			try(Snapshot snapshot = silo.createSnapshot(); OutputStream out = new FileOutputStream(tmpFile.toString()))
@@ -258,9 +260,10 @@ public class SnapshotTest
 					.done()
 				.build();
 				
-			entity = silo.structured("test").asObject(TestUserData.class);
+			entity = silo.structured("test")
+				.asObject(TestUserData.class, TestUserData::getId);
 				
-			Assert.assertEquals(new TestUserData("jane", 22, false), entity.get("e2"));
+			Assert.assertEquals(new TestUserData(2, "jane", 22, false), entity.get(2));
 			
 			// Stop Silo
 			silo.close();
@@ -291,9 +294,10 @@ public class SnapshotTest
 					.done()
 				.build();
 			
-			ObjectEntity<TestUserData> entity = silo.structured("test").asObject(TestUserData.class);
-			entity.store("e1", new TestUserData("john", 22, true));
-			entity.store("e2", new TestUserData("jane", 22, false));
+			ObjectEntity<TestUserData> entity = silo.structured("test")
+				.asObject(TestUserData.class, TestUserData::getId);
+			entity.store(new TestUserData(1, "john", 22, true));
+			entity.store(new TestUserData(2, "jane", 22, false));
 			
 			// Store the snapshot
 			try(Snapshot snapshot = silo.createSnapshot(); OutputStream out = new FileOutputStream(tmpFile.toString()))
@@ -320,9 +324,10 @@ public class SnapshotTest
 			// Restore the snapshot
 			silo.installSnapshot(new FileSnapshot(tmpFile));
 				
-			entity = silo.structured("test").asObject(TestUserData.class);
+			entity = silo.structured("test")
+				.asObject(TestUserData.class, TestUserData::getId);
 				
-			Assert.assertEquals(new TestUserData("jane", 22, false), entity.get("e2"));
+			Assert.assertEquals(new TestUserData(2, "jane", 22, false), entity.get(2));
 			
 			// Stop Silo
 			silo.close();

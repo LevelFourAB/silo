@@ -43,7 +43,7 @@ public class ObjectEntityTest
 				.done()
 			.build();
 		
-		entity = silo.structured("test").asObject(TestUserData.class);
+		entity = silo.structured("test").asObject(TestUserData.class, TestUserData::getId);
 	}
 	
 	@After
@@ -57,10 +57,10 @@ public class ObjectEntityTest
 	@Test
 	public void testStoreNoTransaction()
 	{
-		TestUserData obj = new TestUserData("Donna Johnson", 28, false);
-		entity.store("test", obj);
+		TestUserData obj = new TestUserData(2, "Donna Johnson", 28, false);
+		entity.store(obj);
 		
-		TestUserData fetched = entity.get("test");
+		TestUserData fetched = entity.get(2);
 		
 		Assert.assertEquals(obj, fetched);
 	}
@@ -70,7 +70,7 @@ public class ObjectEntityTest
 	{
 		for(int i=0; i<1000; i++)
 		{
-			entity.store(i, new TestUserData(i % 2 == 0 ? "Donna" : "Eric", 18 + i % 40, i % 2 == 0));
+			entity.store(new TestUserData(i, i % 2 == 0 ? "Donna" : "Eric", 18 + i % 40, i % 2 == 0));
 		}
 		
 		try(FetchResult<TestUserData> fr = entity.query("byAge", IndexQuery.type())
