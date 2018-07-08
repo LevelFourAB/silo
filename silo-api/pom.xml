@@ -21,8 +21,20 @@
 	<dependencies>
 		<dependency>
 			<groupId>se.l4.commons</groupId>
-			<artifactId>commons-main</artifactId>
-			<version>0.4.1</version>
+			<artifactId>commons-id</artifactId>
+			<version>${commons-version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>se.l4.commons</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>${commons-version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>se.l4.commons</groupId>
+			<artifactId>commons-serialization</artifactId>
+			<version>${commons-version}</version>
 		</dependency>
 	</dependencies>
 	

@@ -24,6 +24,12 @@
 			<artifactId>silo-api</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+
+		<dependency>
+			<groupId>se.l4.commons</groupId>
+			<artifactId>commons-config</artifactId>
+			<version>${commons-version}</version>
+		</dependency>
 		
 		<dependency>
 		    <groupId>com.carrotsearch</groupId>
