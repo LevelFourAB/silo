@@ -19,13 +19,6 @@ public interface BinaryEntry
 	Object getId();
 	
 	/**
-	 * Get the version if available.
-	 * 
-	 * @return
-	 */
-	Object getVersion();
-	
-	/**
 	 * Get the data of this item.
 	 * 
 	 * @return

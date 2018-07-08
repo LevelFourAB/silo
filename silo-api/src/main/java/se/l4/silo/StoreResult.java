@@ -10,13 +10,6 @@ public interface StoreResult
 	Object getId();
 	
 	/**
-	 * Get the version if any is available.
-	 * 
-	 * @return
-	 */
-	Object getVersion();
-	
-	/**
 	 * Get the size of the stream stored.
 	 * 
 	 * @return

@@ -30,12 +30,6 @@ public class BinaryEntryImpl
 	}
 
 	@Override
-	public Object getVersion()
-	{
-		return version;
-	}
-
-	@Override
 	public Bytes getData()
 	{
 		return data;
