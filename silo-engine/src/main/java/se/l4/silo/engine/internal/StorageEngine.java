@@ -329,6 +329,15 @@ public class StorageEngine
 
 		store.close();
 		stateStore.close();
+
+		try
+		{
+			executor.awaitTermination(10, TimeUnit.SECONDS);
+		}
+		catch(InterruptedException e)
+		{
+			// Ignore the interruption
+		}
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
