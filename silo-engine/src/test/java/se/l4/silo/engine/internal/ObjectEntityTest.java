@@ -3,6 +3,7 @@ package se.l4.silo.engine.internal;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -42,10 +43,10 @@ public class ObjectEntityTest
 					.done()
 				.done()
 			.build();
-		
+
 		entity = silo.structured("test").asObject(TestUserData.class, TestUserData::getId);
 	}
-	
+
 	@After
 	public void after()
 		throws Exception
@@ -53,18 +54,18 @@ public class ObjectEntityTest
 		silo.close();
 		DataUtils.removeRecursive(tmp);
 	}
-	
+
 	@Test
 	public void testStoreNoTransaction()
 	{
 		TestUserData obj = new TestUserData(2, "Donna Johnson", 28, false);
 		entity.store(obj);
-		
-		TestUserData fetched = entity.get(2);
-		
-		Assert.assertEquals(obj, fetched);
+
+		Optional<TestUserData> fetched = entity.get(2);
+
+		Assert.assertEquals(obj, fetched.get());
 	}
-	
+
 	@Test
 	public void testQuery()
 	{
@@ -72,7 +73,7 @@ public class ObjectEntityTest
 		{
 			entity.store(new TestUserData(i, i % 2 == 0 ? "Donna" : "Eric", 18 + i % 40, i % 2 == 0));
 		}
-		
+
 		try(FetchResult<TestUserData> fr = entity.query("byAge", IndexQuery.type())
 			.field("age")
 			.isMoreThan(30)
@@ -81,7 +82,7 @@ public class ObjectEntityTest
 			.run())
 		{
 			Assert.assertEquals(675, fr.getTotal());
-			
+
 			for(TestUserData d : fr)
 			{
 				if(d.age <= 30)

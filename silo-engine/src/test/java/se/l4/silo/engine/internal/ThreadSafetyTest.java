@@ -1,14 +1,15 @@
 package se.l4.silo.engine.internal;
 
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Test;
-
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
+
+import org.junit.Test;
 
 import net.jodah.concurrentunit.Waiter;
 import se.l4.silo.FetchResult;
@@ -31,14 +32,14 @@ public class ThreadSafetyTest
 		Silo silo = LocalSilo.open(tmp)
 			.addEntity("test").asBinary().done()
 			.build();
-		
+
 		closeAfterTest(silo);
-		
+
 		ExecutorService executor = Executors.newFixedThreadPool(randomIntBetween(4, 8));
 		Waiter waiter = new Waiter();
-		
+
 		BinaryEntity entity = silo.binary("test");
-		
+
 		int entries = scaledRandomIntBetween(1000, 10000) * 2;
 		for(int i=0, n=entries; i<n; i++)
 		{
@@ -48,12 +49,12 @@ public class ThreadSafetyTest
 					String id = randomUnicodeOfLengthBetween(2, 10);
 					int size = randomIntBetween(100, 8192);
 					entity.store(id, DataUtils.generate(size));
-					
+
 					executor.submit(() -> {
 						try
 						{
 							// Try to read back the data and verify that it was stored correctly
-							
+
 							FetchResult<BinaryEntry> fr = entity.get(id);
 							DataUtils.assertBytesEquals(fr.iterator().next().getData(), DataUtils.generate(size));
 						}
@@ -71,13 +72,13 @@ public class ThreadSafetyTest
 				waiter.resume();
 			});
 		}
-		
+
 		waiter.await(1, TimeUnit.MINUTES, entries);
-		
+
 		executor.shutdown();
 		executor.awaitTermination(1, TimeUnit.MINUTES);
 	}
-	
+
 	@Test
 	@ThreadLeakLingering(linger = 1000)
 	public void testSeveralThreadsWithObjectEntity()
@@ -93,15 +94,15 @@ public class ThreadSafetyTest
 					.done()
 				.done()
 			.build();
-		
+
 		closeAfterTest(silo);
-		
+
 		ExecutorService executor = Executors.newFixedThreadPool(randomIntBetween(4, 8));
 		Waiter waiter = new Waiter();
-		
+
 		ObjectEntity<TestUserData> entity = silo.structured("test")
 			.asObject(TestUserData.class, TestUserData::getId);
-		
+
 		int entries = scaledRandomIntBetween(1000, 10000) * 2;
 		for(int i=0, n=entries; i<n; i++)
 		{
@@ -111,14 +112,14 @@ public class ThreadSafetyTest
 					int id = randomIntBetween(100, 1000000);
 					String name = randomRealisticUnicodeOfLengthBetween(4, 10);
 					entity.store(new TestUserData(id, name, 1, false));
-					
+
 					executor.submit(() -> {
 						try
 						{
 							// Try to read back the data and verify that it was stored correctly
-							
-							TestUserData td = entity.get(id);
-							waiter.assertEquals(new TestUserData(id, name, 1, false), td);
+
+							Optional<TestUserData> td = entity.get(id);
+							waiter.assertEquals(new TestUserData(id, name, 1, false), td.get());
 						}
 						catch(Throwable t)
 						{
@@ -134,9 +135,9 @@ public class ThreadSafetyTest
 				waiter.resume();
 			});
 		}
-		
+
 		waiter.await(1, TimeUnit.MINUTES, entries);
-		
+
 		executor.shutdown();
 		executor.awaitTermination(1, TimeUnit.MINUTES);
 	}

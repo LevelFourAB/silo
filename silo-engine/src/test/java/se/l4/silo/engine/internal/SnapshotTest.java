@@ -34,11 +34,11 @@ public class SnapshotTest
 			LocalSilo silo = LocalSilo.open(tmp)
 				.addEntity("test").asBinary().done()
 				.build();
-			
+
 			BinaryEntity entity = silo.binary("test");
 			entity.store("e1", DataUtils.generate(1024));
 			entity.store("e2", DataUtils.generate(40212));
-			
+
 			// Store the snapshot
 			try(Snapshot snapshot = silo.createSnapshot(); OutputStream out = new FileOutputStream(tmpFile.toString()))
 			{
@@ -47,12 +47,12 @@ public class SnapshotTest
 					ByteStreams.copy(in, out);
 				}
 			}
-			
+
 			// Restore the snapshot
 			silo.installSnapshot(new FileSnapshot(tmpFile));
-			
+
 			check(entity.get("e2"), DataUtils.generate(40212));
-			
+
 			// Stop Silo
 			silo.close();
 		}
@@ -62,7 +62,7 @@ public class SnapshotTest
 			Files.delete(tmpFile);
 		}
 	}
-	
+
 	@Test
 	public void testUpdateExistingReopenNoIndexes()
 		throws Exception
@@ -74,11 +74,11 @@ public class SnapshotTest
 			LocalSilo silo = LocalSilo.open(tmp)
 				.addEntity("test").asBinary().done()
 				.build();
-			
+
 			BinaryEntity entity = silo.binary("test");
 			entity.store("e1", DataUtils.generate(1024));
 			entity.store("e2", DataUtils.generate(40212));
-			
+
 			// Store the snapshot
 			try(Snapshot snapshot = silo.createSnapshot(); OutputStream out = new FileOutputStream(tmpFile.toString()))
 			{
@@ -87,22 +87,22 @@ public class SnapshotTest
 					ByteStreams.copy(in, out);
 				}
 			}
-			
+
 			// Restore the snapshot
 			silo.installSnapshot(new FileSnapshot(tmpFile));
-			
+
 			// Stop the instance
 			silo.close();
-			
+
 			// Restart
 			silo = LocalSilo.open(tmp)
 				.addEntity("test").asBinary().done()
 				.build();
-			
+
 			entity = silo.binary("test");
-			
+
 			check(entity.get("e2"), DataUtils.generate(40212));
-			
+
 			// Stop Silo
 			silo.close();
 		}
@@ -112,7 +112,7 @@ public class SnapshotTest
 			Files.delete(tmpFile);
 		}
 	}
-	
+
 	@Test
 	public void testCreateNewInstanceNoIndexes()
 		throws Exception
@@ -125,11 +125,11 @@ public class SnapshotTest
 			LocalSilo silo = LocalSilo.open(tmp)
 				.addEntity("test").asBinary().done()
 				.build();
-			
+
 			BinaryEntity entity = silo.binary("test");
 			entity.store("e1", DataUtils.generate(1024));
 			entity.store("e2", DataUtils.generate(40212));
-			
+
 			// Store the snapshot
 			try(Snapshot snapshot = silo.createSnapshot(); OutputStream out = new FileOutputStream(tmpFile.toString()))
 			{
@@ -138,22 +138,22 @@ public class SnapshotTest
 					ByteStreams.copy(in, out);
 				}
 			}
-			
+
 			// Stop current Silo
 			silo.close();
-			
+
 			// Create a new instance in another directory
 			silo = LocalSilo.open(tmp2)
 				.addEntity("test").asBinary().done()
 				.build();
-			
+
 			// Restore the snapshot
 			silo.installSnapshot(new FileSnapshot(tmpFile));
-			
+
 			// Check that the new instance has our data
 			entity = silo.binary("test");
 			check(entity.get("e2"), DataUtils.generate(40212));
-			
+
 			// Stop the instance
 			silo.close();
 		}
@@ -164,7 +164,7 @@ public class SnapshotTest
 			Files.delete(tmpFile);
 		}
 	}
-	
+
 	@Test
 	public void testUpdateExistingWithIndex()
 		throws Exception
@@ -182,12 +182,12 @@ public class SnapshotTest
 						.done()
 					.done()
 				.build();
-			
+
 			ObjectEntity<TestUserData> entity = silo.structured("test")
 				.asObject(TestUserData.class, TestUserData::getId);
 			entity.store(new TestUserData(1, "john", 22, true));
 			entity.store(new TestUserData(2, "jane", 22, false));
-			
+
 			// Store the snapshot
 			try(Snapshot snapshot = silo.createSnapshot(); OutputStream out = new FileOutputStream(tmpFile.toString()))
 			{
@@ -196,12 +196,12 @@ public class SnapshotTest
 					ByteStreams.copy(in, out);
 				}
 			}
-			
+
 			// Restore the snapshot
 			silo.installSnapshot(new FileSnapshot(tmpFile));
-			
-			Assert.assertEquals(new TestUserData(2, "jane", 22, false), entity.get(2));
-			
+
+			Assert.assertEquals(new TestUserData(2, "jane", 22, false), entity.get(2).get());
+
 			// Stop Silo
 			silo.close();
 		}
@@ -211,7 +211,7 @@ public class SnapshotTest
 			Files.delete(tmpFile);
 		}
 	}
-	
+
 	@Test
 	public void testUpdateExistingReloadWithIndex()
 		throws Exception
@@ -229,12 +229,12 @@ public class SnapshotTest
 						.done()
 					.done()
 				.build();
-			
+
 			ObjectEntity<TestUserData> entity = silo.structured("test")
 				.asObject(TestUserData.class, TestUserData::getId);
 			entity.store(new TestUserData(1, "john", 22, true));
 			entity.store(new TestUserData(2, "jane", 22, false));
-			
+
 			// Store the snapshot
 			try(Snapshot snapshot = silo.createSnapshot(); OutputStream out = new FileOutputStream(tmpFile.toString()))
 			{
@@ -243,13 +243,13 @@ public class SnapshotTest
 					ByteStreams.copy(in, out);
 				}
 			}
-			
+
 			// Restore the snapshot
 			silo.installSnapshot(new FileSnapshot(tmpFile));
-			
+
 			// Stop Silo
 			silo.close();
-			
+
 			silo = LocalSilo.open(tmp)
 				.addEntity("test")
 					.asStructured()
@@ -259,12 +259,12 @@ public class SnapshotTest
 						.done()
 					.done()
 				.build();
-				
+
 			entity = silo.structured("test")
 				.asObject(TestUserData.class, TestUserData::getId);
-				
-			Assert.assertEquals(new TestUserData(2, "jane", 22, false), entity.get(2));
-			
+
+			Assert.assertEquals(new TestUserData(2, "jane", 22, false), entity.get(2).get());
+
 			// Stop Silo
 			silo.close();
 		}
@@ -274,7 +274,7 @@ public class SnapshotTest
 			Files.delete(tmpFile);
 		}
 	}
-	
+
 	@Test
 	public void testCreateNewInstancedWithIndex()
 		throws Exception
@@ -293,12 +293,12 @@ public class SnapshotTest
 						.done()
 					.done()
 				.build();
-			
+
 			ObjectEntity<TestUserData> entity = silo.structured("test")
 				.asObject(TestUserData.class, TestUserData::getId);
 			entity.store(new TestUserData(1, "john", 22, true));
 			entity.store(new TestUserData(2, "jane", 22, false));
-			
+
 			// Store the snapshot
 			try(Snapshot snapshot = silo.createSnapshot(); OutputStream out = new FileOutputStream(tmpFile.toString()))
 			{
@@ -307,10 +307,10 @@ public class SnapshotTest
 					ByteStreams.copy(in, out);
 				}
 			}
-			
+
 			// Stop Silo
 			silo.close();
-			
+
 			silo = LocalSilo.open(tmp2)
 				.addEntity("test")
 					.asStructured()
@@ -320,15 +320,15 @@ public class SnapshotTest
 						.done()
 					.done()
 				.build();
-			
+
 			// Restore the snapshot
 			silo.installSnapshot(new FileSnapshot(tmpFile));
-				
+
 			entity = silo.structured("test")
 				.asObject(TestUserData.class, TestUserData::getId);
-				
-			Assert.assertEquals(new TestUserData(2, "jane", 22, false), entity.get(2));
-			
+
+			Assert.assertEquals(new TestUserData(2, "jane", 22, false), entity.get(2).get());
+
 			// Stop Silo
 			silo.close();
 		}
@@ -339,7 +339,7 @@ public class SnapshotTest
 			Files.delete(tmpFile);
 		}
 	}
-	
+
 	private void check(FetchResult<BinaryEntry> fr, Bytes data)
 	{
 		BinaryEntry be = fr.iterator().next();

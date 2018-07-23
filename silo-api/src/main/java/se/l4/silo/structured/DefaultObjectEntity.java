@@ -3,6 +3,7 @@ package se.l4.silo.structured;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.function.Function;
 
 import se.l4.commons.serialization.Serializer;
@@ -17,7 +18,7 @@ import se.l4.silo.query.QueryType;
 
 /**
  * Implementation of {@link ObjectEntity}.
- * 
+ *
  * @author Andreas Holstenson
  *
  * @param <T>
@@ -30,7 +31,7 @@ public class DefaultObjectEntity<T>
 	private final Function<T, Object> identityMapper;
 
 	public DefaultObjectEntity(
-		StructuredEntity parent, 
+		StructuredEntity parent,
 		Serializer<T> serializer,
 		Function<T, Object> identityMapper)
 	{
@@ -46,19 +47,19 @@ public class DefaultObjectEntity<T>
 	}
 
 	@Override
-	public T get(Object id)
+	public Optional<T> get(Object id)
 	{
 		try(FetchResult<StreamingInput> fr = parent.get(id))
 		{
 			Iterator<StreamingInput> it = fr.iterator();
 			if(! it.hasNext())
 			{
-				return null;
+				return Optional.empty();
 			}
-			
+
 			try(StreamingInput in = it.next())
 			{
-				return serializer.read(in);
+				return Optional.of(serializer.read(in));
 			}
 			catch(IOException e)
 			{
@@ -70,7 +71,7 @@ public class DefaultObjectEntity<T>
 	@Override
 	public void deleteViaId(Object id)
 	{
-		parent.delete(id);	
+		parent.delete(id);
 	}
 
 	@Override
@@ -100,13 +101,13 @@ public class DefaultObjectEntity<T>
 	{
 		return parent.query(engine, new TransformingQueryType<StreamingInput, T, RT, Q>(type, this::transform));
 	}
-	
+
 	@Override
 	public FetchResult<T> stream()
 	{
 		return parent.stream().transform(this::transform);
 	}
-	
+
 	private T transform(StreamingInput in)
 	{
 		try
@@ -141,7 +142,7 @@ public class DefaultObjectEntity<T>
 			this.qt = (QueryType<EntityDataType, ResultType, Q>) qt;
 			this.translator = translator;
 		}
-		
+
 		@Override
 		public Q create(QueryRunner<TransformedFrom, ResultType> runner)
 		{
@@ -152,7 +153,7 @@ public class DefaultObjectEntity<T>
 			});
 		}
 	}
-	
+
 	private static class TransformedQueryResult<From, To>
 		implements QueryResult<To>
 	{
@@ -164,13 +165,13 @@ public class DefaultObjectEntity<T>
 			this.other = other;
 			this.translator = translator;
 		}
-		
+
 		@Override
 		public To getData()
 		{
 			return translator.apply(other.getData());
 		}
-		
+
 		@Override
 		public <R> R getMetadata(String key)
 		{
