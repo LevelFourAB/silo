@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.junit.Test;
 
@@ -24,7 +25,7 @@ public class ThreadSafetyTest
 	extends RandomizedTest
 {
 	@Test
-	@ThreadLeakLingering(linger = 1000)
+	@ThreadLeakLingering(linger = 10000)
 	public void testSeveralThreadsWithBinaryEntity()
 		throws Exception
 	{
@@ -35,7 +36,12 @@ public class ThreadSafetyTest
 
 		closeAfterTest(silo);
 
-		ExecutorService executor = Executors.newFixedThreadPool(randomIntBetween(4, 8));
+		ExecutorService executor = Executors.newFixedThreadPool(
+			randomIntBetween(4, 8),
+			new ThreadFactoryBuilder()
+				.setNameFormat("binary-entity-threads-%d")
+				.build()
+		);
 		Waiter waiter = new Waiter();
 
 		BinaryEntity entity = silo.binary("test");
@@ -80,7 +86,7 @@ public class ThreadSafetyTest
 	}
 
 	@Test
-	@ThreadLeakLingering(linger = 1000)
+	@ThreadLeakLingering(linger = 10000)
 	public void testSeveralThreadsWithObjectEntity()
 		throws Exception
 	{
@@ -97,7 +103,12 @@ public class ThreadSafetyTest
 
 		closeAfterTest(silo);
 
-		ExecutorService executor = Executors.newFixedThreadPool(randomIntBetween(4, 8));
+		ExecutorService executor = Executors.newFixedThreadPool(
+			randomIntBetween(4, 8),
+			new ThreadFactoryBuilder()
+				.setNameFormat("object-entity-threads-%d")
+				.build()
+		);
 		Waiter waiter = new Waiter();
 
 		ObjectEntity<TestUserData> entity = silo.structured("test")
