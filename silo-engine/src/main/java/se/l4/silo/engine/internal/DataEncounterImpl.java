@@ -14,8 +14,8 @@ import java.util.function.BiConsumer;
 import com.google.common.collect.ImmutableSet;
 
 import se.l4.commons.io.Bytes;
-import se.l4.commons.io.IoConsumer;
-import se.l4.commons.io.IoFunction;
+import se.l4.commons.io.IOConsumer;
+import se.l4.commons.io.IOFunction;
 import se.l4.commons.serialization.format.BinaryInput;
 import se.l4.commons.serialization.format.StreamingInput;
 import se.l4.commons.serialization.format.Token;
@@ -66,7 +66,7 @@ public class DataEncounterImpl
 		}
 	}
 
-	public <T> T withStreamingInput(IoFunction<StreamingInput, T> func)
+	public <T> T withStreamingInput(IOFunction<StreamingInput, T> func)
 	{
 		try(InputStream stream = data.asInputStream())
 		{
@@ -162,7 +162,7 @@ public class DataEncounterImpl
 	}
 
 	private static class StructuredKeyFetcher
-		implements IoConsumer<StreamingInput>
+		implements IOConsumer<StreamingInput>
 	{
 		private final Set<String> keys;
 		private final BiConsumer<String, Object> receiver;

@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import se.l4.commons.io.Bytes;
 import se.l4.commons.io.ExtendedDataInput;
-import se.l4.commons.io.IoConsumer;
+import se.l4.commons.io.IOConsumer;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.internal.tx.TransactionOperation;
 import se.l4.silo.engine.internal.tx.TransactionOperationType;
@@ -43,7 +43,7 @@ import se.l4.vibe.probes.CountingProbe;
  *
  */
 public class TransactionAdapter
-	implements IoConsumer<LogEntry>
+	implements IOConsumer<LogEntry>
 {
 	// Timeout to use for removing stale transactions
 	private static final long TIMEOUT = TimeUnit.HOURS.toMillis(24);

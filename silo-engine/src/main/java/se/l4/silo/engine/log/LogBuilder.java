@@ -1,6 +1,6 @@
 package se.l4.silo.engine.log;
 
-import se.l4.commons.io.IoConsumer;
+import se.l4.commons.io.IOConsumer;
 
 /**
  * Builder that can create an instance of a {@link Log}.
@@ -17,5 +17,5 @@ public interface LogBuilder
 	 * @param data
 	 * @return
 	 */
-	Log build(IoConsumer<LogEntry> consumer);
+	Log build(IOConsumer<LogEntry> consumer);
 }

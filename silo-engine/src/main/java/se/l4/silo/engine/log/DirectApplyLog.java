@@ -3,7 +3,7 @@ package se.l4.silo.engine.log;
 import java.io.IOException;
 
 import se.l4.commons.io.Bytes;
-import se.l4.commons.io.IoConsumer;
+import se.l4.commons.io.IOConsumer;
 
 /**
  * Log that simply forwards whatever is appended to the consumer of entries.
@@ -15,10 +15,10 @@ import se.l4.commons.io.IoConsumer;
 public class DirectApplyLog
 	implements Log
 {
-	private final IoConsumer<LogEntry> consumer;
+	private final IOConsumer<LogEntry> consumer;
 	private transient boolean closed;
 
-	private DirectApplyLog(IoConsumer<LogEntry> consumer)
+	private DirectApplyLog(IOConsumer<LogEntry> consumer)
 	{
 		this.consumer = consumer;
 	}
@@ -52,7 +52,7 @@ public class DirectApplyLog
 		return new LogBuilder()
 		{
 			@Override
-			public Log build(IoConsumer<LogEntry> consumer)
+			public Log build(IOConsumer<LogEntry> consumer)
 			{
 				return new DirectApplyLog(consumer);
 			}
