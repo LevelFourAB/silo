@@ -13,25 +13,25 @@ public class DefaultFacetEntry
 		this.count = count;
 		this.data = data;
 	}
-	
+
 	@Override
 	public String label()
 	{
 		return label;
 	}
-	
+
 	@Override
 	public int count()
 	{
 		return count;
 	}
-	
+
 	@Override
 	public Object data()
 	{
 		return data;
 	}
-	
+
 	@Override
 	public String toString()
 	{

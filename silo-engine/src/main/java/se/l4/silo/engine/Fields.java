@@ -4,7 +4,7 @@ import java.util.Optional;
 
 /**
  * Information about fields.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -12,7 +12,7 @@ public interface Fields
 {
 	/**
 	 * Get a definition for the given field.
-	 *  
+	 *
 	 * @param name
 	 * @return
 	 */

@@ -21,65 +21,65 @@ public class TokenFieldType
 	implements SearchFieldType
 {
 	private static final Analyzer TOKEN_ANALYZER = new KeywordAnalyzer();
-	
+
 	@Override
 	public boolean isLanguageSpecific()
 	{
 		return false;
 	}
-	
+
 	@Override
 	public FieldType getDefaultFieldType()
 	{
 		return StringField.TYPE_NOT_STORED;
 	}
-	
+
 	@Override
 	public Analyzer getAnalyzer(Language lang)
 	{
 		return TOKEN_ANALYZER;
 	}
-	
+
 	@Override
 	public IndexableField create(
 			String field,
-			FieldType type, 
+			FieldType type,
 			Language lang,
 			Object object)
 	{
 		return new Field(field, object == null ? null : object.toString(), type);
 	}
-	
+
 	@Override
 	public IndexableField createValuesField(String field, Language lang, Object object)
 	{
 		return new SortedSetDocValuesField(field, new BytesRef(object.toString()));
 	}
-	
+
 	@Override
 	public IndexableField createSortingField(String field, Language lang, Object object)
 	{
 		return new SortedDocValuesField(field, new BytesRef(object.toString()));
 	}
-	
+
 	@Override
 	public SortField createSortField(String field, boolean ascending, Object params)
 	{
 		return new SortField(field, SortField.Type.STRING, ! ascending);
 	}
-	
+
 	@Override
 	public Object extract(IndexableField field)
 	{
 		return field.stringValue();
 	}
-	
+
 	@Override
 	public Query createEqualsQuery(String field, Object value)
 	{
 		return new TermQuery(new Term(field, value.toString()));
 	}
-	
+
 	@Override
 	public Query createRangeQuery(String field, Object from, Object to)
 	{

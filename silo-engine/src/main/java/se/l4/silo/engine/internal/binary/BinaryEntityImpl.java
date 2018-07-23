@@ -11,7 +11,7 @@ import se.l4.silo.engine.internal.BinaryEntryImpl;
 
 /**
  * Implementation of {@link BinaryEntity}.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -26,25 +26,25 @@ public class BinaryEntityImpl
 		this.name = name;
 		this.storage = storage;
 	}
-	
+
 	@Override
 	public String getName()
 	{
 		return name;
 	}
-	
+
 	@Override
 	public StoreResult store(Object id, Bytes bytes)
 	{
 		return storage.store(id, bytes);
 	}
-	
+
 	@Override
 	public DeleteResult delete(Object id)
 	{
 		return storage.delete(id);
 	}
-	
+
 	@Override
 	public FetchResult<BinaryEntry> get(Object id)
 	{
@@ -53,7 +53,7 @@ public class BinaryEntityImpl
 		{
 			return FetchResult.empty();
 		}
-		
+
 		return FetchResult.single(new BinaryEntryImpl(id, null, data));
 	}
 }

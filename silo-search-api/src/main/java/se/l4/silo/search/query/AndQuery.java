@@ -13,25 +13,25 @@ public class AndQuery<ReturnPath>
 	implements QueryWithSubqueries<AndQuery<ReturnPath>, ReturnPath>
 {
 	private final List<QueryItem> items;
-	
+
 	public AndQuery()
 	{
-		items = Lists.newArrayList(); 
+		items = Lists.newArrayList();
 	}
-	
+
 	@Override
 	public void addQuery(QueryItem item)
 	{
 		items.add(item);
 	}
-	
+
 	@Override
 	public <P extends QueryPart<AndQuery<ReturnPath>>> P query(P q)
 	{
 		q.parent(this, this);
 		return q;
 	}
-	
+
 	@Override
 	public ReturnPath done()
 	{

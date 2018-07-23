@@ -38,7 +38,7 @@ public class StructuredEntityImpl
 	{
 		return name;
 	}
-	
+
 	@Override
 	public StoreResult store(Object id, StreamingInput out)
 	{
@@ -51,13 +51,13 @@ public class StructuredEntityImpl
 			throw new StorageException("Unable to store; " + e.getMessage(), e);
 		}
 	}
-	
+
 	@Override
 	public DeleteResult delete(Object id)
 	{
 		return entity.delete(id);
 	}
-	
+
 	@Override
 	public FetchResult<StreamingInput> get(Object id)
 	{
@@ -66,10 +66,10 @@ public class StructuredEntityImpl
 		{
 			return FetchResult.empty();
 		}
-		
+
 		return FetchResult.single(bytes).transform(BytesToStreamingInputFunction.INSTANCE);
 	}
-	
+
 	@Override
 	public <RT, Q extends Query<?>> Q query(String engine, QueryType<StreamingInput, RT, Q> type)
 	{
@@ -78,19 +78,19 @@ public class StructuredEntityImpl
 				.transform(translator);
 		});
 	}
-	
+
 	@Override
 	public FetchResult<StreamingInput> stream()
 	{
 		return entity.stream().transform(BytesToStreamingInputFunction.INSTANCE);
 	}
-	
+
 	@Override
 	public <T> ObjectEntity<T> asObject(Class<T> type, Function<T, Object> identityMapper)
 	{
 		return asObject(serializers.find(type), identityMapper);
 	}
-	
+
 	protected Bytes toBytes(StreamingInput in)
 		throws IOException
 	{
@@ -99,7 +99,7 @@ public class StructuredEntityImpl
 		{
 			// Tag with a version
 			baos.write(0);
-			
+
 			switch(in.next())
 			{
 				case OBJECT_START:
@@ -119,9 +119,9 @@ public class StructuredEntityImpl
 					copyValue(in, out, "");
 					break;
 			}
-			
+
 			out.flush();
-			
+
 			return Bytes.create(baos.toByteArray());
 		}
 	}
@@ -155,7 +155,7 @@ public class StructuredEntityImpl
 		in.next(Token.OBJECT_END);
 		out.writeObjectEnd(key);
 	}
-	
+
 	private void copyList(StreamingInput in, BinaryOutput out, String key)
 		throws IOException
 	{
@@ -183,7 +183,7 @@ public class StructuredEntityImpl
 		in.next(Token.LIST_END);
 		out.writeListEnd(key);
 	}
-	
+
 	private void copyValue(StreamingInput in, BinaryOutput out, String key)
 		throws IOException
 	{

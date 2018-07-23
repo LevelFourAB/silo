@@ -16,7 +16,7 @@ public class IndexQueryImpl<T>
 	public IndexQueryImpl(QueryRunner<T, T> runner)
 	{
 		this.runner = runner;
-		
+
 		request = new IndexQueryRequest();
 	}
 
@@ -39,12 +39,12 @@ public class IndexQueryImpl<T>
 		{
 			throw new StorageException("No field given");
 		}
-		
+
 		request.addCritera(field, op, value);
 		field = null;
 		return this;
 	}
-	
+
 	@Override
 	public IndexQuery<T> isEqualTo(Object value)
 	{
@@ -75,18 +75,18 @@ public class IndexQueryImpl<T>
 	{
 		return add(Op.MORE_THAN_OR_EQUAL_TO, number);
 	}
-	
+
 	private IndexQuery<T> addSort(boolean ascending)
 	{
 		if(field == null)
 		{
 			throw new StorageException("No field given");
 		}
-		
+
 		request.addSort(field, ascending);
-		
+
 		field = null;
-		
+
 		return this;
 	}
 
@@ -101,13 +101,13 @@ public class IndexQueryImpl<T>
 	{
 		return addSort(false);
 	}
-	
+
 	@Override
 	public IndexQuery<T> sort(boolean ascending)
 	{
 		return addSort(ascending);
 	}
-	
+
 	@Override
 	public IndexQuery<T> reverseDefaultSort()
 	{

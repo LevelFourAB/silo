@@ -57,7 +57,7 @@ public class ByteArrayFieldType
 		{
 			return 1;
 		}
-		
+
 		return 0;
 	}
 

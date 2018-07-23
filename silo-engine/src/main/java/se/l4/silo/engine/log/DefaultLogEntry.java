@@ -4,7 +4,7 @@ import se.l4.commons.io.Bytes;
 
 /**
  * Implementation of {@link LogEntry}.
- * 
+ *
  * @author Andreas Holstenson
  *
  */

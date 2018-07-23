@@ -25,10 +25,10 @@ import se.l4.silo.search.facet.SimpleFacetQuery;
 /**
  * {@link Facet} for counting the number of documents in different date ranges.
  * Supports {@link SearchFields#LONG} for storing the time as milliseconds.
- * 
+ *
  * The following ranges are returned: today, yesterday, lastWeek, lastMonth
  * and other.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -47,13 +47,13 @@ public class DateFacet
 	{
 		return "date";
 	}
-	
+
 	@Override
 	public void setup(IndexDefinitionEncounter encounter)
 	{
 		encounter.addValuesField(field);
 	}
-	
+
 	private LongRange between(String id, ZonedDateTime first, ZonedDateTime last)
 	{
 		return new LongRange(id, first.toEpochSecond() * 1000, true, last.toEpochSecond() * 1000, false);
@@ -65,17 +65,17 @@ public class DateFacet
 	{
 		FieldDefinition fieldDef = encounter.getIndexDefinition()
 			.getField(this.field);
-		
+
 		String field = fieldDef.docValuesName(encounter.getLocale());
-		
+
 		int count = encounter.getQueryParameters().getCount();
-		
+
 		ZonedDateTime dt = ZonedDateTime.now(); // TODO: Support timezone
 		ZonedDateTime midnight = dt.truncatedTo(ChronoUnit.DAYS);
 		ZonedDateTime midnightYesterday = midnight.minusDays(1);
 		ZonedDateTime lastWeek = midnightYesterday.minusWeeks(1);
 		ZonedDateTime lastMonth = lastWeek.minusMonths(1);
-		
+
 		Facets f = new LongRangeFacetCounts(
 			field,
 			encounter.getCollector(),
@@ -85,7 +85,7 @@ public class DateFacet
 			between("lastMonth", lastMonth, lastWeek),
 			new LongRange("past", 0, true, System.currentTimeMillis(), true)
 		);
-		
+
 		List<FacetEntry> entries = Lists.newArrayList();
 		for(LabelAndValue lv : f.getTopChildren(count, field).labelValues)
 		{

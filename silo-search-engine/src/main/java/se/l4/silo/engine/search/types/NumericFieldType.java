@@ -11,7 +11,7 @@ import se.l4.silo.engine.search.SearchFieldType;
 
 /**
  * Abstract base for field types for numeric values.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -19,21 +19,21 @@ public abstract class NumericFieldType
 	implements SearchFieldType
 {
 	private static final Analyzer ANALYZER = new KeywordAnalyzer();
-	
+
 	private final FieldType type;
-	
+
 	public NumericFieldType()
 	{
 		FieldType ft = new FieldType();
-	    ft.setStored(false);
-	    ft.setTokenized(true);
-	    ft.setOmitNorms(true);
-	    ft.setIndexOptions(IndexOptions.DOCS);
-	    ft.freeze();
-	    
-	    this.type = ft;
+		ft.setStored(false);
+		ft.setTokenized(true);
+		ft.setOmitNorms(true);
+		ft.setIndexOptions(IndexOptions.DOCS);
+		ft.freeze();
+
+		this.type = ft;
 	}
-	
+
 	@Override
 	public boolean isLanguageSpecific()
 	{
@@ -61,8 +61,8 @@ public abstract class NumericFieldType
 	{
 		return create(field, (Number) object, type);
 	}
-	
-	protected abstract IndexableField create(String field, 
+
+	protected abstract IndexableField create(String field,
 			Number number,
 			FieldType type);
 
@@ -71,6 +71,6 @@ public abstract class NumericFieldType
 	{
 		return field.numericValue();
 	}
-	
-	
+
+
 }

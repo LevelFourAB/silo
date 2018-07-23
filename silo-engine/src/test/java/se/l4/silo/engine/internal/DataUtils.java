@@ -16,7 +16,7 @@ public class DataUtils
 	private DataUtils()
 	{
 	}
-	
+
 	public static Bytes generate(int size)
 	{
 		try
@@ -33,11 +33,11 @@ public class DataUtils
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	/**
 	 * Test that two instances of {@link Bytes} are equal by both checking
 	 * their byte arrays and checking their input streams.
-	 * 
+	 *
 	 * @param b1
 	 * @param b2
 	 * @throws IOException
@@ -48,20 +48,20 @@ public class DataUtils
 		{
 			byte[] a1 = b1.toByteArray();
 			byte[] a2 = b2.toByteArray();
-			
+
 			if(a1.length != a2.length)
 			{
 				throw new AssertionError("Bytes not equal, size is different. First is " + a1.length + " bytes, second is " + a2.length);
 			}
-			
+
 			if(! Arrays.equals(a1, a2))
 			{
 				throw new AssertionError("Bytes are not equal");
 			}
-			
+
 			InputStream in1 = b1.asInputStream();
 			InputStream in2 = b2.asInputStream();
-			
+
 			int i = 0;
 			int r1;
 			while((r1 = in1.read()) != -1)
@@ -71,10 +71,10 @@ public class DataUtils
 				{
 					throw new AssertionError("Bytes not equal, diverged at index " + i);
 				}
-				
+
 				i++;
 			}
-			
+
 			if(in2.read() != -1)
 			{
 				throw new AssertionError("Bytes not equal, second byte stream still has data at index " + i);

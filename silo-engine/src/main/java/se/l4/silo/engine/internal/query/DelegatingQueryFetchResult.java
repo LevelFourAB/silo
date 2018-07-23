@@ -9,7 +9,7 @@ import se.l4.silo.query.QueryFetchResult;
 /**
  * Implementation of {@link QueryFetchResult} that delegates to a {@link FetchResult}
  * and just provides some metadata.
- * 
+ *
  * @author Andreas Holstenson
  *
  * @param <T>
@@ -19,13 +19,13 @@ public class DelegatingQueryFetchResult<T>
 {
 	private final Map<String, Object> metadata;
 	private final FetchResult<T> fr;
-	
+
 	public DelegatingQueryFetchResult(FetchResult<T> fr, Map<String, Object> metadata)
 	{
 		this.fr = fr;
 		this.metadata = metadata;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public <M> M getMetadata(String key)

@@ -15,7 +15,7 @@ import se.l4.silo.query.QueryType;
 /**
  * Entity for storing structured data. Anything that can be represented as
  * a {@link StreamingInput} is considered structured data.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -24,40 +24,40 @@ public interface StructuredEntity
 {
 	/**
 	 * Get data stored for the given identifier.
-	 * 
+	 *
 	 * @param id
 	 * @return
 	 */
 	FetchResult<StreamingInput> get(Object id);
-	
+
 	/**
 	 * Store new data and associate it with the given identifier.
-	 * 
+	 *
 	 * @param id
 	 * @param out
 	 * @return
 	 */
 	StoreResult store(Object id, StreamingInput out);
-	
+
 	/**
 	 * Delete data associated with the given identifier.
-	 * 
+	 *
 	 * @param id
 	 * @return
 	 */
 	DeleteResult delete(Object id);
-	
+
 	/**
 	 * Query the the query engine.
-	 * 
+	 *
 	 * @param index
 	 * @return
 	 */
 	<RT, Q extends Query<?>> Q query(String engine, QueryType<StreamingInput, RT, Q> type);
-	
+
 	/**
-	 * Stream everything in this entry. 
-	 * 
+	 * Stream everything in this entry.
+	 *
 	 * @return
 	 */
 	FetchResult<StreamingInput> stream();
@@ -66,15 +66,15 @@ public interface StructuredEntity
 	 * Get an entity that translates the structured data into objects. This
 	 * will call {@link #asObject(Serializer)} with a serializer fetched
 	 * from the current {@link SerializerCollection}.
-	 * 
+	 *
 	 * @param type
 	 * @return
 	 */
 	<T> ObjectEntity<T> asObject(Class<T> type, Function<T, Object> identityMapper);
-	
+
 	/**
 	 * Get an entity that translates the structured data into objects.
-	 * 
+	 *
 	 * @param serializer
 	 * @return
 	 */

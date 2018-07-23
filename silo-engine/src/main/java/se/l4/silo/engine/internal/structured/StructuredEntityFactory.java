@@ -8,7 +8,7 @@ import se.l4.silo.structured.StructuredEntity;
 
 /**
  * Factory for creating instances of {@link StructuredEntity}.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -27,7 +27,7 @@ public class StructuredEntityFactory
 	{
 		return StructuredEntityConfig.class;
 	}
-	
+
 	@Override
 	public StructuredEntity create(EntityCreationEncounter<StructuredEntityConfig> encounter)
 	{
@@ -37,5 +37,5 @@ public class StructuredEntityFactory
 			.build();
 		return new StructuredEntityImpl(encounter.getSerializerCollection(), encounter.getEntityName(), entity);
 	}
-	
+
 }

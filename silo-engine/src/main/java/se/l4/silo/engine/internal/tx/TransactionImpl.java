@@ -10,7 +10,7 @@ import se.l4.silo.engine.internal.log.TransactionLog;
 
 /**
  * {@link Transaction} over a {@link TransactionLog}.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -27,7 +27,7 @@ public class TransactionImpl
 		this.log = log;
 		this.onClose = onClose;
 		id = log.startTransaction();
-		
+
 		// Create an exchange that does not automatically commit everything
 		exchange = new TransactionExchange()
 		{
@@ -35,18 +35,18 @@ public class TransactionImpl
 			public void rollback()
 			{
 			}
-			
+
 			@Override
 			public void commit()
 			{
 			}
-			
+
 			@Override
 			public StoreResult store(String entity, Object id, Bytes bytes)
 			{
 				return TransactionImpl.this.store(entity, id, bytes);
 			}
-			
+
 			@Override
 			public DeleteResult delete(String entity, Object id)
 			{
@@ -54,14 +54,14 @@ public class TransactionImpl
 			}
 		};
 	}
-	
-	
+
+
 	@Override
 	public StoreResult store(String entity, Object id, Bytes bytes)
 	{
 		return log.store(this.id, entity, id, bytes);
 	}
-	
+
 	@Override
 	public DeleteResult delete(String entity, Object id)
 	{

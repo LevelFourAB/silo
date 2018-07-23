@@ -32,7 +32,7 @@ import se.l4.silo.search.facet.SimpleFacetQuery;
  * {@link Facet} that counts how many results fit in a set of categories.
  * Can be used with {@link SearchFields#TOKEN}, {@link SearchFields#LONG}
  * and {@link SearchFields#INTEGER}.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -43,7 +43,7 @@ public class CategoryFacet
 
 	/**
 	 * Create a new instance of this facet for the given field.
-	 * 
+	 *
 	 * @param field
 	 */
 	public CategoryFacet(String field)
@@ -56,7 +56,7 @@ public class CategoryFacet
 	{
 		return "category";
 	}
-	
+
 	@Override
 	public void setup(IndexDefinitionEncounter encounter)
 	{
@@ -69,23 +69,23 @@ public class CategoryFacet
 	{
 		FieldDefinition fieldDef = encounter.getIndexDefinition()
 			.getField(this.field);
-		
+
 		String field = fieldDef.docValuesName(encounter.getLocale());
-		
+
 		SimpleFacetQuery parameters = encounter.getQueryParameters();
 		int count = parameters.getCount();
-		
+
 		ObjectIntMap<String> result = new ObjectIntHashMap<>();
 		for(MatchingDocs docs : encounter.getCollector().getMatchingDocs())
 		{
 			LeafReader reader = docs.context.reader();
-			
+
 			if(fieldDef.getType() instanceof NumericFieldType)
 			{
 				// NumericSearchfield uses NumericDocValues
 				NumericDocValues values = reader.getNumericDocValues(field);
 				if(values == null) continue;
-				
+
 				DocIdSetIterator it = docs.bits.iterator();
 				int doc;
 				while((doc = it.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS)
@@ -100,7 +100,7 @@ public class CategoryFacet
 				// Assume other fields use SortedSetDocValues
 				SortedSetDocValues values = reader.getSortedSetDocValues(field);
 				if(values == null) continue;
-				
+
 				DocIdSetIterator it = docs.bits.iterator();
 				int doc;
 				while((doc = it.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS)
@@ -117,7 +117,7 @@ public class CategoryFacet
 				}
 			}
 		}
-	
+
 		TreeSet<Result> tree = new TreeSet<>();
 		for(ObjectIntCursor<String> cursor : result)
 		{
@@ -132,7 +132,7 @@ public class CategoryFacet
 				tree.add(r);
 			}
 		}
-		
+
 		List<FacetEntry> entries = Lists.newArrayList();
 		Iterator<Result> it = tree.iterator();
 		while(it.hasNext())
@@ -140,32 +140,32 @@ public class CategoryFacet
 			Result r = it.next();
 			entries.add(new DefaultFacetEntry(r.key, r.count, r.key));
 		}
-		
+
 		return entries;
 	}
-	
+
 	private static class Result
 		implements Comparable<Result>
 	{
 		private final String key;
 		private final int count;
-		
+
 		public Result(String key, int count)
 		{
 			this.key = key;
 			this.count = count;
 		}
-		
+
 		@Override
 		public int compareTo(Result o)
 		{
 			int c = Integer.compare(o.count, count);
 			if(c != 0) return c;
-			
+
 			return key.compareTo(o.key);
 		}
 	}
-	
+
 	public static <Parent> CategoryFacetBuilder<Parent> newFacet(Function<Facet<?>, Parent> configReceiver)
 	{
 		return new CategoryFacetBuilder<>(configReceiver);

@@ -11,7 +11,7 @@ public class MergedFieldType
 {
 	private static final byte NULL = 0;
 	private static final byte VALUE = 1;
-	
+
 	@SuppressWarnings("rawtypes")
 	private final FieldType[] types;
 
@@ -20,13 +20,13 @@ public class MergedFieldType
 	{
 		this.types = types;
 	}
-	
+
 	@SuppressWarnings("rawtypes")
 	public FieldType[] getTypes()
 	{
 		return types;
 	}
-	
+
 	@Override
 	public String uniqueId()
 	{
@@ -41,7 +41,7 @@ public class MergedFieldType
 		{
 			Object a = o1[i];
 			Object b = o2[i];
-			
+
 			if(a == b) continue;
 
 			if(a == MaxMin.MIN)
@@ -60,14 +60,14 @@ public class MergedFieldType
 			{
 				return -1;
 			}
-			
+
 			int c = types[i].compare(a, b);
 			if(c != 0)
 			{
 				return c;
 			}
 		}
-		
+
 		return 0;
 	}
 

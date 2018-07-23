@@ -11,12 +11,12 @@ public class RangeQuery<R>
 	{
 		this.field = field;
 	}
-	
+
 	public R is(long l)
 	{
 		return range(l, l);
 	}
-	
+
 	public R range(long from, long to)
 	{
 		receiver.addQuery(new QueryItem("range", new RangeQueryData(field, from, to)));

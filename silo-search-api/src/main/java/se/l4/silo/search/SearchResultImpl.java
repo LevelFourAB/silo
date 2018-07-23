@@ -6,7 +6,7 @@ import se.l4.silo.FetchResult;
 
 /**
  * Implementation of {@link SearchResult}.
- * 
+ *
  * @author Andreas Holstenson
  *
  * @param <T>
@@ -58,7 +58,7 @@ public class SearchResultImpl<T>
 	{
 		return results.isEmpty();
 	}
-	
+
 	@Override
 	public Facets facets()
 	{
@@ -70,6 +70,6 @@ public class SearchResultImpl<T>
 	{
 		results.close();
 	}
-	
-	
+
+
 }

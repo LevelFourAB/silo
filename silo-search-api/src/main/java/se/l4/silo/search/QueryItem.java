@@ -10,7 +10,7 @@ public class QueryItem
 		this.type = type;
 		this.payload = payload;
 	}
-	
+
 	public String getType()
 	{
 		return type;

@@ -14,7 +14,7 @@ public class ArrayFieldType
 {
 	private static final byte NULL = 0;
 	private static final byte VALUE = 1;
-	
+
 	@SuppressWarnings("rawtypes")
 	private final FieldType type;
 
@@ -23,7 +23,7 @@ public class ArrayFieldType
 	{
 		this.type = type;
 	}
-	
+
 	@Override
 	public String uniqueId()
 	{
@@ -37,7 +37,7 @@ public class ArrayFieldType
 		{
 			Object a = o1[i];
 			Object b = o2[i];
-			
+
 			if(a == b) continue;
 
 			if(a == MaxMin.MIN)
@@ -56,7 +56,7 @@ public class ArrayFieldType
 			{
 				return -1;
 			}
-			
+
 			@SuppressWarnings("unchecked")
 			int c = type.compare(a, b);
 			if(c != 0)
@@ -64,7 +64,7 @@ public class ArrayFieldType
 				return c;
 			}
 		}
-		
+
 		return 0;
 	}
 
@@ -80,10 +80,10 @@ public class ArrayFieldType
 				size += type.estimateMemory(o);
 			}
 		}
-		
+
 		return size;
 	}
-	
+
 	private Object[] subConvert(Object[] in)
 	{
 		for(int i=0, n=in.length; i<n; i++)

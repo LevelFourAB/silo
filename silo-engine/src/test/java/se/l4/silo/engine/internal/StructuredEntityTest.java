@@ -27,7 +27,7 @@ public class StructuredEntityTest
 	private StructuredEntity entity;
 	private Path tmp;
 	private Silo silo;
-	
+
 
 	@Before
 	public void before()
@@ -43,10 +43,10 @@ public class StructuredEntityTest
 					.done()
 				.done()
 			.build();
-		
+
 		entity = silo.structured("test");
 	}
-	
+
 	@After
 	public void after()
 		throws Exception
@@ -54,7 +54,7 @@ public class StructuredEntityTest
 		silo.close();
 		DataUtils.removeRecursive(tmp);
 	}
-	
+
 	private BinaryInput generateTestData()
 	{
 		try(ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -64,7 +64,7 @@ public class StructuredEntityTest
 			out.write("field", "value");
 			out.writeObjectEnd("");
 			out.flush();
-			
+
 			return new BinaryInput(new ByteArrayInputStream(baos.toByteArray()));
 		}
 		catch(IOException e)
@@ -72,17 +72,17 @@ public class StructuredEntityTest
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	private void check(FetchResult<StreamingInput> fr)
 	{
 		if(fr.isEmpty())
 		{
 			throw new AssertionError("No data");
 		}
-		
+
 		Iterator<StreamingInput> it = fr.iterator();
 		StreamingInput c = it.next();
-		
+
 		try
 		{
 			c.next(Token.OBJECT_START);
@@ -108,29 +108,29 @@ public class StructuredEntityTest
 		{
 			throw new RuntimeException(e);
 		}
-			
+
 		fr.close();
 	}
-	
+
 	@Test
 	public void testStoreNoTransaction()
 	{
 		entity.store("test", generateTestData());
-		
+
 		FetchResult<StreamingInput> fr = entity.get("test");
 		check(fr);
 	}
-	
+
 	@Test
 	public void testQuery()
 	{
 		entity.store("test", generateTestData());
-		
+
 		FetchResult<StreamingInput> fr = entity.query("byField", IndexQuery.type())
 			.field("field")
 			.isEqualTo("value")
 			.run();
-		
+
 		check(fr);
 	}
 }

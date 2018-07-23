@@ -8,7 +8,7 @@ import se.l4.silo.engine.search.Language;
 
 /**
  * Implementation of English for Silo.
- * 
+ *
  * @author Andreas Holstenson
  *
  */

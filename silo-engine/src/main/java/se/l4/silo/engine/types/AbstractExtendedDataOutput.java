@@ -14,14 +14,14 @@ public abstract class AbstractExtendedDataOutput
 	{
 		write(buffer, 0, buffer.length);
 	}
-	
+
 	@Override
 	public void writeBoolean(boolean value)
 		throws IOException
 	{
 		write(value ? 1 : 0);
 	}
-	
+
 	@Override
 	public void writeDouble(double value)
 		throws IOException
@@ -36,7 +36,7 @@ public abstract class AbstractExtendedDataOutput
 		write((int) (l >> 48) & 0xff);
 		write((int) (l >> 56) & 0xff);
 	}
-	
+
 	@Override
 	public void writeFloat(float value)
 		throws IOException
@@ -47,7 +47,7 @@ public abstract class AbstractExtendedDataOutput
 		write((i >> 16) & 0xff);
 		write((i >> 24) & 0xff);
 	}
-	
+
 	@Override
 	public void writeVInt(int value)
 		throws IOException
@@ -66,7 +66,7 @@ public abstract class AbstractExtendedDataOutput
 			}
 		}
 	}
-	
+
 	@Override
 	public void writeInt(int value)
 		throws IOException
@@ -86,7 +86,7 @@ public abstract class AbstractExtendedDataOutput
 			writeVInt(-value);
 		}
 	}
-	
+
 	@Override
 	public void writeVLong(long value)
 		throws IOException
@@ -105,7 +105,7 @@ public abstract class AbstractExtendedDataOutput
 			}
 		}
 	}
-	
+
 	@Override
 	public void writeLong(long value)
 		throws IOException
@@ -125,7 +125,7 @@ public abstract class AbstractExtendedDataOutput
 			writeVLong(-value);
 		}
 	}
-	
+
 	@Override
 	public void writeString(String value)
 		throws IOException
@@ -151,7 +151,7 @@ public abstract class AbstractExtendedDataOutput
 			}
 		}
 	}
-	
+
 	@Override
 	public void writeBytes(Bytes bytes)
 		throws IOException

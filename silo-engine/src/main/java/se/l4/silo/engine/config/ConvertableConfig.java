@@ -22,7 +22,7 @@ import se.l4.silo.engine.config.ConvertableConfig.ConfigSerializerResolver;
  * Base class for configuration objects that can mutate their type at runtime.
  * This type will store all values when read via serialization so that it
  * can be returned as a more specific type at runtime.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -37,7 +37,7 @@ public class ConvertableConfig
 		data = null;
 		collection = null;
 	}
-	
+
 	public ConvertableConfig(Map<String, Object> data, SerializerCollection collection)
 	{
 		this.data = data;
@@ -49,7 +49,7 @@ public class ConvertableConfig
 	{
 		// Void is used when no configuration is required
 		if(type == Void.class) return null;
-		
+
 		if(type.isAssignableFrom(getClass()))
 		{
 			// In case we are already the right type
@@ -60,7 +60,7 @@ public class ConvertableConfig
 		{
 			throw new ConfigException("Can not convert, this instance does not have access to SerializerCollection. Was this instance deserialized?");
 		}
-		
+
 		Serializer<T> serializer = collection.find(type);
 		MapInput in = new MapInput("", data);
 		try
@@ -72,7 +72,7 @@ public class ConvertableConfig
 			throw new ConfigException("Unable to convert to " + type.getName() + "; " + e.getMessage(), e);
 		}
 	}
-	
+
 	public static class ConfigSerializerResolver
 		implements SerializerResolver<ConvertableConfig>
 	{
@@ -88,7 +88,7 @@ public class ConvertableConfig
 		{
 			return Collections.emptySet();
 		}
-		
+
 	}
 
 	private static class ConvertableConfigSerializer
@@ -114,6 +114,6 @@ public class ConvertableConfig
 			throws IOException
 		{
 		}
-		
+
 	}
 }

@@ -42,7 +42,7 @@ import se.l4.silo.index.IndexQueryRequest.SortOnField;
 /**
  * {@link QueryEngine} that creates a queryable index similiar in functionality
  * to traditional databases.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -50,13 +50,13 @@ public class IndexQueryEngine
 	implements QueryEngine<IndexQueryRequest>
 {
 	private static final Logger logger = LoggerFactory.getLogger(IndexQueryEngine.class);
-	
+
 	private final String name;
-	
+
 	private final MVStoreManager store;
 	private final MVMap<Long, Object[]> indexedData;
 	private final MVMap<Object[], Object[]> index;
-	
+
 	private final String[] fields;
 	private final Set<String> fieldsSet;
 	@SuppressWarnings("rawtypes")
@@ -70,37 +70,37 @@ public class IndexQueryEngine
 	{
 		this.name = name;
 		this.store = store;
-		
+
 		this.fields = config.getFields();
 		this.sortFields = config.getSortFields();
-		
+
 		this.fieldsSet = ImmutableSet.copyOf(this.fields);
-		
+
 		MergedFieldType dataFieldType = createMultiFieldType(name, fields, config.getFields(), false);
 		indexedData = store.openMap("data:" + name, LongFieldType.INSTANCE, dataFieldType);
-		
+
 		MergedFieldType indexKey = createFieldType(name, fields, config.getFields(), true);
 		this.fieldTypes = indexKey.getTypes();
-		
+
 		MergedFieldType indexData = createFieldType(name, fields, config.getSortFields(), false);
 		this.sortFieldTypes = indexData.getTypes();
 		index = store.openMap("index:" + name, indexKey, indexData);
-		
+
 		allFields = new HashSet<>(fieldsSet);
 		for(String field : sortFields)
 		{
 			allFields.add(field);
 		}
-		
+
 		if(logger.isDebugEnabled())
 		{
 			logger.debug(name + ": fields=" + Arrays.toString(this.fields) + ", sortFields=" + Arrays.toString(this.sortFields));
 		}
 	}
-	
+
 	/**
 	 * Create a {@link MergedFieldType} for the given fields.
-	 * 
+	 *
 	 * @param name
 	 * @param fields
 	 * @param fieldNames
@@ -121,19 +121,19 @@ public class IndexQueryEngine
 			}
 			result[i] = def.get().getType();
 		}
-		
+
 		if(appendId)
 		{
 			result[fieldNames.length] = LongFieldType.INSTANCE;
 		}
-		
+
 		return new MergedFieldType(result);
 	}
-	
+
 	/**
 	 * Create a {@link MergedFieldType} that allows multiple values for
 	 * every field.
-	 * 
+	 *
 	 * @param name
 	 * @param fields
 	 * @param fieldNames
@@ -154,16 +154,16 @@ public class IndexQueryEngine
 			}
 			result[i] = new ArrayFieldType(def.get().getType());
 		}
-		
+
 		if(appendId)
 		{
 			result[fieldNames.length] = LongFieldType.INSTANCE;
 		}
-		
+
 		return new MergedFieldType(result);
 	}
-	
-	
+
+
 	@Override
 	public void close()
 		throws IOException
@@ -179,7 +179,7 @@ public class IndexQueryEngine
 		// Fetch all the values that need to be indexed
 		Multimap<String, Object> values = HashMultimap.create();
 		encounter.findStructuredKeys(allFields, values::put);
-		
+
 		// Generate the sort data
 		Object[] data = new Object[sortFields.length];
 		for(int i=0, n=sortFields.length; i<n; i++)
@@ -190,20 +190,20 @@ public class IndexQueryEngine
 				data[i] = value.iterator().next();
 			}
 		}
-		
+
 		// Look up our previously indexed key to see if we need to delete it
 		Object[] previousKey = indexedData.get(id);
 		remove(previousKey, id);
-		
+
 		// Store the new key
 		store(values, data, id);
 	}
-	
+
 	private void store(Multimap<String, Object> values, Object[] sortData, long id)
 	{
 		Object[] generatedKey = new Object[fields.length + 1];
 		generatedKey[fields.length] = id;
-		
+
 		if(fields.length == 0)
 		{
 			// Special case for only sort data
@@ -217,7 +217,7 @@ public class IndexQueryEngine
 		{
 			recursiveStore(values, sortData, generatedKey, 0);
 		}
-		
+
 		// Create a combined key for indexedData
 		Object[][] data = new Object[fields.length][];
 		for(int i=0, n=fields.length; i<n; i++)
@@ -226,7 +226,7 @@ public class IndexQueryEngine
 		}
 		indexedData.put(id, data);
 	}
-	
+
 	private void recursiveStore(Multimap<String, Object> values, Object[] sortData, Object[] generatedKey, int i)
 	{
 		String fieldName = fields[i];
@@ -252,14 +252,14 @@ public class IndexQueryEngine
 			}
 		}
 	}
-	
+
 	private void remove(Object[] data, long id)
 	{
 		if(data == null) return;
-		
+
 		Object[] generatedKey = new Object[data.length + 1];
 		generatedKey[data.length] = id;
-		
+
 		if(fields.length == 0)
 		{
 			index.remove(generatedKey);
@@ -269,7 +269,7 @@ public class IndexQueryEngine
 			recursiveRemove(data, generatedKey, 0);
 		}
 	}
-	
+
 	private void recursiveRemove(Object[] data, Object[] generatedKey, int i)
 	{
 		Object[] values = (Object[]) data[i];
@@ -304,7 +304,7 @@ public class IndexQueryEngine
 		remove(previousKey, id);
 		indexedData.remove(id);
 	}
-	
+
 	private int findField(String name, boolean errorOnNoFind)
 	{
 		for(int i=0, n=fields.length; i<n; i++)
@@ -314,15 +314,15 @@ public class IndexQueryEngine
 				return i;
 			}
 		}
-		
+
 		if(errorOnNoFind)
 		{
 			throw new StorageException("The field `" + name + "` does not exist in this index");
 		}
-		
+
 		return -1;
 	}
-	
+
 	private int findSortField(String name)
 	{
 		for(int i=0, n=sortFields.length; i<n; i++)
@@ -332,7 +332,7 @@ public class IndexQueryEngine
 				return i;
 			}
 		}
-		
+
 		throw new StorageException("The field `" + name + "` does not exist in this index");
 	}
 
@@ -341,20 +341,20 @@ public class IndexQueryEngine
 	{
 		IndexQueryRequest request = encounter.getData();
 		logger.debug("{}: Perform query {}", name, request);
-		
+
 		QueryPart[] parts = new QueryPart[fields.length + 1];
 		for(Criterion c : request.getCriterias())
 		{
 			int field = findField(c.getField(), true);
-			
+
 			FieldType<?> ft = fieldTypes[field];
-			
+
 			switch(c.getOp())
 			{
 				case EQUAL:
 					parts[field] = new EqualsQuery(field, c.getValue());
 					break;
-				case MORE_THAN: 
+				case MORE_THAN:
 				{
 					QueryPart qp = parts[field];
 					if(qp instanceof RangeQuery)
@@ -365,7 +365,7 @@ public class IndexQueryEngine
 					{
 						qp = new RangeQuery(field, increase(ft, c.getValue()), MaxMin.MAX);
 					}
-					
+
 					parts[field] = qp;
 					break;
 				}
@@ -380,7 +380,7 @@ public class IndexQueryEngine
 					{
 						qp = new RangeQuery(field, convert(ft, c.getValue()), MaxMin.MAX);
 					}
-					
+
 					parts[field] = qp;
 					break;
 				}
@@ -395,7 +395,7 @@ public class IndexQueryEngine
 					{
 						qp = new RangeQuery(field, MaxMin.MIN, decrease(ft, c.getValue()));
 					}
-					
+
 					parts[field] = qp;
 					break;
 				}
@@ -410,13 +410,13 @@ public class IndexQueryEngine
 					{
 						qp = new RangeQuery(field, MaxMin.MIN, convert(ft, c.getValue()));
 					}
-					
+
 					parts[field] = qp;
 					break;
 				}
 			}
 		}
-		
+
 		// Setup sorting of the results
 		boolean hasSort = false;
 		Sort.Builder sortBuilder = Sort.builder();
@@ -434,15 +434,15 @@ public class IndexQueryEngine
 				sortBuilder.value(field, sortFieldTypes[field], s.isAscending());
 			}
 		}
-		
+
 		Comparator<Result> sort = sortBuilder
 			.id(! request.isReverseDefaultSort())
 			.build();
-		
+
 		// Fetch the limits and setup collection of results
 		long limit = request.getLimit();
 		long offset = request.getOffset();
-		
+
 		LongAdder total = new LongAdder();
 		long maxSize = limit > 0 ? offset + limit : 0;
 		TreeSet<Result> tree = new TreeSet<>(sort);
@@ -452,9 +452,9 @@ public class IndexQueryEngine
 			protected boolean accept(long id, Object[] key, Object[] values)
 			{
 				logger.trace("  Query matched {}", id);
-				
+
 				total.increment();
-				
+
 				Result result = new Result(id, key, values);
 				if(maxSize <= 0 || tree.size() < maxSize)
 				{
@@ -465,17 +465,17 @@ public class IndexQueryEngine
 					tree.pollLast();
 					tree.add(result);
 				}
-				
+
 				// TODO: Can we short circuit the result collection somehow?
 				return true;
 			}
 		};
-		
+
 		// Run the collection
 		Object[] lower = new Object[parts.length];
 		Object[] upper = new Object[parts.length];
 		parts[0].run(lower, upper, parts, (v) -> true);
-		
+
 		// Cut down the results if needed
 		if(maxSize != 0 && tree.size() > limit)
 		{
@@ -494,15 +494,15 @@ public class IndexQueryEngine
 				encounter.receive(r.getId());
 			}
 		}
-		
+
 		encounter.setMetadata(offset, limit, total.intValue());
 	}
-	
+
 	private Number convert(FieldType<?> type, Object v)
 	{
 		return (Number) type.convert(v);
 	}
-	
+
 	private Object increase(FieldType<?> type, Object v)
 	{
 		Number n = (Number) type.convert(v);
@@ -522,10 +522,10 @@ public class IndexQueryEngine
 		{
 			return n.longValue() + 1;
 		}
-		
+
 		throw new IllegalArgumentException("Can not increase value of " + v);
 	}
-	
+
 	private Object decrease(FieldType<?> type, Object v)
 	{
 		Number n = (Number) type.convert(v);
@@ -545,7 +545,7 @@ public class IndexQueryEngine
 		{
 			return n.longValue() - 1;
 		}
-		
+
 		throw new IllegalArgumentException("Can not decrease value of " + v);
 	}
 
@@ -553,21 +553,21 @@ public class IndexQueryEngine
 	{
 		void run(Object[] lower, Object[] upper, QueryPart[] parts, Predicate<Object[]> filter);
 	}
-	
+
 	public static class RangeQuery
 		implements QueryPart
 	{
 		private final int field;
 		private final Object lower;
 		private final Object upper;
-		
+
 		public RangeQuery(int field, Object lower, Object upper)
 		{
 			this.field = field;
 			this.lower = lower;
 			this.upper = upper;
 		}
-		
+
 		@Override
 		public void run(Object[] lower, Object[] upper, QueryPart[] parts,
 				Predicate<Object[]> filter)
@@ -575,26 +575,26 @@ public class IndexQueryEngine
 			// Update our bounds
 			lower[field] = this.lower;
 			upper[field] = this.upper;
-			
+
 			// TODO: Do we need to do filtering here?
-			
+
 			// And then run the next part
 			parts[field+1].run(lower, upper, parts, filter);
 		}
 	}
-	
+
 	public static class EqualsQuery
 		implements QueryPart
 	{
 		private final int field;
 		private final Object value;
-		
+
 		public EqualsQuery(int field, Object value)
 		{
 			this.field = field;
 			this.value = value;
 		}
-		
+
 		@Override
 		public void run(Object[] lower, Object[] upper, QueryPart[] parts, Predicate<Object[]> filter)
 		{
@@ -608,12 +608,12 @@ public class IndexQueryEngine
 					// Set our bounds to this exact value
 					lower[field] = o;
 					upper[field] = o;
-					
+
 					// Extend the filter
 					Predicate<Object[]> f2 = o instanceof byte[]
 						? filter.and(data -> Arrays.equals((byte[]) o, (byte[]) data[field]))
 						: filter.and(data -> Objects.equals(o, data[field]));
-					
+
 					// The run the next part
 					parts[field+1].run(lower, upper, parts, f2);
 				}
@@ -623,30 +623,30 @@ public class IndexQueryEngine
 				// Set our bounds to this exact value
 				lower[field] = value;
 				upper[field] = value;
-				
+
 				// Extend the filter
 				filter = value instanceof byte[]
 					? filter.and(data -> Arrays.equals((byte[]) value, (byte[]) data[field]))
 					: filter.and(data -> Objects.equals(value, data[field]));
-				
+
 				// The run the next part
 				parts[field+1].run(lower, upper, parts, filter);
 			}
 		}
 	}
-	
+
 	public static class OrQuery
 		implements QueryPart
 	{
 		private final int field;
 		private final Collection<? extends Object> values;
-		
+
 		public OrQuery(int field, Collection<? extends Object> values)
 		{
 			this.field = field;
 			this.values = values;
 		}
-		
+
 		@Override
 		public void run(Object[] lower, Object[] upper, QueryPart[] parts, Predicate<Object[]> filter)
 		{
@@ -654,14 +654,14 @@ public class IndexQueryEngine
 			{
 				lower[field] = value;
 				upper[field] = value;
-				
+
 				Predicate<Object[]> newFilter = filter.and((data) -> Objects.equals(value, data[field]));
-				
+
 				parts[field+1].run(lower, upper, parts, newFilter);
 			}
 		}
 	}
-	
+
 	@SuppressWarnings("rawtypes")
 	private static Class[] types(Object[] in)
 	{
@@ -670,24 +670,24 @@ public class IndexQueryEngine
 		{
 			result[i] = in[i] == null ? null : in[i].getClass();
 		}
-		
+
 		return result;
 	}
-	
+
 	public static abstract class ResultCollector
 		implements QueryPart
 	{
 		private final MVMap<Object[], Object[]> map;
 		private final int id;
 		private final boolean sort;
-		
+
 		public ResultCollector(MVMap<Object[], Object[]> map, int id, boolean sort)
 		{
 			this.map = map;
 			this.id = id;
 			this.sort = sort;
 		}
-		
+
 		@Override
 		public void run(Object[] lower,
 				Object[] upper,
@@ -696,9 +696,9 @@ public class IndexQueryEngine
 		{
 			lower[id] = MaxMin.MIN;
 			upper[id] = MaxMin.MAX;
-			
+
 			DataType keyType = map.getKeyType();
-			
+
 			if(logger.isTraceEnabled())
 			{
 				logger.trace("  Query: lower= " + Arrays.toString(lower) + " " + Arrays.toString(types(lower)));
@@ -706,43 +706,43 @@ public class IndexQueryEngine
 				logger.trace("  Query: lower <> upper = " + keyType.compare(lower, upper));
 				logger.trace("  Map size: " + map.size());
 			}
-			
+
 			Object[] previous = map.lowerKey(lower);
 			if(previous == null)
 			{
 				previous = map.firstKey();
 				logger.trace("  First key updated to {}", previous);
 			}
-			
+
 			if(previous == null)
 			{
 				// No keys
 				return;
 			}
-			
+
 			if(logger.isTraceEnabled())
 			{
 				logger.trace("  Query: previous= " + Arrays.toString(previous) + " " + Arrays.toString(types(previous)));
 				logger.trace("  Query: previous <> lower = " + keyType.compare(previous, lower));
 			}
-			
+
 			Iterator<Object[]> it = map.keyIterator(previous);
-			
+
 			while(it.hasNext())
 			{
 				Object[] key = it.next();
-				
+
 				if(logger.isTraceEnabled())
 				{
 					logger.trace("  Query: Got a key! " + Arrays.toString(key) + ", bound=" + keyType.compare(key, upper));
 				}
-				
+
 				// Check the lower bound
 				if(keyType.compare(key, lower) < 0) continue;
-				
+
 				// Check that we are within the bounds of upper
 				if(keyType.compare(key, upper) > 0) return;
-				
+
 				if(filter.test(key))
 				{
 					if(! accept((Long) key[id], key, sort ? map.get(key) : null))
@@ -753,10 +753,10 @@ public class IndexQueryEngine
 				}
 			}
 		}
-		
+
 		/**
 		 * Accept the given id with the given sorting data.
-		 * 
+		 *
 		 * @param id
 		 * @param sortData
 		 * @return

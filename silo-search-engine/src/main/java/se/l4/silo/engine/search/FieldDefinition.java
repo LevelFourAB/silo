@@ -174,7 +174,7 @@ public interface FieldDefinition
 		Builder setType(SearchFieldType type);
 
 		Builder setLanguageSpecific(boolean languageSpecific);
-		
+
 		Builder setSorted(boolean sorted);
 
 		FieldDefinition build();

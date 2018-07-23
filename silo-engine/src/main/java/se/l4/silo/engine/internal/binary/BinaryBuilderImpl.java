@@ -7,7 +7,7 @@ import se.l4.silo.engine.config.EntityConfig;
 
 /**
  * Implementation of {@link BinaryBuilder}.
- * 
+ *
  * @author Andreas Holstenson
  *
  * @param <Parent>
@@ -21,7 +21,7 @@ public class BinaryBuilderImpl<Parent>
 	public BinaryBuilderImpl(Function<EntityConfig, Parent> configReceiver)
 	{
 		this.configReceiver = configReceiver;
-		
+
 		config = new EntityConfig("silo:binary");
 	}
 

@@ -1,23 +1,23 @@
-<project 
+<project
 	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	
+
 	<modelVersion>4.0.0</modelVersion>
-	
+
 	<parent>
 		<artifactId>silo-base</artifactId>
 		<groupId>se.l4.silo</groupId>
 		<version>0.2-SNAPSHOT</version>
 		<relativePath>..</relativePath>
 	</parent>
-	
+
 	<artifactId>silo-engine</artifactId>
 	<name>${project.artifactId}</name>
-	
+
 	<description>
 		Engine that provides storage and main index functionality.
 	</description>
-	
+
 	<dependencies>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
@@ -30,25 +30,25 @@
 			<artifactId>commons-config</artifactId>
 			<version>${commons-version}</version>
 		</dependency>
-		
+
 		<dependency>
 		    <groupId>com.carrotsearch</groupId>
 		    <artifactId>hppc</artifactId>
 		    <version>0.7.1</version>
 		</dependency>
-		
+
 		<dependency>
 		    <groupId>com.h2database</groupId>
 		    <artifactId>h2-mvstore</artifactId>
 		    <version>1.4.192</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>se.l4.vibe</groupId>
 			<artifactId>vibe-api</artifactId>
 			<version>0.2.1</version>
 		</dependency>
-		
+
 		<dependency>
 		    <groupId>org.slf4j</groupId>
 		    <artifactId>slf4j-simple</artifactId>
@@ -56,7 +56,7 @@
 		    <scope>test</scope>
 		</dependency>
 	</dependencies>
-	
+
 	<build>
 		<plugins>
 			<plugin>
@@ -73,5 +73,5 @@
 			</plugin>
 		</plugins>
 	</build>
-	
+
 </project>

@@ -16,87 +16,87 @@ public class IndexQueryRequest
 	private long offset;
 	@Expose
 	private long limit;
-	
+
 	@Expose
 	private List<Criterion> criterias;
 	@Expose
 	private List<SortOnField> sort;
 	@Expose
 	private boolean reverseDefaultSort;
-	
+
 	public IndexQueryRequest()
 	{
 	}
-	
+
 	public long getOffset()
 	{
 		return offset;
 	}
-	
+
 	public void setOffset(long offset)
 	{
 		this.offset = offset;
 	}
-	
+
 	public long getLimit()
 	{
 		return limit;
 	}
-	
+
 	public void setLimit(long limit)
 	{
 		this.limit = limit;
 	}
-	
+
 	public List<Criterion> getCriterias()
 	{
 		return criterias == null ? Collections.emptyList() : criterias;
 	}
-	
+
 	public void addCritera(String field, Op op, Object value)
 	{
 		if(criterias == null)
 		{
 			criterias = new ArrayList<>();
 		}
-		
+
 		Criterion c = new Criterion();
 		c.field = field;
 		c.op = op;
 		c.value = value;
-		
+
 		criterias.add(c);
 	}
-	
+
 	public List<SortOnField> getSort()
 	{
 		return sort == null ? Collections.emptyList() : sort;
 	}
-	
+
 	public void addSort(String field, boolean ascending)
 	{
 		if(sort == null)
 		{
 			sort = new ArrayList<>();
 		}
-			
+
 		SortOnField s = new SortOnField();
 		s.field = field;
 		s.ascending = ascending;
-		
+
 		sort.add(s);
 	}
-	
+
 	public boolean isReverseDefaultSort()
 	{
 		return reverseDefaultSort;
 	}
-	
+
 	public void setReverseDefaultSort(boolean reverseDefaultSort)
 	{
 		this.reverseDefaultSort = reverseDefaultSort;
 	}
-	
+
 	@Use(ReflectionSerializer.class)
 	public static class Criterion
 	{
@@ -107,23 +107,23 @@ public class IndexQueryRequest
 		@Expose
 		@AllowAny
 		private Object value;
-		
+
 		public String getField()
 		{
 			return field;
 		}
-		
+
 		public Op getOp()
 		{
 			return op;
 		}
-		
+
 		public Object getValue()
 		{
 			return value;
 		}
 	}
-	
+
 	public enum Op
 	{
 		EQUAL,
@@ -132,7 +132,7 @@ public class IndexQueryRequest
 		MORE_THAN,
 		MORE_THAN_OR_EQUAL_TO
 	}
-	
+
 	@Use(ReflectionSerializer.class)
 	public static class SortOnField
 	{
@@ -140,12 +140,12 @@ public class IndexQueryRequest
 		private String field;
 		@Expose
 		private boolean ascending;
-		
+
 		public String getField()
 		{
 			return field;
 		}
-		
+
 		public boolean isAscending()
 		{
 			return ascending;

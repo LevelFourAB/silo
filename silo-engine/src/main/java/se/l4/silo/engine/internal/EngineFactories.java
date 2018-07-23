@@ -8,7 +8,7 @@ import se.l4.silo.engine.types.FieldType;
 /**
  * Class for keeping track of different factories registered with a {@link Silo}
  * instance during creation.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -16,7 +16,7 @@ public interface EngineFactories
 {
 	/**
 	 * Get the {@link EntityTypeFactory} for the given type.
-	 * 
+	 *
 	 * @param type
 	 * @return
 	 */
@@ -24,7 +24,7 @@ public interface EngineFactories
 
 	/**
 	 * Get the {@link QueryEngineFactory} for the given type.
-	 * 
+	 *
 	 * @param type
 	 * @return
 	 */
@@ -32,7 +32,7 @@ public interface EngineFactories
 
 	/**
 	 * Get a field type.
-	 * 
+	 *
 	 * @param type
 	 * @return
 	 */

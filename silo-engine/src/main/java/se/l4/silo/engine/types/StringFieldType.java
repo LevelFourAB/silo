@@ -23,7 +23,7 @@ public class StringFieldType
 		if(o1 == null && o2 == null) return 0;
 		if(o1 == null) return -1;
 		if(o2 == null) return 1;
-		
+
 		return o1.compareTo(o2);
 	}
 
@@ -39,20 +39,20 @@ public class StringFieldType
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
 	@Override
 	public int estimateMemory(String instance)
 	{
 		return 24 + 2 * instance.length();
 	}
-	
+
 	@Override
 	public String read(ExtendedDataInput in)
 		throws IOException
 	{
 		return in.readString();
 	}
-	
+
 	@Override
 	public void write(String instance, ExtendedDataOutput out)
 		throws IOException

@@ -14,13 +14,13 @@ public class ConstantScoreQuery<R>
 	{
 		this.score = score;
 	}
-	
+
 	@Override
 	public void addQuery(QueryItem item)
 	{
 		receiver.addQuery(new QueryItem("constantScore", new ConstantScoreData(score, item)));
 	}
-	
+
 	@Override
 	public <P extends QueryPart<R>> P query(P q)
 	{

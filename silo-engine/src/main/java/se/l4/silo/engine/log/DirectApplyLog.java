@@ -8,7 +8,7 @@ import se.l4.commons.io.IoConsumer;
 /**
  * Log that simply forwards whatever is appended to the consumer of entries.
  * This log provides no data consistency in the form of storage to disk.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -22,7 +22,7 @@ public class DirectApplyLog
 	{
 		this.consumer = consumer;
 	}
-	
+
 	@Override
 	public void append(Bytes bytes)
 		throws IOException
@@ -31,20 +31,20 @@ public class DirectApplyLog
 		{
 			throw new IOException("Log has been closed");
 		}
-		
+
 		consumer.accept(new DefaultLogEntry(System.currentTimeMillis(), bytes));
 	}
-	
+
 	@Override
 	public void close()
 		throws IOException
 	{
 		closed = true;
 	}
-	
+
 	/**
 	 * Start building a new direct apply log.
-	 * 
+	 *
 	 * @return
 	 */
 	public static LogBuilder builder()

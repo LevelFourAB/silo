@@ -23,7 +23,7 @@ public class BooleanFieldType
 		if(o1 == null && o2 == null) return 0;
 		if(o1 == null) return -1;
 		if(o2 == null) return 1;
-		
+
 		return Boolean.compare(o1, o2);
 	}
 
@@ -31,17 +31,17 @@ public class BooleanFieldType
 	public Boolean convert(Object in)
 	{
 		if(in instanceof Boolean) return (Boolean) in;
-		
+
 		throw new IllegalArgumentException("Can't convert " + in + " to a boolean");
 	}
-	
+
 	@Override
 	public Serializer<Boolean> getSerializer()
 	{
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
 	@Override
 	public int estimateMemory(Boolean instance)
 	{

@@ -12,14 +12,14 @@ public abstract class AbstractExtendedDataInput
 	implements ExtendedDataInput
 {
 	private static final int TRUE = 1;
-	
+
 	@Override
 	public void readFully(byte[] buffer)
 		throws IOException
 	{
 		readFully(buffer, 0, buffer.length);
 	}
-	
+
 	@Override
 	public double readDouble()
 		throws IOException
@@ -32,10 +32,10 @@ public abstract class AbstractExtendedDataInput
 			((long) readByte() & 0xff) << 40 |
 			((long) readByte() & 0xff) << 48 |
 			((long) readByte() & 0xff) << 56;
-		
+
 		return Double.longBitsToDouble(value);
 	}
-	
+
 	@Override
 	public float readFloat()
 		throws IOException
@@ -44,10 +44,10 @@ public abstract class AbstractExtendedDataInput
 			(readByte() & 0xff) << 8 |
 			(readByte() & 0xff) << 16 |
 			(readByte() & 0xff) << 24;
-		
+
 		return Float.intBitsToFloat(value);
 	}
-	
+
 	@Override
 	public int readVInt()
 		throws IOException
@@ -59,20 +59,20 @@ public abstract class AbstractExtendedDataInput
 			final byte b = readByte();
 			result |= (b & 0x7F) << shift;
 			if((b & 0x80) == 0) return result;
-			
+
 			shift += 7;
 		}
-		
+
 		throw new EOFException("Invalid integer");
 	}
-	
+
 	@Override
 	public int readInt()
 		throws IOException
 	{
 		int type = readByte();
 		if(type == 0) return 0;
-		
+
 		if(type == 1)
 		{
 			return readVInt();
@@ -86,7 +86,7 @@ public abstract class AbstractExtendedDataInput
 			throw new EOFException("Unknownn type: " + type);
 		}
 	}
-	
+
 	@Override
 	public long readVLong()
 		throws IOException
@@ -98,20 +98,20 @@ public abstract class AbstractExtendedDataInput
 			final byte b = readByte();
 			result |= (long) (b & 0x7F) << shift;
 			if((b & 0x80) == 0) return result;
-			
+
 			shift += 7;
 		}
-		
+
 		throw new EOFException("Invalid long");
 	}
-	
+
 	@Override
 	public long readLong()
 		throws IOException
 	{
 		int type = readByte();
 		if(type == 0) return 0l;
-		
+
 		if(type == 1)
 		{
 			return readVLong();
@@ -125,14 +125,14 @@ public abstract class AbstractExtendedDataInput
 			throw new EOFException("Unknown type: " + type);
 		}
 	}
-	
+
 	@Override
 	public String readString()
 		throws IOException
 	{
 		int length = readVInt();
 		char[] chars = new char[length];
-		
+
 		for(int i=0; i<length; i++)
 		{
 			int c = readByte() & 0xff;
@@ -147,22 +147,22 @@ public abstract class AbstractExtendedDataInput
 			}
 			else if(t == 14)
 			{
-				chars[i] = (char) ((c & 0x0f) << 12 
+				chars[i] = (char) ((c & 0x0f) << 12
 					| (readByte() & 0x3f) << 6
 					| (readByte() & 0x3f) << 0);
 			}
 		}
-		
+
 		return new String(chars, 0, length);
 	}
-	
+
 	@Override
 	public boolean readBoolean()
 		throws IOException
 	{
 		return readByte() == TRUE;
 	}
-	
+
 	@Override
 	public Bytes readBytes()
 		throws IOException
@@ -173,12 +173,12 @@ public abstract class AbstractExtendedDataInput
 		{
 			int len = readVInt();
 			if(len == 0) return builder.build();
-			
+
 			readFully(buffer, 0, len);
 			builder.addChunk(buffer, 0, len);
 		}
 	}
-	
+
 	@Override
 	public Bytes readTemporaryBytes()
 		throws IOException
@@ -229,7 +229,7 @@ public abstract class AbstractExtendedDataInput
 		return readString();
 	}
 
-	
+
 	private static class TemporaryBytes
 		implements Bytes
 	{
@@ -239,14 +239,14 @@ public abstract class AbstractExtendedDataInput
 		{
 			this.parent = parent;
 		}
-		
+
 		@Override
 		public InputStream asInputStream()
 			throws IOException
 		{
 			return new TemporaryInputStream(parent);
 		}
-		
+
 		@Override
 		public byte[] toByteArray()
 			throws IOException
@@ -254,7 +254,7 @@ public abstract class AbstractExtendedDataInput
 			throw new UnsupportedOperationException();
 		}
 	}
-	
+
 	private static class TemporaryInputStream
 		extends InputStream
 	{
@@ -267,7 +267,7 @@ public abstract class AbstractExtendedDataInput
 			this.in = in;
 			this.remaining = 0;
 		}
-		
+
 		@Override
 		public int read()
 			throws IOException
@@ -285,11 +285,11 @@ public abstract class AbstractExtendedDataInput
 					return -1;
 				}
 			}
-			
+
 			remaining--;
 			return in.readUnsignedByte();
 		}
-		
+
 		@Override
 		public int read(byte[] b, int off, int len)
 			throws IOException
@@ -307,7 +307,7 @@ public abstract class AbstractExtendedDataInput
 					return -1;
 				}
 			}
-			
+
 			len = Math.min(len, remaining);
 			in.readFully(b, off, len);
 			return len;

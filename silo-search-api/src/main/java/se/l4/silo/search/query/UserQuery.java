@@ -17,7 +17,7 @@ public class UserQuery<R>
 			boosts[i] = 1;
 		}
 	}
-	
+
 	public R text(String query)
 	{
 		receiver.addQuery(new QueryItem("user", new UserQueryData(fields, boosts, query)));

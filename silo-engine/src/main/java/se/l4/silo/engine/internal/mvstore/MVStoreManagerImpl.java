@@ -22,7 +22,7 @@ import se.l4.silo.engine.types.FieldType;
 
 /**
  * Implementation of {@link MVStoreManager}.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -35,7 +35,7 @@ public class MVStoreManagerImpl
 	private static final int DATA_SIZE = 16 * 1024 * 1024;
 
 	private final MVStore.Builder builder;
-	
+
 	private volatile MVStore store;
 	private AtomicLong snapshotsOpen;
 
@@ -43,10 +43,10 @@ public class MVStoreManagerImpl
 	{
 		this.builder = builder;
 		store = builder.open();
-		
+
 		snapshotsOpen = new AtomicLong();
 	}
-	
+
 	public MVStore getStore()
 	{
 		return store;
@@ -59,7 +59,7 @@ public class MVStoreManagerImpl
 			.keyType(new DataTypeAdapter(key))
 			.valueType(new DataTypeAdapter(value)));
 	}
-	
+
 	@Override
 	public <K, V> MVMap<K, V> openMap(String name, Builder<K, V> builder)
 	{
@@ -75,7 +75,7 @@ public class MVStoreManagerImpl
 		return new Snapshot()
 		{
 			private boolean closed = false;
-			
+
 			@Override
 			public InputStream asStream()
 				throws IOException
@@ -84,24 +84,24 @@ public class MVStoreManagerImpl
 				{
 					throw new IOException("Can not use this snapshot, the underlying storage might be in an incosistent state");
 				}
-				
+
 				if(closed)
 				{
 					throw new IOException("This snapshot has already been closed");
 				}
-				
+
 				return new FileChannelInputStream(
 					store.getFileStore().getFile(),
 					false
 				);
 			}
-			
+
 			@Override
 			public void close()
 				throws IOException
 			{
 				if(closed) return;
-				
+
 				closed = true;
 				if(snapshotsOpen.decrementAndGet() == 0)
 				{
@@ -110,7 +110,7 @@ public class MVStoreManagerImpl
 			}
 		};
 	}
-	
+
 	@Override
 	public void installSnapshot(Snapshot snapshot)
 		throws IOException
@@ -119,25 +119,25 @@ public class MVStoreManagerImpl
 		{
 			throw new IOException("Can not install snapshot as this store has an open snapshot");
 		}
-		
+
 		// Get the file name we are replacing
 		String fileName = store.getFileStore().getFileName();
 		if(fileName.startsWith("nio:"))
 		{
 			fileName = fileName.substring(4);
 		}
-		
+
 		// Close the existing store
 		store.closeImmediately();
-		
+
 		try(InputStream in = snapshot.asStream(); OutputStream out = new FileOutputStream(fileName))
 		{
 			ByteStreams.copy(in, out);
 		}
-		
+
 		store = builder.open();
 	}
-	
+
 	@Override
 	public void recreate() throws IOException
 	{
@@ -145,16 +145,16 @@ public class MVStoreManagerImpl
 		{
 			throw new IOException("Can not recreate as this store has an open snapshot");
 		}
-		
+
 		// Get the file name we are replacing
 		String fileName = store.getFileStore().getFileName();
-		
+
 		// Close the existing store
 		store.closeImmediately();
-		
+
 		// Delete the data
 		Files.deleteIfExists(Paths.get(fileName));
-		
+
 		store = builder.open();
 	}
 
@@ -171,9 +171,9 @@ public class MVStoreManagerImpl
 		{
 			return;
 		}
-		
+
 		// TODO: This should really be smarter
-		
+
 		int retentionTime = store.getRetentionTime();
 		store.setRetentionTime(0);
 

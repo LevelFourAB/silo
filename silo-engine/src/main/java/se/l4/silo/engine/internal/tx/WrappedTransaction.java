@@ -5,7 +5,7 @@ import se.l4.silo.Transaction;
 /**
  * {@link Transaction} that wraps another transaction. This is used internally
  * when the user requests a new transaction when one is already active.
- * 
+ *
  * @author Andreas Holstenson
  *
  */

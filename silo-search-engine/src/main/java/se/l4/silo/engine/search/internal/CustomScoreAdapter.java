@@ -14,7 +14,7 @@ import se.l4.silo.engine.search.scoring.ScoringProvider;
 
 /**
  * Adapter for {@link CustomScoreQuery} and {@link ScoringProvider}.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -29,11 +29,11 @@ public class CustomScoreAdapter<T>
 	{
 		super(subQuery);
 		this.def = def;
-		
+
 		this.provider = provider;
 		this.data = data;
 	}
-	
+
 	@Override
 	protected CustomScoreProvider getCustomScoreProvider(LeafReaderContext context)
 		throws IOException
@@ -45,23 +45,23 @@ public class CustomScoreAdapter<T>
 			{
 				return def;
 			}
-			
+
 			@Override
 			public LeafReaderContext getLeafReader()
 			{
 				return context;
 			}
-			
+
 			@Override
 			public T getParameters()
 			{
 				return data;
 			}
 		});
-		
+
 		return new Scorer(context, scorer);
 	}
-	
+
 	private static class Scorer
 		extends CustomScoreProvider
 	{
@@ -72,7 +72,7 @@ public class CustomScoreAdapter<T>
 			super(context);
 			this.actualScorer = actualScorer;
 		}
-		
+
 		@Override
 		public float customScore(int doc, float subQueryScore, float valSrcScore)
 			throws IOException

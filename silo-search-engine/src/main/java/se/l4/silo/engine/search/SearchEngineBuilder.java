@@ -9,7 +9,7 @@ import se.l4.silo.engine.search.query.QueryParser;
 /**
  * Builder for setting up shared information used by instances of
  * {@link SearchIndexQueryEngine}.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -17,32 +17,32 @@ public interface SearchEngineBuilder
 {
 	/**
 	 * Set the default language for this engine.
-	 * 
+	 *
 	 * @param locale
 	 * @return
 	 */
 	SearchEngineBuilder setDefaultLanguage(Locale locale);
-	
+
 	/**
 	 * Add a custom language implementation to this engine. This is for
 	 * advanced usage with custom language implementations.
-	 * 
+	 *
 	 * @param language
 	 * @return
 	 */
 	SearchEngineBuilder addLanguage(Language language);
-	
+
 	/**
 	 * Add a query parser to this engine.
-	 * 
+	 *
 	 * @param parser
 	 * @return
 	 */
 	SearchEngineBuilder addQueryParser(QueryParser<?> parser);
-	
+
 	/**
 	 * Create the factory for {@link SearchIndexQueryEngine}s.
-	 * 
+	 *
 	 * @return
 	 */
 	QueryEngineFactory<?, ?> build();

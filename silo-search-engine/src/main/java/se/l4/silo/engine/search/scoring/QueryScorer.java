@@ -4,7 +4,7 @@ public interface QueryScorer
 {
 	/**
 	 * Score the given document.
-	 * 
+	 *
 	 * @param doc
 	 * @param currentScore
 	 * @return

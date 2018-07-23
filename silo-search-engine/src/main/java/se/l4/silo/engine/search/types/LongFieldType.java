@@ -18,44 +18,44 @@ public class LongFieldType
 	{
 		return new LongPoint(field, number.longValue());
 	}
-	
+
 	@Override
 	public IndexableField createValuesField(String field, Language lang, Object object)
 	{
 		return new NumericDocValuesField(field, toLong(object));
 	}
-	
+
 	@Override
 	public IndexableField createSortingField(String field, Language lang, Object object)
 	{
 		return new NumericDocValuesField(field, toLong(object));
 	}
-	
+
 	@Override
 	public SortField createSortField(String field, boolean ascending, Object params)
 	{
 		return new SortField(field, SortField.Type.LONG, ! ascending);
 	}
-	
+
 	@Override
 	public Query createEqualsQuery(String field, Object value)
 	{
 		return LongPoint.newExactQuery(field, toLong(value));
 	}
-	
+
 	@Override
 	public Query createRangeQuery(String field, Object from, Object to)
 	{
 		return LongPoint.newRangeQuery(field, toLong(from), toLong(to));
 	}
-	
+
 	private long toLong(Object value)
 	{
 		if(value instanceof Number)
 		{
 			return ((Number) value).longValue();
 		}
-		
+
 		return Long.parseLong(value.toString());
 	}
 }

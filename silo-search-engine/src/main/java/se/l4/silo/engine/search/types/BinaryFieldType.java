@@ -18,7 +18,7 @@ import se.l4.silo.engine.search.SearchFields;
 
 /**
  * Field type for indexing binary data.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -26,7 +26,7 @@ public final class BinaryFieldType
 	implements SearchFieldType
 {
 	private final FieldType type = createFieldType();
-	
+
 	protected static FieldType createFieldType()
 	{
 		FieldType ft = new FieldType();
@@ -58,7 +58,7 @@ public final class BinaryFieldType
 	@Override
 	public IndexableField create(
 			String field,
-			FieldType type, 
+			FieldType type,
 			Language lang,
 			Object object)
 	{

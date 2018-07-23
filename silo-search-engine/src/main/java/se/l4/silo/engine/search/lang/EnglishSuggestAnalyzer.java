@@ -11,7 +11,7 @@ import org.apache.lucene.analysis.standard.StandardTokenizer;
 public class EnglishSuggestAnalyzer
 	extends Analyzer
 {
-	
+
 	@Override
 	protected TokenStreamComponents createComponents(String fieldName)
 	{
@@ -19,7 +19,7 @@ public class EnglishSuggestAnalyzer
 		TokenStream result = new StandardFilter(source);
 		result = new EnglishPossessiveFilter(result);
 		result = new LowerCaseFilter(result);
-		
+
 		return new TokenStreamComponents(source, result);
 	}
 

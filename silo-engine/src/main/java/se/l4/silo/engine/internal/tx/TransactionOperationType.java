@@ -34,10 +34,10 @@ public class TransactionOperationType
 	public int estimateMemory(TransactionOperation instance)
 	{
 		int result = 16;
-		
+
 		// Enum
 		result += 24;
-		
+
 		// Entity
 		if(instance.getEntity() != null)
 		{
@@ -47,7 +47,7 @@ public class TransactionOperationType
 		{
 			result += 8;
 		}
-		
+
 		// Id
 		if(instance.getId() instanceof Long)
 		{
@@ -65,7 +65,7 @@ public class TransactionOperationType
 		{
 			result += 8;
 		}
-		
+
 		// Data
 		if(instance.getData() != null)
 		{
@@ -75,7 +75,7 @@ public class TransactionOperationType
 		{
 			result += 8;
 		}
-		
+
 		return result;
 	}
 
@@ -97,7 +97,7 @@ public class TransactionOperationType
 		throws IOException
 	{
 		out.writeVInt(instance.getType().ordinal());
-		
+
 		switch(instance.getType())
 		{
 			case STORE_CHUNK:
@@ -106,7 +106,7 @@ public class TransactionOperationType
 				IOUtils.writeId(instance.getId(), out);
 				break;
 		}
-		
+
 		if(instance.getType() == TransactionOperation.Type.STORE_CHUNK)
 		{
 			IOUtils.writeByteArray(instance.getData(), out);
@@ -144,7 +144,7 @@ public class TransactionOperationType
 				long timestamp = in.readVLong();
 				return TransactionOperation.start(timestamp);
 		}
-		
+
 		return null;
 	}
 

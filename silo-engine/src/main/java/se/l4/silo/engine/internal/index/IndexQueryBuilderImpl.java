@@ -14,11 +14,11 @@ public class IndexQueryBuilderImpl<R>
 	private final Function<QueryEngineConfig, R> configReceiver;
 	private final List<String> fields;
 	private final List<String> sortFields;
-	
+
 	public IndexQueryBuilderImpl(Function<QueryEngineConfig, R> configReceiver)
 	{
 		this.configReceiver = configReceiver;
-		
+
 		fields = new ArrayList<>();
 		sortFields = new ArrayList<>();
 	}

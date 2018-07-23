@@ -18,7 +18,7 @@ import se.l4.silo.engine.search.internal.SearchIndexQueryEngine;
 
 /**
  * {@link QueryEngine} implementation for search indexes.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -31,7 +31,7 @@ public class SearchIndex
 	{
 		this.engine = engine;
 	}
-	
+
 	@Override
 	public String getId()
 	{
@@ -64,12 +64,12 @@ public class SearchIndex
 			throw new StorageException("Unable to setup search index; " + e.getMessage(), e);
 		}
 	}
-	
+
 	/**
 	 * Start building a new factory for {@link QueryEngine query engines} that
 	 * perform searches. The result can be used with
 	 * {@link SiloBuilder#addQueryEngine(QueryEngineFactory)}.
-	 * 
+	 *
 	 * <p>
 	 * Example usage:
 	 * <pre>
@@ -80,19 +80,19 @@ public class SearchIndex
 	 * 	)
 	 *  ...
 	 * </pre>
-	 * 
+	 *
 	 * @return
 	 */
 	public static SearchEngineBuilder builder()
 	{
 		return new SearchEngineBuilderImpl();
 	}
-	
+
 
 	/**
 	 * Create a new {@link SearchIndexBuilder}. This method is used by
 	 * entities when constructing indexes.
-	 * 
+	 *
 	 * @param f
 	 * @return
 	 */

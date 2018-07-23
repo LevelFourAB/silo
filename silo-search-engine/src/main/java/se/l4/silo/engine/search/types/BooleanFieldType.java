@@ -19,7 +19,7 @@ public class BooleanFieldType
 	implements SearchFieldType
 {
 	private final FieldType type = createFieldType();
-	
+
 	protected static FieldType createFieldType()
 	{
 		FieldType ft = new FieldType();

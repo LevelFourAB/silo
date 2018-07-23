@@ -39,8 +39,8 @@ public class SuggestQueryParser
 		Analyzer analyzer = fdef.getType().getAnalyzer(encounter.currentLanguage());
 
 		BooleanQuery.Builder q = new BooleanQuery.Builder();
-	    try(TokenStream ts = analyzer.tokenStream("", new StringReader(value)))
-	    {
+		try(TokenStream ts = analyzer.tokenStream("", new StringReader(value)))
+		{
 			ts.reset();
 			CharTermAttribute termAtt = ts.addAttribute(CharTermAttribute.class);
 			OffsetAttribute offsetAtt = ts.addAttribute(OffsetAttribute.class);
@@ -80,9 +80,9 @@ public class SuggestQueryParser
 					q.add(lastQuery, BooleanClause.Occur.MUST);
 				}
 			}
-	    }
+		}
 
-	    return q.build();
+		return q.build();
 	}
 
 }

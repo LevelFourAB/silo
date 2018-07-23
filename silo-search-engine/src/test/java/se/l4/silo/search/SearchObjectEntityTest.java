@@ -49,11 +49,11 @@ public class SearchObjectEntityTest
 					.done()
 				.done()
 			.build();
-		
+
 		entity = silo.structured("test")
 			.asObject(TestUserData.class, TestUserData::getId);
 	}
-	
+
 	@After
 	public void after()
 		throws Exception
@@ -61,7 +61,7 @@ public class SearchObjectEntityTest
 		silo.close();
 		DataUtils.removeRecursive(tmp);
 	}
-	
+
 	@Test
 	public void testQuery()
 	{
@@ -69,7 +69,7 @@ public class SearchObjectEntityTest
 		{
 			entity.store(new TestUserData(i, i % 2 == 0 ? "Donna" : "Eric", 18 + i % 40, i % 2 == 0));
 		}
-		
+
 		try
 		{
 			Thread.sleep(1000);
@@ -79,7 +79,7 @@ public class SearchObjectEntityTest
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		try(SearchResult<TestUserData> fr = entity.query("index", SearchIndexQuery.type())
 			.user("name").text("donna")
 			.number("age").range(18, 21)
@@ -91,7 +91,7 @@ public class SearchObjectEntityTest
 			assertThat(fr.getTotal(), is(50l));
 		}
 	}
-	
+
 	@Test
 	public void testWaitForLatest()
 	{
@@ -99,7 +99,7 @@ public class SearchObjectEntityTest
 		{
 			entity.store(new TestUserData(i, i % 2 == 0 ? "Donna" : "Eric", 18 + i % 40, i % 2 == 0));
 		}
-		
+
 		try(SearchResult<TestUserData> fr = entity.query("index", SearchIndexQuery.type())
 			.waitForLatest()
 			.user("name").text("donna")
@@ -112,7 +112,7 @@ public class SearchObjectEntityTest
 			assertThat(fr.getTotal(), is(50l));
 		}
 	}
-	
+
 	@Test
 	public void testNull()
 	{
@@ -120,7 +120,7 @@ public class SearchObjectEntityTest
 		{
 			entity.store(new TestUserData(i, i % 2 == 0 ? "Donna" : null, 18 + i % 40, i % 2 == 0));
 		}
-		
+
 		try
 		{
 			Thread.sleep(1000);
@@ -130,7 +130,7 @@ public class SearchObjectEntityTest
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		try(SearchResult<TestUserData> fr = entity.query("index", SearchIndexQuery.type())
 			.field("name").isEmpty()
 			.number("age").range(18, 21)
@@ -142,7 +142,7 @@ public class SearchObjectEntityTest
 			assertThat(fr.getTotal(), is(50l));
 		}
 	}
-	
+
 	@Test
 	public void testNullVsEmpty()
 	{
@@ -150,7 +150,7 @@ public class SearchObjectEntityTest
 		{
 			entity.store(new TestUserData(i, i % 2 == 0 ? "" : null, 18 + i % 40, i % 2 == 0));
 		}
-		
+
 		try
 		{
 			Thread.sleep(1000);
@@ -160,7 +160,7 @@ public class SearchObjectEntityTest
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		try(SearchResult<TestUserData> fr = entity.query("index", SearchIndexQuery.type())
 			.field("name").isEmpty()
 			.number("age").range(18, 21)

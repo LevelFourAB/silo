@@ -15,7 +15,7 @@ public class LongArrayFieldType
 	public LongArrayFieldType()
 	{
 	}
-	
+
 	@Override
 	public String uniqueId()
 	{
@@ -29,14 +29,14 @@ public class LongArrayFieldType
 		{
 			long a = o1[i];
 			long b = o2[i];
-			
+
 			int c = Long.compare(a, b);
 			if(c != 0)
 			{
 				return c;
 			}
 		}
-		
+
 		return 0;
 	}
 
@@ -51,10 +51,10 @@ public class LongArrayFieldType
 				size += 8;
 			}
 		}
-		
+
 		return size;
 	}
-	
+
 	private long[] subConvert(Object[] in)
 	{
 		long[] result = new long[in.length];

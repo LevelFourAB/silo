@@ -33,12 +33,12 @@ public class QueryEngineUpdateTest
 				.defineField("field", "string")
 				.done()
 			.build();
-		
+
 		StructuredEntity entity = silo.structured("test");
 		entity.store("test", generateTestData());
-		
+
 		silo.close();
-		
+
 		silo = LocalSilo.open(tmp)
 			.addEntity("test")
 				.asStructured()
@@ -48,23 +48,23 @@ public class QueryEngineUpdateTest
 					.done()
 				.done()
 			.build();
-		
+
 		entity = silo.structured("test");
-		
+
 		Thread.sleep(100);
-		
+
 		FetchResult<StreamingInput> fr = entity.query("byField", IndexQuery.type())
 			.field("field")
 			.isEqualTo("value")
 			.run();
-		
+
 		check(fr);
-		
+
 		silo.close();
-		
+
 		DataUtils.removeRecursive(tmp);
 	}
-	
+
 	private BinaryInput generateTestData()
 	{
 		try(ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -74,7 +74,7 @@ public class QueryEngineUpdateTest
 			out.write("field", "value");
 			out.writeObjectEnd("");
 			out.flush();
-			
+
 			return new BinaryInput(new ByteArrayInputStream(baos.toByteArray()));
 		}
 		catch(IOException e)
@@ -82,17 +82,17 @@ public class QueryEngineUpdateTest
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	private void check(FetchResult<StreamingInput> fr)
 	{
 		if(fr.isEmpty())
 		{
 			throw new AssertionError("No data");
 		}
-		
+
 		Iterator<StreamingInput> it = fr.iterator();
 		StreamingInput c = it.next();
-		
+
 		try
 		{
 			c.next(Token.OBJECT_START);
@@ -118,7 +118,7 @@ public class QueryEngineUpdateTest
 		{
 			throw new RuntimeException(e);
 		}
-			
+
 		fr.close();
 	}
 }

@@ -15,16 +15,16 @@ public class MVStoreHealth
 	implements KeyValueMappable
 {
 	private long currentVersion;
-	
+
 	private long fileSize;
-	
+
 	private long readBytes;
 	private long readCount;
 	private long writeBytes;
 	private long writeCount;
 
 	private final int fillRate;
-	
+
 	public MVStoreHealth(long currentVersion, long fileSize, long readBytes, long readCount, long writeBytes, long writeCount, int fillRate)
 	{
 		this.currentVersion = currentVersion;
@@ -47,7 +47,7 @@ public class MVStoreHealth
 		receiver.add("writeCount", writeCount);
 		receiver.add("fillRate", fillRate);
 	}
-	
+
 	public static SampledProbe<MVStoreHealth> createProbe(MVStore store)
 	{
 		return new AbstractSampledProbe<MVStoreHealth>()
@@ -57,7 +57,7 @@ public class MVStoreHealth
 			private long writeBytes;
 			private long writeCount;
 
-			
+
 			private long getFileSize(FileStore fs)
 			{
 				try
@@ -69,7 +69,7 @@ public class MVStoreHealth
 					throw new StorageException("Unable to read size of MVStore file; " + e.getMessage(), e);
 				}
 			}
-			
+
 			@Override
 			public MVStoreHealth peek()
 			{
@@ -81,7 +81,7 @@ public class MVStoreHealth
 				long totalWriteBytes = fs.getWriteBytes();
 				long totalWriteCount = fs.getWriteCount();
 				int fillRate = fs.getFillRate();
-				
+
 				return new MVStoreHealth(
 					currentVersion,
 					fileSize,
@@ -92,12 +92,12 @@ public class MVStoreHealth
 					fillRate
 				);
 			}
-			
+
 			@Override
 			protected MVStoreHealth sample0()
 			{
 				long currentVersion = store.getCurrentVersion();
-				
+
 				FileStore fs = store.getFileStore();
 				long fileSize = getFileSize(fs);
 				long totalReadBytes = fs.getReadBytes();
@@ -105,7 +105,7 @@ public class MVStoreHealth
 				long totalWriteBytes = fs.getWriteBytes();
 				long totalWriteCount = fs.getWriteCount();
 				int fillRate = fs.getFillRate();
-				
+
 				MVStoreHealth health = new MVStoreHealth(
 					currentVersion,
 					fileSize,
@@ -115,12 +115,12 @@ public class MVStoreHealth
 					totalWriteCount - writeCount,
 					fillRate
 				);
-				
+
 				this.readBytes = totalReadBytes;
 				this.readCount = totalReadCount;
 				this.writeBytes = totalWriteBytes;
 				this.writeCount = totalWriteCount;
-				
+
 				return health;
 			}
 		};

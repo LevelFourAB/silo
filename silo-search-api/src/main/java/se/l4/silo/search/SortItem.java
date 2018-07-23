@@ -12,17 +12,17 @@ public class SortItem
 		this.ascending = ascending;
 		this.params = params;
 	}
-	
+
 	public String getField()
 	{
 		return field;
 	}
-	
+
 	public boolean isAscending()
 	{
 		return ascending;
 	}
-	
+
 	public Object getParams()
 	{
 		return params;

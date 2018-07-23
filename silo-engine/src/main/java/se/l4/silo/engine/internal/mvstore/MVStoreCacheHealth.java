@@ -11,7 +11,7 @@ import se.l4.vibe.probes.SampledProbe;
 
 /**
  * Cache health information extracted from a {@link MVStore}.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -43,40 +43,40 @@ public class MVStoreCacheHealth
 		receiver.add("memoryMax", maxMemory);
 		receiver.add("memoryUsageAsFraction", usedMemory / (double) maxMemory);
 	}
-	
+
 	public static SampledProbe<MVStoreCacheHealth> createProbe(MVStore store)
 	{
 		return new AbstractSampledProbe<MVStoreCacheHealth>()
 		{
 			private long hits;
 			private long misses;
-			
+
 			@Override
 			public MVStoreCacheHealth peek()
 			{
 				return sample0();
 			}
-			
+
 			@Override
 			protected MVStoreCacheHealth sample0()
 			{
 				CacheLongKeyLIRS<Page> cache = store.getCache();
 				long hits = cache.getHits();
 				long misses = cache.getMisses();
-				
+
 				long usedMemory = cache.getUsedMemory();
 				long maxMemory = cache.getMaxMemory();
-				
+
 				MVStoreCacheHealth result = new MVStoreCacheHealth(
 					hits - this.hits,
 					misses - this.misses,
 					usedMemory,
 					maxMemory
 				);
-				
+
 				this.hits = hits;
 				this.misses = misses;
-				
+
 				return result;
 			}
 		};

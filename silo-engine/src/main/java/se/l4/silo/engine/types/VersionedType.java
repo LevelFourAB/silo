@@ -25,11 +25,11 @@ public class VersionedType<T>
 		{
 			if(c.value > max) max = c.value;
 		}
-		
+
 		this.latest = max;
 		this.latestType = versions.get(latest);
 	}
-	
+
 	public static <T> FieldType<T> singleVersion(FieldType<T> other)
 	{
 		IntObjectHashMap<FieldType<T>> versions = new IntObjectHashMap<>();

@@ -6,7 +6,7 @@ import se.l4.silo.engine.QueryEngineFactory;
 
 /**
  * Abstract configuration for a {@link QueryEngine}.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -18,19 +18,19 @@ public abstract class QueryEngineConfig
 	 */
 	@Expose
 	private String type;
-	
+
 	public QueryEngineConfig()
 	{
 	}
-	
+
 	public QueryEngineConfig(String type)
 	{
 		this.type = type;
 	}
-	
+
 	/**
 	 * Get the type that this query engine should be.
-	 * 
+	 *
 	 * @return
 	 */
 	public String getType()

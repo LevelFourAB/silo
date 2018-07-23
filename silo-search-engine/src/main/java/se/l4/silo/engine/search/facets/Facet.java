@@ -10,7 +10,7 @@ import se.l4.silo.search.SearchIndexQuery;
 
 /**
  * Faceting support for {@link SearchIndexQuery}.
- * 
+ *
  * @author Andreas Holstenson
  *
  * @param <QueryParams>
@@ -19,22 +19,22 @@ public interface Facet<QueryParams>
 {
 	/**
 	 * Get the type of this facet.
-	 * 
+	 *
 	 * @return
 	 */
 	String type();
-	
+
 	/**
 	 * Enhance the current {@link IndexDefinition} with extra information needed
 	 * for this facet to function.
-	 * 
+	 *
 	 * @param encounter
 	 */
 	void setup(IndexDefinitionEncounter encounter);
-	
+
 	/**
 	 * Collect the facets for the given encounter.
-	 * 
+	 *
 	 * @param encounter
 	 * @return
 	 * @throws IOException

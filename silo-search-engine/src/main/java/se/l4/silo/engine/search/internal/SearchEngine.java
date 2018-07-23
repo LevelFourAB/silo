@@ -11,7 +11,7 @@ import se.l4.silo.engine.search.query.QueryParser;
  * Search engine as created from {@link SearchEngineBuilder}. This contains
  * information shared between instances of {@link SearchIndexQueryEngine}
  * such as information about languages and query parsers.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -29,20 +29,20 @@ public class SearchEngine
 		this.languages = languages;
 		this.queryParsers = queryParsers;
 	}
-	
+
 	/**
 	 * Get the default language for indexes under this engine.
-	 * 
+	 *
 	 * @return
 	 */
 	public Locale getDefaultLanguage()
 	{
 		return defaultLanguage;
 	}
-	
+
 	/**
 	 * Check if the given locale is supported.
-	 * 
+	 *
 	 * @param locale
 	 * @return
 	 */
@@ -50,10 +50,10 @@ public class SearchEngine
 	{
 		return languages.containsKey(locale.toLanguageTag());
 	}
-	
+
 	/**
 	 * Get the language that matches the given locale.
-	 * 
+	 *
 	 * @param locale
 	 * @return
 	 */
@@ -64,7 +64,7 @@ public class SearchEngine
 
 	/**
 	 * Fetch a query parser with the given type.
-	 * 
+	 *
 	 * @param type
 	 * @return
 	 */

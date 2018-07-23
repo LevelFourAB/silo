@@ -33,11 +33,11 @@ public class LocalSiloBuilder
 {
 	private final LogBuilder logBuilder;
 	private final Path dataPath;
-	
+
 	private final Map<String, EntityTypeFactory<?, ?>> entityTypes;
 	private final Map<String, QueryEngineFactory<?, ?>> queryEngineTypes;
 	private final Map<String, FieldType<?>> fieldTypes;
-	
+
 	private EngineConfig config;
 	private SerializerCollection serializers;
 	private TypeFinder typeFinder;
@@ -47,44 +47,44 @@ public class LocalSiloBuilder
 	{
 		this.logBuilder = logBuilder;
 		this.dataPath = dataPath;
-		
+
 		config = new EngineConfig();
-		
+
 		entityTypes = new HashMap<>();
 		queryEngineTypes = new HashMap<>();
 		fieldTypes = new HashMap<>();
-		
+
 		addEntityType(new BinaryEntityFactory());
 		addEntityType(new StructuredEntityFactory());
-		
+
 		addQueryEngine(new Index());
-		
+
 		addFieldType(BooleanFieldType.INSTANCE);
 		addFieldType(ByteArrayFieldType.INSTANCE);
 		addFieldType(IntFieldType.INSTANCE);
 		addFieldType(LongFieldType.INSTANCE);
 		addFieldType(StringFieldType.INSTANCE);
 	}
-	
+
 	private <T> void put(Map<String, T> map, T instance, String name)
 	{
 		map.put(name, instance);
 	}
-	
+
 	@Override
 	public SiloBuilder withSerializerCollection(SerializerCollection collection)
 	{
 		this.serializers = collection;
 		return this;
 	}
-	
+
 	@Override
 	public SiloBuilder withTypeFinder(TypeFinder typeFinder)
 	{
 		this.typeFinder = typeFinder;
 		return this;
 	}
-	
+
 	@Override
 	public SiloBuilder withVibe(Vibe vibe, String... path)
 	{
@@ -96,10 +96,10 @@ public class LocalSiloBuilder
 		{
 			this.vibe = vibe.scope(Joiner.on('/').join(path));
 		}
-			
+
 		return this;
 	}
-	
+
 	@Override
 	public EntityBuilder<SiloBuilder> addEntity(String name)
 	{
@@ -108,14 +108,14 @@ public class LocalSiloBuilder
 			return this;
 		});
 	}
-	
+
 	@Override
 	public SiloBuilder addEntityType(EntityTypeFactory<?, ?> type)
 	{
 		put(entityTypes, type, type.getId());
 		return this;
 	}
-	
+
 	@Override
 	@SuppressWarnings("rawtypes")
 	public SiloBuilder addQueryEngine(QueryEngineFactory factory)
@@ -123,26 +123,26 @@ public class LocalSiloBuilder
 		put(queryEngineTypes, factory, factory.getId());
 		return this;
 	}
-	
+
 	@Override
 	public SiloBuilder addFieldType(FieldType<?> fieldType)
 	{
 		put(fieldTypes, fieldType, fieldType.uniqueId());
 		return this;
 	}
-	
+
 	@Override
 	public SiloBuilder withCacheSize(int cacheSizeInMb)
 	{
 		config = config.setCacheSizeInMb(cacheSizeInMb);
 		return this;
 	}
-	
+
 	@Override
 	public LocalSilo build()
 	{
 		autoLoad();
-		
+
 		LocalEngineFactories factories = new LocalEngineFactories(entityTypes.values(), queryEngineTypes.values(), fieldTypes.values());
 		SerializerCollection serializers = this.serializers == null ? new DefaultSerializerCollection() : this.serializers;
 		return new LocalSilo(factories, serializers, vibe, logBuilder, dataPath, config);
@@ -151,13 +151,13 @@ public class LocalSiloBuilder
 	private void autoLoad()
 	{
 		if(typeFinder == null) return;
-		
+
 		// Find all available field types
 		for(FieldType<?> ft : typeFinder.getSubTypesAsInstances(FieldType.class))
 		{
 			addFieldType(ft);
 		}
-		
+
 		// Find all entity types
 		for(EntityTypeFactory<?, ?> et : typeFinder.getSubTypesAsInstances(EntityTypeFactory.class))
 		{

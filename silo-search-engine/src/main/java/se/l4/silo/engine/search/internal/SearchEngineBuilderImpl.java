@@ -25,7 +25,7 @@ import se.l4.silo.engine.search.query.UserQueryParserSpi;
 
 /**
  * Implementation of {@link SearchEngineBuilder}.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -33,17 +33,17 @@ public class SearchEngineBuilderImpl
 	implements SearchEngineBuilder
 {
 	private Locale defaultLanguage;
-	
+
 	private final Map<String, Language> langs;
 	private final Map<String, QueryParser<?>> queryTypes;
-	
+
 	public SearchEngineBuilderImpl()
 	{
 		defaultLanguage = Locale.ENGLISH;
-		
+
 		langs = new HashMap<>();
 		addLanguage(new EnglishLanguage());
-		
+
 		queryTypes = new HashMap<>();
 		addQueryParser(new AndQueryParser());
 		addQueryParser(new OrQueryParser());
@@ -55,7 +55,7 @@ public class SearchEngineBuilderImpl
 		addQueryParser(new SuggestQueryParser());
 		addQueryParser(new UserQueryParserSpi());
 	}
-	
+
 	@Override
 	public SearchEngineBuilder setDefaultLanguage(Locale locale)
 	{
@@ -70,12 +70,12 @@ public class SearchEngineBuilderImpl
 		langs.put(language.getLocale().toLanguageTag(), language);
 		return this;
 	}
-	
+
 	@Override
 	public SearchEngineBuilder addQueryParser(QueryParser<?> parser)
 	{
 		queryTypes.put(parser.id(), parser);
-		
+
 		return this;
 	}
 

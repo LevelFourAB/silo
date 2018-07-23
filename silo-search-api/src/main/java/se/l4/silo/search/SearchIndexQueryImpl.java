@@ -19,60 +19,60 @@ public class SearchIndexQueryImpl<T>
 		this.runner = runner;
 		request = new SearchIndexQueryRequest();
 	}
-	
+
 	@Override
 	public SearchIndexQuery<T> fromLocale(Locale locale)
 	{
 		request.setLanguage(locale.toLanguageTag());
 		return this;
 	}
-	
+
 	@Override
 	public SearchIndexQuery<T> waitForLatest()
 	{
 		request.setWaitForLatest(true);
 		return this;
 	}
-	
+
 	@Override
 	public SearchIndexQuery<T> offset(long offset)
 	{
 		request.setOffset(offset);
 		return this;
 	}
-	
+
 	@Override
 	public SearchIndexQuery<T> limit(long limit)
 	{
 		request.setLimit(limit);
 		return this;
 	}
-	
+
 	@Override
 	public void parent(SearchIndexQuery<T> path, QueryReceiver receiver)
 	{
 		throw new UnsupportedOperationException();
 	}
-	
+
 	@Override
 	public void addQuery(QueryItem item)
 	{
 		request.addQueryItem(item);
 	}
-	
+
 	@Override
 	public SearchIndexQuery<T> done()
 	{
 		return this;
 	}
-	
+
 	@Override
 	public <P extends QueryPart<SearchIndexQuery<T>>> P query(P q)
 	{
 		q.parent(this, this);
 		return q;
 	}
-	
+
 	@Override
 	public <C extends FacetQueryBuilder<SearchIndexQuery<T>>> C withFacet(String id, Supplier<C> facetType)
 	{
@@ -83,14 +83,14 @@ public class SearchIndexQueryImpl<T>
 		});
 		return builder;
 	}
-	
+
 	@Override
 	public SearchIndexQuery<T> addSort(String sort, boolean sortAscending)
 	{
 		request.addSortItem(sort, sortAscending, null);
 		return this;
 	}
-	
+
 	@Override
 	public <C extends SortingQueryBuilder<SearchIndexQuery<T>>> C addSort(String field, Supplier<C> scoring)
 	{
@@ -101,7 +101,7 @@ public class SearchIndexQueryImpl<T>
 		});
 		return builder;
 	}
-	
+
 	@Override
 	public <C extends ScoringQueryBuilder<SearchIndexQuery<T>>> C setScoring(Supplier<C> scoring)
 	{
@@ -112,7 +112,7 @@ public class SearchIndexQueryImpl<T>
 		});
 		return builder;
 	}
-	
+
 	@Override
 	public <C extends FacetQueryBuilder<SearchIndexQuery<T>>> C withFacet(String id, FacetQueryType<SearchIndexQuery<T>, C> type)
 	{
@@ -121,21 +121,21 @@ public class SearchIndexQueryImpl<T>
 			return this;
 		});
 	}
-	
+
 	@Override
 	public SearchResult<T> run()
 	{
 		QueryFetchResult<SearchHit<T>> qr = runner.fetchResults(request, (f) -> {
 			float score = f.getMetadata("score", 0f);
-			return new SearchHitImpl<>(f.getData(), score); 
+			return new SearchHitImpl<>(f.getData(), score);
 		});
-		
+
 		Facets facets = qr.getMetadata("facets");
 		if(facets == null)
 		{
 			facets = new FacetsImpl();
 		}
-		
+
 		return new SearchResultImpl<>(qr, facets);
 	}
 }

@@ -23,7 +23,7 @@ public class LongFieldType
 		if(o1 == null && o2 == null) return 0;
 		if(o1 == null) return -1;
 		if(o2 == null) return 1;
-		
+
 		return Long.compare(o1, o2);
 	}
 
@@ -32,7 +32,7 @@ public class LongFieldType
 	{
 		if(in instanceof Long) return (Long) in;
 		if(in instanceof Number) return ((Number) in).longValue();
-		
+
 		throw new IllegalArgumentException("Can't convert " + in + " to a long");
 	}
 
@@ -42,20 +42,20 @@ public class LongFieldType
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
 	@Override
 	public int estimateMemory(Long instance)
 	{
 		return 30;
 	}
-	
+
 	@Override
 	public Long read(ExtendedDataInput in)
 		throws IOException
 	{
 		return in.readLong();
 	}
-	
+
 	@Override
 	public void write(Long instance, ExtendedDataOutput out)
 		throws IOException

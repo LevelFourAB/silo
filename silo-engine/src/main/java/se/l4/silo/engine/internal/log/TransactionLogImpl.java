@@ -18,7 +18,7 @@ import se.l4.silo.engine.log.Log;
 /**
  * Implementation of {@link TransactionLog} that translates our transaction
  * semantics into messages written to a {@link Log log}.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -26,7 +26,7 @@ public class TransactionLogImpl
 	implements TransactionLog
 {
 	private static final Logger logger = LoggerFactory.getLogger(TransactionLogImpl.class);
-	
+
 	private final Log log;
 	private final LongIdGenerator ids;
 
@@ -46,7 +46,7 @@ public class TransactionLogImpl
 			{
 				logger.trace("[" + tx + "] Transaction started");
 			}
-			
+
 			log.append(Bytes.viaDataOutput(out -> {
 				out.write(MessageConstants.START_TRANSACTION);
 				out.writeVLong(tx);
@@ -56,7 +56,7 @@ public class TransactionLogImpl
 		{
 			throw new StorageException("Could not start transaction, log said: " + e.getMessage(), e);
 		}
-		
+
 		return tx;
 	}
 
@@ -70,7 +70,7 @@ public class TransactionLogImpl
 				{
 					logger.trace("[" + tx + "] Wrote chunk for " + entity + "[" + id + "]: " + Base64.getEncoder().encodeToString(data));
 				}
-				
+
 				log.append(Bytes.viaDataOutput(out -> {
 					out.write(MessageConstants.STORE_CHUNK);
 					out.writeVLong(tx);
@@ -79,14 +79,14 @@ public class TransactionLogImpl
 					IOUtils.writeByteArray(data, offset, length, out);
 				}));
 			});
-			
+
 			// Write a zero length chunk to indicate end of entity
-			
+
 			if(logger.isTraceEnabled())
 			{
 				logger.trace("[" + tx + "] Wrote end of data for " + entity + "[" + id + "]");
 			}
-			
+
 			log.append(Bytes.viaDataOutput(out -> {
 				out.write(MessageConstants.STORE_CHUNK);
 				out.writeVLong(tx);
@@ -112,14 +112,14 @@ public class TransactionLogImpl
 			{
 				logger.trace("[" + tx + "] Wrote delete for " + entity + "[" + id + "]");
 			}
-			
+
 			log.append(Bytes.viaDataOutput(out -> {
 				out.write(MessageConstants.DELETE);
 				out.writeVLong(tx);
 				out.writeString(entity);
 				IOUtils.writeId(id, out);
 			}));
-			
+
 			// TODO: How do we know if something was deleted?
 			return new DeleteResult()
 			{
@@ -145,7 +145,7 @@ public class TransactionLogImpl
 			{
 				logger.trace("[" + tx + "] Transaction committed");
 			}
-			
+
 			log.append(Bytes.viaDataOutput(out -> {
 				out.write(MessageConstants.COMMIT_TRANSACTION);
 				out.writeVLong(tx);
@@ -166,7 +166,7 @@ public class TransactionLogImpl
 			{
 				logger.trace("[" + tx + "] Transaction rolled back");
 			}
-			
+
 			log.append(Bytes.viaDataOutput(out -> {
 				out.write(MessageConstants.ROLLBACK_TRANSACTION);
 				out.writeVLong(tx);

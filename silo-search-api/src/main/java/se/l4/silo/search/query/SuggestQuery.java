@@ -11,7 +11,7 @@ public class SuggestQuery<R>
 	{
 		this.field = field;
 	}
-	
+
 	public R text(String text)
 	{
 		receiver.addQuery(new QueryItem("suggest", new SuggestQueryData(field, text)));

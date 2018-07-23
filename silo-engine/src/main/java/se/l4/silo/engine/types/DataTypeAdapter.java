@@ -12,7 +12,7 @@ public class DataTypeAdapter
 {
 	private static final byte NULL = 0;
 	private static final byte VALUE = 1;
-	
+
 	@SuppressWarnings("rawtypes")
 	private final FieldType type;
 
@@ -21,7 +21,7 @@ public class DataTypeAdapter
 	{
 		this.type = type;
 	}
-	
+
 	@SuppressWarnings("rawtypes")
 	public FieldType getType()
 	{
@@ -50,7 +50,7 @@ public class DataTypeAdapter
 		{
 			return -1;
 		}
-		
+
 		return type.compare(a, b);
 	}
 
@@ -60,7 +60,7 @@ public class DataTypeAdapter
 	{
 		return type.estimateMemory(obj);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private void write(Object obj, ExtendedDataOutputImpl out)
 	{
@@ -97,7 +97,7 @@ public class DataTypeAdapter
 			write(obj[i], out);
 		}
 	}
-	
+
 	private Object read(ExtendedDataInputImpl in)
 	{
 		try
@@ -138,21 +138,21 @@ public class DataTypeAdapter
 	private static class ExtendedDataOutputImpl
 		extends AbstractExtendedDataOutput
 	{
-		
+
 		private final WriteBuffer buf;
 
 		public ExtendedDataOutputImpl(WriteBuffer buf)
 		{
 			this.buf = buf;
 		}
-		
+
 		@Override
 		public void write(byte[] buffer, int offset, int length)
 			throws IOException
 		{
 			buf.put(buffer, offset, length);
 		}
-		
+
 		@Override
 		public void write(int b)
 			throws IOException
@@ -166,7 +166,7 @@ public class DataTypeAdapter
 		{
 		}
 	}
-	
+
 	private static class ExtendedDataInputImpl
 		extends AbstractExtendedDataInput
 	{
@@ -176,21 +176,21 @@ public class DataTypeAdapter
 		{
 			this.buf = buf;
 		}
-		
+
 		@Override
 		public int read() throws IOException
 		{
 			if(! buf.hasRemaining()) return -1;
 			return buf.get() & 0xFF;
 		}
-		
+
 		@Override
 		public byte readByte()
 			throws IOException
 		{
 			return buf.get();
 		}
-		
+
 		@Override
 		public void readFully(byte[] buffer, int offset, int length)
 			throws IOException
@@ -199,10 +199,10 @@ public class DataTypeAdapter
 			{
 				throw new EOFException("Can not read " + length + " bytes, only have " + buf.remaining() + " left");
 			}
-			
+
 			buf.get(buffer, offset, length);
 		}
-		
+
 		@Override
 		public int skipBytes(int n) throws IOException
 		{

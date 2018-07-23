@@ -7,7 +7,7 @@ import se.l4.silo.engine.Storage;
 
 /**
  * Factory for creating instances of {@link BinaryEntity}.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -19,7 +19,7 @@ public class BinaryEntityFactory
 	{
 		return "silo:binary";
 	}
-	
+
 	@Override
 	public Class<Void> getConfigType()
 	{

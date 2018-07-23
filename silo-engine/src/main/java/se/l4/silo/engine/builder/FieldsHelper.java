@@ -12,13 +12,13 @@ public class FieldsHelper<T>
 {
 	private final List<FieldConfig> fields;
 	private final T parent;
-	
+
 	public FieldsHelper(T parent)
 	{
 		this.parent = parent;
 		fields = new ArrayList<>();
 	}
-	
+
 	@Override
 	public FieldDefBuilder<T> defineField(String field)
 	{
@@ -48,20 +48,20 @@ public class FieldsHelper<T>
 				fields.add(new FieldConfig(field, type, collection));
 				return parent;
 			}
-			
+
 		};
 	}
-	
+
 	@Override
 	public T defineField(String field, String type)
 	{
 		return defineField(field).setType(type).done();
 	}
-	
+
 	/**
 	 * Get an instance of {@link Fields} containing the information about
 	 * fields that this helper created.
-	 * 
+	 *
 	 * @return
 	 */
 	public List<FieldConfig> build()

@@ -18,7 +18,7 @@ import se.l4.silo.query.QueryResult;
  * exposed to {@link Entity entity implementations}. This allows the
  * {@link StorageEngine} to switch the underlying storage when needed,
  * for example when a {@link Snapshot} is being installed.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -26,21 +26,21 @@ public class DelegatingStorage
 	implements Storage
 {
 	private volatile Storage storage;
-	
+
 	public DelegatingStorage()
 	{
 	}
-	
+
 	public Storage getStorage()
 	{
 		return storage;
 	}
-	
+
 	public void setStorage(Storage storage)
 	{
 		this.storage = storage;
 	}
-	
+
 	private void check()
 	{
 		if(storage == null)

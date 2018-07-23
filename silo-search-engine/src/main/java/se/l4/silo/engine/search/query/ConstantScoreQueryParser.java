@@ -28,7 +28,7 @@ public class ConstantScoreQueryParser
 		{
 			return q;
 		}
-		
+
 		return new BoostQuery(q, data.getScore());
 	}
 

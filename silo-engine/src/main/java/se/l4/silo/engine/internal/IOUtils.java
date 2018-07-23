@@ -8,7 +8,7 @@ import se.l4.silo.StorageException;
 
 /**
  * Utilities to help with certain IO operations.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -17,7 +17,7 @@ public class IOUtils
 	private IOUtils()
 	{
 	}
-	
+
 	public static void writeId(Object id, ExtendedDataOutput out)
 		throws IOException
 	{
@@ -50,7 +50,7 @@ public class IOUtils
 			throw new StorageException("Unsupported identifier of type " + id.getClass().getName() + ", value is " + id);
 		}
 	}
-	
+
 	public static Object readId(ExtendedDataInput in)
 		throws IOException
 	{
@@ -78,7 +78,7 @@ public class IOUtils
 		out.writeVInt(data.length);
 		out.write(data);
 	}
-	
+
 	public static void writeByteArray(byte[] data, int offset, int length, ExtendedDataOutput out)
 		throws IOException
 	{

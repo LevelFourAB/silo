@@ -15,30 +15,30 @@ public class StructuredEntityBuilderImpl<Parent>
 {
 	private final Function<EntityConfig, Parent> configReceiver;
 	private final FieldsHelper<StructuredEntityBuilder<Parent>> fields;
-	
+
 	private final StructuredEntityConfig config;
 
 	public StructuredEntityBuilderImpl(Function<EntityConfig, Parent> configReceiver)
 	{
 		this.configReceiver = configReceiver;
-		
+
 		config = new StructuredEntityConfig();
 		fields = new FieldsHelper<>(this);
 	}
-	
+
 	@Override
 	public Parent done()
 	{
 		config.fields = this.fields.build();
 		return configReceiver.apply(config);
 	}
-	
+
 	@Override
 	public FieldDefBuilder<StructuredEntityBuilder<Parent>> defineField(String field)
 	{
 		return fields.defineField(field);
 	}
-	
+
 	@Override
 	public StructuredEntityBuilder<Parent> defineField(String field, String type)
 	{

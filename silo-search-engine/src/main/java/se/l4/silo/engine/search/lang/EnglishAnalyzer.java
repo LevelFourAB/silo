@@ -15,12 +15,12 @@ public class EnglishAnalyzer
 	extends Analyzer
 {
 	private final boolean stopwords;
-	
+
 	public EnglishAnalyzer(boolean stopwords)
 	{
 		this.stopwords = stopwords;
 	}
-	
+
 	@Override
 	protected TokenStreamComponents createComponents(String fieldName)
 	{
@@ -28,13 +28,13 @@ public class EnglishAnalyzer
 		TokenStream result = new StandardFilter(source);
 		result = new EnglishPossessiveFilter(result);
 		result = new LowerCaseFilter(result);
-		
+
 		if(stopwords)
 		{
 			result = new StopFilter(result, StopAnalyzer.ENGLISH_STOP_WORDS_SET);
 		}
 		result = new PorterStemFilter(result);
-		
+
 		return new TokenStreamComponents(source, result);
 	}
 

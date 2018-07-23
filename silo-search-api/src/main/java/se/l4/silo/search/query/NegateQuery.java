@@ -11,13 +11,13 @@ public class NegateQuery<R>
 	public NegateQuery()
 	{
 	}
-	
+
 	@Override
 	public void addQuery(QueryItem item)
 	{
 		receiver.addQuery(new QueryItem("negate", item));
 	}
-	
+
 	@Override
 	public <P extends QueryPart<R>> P query(P q)
 	{

@@ -10,46 +10,46 @@ import se.l4.commons.io.Bytes;
 /**
  * Helper to check against actual operations against a set of expected
  * operations.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
 public class OpChecker
 {
 	private final LinkedList<Object[]> queue;
-	
+
 	public OpChecker()
 	{
 		queue = new LinkedList<>();
 	}
-	
+
 	public void expect(Object... data)
 	{
 		queue.add(data);
 	}
-	
+
 	public void check(Object... data)
 	{
 		if(queue.isEmpty())
 		{
 			throw new AssertionError("No more expected operations");
 		}
-		
+
 		Object[] first = queue.poll();
 		if(first.length != data.length)
 		{
 			throw new AssertionError("Operation did not match, expected: "
 				+ Arrays.toString(first) + " but got " + Arrays.toString(data));
 		}
-		
+
 		boolean matches = true;
 		for(int i=0, n=first.length; i<n; i++)
 		{
 			Object a = first[i];
 			Object b = data[i];
-			
+
 			if(a == b) continue;
-			if(a == null || b == null) 
+			if(a == null || b == null)
 			{
 				matches = false;
 			}
@@ -68,10 +68,10 @@ public class OpChecker
 							throw new AssertionError("Operation did not match for argument "
 									+ i + ", of type bytes, mismatch on index " + idx);
 						}
-						
+
 						idx++;
 					}
-					
+
 				}
 				catch(IOException e)
 				{
@@ -82,7 +82,7 @@ public class OpChecker
 			{
 				matches = false;
 			}
-			
+
 			if(! matches)
 			{
 				throw new AssertionError("Operation did not match for argument "
@@ -90,7 +90,7 @@ public class OpChecker
 					+ Arrays.toString(first) + " but got " + Arrays.toString(data));
 			}
 		}
-		
+
 	}
 
 	public void checkEmpty()

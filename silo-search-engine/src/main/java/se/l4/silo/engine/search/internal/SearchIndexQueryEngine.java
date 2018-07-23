@@ -255,8 +255,8 @@ public class SearchIndexQueryEngine
 					else
 					{
 						innerDocs = Arrays.copyOfRange(
-							innerDocs, 
-							(int) request.getOffset(), 
+							innerDocs,
+							(int) request.getOffset(),
 							Math.min(innerDocs.length, (int) (request.getOffset() + request.getLimit()))
 						);
 					}

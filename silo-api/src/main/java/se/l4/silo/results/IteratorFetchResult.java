@@ -7,7 +7,7 @@ import se.l4.silo.FetchResult;
 
 /**
  * {@link FetchResult} implemented over an {@link Iterator}.
- * 
+ *
  * @author Andreas Holstenson
  *
  * @param <T>
@@ -29,7 +29,7 @@ public class IteratorFetchResult<T>
 		this.limit = limit;
 		this.total = total;
 	}
-	
+
 	public IteratorFetchResult(Collection<T> data, long offset, long limit, long total)
 	{
 		this(data.iterator(), data.size(), offset, limit, total);
@@ -58,7 +58,7 @@ public class IteratorFetchResult<T>
 	{
 		return limit;
 	}
-	
+
 	@Override
 	public long getTotal()
 	{
@@ -74,6 +74,6 @@ public class IteratorFetchResult<T>
 	@Override
 	public void close()
 	{
-		
+
 	}
 }

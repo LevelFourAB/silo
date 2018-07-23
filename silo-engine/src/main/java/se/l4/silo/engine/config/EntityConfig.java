@@ -8,7 +8,7 @@ import se.l4.silo.Entity;
 /**
  * Configuration for an individual {@link Entity}. Every entity type can have
  * their own configuration data, but they must extend this class.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -18,16 +18,16 @@ public class EntityConfig
 {
 	@Expose
 	private String type;
-	
+
 	public EntityConfig()
 	{
 	}
-	
+
 	public EntityConfig(@Expose("type") String type)
 	{
 		this.type = type;
 	}
-	
+
 	public String getType()
 	{
 		return type;

@@ -35,7 +35,7 @@ public class StandardQueryParser
 						field = fdef.name(field, encounter.currentLanguage());
 						analyzer = fdef.getType().getAnalyzer(encounter.currentLanguage());
 					}
-					
+
 					return super.newFieldQuery(analyzer, field, queryText, quoted);
 				}
 			}

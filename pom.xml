@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	
+
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>se.l4.silo</groupId>
@@ -9,9 +9,9 @@
 	<packaging>pom</packaging>
 
 	<name>${project.artifactId}</name>
-	
+
 	<url>https://github.com/LevelFourAB/silo</url>
-	
+
 	<description>
 		Log-based storage with query functionality
 	</description>
@@ -38,7 +38,7 @@
 		<module>silo-search-api</module>
 		<module>silo-search-engine</module>
  	</modules>
- 	
+
  	<dependencies>
 		<dependency>
 			<groupId>org.slf4j</groupId>
@@ -51,14 +51,14 @@
 			<artifactId>junit</artifactId>
 			<scope>test</scope>
 		</dependency>
-		
+
 		<dependency>
 		    <groupId>com.carrotsearch.randomizedtesting</groupId>
 		    <artifactId>randomizedtesting-runner</artifactId>
 		    <version>2.3.3</version>
 		    <scope>test</scope>
 		</dependency>
-		
+
 		<dependency>
 		    <groupId>net.jodah</groupId>
 		    <artifactId>concurrentunit</artifactId>
@@ -66,7 +66,7 @@
 		    <scope>test</scope>
 		</dependency>
  	</dependencies>
-	
+
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
@@ -75,7 +75,7 @@
 				<version>4.9</version>
 				<scope>test</scope>
 			</dependency>
-			
+
 			<dependency>
 			    <groupId>com.google.inject</groupId>
 			    <artifactId>guice</artifactId>
@@ -83,7 +83,7 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
-	
+
 	<build>
 		<plugins>
 			<plugin>
@@ -112,14 +112,14 @@
 			</plugin>
 		</plugins>
 	</build>
-	
+
 	<!-- Main Github repo -->
 	<scm>
 		<connection>scm:git:git@github.com:LevelFourAB/silo.git</connection>
 		<url>scm:git:git@github.com:LevelFourAB/silo.git</url>
 		<developerConnection>scm:git:git@github.com:LevelFourAB/silo.git</developerConnection>
 	</scm>
-	
+
 	<distributionManagement>
 		<snapshotRepository>
 			<id>ossrh</id>
@@ -130,7 +130,7 @@
 			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
 	</distributionManagement>
-	
+
 	<profiles>
 		<profile>
 			<id>release</id>
@@ -149,7 +149,7 @@
 							</execution>
 						</executions>
 					</plugin>
-					
+
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-javadoc-plugin</artifactId>
@@ -166,7 +166,7 @@
 							</execution>
 						</executions>
 					</plugin>
-					
+
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-gpg-plugin</artifactId>
@@ -181,7 +181,7 @@
 							</execution>
 						</executions>
 		    		</plugin>
-		
+
 					<plugin>
 						<groupId>org.sonatype.plugins</groupId>
 						<artifactId>nexus-staging-maven-plugin</artifactId>
@@ -197,7 +197,7 @@
 			</build>
 		</profile>
 	</profiles>
-	
+
 	<developers>
 		<developer>
 			<id>aholstenson</id>

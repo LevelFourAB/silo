@@ -19,7 +19,7 @@ public class SearchHitImpl<T>
 	{
 		return item;
 	}
-	
+
 	@Override
 	public float score()
 	{

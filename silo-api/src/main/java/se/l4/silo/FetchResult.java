@@ -18,7 +18,7 @@ import se.l4.silo.results.TransformingFetchResult;
 /**
  * Result of a fetch request, contains the results and information about the
  * parameters used for fetching.
- * 
+ *
  * @author Andreas Holstenson
  *
  * @param <T>
@@ -28,42 +28,42 @@ public interface FetchResult<T>
 {
 	/**
 	 * Get the number of returned results.
-	 * 
+	 *
 	 * @return
 	 */
 	long getSize();
-	
+
 	/**
 	 * Get the offset used to fetch these results.
-	 * 
+	 *
 	 * @return
 	 */
 	long getOffset();
-	
+
 	/**
 	 * Get the limit used to fetch these results.
-	 * 
+	 *
 	 * @return
 	 */
 	long getLimit();
-	
+
 	/**
 	 * Get the total number of results available.
-	 * 
+	 *
 	 * @return
 	 */
 	long getTotal();
 
 	/**
 	 * Check if these results are empty.
-	 * 
+	 *
 	 * @return
 	 */
 	boolean isEmpty();
-	
+
 	/**
 	 * Get the first entry is this result.
-	 *  
+	 *
 	 * @return
 	 */
 	default Optional<T> first()
@@ -73,16 +73,16 @@ public interface FetchResult<T>
 		{
 			return Optional.of(it.next());
 		}
-		
+
 		return Optional.empty();
 	}
-	
+
 	@Override
 	void close();
-	
+
 	/**
 	 * Transform this fetch result using the given function.
-	 * 
+	 *
 	 * @param func
 	 * @return
 	 */
@@ -90,42 +90,42 @@ public interface FetchResult<T>
 	{
 		return new TransformingFetchResult<N>(this, func);
 	}
-	
+
 	@Override
 	default Spliterator<T> spliterator()
 	{
 		return new FetchResultSpliterator<T>(this);
 	}
-	
+
 	/**
 	 * Get a {@link Stream} for this result, see {@link Collection#stream()}
 	 * for details. The returned stream will close this result when it itself
 	 * is closed.
-	 * 
+	 *
 	 * @return
 	 */
-    default Stream<T> stream()
-    {
-        Stream<T> stream = StreamSupport.stream(spliterator(), false);
-        stream.onClose(this::close);
-        return stream;
-    }
+	default Stream<T> stream()
+	{
+		Stream<T> stream = StreamSupport.stream(spliterator(), false);
+		stream.onClose(this::close);
+		return stream;
+	}
 
 	/**
 	 * Get a {@link Stream} for this result for parallel operations,
 	 * see {@link Collection#parallelStream()} for details.
 	 * The returned stream will close this result when it itself is closed.
-	 * 
+	 *
 	 * @return
 	 */
-    default Stream<T> parallelStream()
-    {
-        return StreamSupport.stream(spliterator(), true);
-    }
-	
+	default Stream<T> parallelStream()
+	{
+		return StreamSupport.stream(spliterator(), true);
+	}
+
 	/**
 	 * Get an empty fetch result.
-	 * 
+	 *
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
@@ -133,10 +133,10 @@ public interface FetchResult<T>
 	{
 		return (FetchResult<N>) EmptyFetchResult.INSTANCE;
 	}
-	
+
 	/**
 	 * Get a {@link FetchResult} representing the fetch of a single item.
-	 * 
+	 *
 	 * @param data
 	 * @return
 	 */
@@ -144,11 +144,11 @@ public interface FetchResult<T>
 	{
 		return new IteratorFetchResult<>(Iterators.singletonIterator(data), 1, 0, -1, 1);
 	}
-	
+
 	/**
 	 * Get a {@link FetchResult} for the given collection. This will assume
 	 * that the offset and limit used to fetch this was zero.
-	 * 
+	 *
 	 * @param collection
 	 * @return
 	 */
@@ -156,11 +156,11 @@ public interface FetchResult<T>
 	{
 		return new IteratorFetchResult<>(collection, 0, 0, collection.size());
 	}
-	
+
 	/**
 	 * Get a {@link FetchResult} for the given collection. This will assume
 	 * that the offset and limit used to fetch this was zero.
-	 * 
+	 *
 	 * @param collection
 	 * @return
 	 */
@@ -170,7 +170,7 @@ public interface FetchResult<T>
 		{
 			throw new IllegalArgumentException("hits must be larger than or equal to collection size (" + hits + " < " + collection.size() + ")");
 		}
-		
+
 		return new IteratorFetchResult<>(collection, offset, limit, hits);
 	}
 }

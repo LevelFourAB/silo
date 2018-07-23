@@ -6,7 +6,7 @@ import se.l4.silo.query.QueryFetchResult;
 
 /**
  * Implementation of {@link QueryFetchResult} for transforming results.
- * 
+ *
  * @author Andreas Holstenson
  *
  * @param <T>
@@ -20,7 +20,7 @@ public class TransformingQueryFetchResult<T>
 	public <I> TransformingQueryFetchResult(QueryFetchResult<I> in, Function<I, T> func)
 	{
 		super(in, func);
-		
+
 		this.in = in;
 	}
 

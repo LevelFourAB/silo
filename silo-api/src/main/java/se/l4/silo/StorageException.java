@@ -2,7 +2,7 @@ package se.l4.silo;
 
 /**
  * Exception thrown when a storage operation can not be completed.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -30,5 +30,5 @@ public class StorageException
 	{
 		super(cause);
 	}
-	
+
 }

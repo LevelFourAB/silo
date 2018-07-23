@@ -5,7 +5,7 @@ public class UserQueryData
 	private final String[] fields;
 	private final float[] boosts;
 	private final String query;
-	
+
 	public UserQueryData(String[] fields, float[] boosts, String query)
 	{
 		this.fields = fields;
@@ -17,12 +17,12 @@ public class UserQueryData
 	{
 		return fields;
 	}
-	
+
 	public float[] getBoosts()
 	{
 		return boosts;
 	}
-	
+
 	public String getQuery()
 	{
 		return query;

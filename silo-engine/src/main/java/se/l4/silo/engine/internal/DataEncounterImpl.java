@@ -27,7 +27,7 @@ public class DataEncounterImpl
 	implements DataEncounter, AutoCloseable
 {
 	private final StorageEngine engine;
-	
+
 	private final Bytes data;
 	private final List<Closeable> opened;
 
@@ -51,13 +51,13 @@ public class DataEncounterImpl
 		{
 			InputStream stream = data.asInputStream();
 			opened.add(stream);
-			
+
 			int tag = stream.read();
 			if(tag != 0)
 			{
 				throw new StorageException("Unknown storage version: " + tag + ", this version of Silo is either old or the data is corrupt");
 			}
-			
+
 			return new BinaryInput(stream);
 		}
 		catch(IOException e)
@@ -65,7 +65,7 @@ public class DataEncounterImpl
 			throw new StorageException("Could not read data from storage during query engine update; " + e.getMessage(), e);
 		}
 	}
-	
+
 	public <T> T withStreamingInput(IoFunction<StreamingInput, T> func)
 	{
 		try(InputStream stream = data.asInputStream())
@@ -75,7 +75,7 @@ public class DataEncounterImpl
 			{
 				throw new StorageException("Unknown storage version: " + tag + ", this version of Silo is either old or the data is corrupt");
 			}
-			
+
 			BinaryInput in = new BinaryInput(stream);
 			return func.apply(in);
 		}
@@ -84,41 +84,41 @@ public class DataEncounterImpl
 			throw new StorageException("Could not read data from storage during query engine update; " + e.getMessage(), e);
 		}
 	}
-	
+
 	@Override
 	public Map<String, Object> findStructuredKeys(Collection<String> keys)
 	{
 		return withStreamingInput(in -> {
 			Map<String, Object> result = new HashMap<>();
-			
+
 			new StructuredKeyFetcher(ImmutableSet.copyOf(keys), result::put).accept(in);
-			
+
 			return result;
 		});
 	}
-	
+
 	@Override
 	public void findStructuredKeys(Collection<String> keys, BiConsumer<String, Object> receiver)
 	{
 		withStreamingInput(in -> {
 			new StructuredKeyFetcher(ImmutableSet.copyOf(keys), receiver).accept(in);
-			
+
 			return null;
 		});
 	}
-	
+
 	@Override
 	public Object[] getStructuredArray(String[] keys)
 	{
 		return getStructuredArray(keys, 0);
 	}
-	
+
 	@Override
 	public Object[] getStructuredArray(String[] keys, int appendCount)
 	{
 		return withStreamingInput(in -> {
 			Object[] result = new Object[keys.length + appendCount];
-			
+
 			new StructuredKeyFetcher(ImmutableSet.copyOf(keys), (k, v) -> {
 				for(int i=0, n=keys.length; i<n; i++)
 				{
@@ -129,17 +129,17 @@ public class DataEncounterImpl
 					}
 				}
 			}).accept(in);
-			
+
 			return result;
 		});
 	}
-	
+
 	@Override
 	public Storage getStorage(String entity)
 	{
 		return engine.getStorage(entity);
 	}
-	
+
 	@Override
 	public Storage getStorage(String entity, String name)
 	{
@@ -160,24 +160,24 @@ public class DataEncounterImpl
 			}
 		}
 	}
-	
+
 	private static class StructuredKeyFetcher
 		implements IoConsumer<StreamingInput>
 	{
 		private final Set<String> keys;
 		private final BiConsumer<String, Object> receiver;
 		private final Set<String> paths;
-		
+
 		public StructuredKeyFetcher(Set<String> keys, BiConsumer<String, Object> receiver)
 		{
 			this.keys = keys;
 			this.receiver = receiver;
-			
+
 			ImmutableSet.Builder<String> paths = ImmutableSet.builder();
 			for(String s : keys)
 			{
 				paths.add(s);
-				
+
 				int start = 0;
 				while(true)
 				{
@@ -193,7 +193,7 @@ public class DataEncounterImpl
 					}
 				}
 			}
-			
+
 			this.paths = paths.build();
 		}
 
@@ -203,7 +203,7 @@ public class DataEncounterImpl
 		{
 			handle(in, null);
 		}
-		
+
 		private void handle(StreamingInput in, String key)
 			throws IOException
 		{
@@ -226,7 +226,7 @@ public class DataEncounterImpl
 					throw new IOException("Structured data invalid, got a token out of order: " + next);
 			}
 		}
-		
+
 		private void handleObject(StreamingInput in, String key)
 			throws IOException
 		{
@@ -235,21 +235,21 @@ public class DataEncounterImpl
 				in.skipValue();
 				return;
 			}
-			
+
 			in.next(Token.OBJECT_START);
-			
+
 			while(in.peek() != Token.OBJECT_END)
 			{
 				in.next(Token.KEY);
 				String localKey = in.getString();
-				
+
 				String subKey = key(key, localKey);
 				handle(in, subKey);
 			}
-			
+
 			in.next(Token.OBJECT_END);
 		}
-		
+
 		private void handleList(StreamingInput in, String key)
 			throws IOException
 		{
@@ -258,39 +258,39 @@ public class DataEncounterImpl
 				in.skipValue();
 				return;
 			}
-			
+
 			in.next(Token.LIST_START);
-			
+
 			while(in.peek() != Token.LIST_END)
 			{
 				handle(in, key);
 			}
-			
+
 			in.next(Token.LIST_END);
 		}
-		
+
 		private void handleValue(StreamingInput in, String key)
 			throws IOException
 		{
 			in.next(Token.VALUE);
-			
+
 			if(keys.contains(key))
 			{
 				receiver.accept(key, in.getValue());
 			}
 		}
-		
+
 		private void handleNull(StreamingInput in, String key)
 			throws IOException
 		{
 			in.next(Token.NULL);
-			
+
 			if(keys.contains(key))
 			{
 				receiver.accept(key, null);
 			}
 		}
-			
+
 		private String key(String current, String sub)
 		{
 			return current == null ? sub : current + '.' + sub;

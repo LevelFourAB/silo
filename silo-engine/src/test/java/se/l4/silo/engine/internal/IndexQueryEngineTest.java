@@ -28,7 +28,7 @@ public class IndexQueryEngineTest
 	private StructuredEntity entity;
 	private Path tmp;
 	private Silo silo;
-	
+
 
 	@Before
 	public void before()
@@ -63,10 +63,10 @@ public class IndexQueryEngineTest
 					.done()
 				.done()
 			.build();
-		
+
 		entity = silo.structured("test");
 	}
-	
+
 	@After
 	public void after()
 		throws Exception
@@ -74,7 +74,7 @@ public class IndexQueryEngineTest
 		silo.close();
 		DataUtils.removeRecursive(tmp);
 	}
-	
+
 	private BinaryInput generateList()
 	{
 		try(ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -88,7 +88,7 @@ public class IndexQueryEngineTest
 			out.write("field2", false);
 			out.writeObjectEnd("");
 			out.flush();
-			
+
 			return new BinaryInput(new ByteArrayInputStream(baos.toByteArray()));
 		}
 		catch(IOException e)
@@ -96,25 +96,25 @@ public class IndexQueryEngineTest
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	@Test
 	public void testStore()
 	{
 		entity.store("test", generateList());
-		
+
 		FetchResult<StreamingInput> fr = entity.query("byField1", IndexQuery.type())
 			.field("field1")
 			.isEqualTo("value1")
 			.run();
-		
+
 		assertThat(fr.getSize(), is(1l));
 	}
-	
+
 	@Test
 	public void testStoreDelete()
 	{
 		entity.store("test", generateList());
-		
+
 		try(FetchResult<StreamingInput> fr = entity.query("byField1", IndexQuery.type())
 			.field("field1")
 			.isEqualTo("value1")
@@ -122,9 +122,9 @@ public class IndexQueryEngineTest
 		{
 			assertThat(fr.getSize(), is(1l));
 		}
-		
+
 		entity.delete("test");
-		
+
 		try(FetchResult<StreamingInput> fr = entity.query("byField1", IndexQuery.type())
 			.field("field1")
 			.isEqualTo("value1")
@@ -133,12 +133,12 @@ public class IndexQueryEngineTest
 			assertThat(fr.getSize(), is(0l));
 		}
 	}
-	
+
 	@Test
 	public void testStoreReplace()
 	{
 		entity.store("test", generateList());
-		
+
 		try(FetchResult<StreamingInput> fr = entity.query("byField1", IndexQuery.type())
 			.field("field1")
 			.isEqualTo("value1")
@@ -146,9 +146,9 @@ public class IndexQueryEngineTest
 		{
 			assertThat(fr.getSize(), is(1l));
 		}
-		
+
 		entity.store("test", generateList());
-		
+
 		try(FetchResult<StreamingInput> fr = entity.query("byField1", IndexQuery.type())
 			.field("field1")
 			.isEqualTo("value1")
@@ -157,13 +157,13 @@ public class IndexQueryEngineTest
 			assertThat(fr.getSize(), is(1l));
 		}
 	}
-	
+
 	@Test
 	public void testStoreMultiple1()
 	{
 		entity.store("test1", generateList());
 		entity.store("test2", generateList());
-		
+
 		try(FetchResult<StreamingInput> fr = entity.query("byField1", IndexQuery.type())
 			.field("field1")
 			.isEqualTo("value1")
@@ -172,13 +172,13 @@ public class IndexQueryEngineTest
 			assertThat(fr.getSize(), is(2l));
 		}
 	}
-	
+
 	@Test
 	public void testStoreMultiple2()
 	{
 		entity.store("test1", generateList());
 		entity.store("test2", generateList());
-		
+
 		try(FetchResult<StreamingInput> fr = entity.query("byField1", IndexQuery.type())
 			.field("field1")
 			.isEqualTo("value2")
@@ -187,12 +187,12 @@ public class IndexQueryEngineTest
 			assertThat(fr.getSize(), is(2l));
 		}
 	}
-	
+
 	@Test
 	public void testStoreDeleteStore()
 	{
 		entity.store("test", generateList());
-		
+
 		try(FetchResult<StreamingInput> fr = entity.query("byField1", IndexQuery.type())
 			.field("field1")
 			.isEqualTo("value1")
@@ -200,9 +200,9 @@ public class IndexQueryEngineTest
 		{
 			assertThat(fr.getSize(), is(1l));
 		}
-		
+
 		entity.delete("test");
-		
+
 		try(FetchResult<StreamingInput> fr = entity.query("byField1", IndexQuery.type())
 			.field("field1")
 			.isEqualTo("value1")
@@ -210,9 +210,9 @@ public class IndexQueryEngineTest
 		{
 			assertThat(fr.getSize(), is(0l));
 		}
-		
+
 		entity.store("test", generateList());
-		
+
 		try(FetchResult<StreamingInput> fr = entity.query("byField1", IndexQuery.type())
 			.field("field1")
 			.isEqualTo("value1")
@@ -221,7 +221,7 @@ public class IndexQueryEngineTest
 			assertThat(fr.getSize(), is(1l));
 		}
 	}
-	
+
 	@Test
 	public void testStoreWithPath()
 	{
@@ -235,16 +235,16 @@ public class IndexQueryEngineTest
 			out.writeObjectEnd("field3");
 			out.writeObjectEnd("");
 			out.flush();
-			
+
 			in = new BinaryInput(new ByteArrayInputStream(baos.toByteArray()));
 		}
 		catch(IOException e)
 		{
 			throw new RuntimeException(e);
 		}
-		
+
 		entity.store("test", in);
-		
+
 		try(FetchResult<StreamingInput> fr = entity.query("byField3", IndexQuery.type())
 			.field("field3.test")
 			.isEqualTo("hello")
@@ -252,9 +252,9 @@ public class IndexQueryEngineTest
 		{
 			assertThat(fr.getSize(), is(1l));
 		}
-		
+
 		entity.delete("test");
-		
+
 		try(FetchResult<StreamingInput> fr = entity.query("byField3", IndexQuery.type())
 			.field("field3.test")
 			.isEqualTo("value1")

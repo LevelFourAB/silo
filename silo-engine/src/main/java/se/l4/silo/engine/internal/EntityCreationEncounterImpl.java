@@ -6,7 +6,7 @@ import se.l4.silo.engine.builder.StorageBuilder;
 
 /**
  * Implementation of {@link EntityCreationEncounter}.
- * 
+ *
  * @author Andreas Holstenson
  *
  * @param <Config>
@@ -38,7 +38,7 @@ public class EntityCreationEncounterImpl<Config>
 	{
 		return config;
 	}
-	
+
 	@Override
 	public SerializerCollection getSerializerCollection()
 	{

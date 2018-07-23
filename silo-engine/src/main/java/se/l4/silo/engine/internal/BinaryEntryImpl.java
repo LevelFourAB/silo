@@ -5,7 +5,7 @@ import se.l4.silo.binary.BinaryEntry;
 
 /**
  * Implementation of {@link BinaryEntry}.
- * 
+ *
  * @author Andreas Holstenson
  *
  */

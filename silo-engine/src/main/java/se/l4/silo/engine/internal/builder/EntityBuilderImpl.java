@@ -10,7 +10,7 @@ import se.l4.silo.engine.internal.binary.BinaryBuilderImpl;
 
 /**
  * Implementation of {@link EntityBuilder}.
- * 
+ *
  * @author Andreas Holstenson
  *
  * @param <Parent>

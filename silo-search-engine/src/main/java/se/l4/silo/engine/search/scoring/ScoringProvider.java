@@ -9,25 +9,25 @@ public interface ScoringProvider<T>
 {
 	/**
 	 * Get the id of this provider.
-	 * 
+	 *
 	 * @return
 	 */
 	String id();
-	
+
 	/**
 	 * Enhance the current {@link IndexDefinition} with extra information needed
 	 * for this scoring to function.
-	 * 
+	 *
 	 * @param encounter
 	 */
 	void setup(IndexDefinitionEncounter encounter);
-	
+
 	/**
 	 * Create a scorer for the given encounter.
-	 * 
+	 *
 	 * @param encounter
 	 * @return
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	QueryScorer createScorer(ScoringEncounter<T> encounter)
 		throws IOException;

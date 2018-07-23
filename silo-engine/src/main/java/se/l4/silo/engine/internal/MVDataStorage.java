@@ -30,7 +30,7 @@ import se.l4.silo.engine.types.VersionedType;
  * Data storage that uses {@link MVStore} to store all of the data. This
  * storage will split the data into smaller pieces so that only a subset
  * of the data needs to be loaded into memory at the same time.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -38,11 +38,11 @@ public class MVDataStorage
 	implements DataStorage
 {
 	private static final Logger log = LoggerFactory.getLogger(MVDataStorage.class);
-	
+
 	private static final int CHUNK_SIZE = 8192;
-	
+
 	private final MVStoreManager store;
-	
+
 	private volatile MVMap<Long, long[]> keys;
 	private volatile MVMap<Long, byte[]> chunks;
 
@@ -51,7 +51,7 @@ public class MVDataStorage
 		this.store = store;
 		reopen();
 	}
-	
+
 	public void reopen()
 	{
 		keys = store.openMap("data.keys", LongFieldType.INSTANCE, VersionedType.singleVersion(new LongArrayFieldType()));
@@ -66,21 +66,21 @@ public class MVDataStorage
 		bytes.asChunks(CHUNK_SIZE, (data, offset, length) -> {
 			long nextId = nextInternalId();
 			ids.add(nextId);
-			
+
 			byte[] buf = Arrays.copyOfRange(data, offset, offset + length);
 			chunks.put(nextId, buf);
-			
+
 			if(log.isTraceEnabled())
 			{
 				log.trace("Store: Wrote " + nextId + " with data " + Base64.getEncoder().encodeToString(buf));
 			}
 		});
-		
+
 		if(log.isTraceEnabled())
 		{
 			log.trace("Store: Mapped " + id + " to " + Arrays.toString(ids.toArray()));
 		}
-		
+
 		long[] old = keys.get(id);
 		if(old != null)
 		{
@@ -89,7 +89,7 @@ public class MVDataStorage
 				chunks.remove(chunk);
 			}
 		}
-		
+
 		keys.put(id, ids.toArray());
 	}
 
@@ -98,14 +98,14 @@ public class MVDataStorage
 		throws IOException
 	{
 		long[] ids = keys.get(id);
-		
+
 		if(log.isTraceEnabled())
 		{
 			log.trace("Get: Mapped " + id + " to " + Arrays.toString(ids));
 		}
-		
+
 		if(ids == null) return null;
-		
+
 		return new ChunkedBytes(ids);
 	}
 
@@ -114,20 +114,20 @@ public class MVDataStorage
 	{
 		long[] ids = keys.get(id);
 		if(ids == null) return;
-		
+
 		if(log.isTraceEnabled())
 		{
 			log.trace("Delete: Mapped " + id + " to " + Arrays.toString(ids));
 		}
-		
+
 		for(long chunk : ids)
 		{
 			chunks.remove(chunk);
 		}
-		
+
 		keys.remove(id);
 	}
-	
+
 	@VisibleForTesting
 	long nextInternalId()
 	{
@@ -160,7 +160,7 @@ public class MVDataStorage
 			{
 				return chunks.get(ids[0]);
 			}
-			
+
 			ByteArrayOutputStream out = new ByteArrayOutputStream(CHUNK_SIZE * ids.length);
 			for(long id : ids)
 			{
@@ -169,7 +169,7 @@ public class MVDataStorage
 			}
 			return out.toByteArray();
 		}
-		
+
 		@Override
 		public void asChunks(ByteArrayConsumer consumer) throws IOException
 		{
@@ -180,36 +180,36 @@ public class MVDataStorage
 			}
 		}
 	}
-	
+
 	private class ChunkedInputStreamEnumeration
 		implements Enumeration<InputStream>
 	{
 		private final long[] ids;
 		private int idx;
-		
+
 		public ChunkedInputStreamEnumeration(long[] ids)
 		{
 			this.ids = ids;
 			idx = 0;
 		}
-		
+
 		@Override
 		public boolean hasMoreElements()
 		{
 			return idx < ids.length;
 		}
-		
+
 		@Override
 		public InputStream nextElement()
 		{
 			long id = ids[idx++];
 			byte[] data = chunks.get(id);
-			
+
 			if(log.isTraceEnabled())
 			{
 				log.trace("read " + id + " with data " + Base64.getEncoder().encodeToString(data));
 			}
-			
+
 			return new ByteArrayInputStream(data);
 		}
 	}

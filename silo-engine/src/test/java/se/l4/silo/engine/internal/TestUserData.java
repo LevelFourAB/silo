@@ -14,11 +14,11 @@ public class TestUserData
 	@Expose int age;
 	@Expose
 	private boolean active;
-	
+
 	public TestUserData()
 	{
 	}
-	
+
 	public TestUserData(int id, String name, int age, boolean active)
 	{
 		super();
@@ -32,7 +32,7 @@ public class TestUserData
 	{
 		return id;
 	}
-	
+
 	@Override
 	public int hashCode()
 	{
@@ -43,7 +43,7 @@ public class TestUserData
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		return result;
 	}
-	
+
 	@Override
 	public boolean equals(Object obj)
 	{

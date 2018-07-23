@@ -13,25 +13,25 @@ public class OrQuery<ReturnPath>
 	implements QueryWithSubqueries<OrQuery<ReturnPath>, ReturnPath>
 {
 	private final List<QueryItem> items;
-	
+
 	public OrQuery()
 	{
-		items = Lists.newArrayList(); 
+		items = Lists.newArrayList();
 	}
-	
+
 	@Override
 	public void addQuery(QueryItem item)
 	{
 		items.add(item);
 	}
-	
+
 	@Override
 	public <P extends QueryPart<OrQuery<ReturnPath>>> P query(P q)
 	{
 		q.parent(this, this);
 		return q;
 	}
-	
+
 	@Override
 	public ReturnPath done()
 	{

@@ -12,12 +12,12 @@ public class ConstantScoreData
 		this.score = score;
 		this.subQuery = subQuery;
 	}
-	
+
 	public float getScore()
 	{
 		return score;
 	}
-	
+
 	public QueryItem getSubQuery()
 	{
 		return subQuery;

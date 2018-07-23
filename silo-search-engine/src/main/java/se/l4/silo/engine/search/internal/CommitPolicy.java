@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 /**
  * Helper that handles committing a {@link IndexWriter} based on a preset
  * configuration.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -20,23 +20,23 @@ public class CommitPolicy
 {
 	private final Logger logger;
 	private final String name;
-	
+
 	private final IndexWriter writer;
 	private final int maxDocuments;
 	private final long maxTime;
-	
+
 	private final AtomicLong count;
 	private final AtomicLong lastCommit;
 
 	private final ScheduledExecutorService executor;
 
 	private volatile Future<?> future;
-	
+
 	public CommitPolicy(Logger logger,
 			String name,
 			ScheduledExecutorService executor,
-			IndexWriter writer, 
-			int maxDocumentChanges, 
+			IndexWriter writer,
+			int maxDocumentChanges,
 			long maxTimeBetweenCommits)
 	{
 		this.logger = logger;
@@ -45,22 +45,22 @@ public class CommitPolicy
 		this.writer = writer;
 		this.maxDocuments = maxDocumentChanges;
 		this.maxTime = maxTimeBetweenCommits;
-		
+
 		count = new AtomicLong();
 		lastCommit = new AtomicLong();
 	}
-	
+
 	public void indexModified()
 	{
 		increment();
 	}
-	
+
 	public void commit()
 		throws IOException
 	{
 		commit(false);
 	}
-	
+
 	private void commit(boolean fromThread)
 		throws IOException
 	{
@@ -69,12 +69,12 @@ public class CommitPolicy
 		writer.commit();
 		long t2 = System.currentTimeMillis();
 		lastCommit.set(System.currentTimeMillis());
-		
+
 		if(logger.isDebugEnabled())
 		{
 			logger.debug("{}, Commit took {} ms", name, (t2-t1));
 		}
-		
+
 		synchronized(this)
 		{
 			if(! fromThread && future != null)
@@ -84,7 +84,7 @@ public class CommitPolicy
 			}
 		}
 	}
-	
+
 	private void increment()
 	{
 		if(count.incrementAndGet() % maxDocuments == 0)
@@ -97,10 +97,10 @@ public class CommitPolicy
 			{
 			}
 		}
-		
+
 		scheduleCommit();
 	}
-	
+
 	private void scheduleCommit()
 	{
 		synchronized(this)
@@ -121,7 +121,7 @@ public class CommitPolicy
 						{
 							logger.error("Unable to commit; " + e.getMessage(), e);
 						}
-						
+
 					}
 				}, maxTime, TimeUnit.SECONDS);
 			}

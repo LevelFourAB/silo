@@ -7,7 +7,7 @@ public interface SearchResult<T>
 {
 	/**
 	 * Get information about facets returned in this result.
-	 * 
+	 *
 	 * @return
 	 */
 	Facets facets();

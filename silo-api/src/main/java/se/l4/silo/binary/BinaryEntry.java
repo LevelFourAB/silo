@@ -5,7 +5,7 @@ import se.l4.silo.FetchResult;
 
 /**
  * Item as returned via {@link FetchResult}.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -13,14 +13,14 @@ public interface BinaryEntry
 {
 	/**
 	 * Get the identifier.
-	 * 
+	 *
 	 * @return
 	 */
 	Object getId();
-	
+
 	/**
 	 * Get the data of this item.
-	 * 
+	 *
 	 * @return
 	 */
 	Bytes getData();

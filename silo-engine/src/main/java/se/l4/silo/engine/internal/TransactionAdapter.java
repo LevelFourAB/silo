@@ -38,7 +38,7 @@ import se.l4.vibe.probes.CountingProbe;
 /**
  * Adapter that handles the translation from individual transaction events
  * to events that are applied to the storage.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -47,12 +47,12 @@ public class TransactionAdapter
 {
 	// Timeout to use for removing stale transactions
 	private static final long TIMEOUT = TimeUnit.HOURS.toMillis(24);
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(TransactionAdapter.class);
-	
+
 	private final StorageApplier applier;
 	private final MVStoreManager store;
-	
+
 	private volatile MVMap<long[], TransactionOperation> log;
 
 	private final CountingProbe activeTx;
@@ -66,15 +66,15 @@ public class TransactionAdapter
 	{
 		this.store = store;
 		this.applier = applier;
-		
+
 		activeTx = new CountingProbe(false);
-		
+
 		txStarts = new CountingProbe();
 		txCommits = new CountingProbe();
 		txRollbacks = new CountingProbe();
-		
+
 		logEvents = new CountingProbe();
-		
+
 		if(vibe != null)
 		{
 			vibe.sample(CombinedProbes.<Long>builder()
@@ -86,20 +86,20 @@ public class TransactionAdapter
 				)
 				.at("tx/summary")
 				.export();
-			
+
 			vibe.sample(logEvents)
 				.at("log/events")
 				.export();
 		}
-		
+
 		reopen();
-		
+
 		if(executor != null)
 		{
 			executor.scheduleAtFixedRate(this::removeStale, 1, 5, TimeUnit.MINUTES);
 		}
 	}
-	
+
 	public void reopen()
 	{
 		log = store.openMap("tx.log", new LongArrayFieldType(), new TransactionOperationType());
@@ -116,16 +116,16 @@ public class TransactionAdapter
 				}
 			}
 		}
-		
+
 		logger.info(activeTx.peek() + " active transactions spread over " + log.size() + " entries in the log");
 	}
-	
+
 	@Override
 	public void accept(LogEntry item)
 		throws IOException
 	{
 		logEvents.increase();
-		
+
 		try(ExtendedDataInput in = item.getData().asDataInput())
 		{
 			int msgType = in.readVInt();
@@ -164,7 +164,7 @@ public class TransactionAdapter
 			}
 		}
 	}
-	
+
 	@VisibleForTesting
 	public void removeStale()
 	{
@@ -186,24 +186,24 @@ public class TransactionAdapter
 					}
 				}
 			}
-			
+
 			if(! toRemove.isEmpty())
 			{
 				logger.info("Removing " + toRemove.size() + " stale transactions");
-			
+
 				for(LongCursor c : toRemove)
 				{
 					removeTransaction(c.value);
 				}
-				
+
 				logger.info("Reduced to " + activeTx.peek() + " active transactions");
 			}
 		}
 	}
-	
+
 	/**
 	 * Start of transaction.
-	 * 
+	 *
 	 * @param tx
 	 * @param entity
 	 * @param id
@@ -220,26 +220,26 @@ public class TransactionAdapter
 		{
 			long[] key = it.next();
 			if(key[0] != tx) break;
-			
+
 			nextId = (key[1]) + 1;
 		}
-		
+
 		// Store the data
 		long[] key = new long[] { tx, nextId };
 		log.put(key, TransactionOperation.start(timestamp));
-		
+
 		activeTx.increase();
-		
+
 		if(logger.isTraceEnabled())
 		{
 			logger.trace("[" + tx + "] Starting transaction");
 		}
 	}
-	
+
 	/**
 	 * Store information about a store operation for a given entity. This
 	 * method will take chunked data and store it in the internal log.
-	 * 
+	 *
 	 * @param tx
 	 * @param entity
 	 * @param id
@@ -260,20 +260,20 @@ public class TransactionAdapter
 		{
 			nextId = ceil[1] + 1;
 		}
-		
+
 		// Store the data
 		long[] key = new long[] { tx, nextId };
 		log.put(key, TransactionOperation.store(entity, id, data));
-		
+
 		if(logger.isTraceEnabled())
 		{
 			logger.trace("[" + tx + "] Wrote " + nextId + " for " + entity + "[" + id + "] with data " + Base64.getEncoder().encodeToString(data));
 		}
 	}
-	
+
 	/**
 	 * Indicate that something has been deleted in a transaction.
-	 * 
+	 *
 	 * @param tx
 	 * @param entity
 	 * @param id
@@ -287,22 +287,22 @@ public class TransactionAdapter
 		{
 			long[] key = it.next();
 			if(key[0] != tx) break;
-			
+
 			nextId = (key[1]) + 1;
 		}
-		
+
 		long[] key = new long[] { tx, nextId };
 		log.put(key, TransactionOperation.delete(entity, id));
-		
+
 		if(logger.isTraceEnabled())
 		{
 			logger.trace("[" + tx + "] Wrote " + nextId + " as delete of " + entity + "[" + id + "]");
 		}
 	}
-	
+
 	/**
 	 * Remove a transaction from the log.
-	 * 
+	 *
 	 * @param tx
 	 */
 	private void removeTransaction(long tx)
@@ -313,26 +313,26 @@ public class TransactionAdapter
 		{
 			long[] key = it.next();
 			if(key[0] != tx) break;
-			
+
 			keysToRemove.add(key);
 		}
-		
+
 		for(Object o : keysToRemove)
 		{
 			log.remove(o);
 		}
-		
+
 		activeTx.decrease();
-		
+
 		if(logger.isTraceEnabled())
 		{
 			logger.trace("[" + tx + "] Removing from stored log");
 		}
 	}
-	
+
 	/**
 	 * Apply a transaction to the storage.
-	 *  
+	 *
 	 * @param tx
 	 */
 	private void applyTransaction(long tx)
@@ -344,7 +344,7 @@ public class TransactionAdapter
 		{
 			long[] key = it.next();
 			if(key[0] != tx) break;
-			
+
 			TransactionOperation op = log.get(key);
 			switch(op.getType())
 			{
@@ -368,10 +368,10 @@ public class TransactionAdapter
 					// Do nothing for other types
 			}
 		}
-		
+
 		removeTransaction(tx);
 	}
-	
+
 	private class ChunkedBytes
 		implements Bytes
 	{
@@ -381,26 +381,26 @@ public class TransactionAdapter
 		{
 			this.keys = keys;
 		}
-		
+
 		@Override
 		public InputStream asInputStream() throws IOException
 		{
 			return new SequenceInputStream(new InputStreamEnumeration(keys));
 		}
-		
+
 		@Override
 		public byte[] toByteArray() throws IOException
 		{
 			return ByteStreams.toByteArray(asInputStream());
 		}
 	}
-	
+
 	private class InputStreamEnumeration
 		implements Enumeration<InputStream>
 	{
 		private final Iterator<long[]> it;
 
-		
+
 		public InputStreamEnumeration(List<long[]> keys)
 		{
 			it = keys.iterator();
@@ -411,20 +411,20 @@ public class TransactionAdapter
 		{
 			return it.hasNext();
 		}
-		
+
 		@Override
 		public InputStream nextElement()
 		{
 			long[] key = it.next();
-			
+
 			if(logger.isTraceEnabled())
 			{
 				logger.trace("[" + key[0] + "] Reading id " + key[1] + " with data " + Base64.getEncoder().encodeToString(log.get(key).getData()));
 			}
-			
+
 			return new ByteArrayInputStream(log.get(key).getData());
 		}
-		
-		
+
+
 	}
 }

@@ -18,7 +18,7 @@ import se.l4.silo.results.IteratorFetchResult;
 
 /**
  * Implementation of {@link QueryEncounter}.
- * 
+ *
  * @author Andreas Holstenson
  *
  * @param <T>
@@ -30,7 +30,7 @@ public class QueryEncounterImpl<T, R>
 	private final LongFunction<R> dataLoader;
 	private final List<QueryResult<R>> result;
 	private final Map<String, Object> metadata;
-	
+
 	private long offset;
 	private long limit;
 	private long totalHits;
@@ -48,34 +48,34 @@ public class QueryEncounterImpl<T, R>
 	{
 		return data;
 	}
-	
+
 	@Override
 	public Object load(long id)
 	{
 		return dataLoader.apply(id);
 	}
-	
+
 	@Override
 	public void receive(long id)
 	{
 		result.add(new QueryResultImpl<>(id, Collections.emptyMap(), dataLoader));
 	}
-	
+
 	@Override
 	public void receive(long id, Consumer<BiConsumer<String, Object>> metadataCreator)
 	{
 		ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
 		metadataCreator.accept(builder::put);
-		
+
 		result.add(new QueryResultImpl<>(id, builder.build(), dataLoader));
 	}
-	
+
 	@Override
 	public void addMetadata(String key, Object value)
 	{
 		metadata.put(key, value);
 	}
-	
+
 	@Override
 	public void setMetadata(long offset, long limit, long totalHits)
 	{
@@ -83,13 +83,13 @@ public class QueryEncounterImpl<T, R>
 		this.limit = limit;
 		this.totalHits = totalHits;
 	}
-	
+
 	public QueryFetchResult<QueryResult<R>> getResult()
 	{
 		IteratorFetchResult<QueryResult<R>> fr = new IteratorFetchResult<>(result, offset, limit, totalHits);
 		return new DelegatingQueryFetchResult<>(fr, metadata);
 	}
-	
+
 	private static class QueryResultImpl<R>
 		implements QueryResult<R>
 	{
@@ -116,6 +116,6 @@ public class QueryEncounterImpl<T, R>
 		{
 			return (M) metadata.get(key);
 		}
-		
+
 	}
 }

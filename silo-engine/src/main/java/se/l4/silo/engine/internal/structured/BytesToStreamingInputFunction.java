@@ -13,7 +13,7 @@ public class BytesToStreamingInputFunction
 	implements Function<Bytes, StreamingInput>
 {
 	public static final BytesToStreamingInputFunction INSTANCE = new BytesToStreamingInputFunction();
-	
+
 	public BytesToStreamingInputFunction()
 	{
 	}
@@ -30,7 +30,7 @@ public class BytesToStreamingInputFunction
 				current.close();
 				throw new StorageException("Data has an unknown version: " + version + ". Data is corrupt.");
 			}
-			
+
 			return new BinaryInput(current);
 		}
 		catch(IOException e)

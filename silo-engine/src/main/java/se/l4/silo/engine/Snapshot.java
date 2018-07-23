@@ -6,7 +6,7 @@ import java.io.InputStream;
 
 /**
  * A snapshot of some data.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -15,9 +15,9 @@ public interface Snapshot
 {
 	/**
 	 * Get this stream as an {@link InputStream}.
-	 * 
+	 *
 	 * @return
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	InputStream asStream()
 		throws IOException;

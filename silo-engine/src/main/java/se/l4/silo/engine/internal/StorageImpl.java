@@ -37,7 +37,7 @@ import se.l4.silo.results.IteratorFetchResult;
 
 /**
  * Implementation of {@link Storage}.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -49,7 +49,7 @@ public class StorageImpl
 	private final TransactionSupport transactionSupport;
 	private final DataStorage storage;
 	private final PrimaryIndex primary;
-	
+
 	private final ImmutableMap<String, QueryEngine<?>> queryEngines;
 	private final QueryEngineUpdater queryEngineUpdater;
 
@@ -71,13 +71,13 @@ public class StorageImpl
 		this.transactionSupport = transactionSupport;
 		this.storage = storage;
 		this.primary = primary;
-		
+
 		ImmutableMap.Builder<String, QueryEngine<?>> builder = ImmutableMap.builder();
 		for(Map.Entry<String, QueryEngineConfig> queryEngineConfig : queryEngines.entrySet())
 		{
 			String key = queryEngineConfig.getKey();
 			QueryEngineConfig config = queryEngineConfig.getValue();
-			
+
 			String type = config.getType();
 			QueryEngineFactory<?, ?> queryEngineFactory = factories.forQueryEngine(type);
 
@@ -91,14 +91,14 @@ public class StorageImpl
 				config.as(queryEngineFactory.getConfigClass()),
 				fields
 			));
-			
+
 			builder.put(key, queryEngine);
 		}
-		
+
 		this.queryEngines = builder.build();
 		this.queryEngineUpdater = new QueryEngineUpdater(engine, stateStore, this, executor, name, this.queryEngines);
 	}
-	
+
 	@Override
 	public void close()
 		throws IOException
@@ -117,7 +117,7 @@ public class StorageImpl
 		{
 			log.trace("[" + name + "] TX store of " + id);
 		}
-		
+
 		TransactionExchange tx = transactionSupport.getExchange();
 		try
 		{
@@ -128,7 +128,7 @@ public class StorageImpl
 		catch(Throwable e)
 		{
 			tx.rollback();
-			
+
 			throw new StorageException("Unable to store data with id " + id + "; " + e.getMessage(), e);
 		}
 	}
@@ -140,7 +140,7 @@ public class StorageImpl
 		{
 			log.trace("[" + name + "] TX delete of " + id);
 		}
-		
+
 		TransactionExchange tx = transactionSupport.getExchange();
 		try
 		{
@@ -151,23 +151,23 @@ public class StorageImpl
 		catch(Throwable e)
 		{
 			tx.rollback();
-			
+
 			throw new StorageException("Unable to delete data with id " + id + "; " + e.getMessage(), e);
 		}
 	}
-	
+
 	@Override
 	public Bytes get(Object id)
 	{
 		long internalId = primary.get(id);
-		
+
 		if(log.isTraceEnabled())
 		{
 			log.trace("[" + name + "] Getting " + id + " mapped to internal id " + internalId);
 		}
-		
+
 		if(internalId == 0) return null;
-		
+
 		try
 		{
 			return storage.get(internalId);
@@ -177,7 +177,7 @@ public class StorageImpl
 			throw new StorageException("Unable to get data with id " + id + "; " + e.getMessage(), e);
 		}
 	}
-	
+
 	public Bytes getInternal(long id)
 	{
 		try
@@ -189,22 +189,22 @@ public class StorageImpl
 			throw new StorageException("Unable to get internal data with id " + id + "; " + e.getMessage(), e);
 		}
 	}
-	
+
 	public long getLatest()
 	{
 		return primary.latest();
 	}
-	
+
 	public long nextId(long id)
 	{
 		return primary.nextAfter(id);
 	}
-	
+
 	public int size()
 	{
 		return primary.size();
 	}
-	
+
 	@Override
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public <R> QueryFetchResult<QueryResult<R>> query(String engine, Object query, Function<Bytes, R> dataLoader)
@@ -214,7 +214,7 @@ public class StorageImpl
 		{
 			throw new StorageException("Unknown query engine `" + engine + "`");
 		}
-		
+
 		QueryEncounterImpl encounter = new QueryEncounterImpl<>(query, id -> {
 			try
 			{
@@ -230,12 +230,12 @@ public class StorageImpl
 				throw new StorageException("Unable to fetch data for internal id " + id + "; " + e.getMessage(), e);
 			}
 		});
-		
+
 		qe.query(encounter);
-		
+
 		return encounter.getResult();
 	}
-	
+
 	@Override
 	public FetchResult<Bytes> stream()
 	{
@@ -244,17 +244,17 @@ public class StorageImpl
 		{
 			return FetchResult.empty();
 		}
-		
+
 		return new IteratorFetchResult<>(new Iterator<Bytes>()
 		{
 			private long current = first;
-			
+
 			@Override
 			public boolean hasNext()
 			{
 				return current != 0;
 			}
-			
+
 			@Override
 			public Bytes next()
 			{
@@ -262,7 +262,7 @@ public class StorageImpl
 				{
 					throw new NoSuchElementException();
 				}
-				
+
 				try
 				{
 					long toFetch = current;
@@ -279,7 +279,7 @@ public class StorageImpl
 
 	/**
 	 * Store an entry for this entity.
-	 * 
+	 *
 	 * @param id
 	 * @param bytes
 	 * @throws IOException
@@ -289,22 +289,22 @@ public class StorageImpl
 	{
 		long previous = primary.latest();
 		long internalId = primary.store(id);
-		
+
 		if(log.isTraceEnabled())
 		{
 			log.trace("[" + name + "] Direct store of " + id + " mapped to internal id " + internalId);
 		}
-		
+
 		storage.store(internalId, bytes);
-		
+
 		Bytes storedBytes = storage.get(internalId);
-		
+
 		queryEngineUpdater.store(previous, internalId, storedBytes);
 	}
-	
+
 	/**
 	 * Delete a previously stored entry.
-	 * 
+	 *
 	 * @param id
 	 * @throws IOException
 	 */
@@ -312,17 +312,17 @@ public class StorageImpl
 		throws IOException
 	{
 		long internalId = primary.get(id);
-		
+
 		if(log.isTraceEnabled())
 		{
 			log.trace("[" + name + "] Direct delete of " + id + " mapped to internal id " + internalId);
 		}
-		
+
 		if(internalId == 0) return;
-		
+
 		long previous = primary.before(internalId);
 		queryEngineUpdater.delete(previous, internalId);
-		
+
 		storage.delete(internalId);
 		primary.remove(id);
 	}

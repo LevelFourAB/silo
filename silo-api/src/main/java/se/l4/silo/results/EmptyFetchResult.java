@@ -7,7 +7,7 @@ import se.l4.silo.FetchResult;
 
 /**
  * A {@link FetchResult} that is always empty.
- * 
+ *
  * @author Andreas Holstenson
  *
  * @param <T>
@@ -16,7 +16,7 @@ public class EmptyFetchResult<T>
 	implements FetchResult<T>
 {
 	public static final EmptyFetchResult<?> INSTANCE = new EmptyFetchResult<>();
-	
+
 	private EmptyFetchResult()
 	{
 	}
@@ -44,7 +44,7 @@ public class EmptyFetchResult<T>
 	{
 		return -1;
 	}
-	
+
 	@Override
 	public long getTotal()
 	{
@@ -61,7 +61,7 @@ public class EmptyFetchResult<T>
 	public void close()
 	{
 	}
-	
+
 	@Override
 	public String toString()
 	{

@@ -9,20 +9,20 @@ public class RangeQueryData
 {
 	@Expose
 	private final String field;
-	
+
 	@Expose
 	private final long from;
-	
+
 	@Expose
 	private final long to;
-	
+
 	public RangeQueryData(@Expose("field") String field, @Expose("from") long from, @Expose("to") long to)
 	{
 		this.field = field;
 		this.from = from;
 		this.to = to;
 	}
-	
+
 	public String getField()
 	{
 		return field;
@@ -32,7 +32,7 @@ public class RangeQueryData
 	{
 		return from;
 	}
-	
+
 	public long getTo()
 	{
 		return to;

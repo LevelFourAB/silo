@@ -11,7 +11,7 @@ public class FieldQuery<R>
 	{
 		this.field = field;
 	}
-	
+
 	public R is(Object value)
 	{
 		receiver.addQuery(new QueryItem("field", new FieldQueryData(field, value)));

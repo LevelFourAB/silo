@@ -9,7 +9,7 @@ import se.l4.silo.engine.Fields;
 
 /**
  * Implementation of {@link Fields}.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -25,7 +25,7 @@ public class FieldsImpl
 		{
 			builder.put(def.getName(), def);
 		}
-		
+
 		this.fields = builder.build();
 	}
 

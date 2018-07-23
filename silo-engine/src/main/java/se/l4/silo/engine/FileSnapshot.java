@@ -8,7 +8,7 @@ import java.nio.file.Path;
 
 /**
  * {@link Snapshot} implemented over a single file.
- * 
+ *
  * @author Andreas Holstenson
  *
  */
@@ -21,12 +21,12 @@ public class FileSnapshot
 	{
 		this(new File(name));
 	}
-	
+
 	public FileSnapshot(Path path)
 	{
 		this(path.toFile());
 	}
-	
+
 	public FileSnapshot(File file)
 	{
 		this.file = file;

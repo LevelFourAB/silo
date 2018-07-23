@@ -16,17 +16,17 @@ public class DateFacetQuery<Parent>
 	{
 		count = Integer.MAX_VALUE;
 	}
-	
+
 	@Override
 	public void setReceiver(String id, Function<FacetItem, Parent> configReceiver)
 	{
 		this.id = id;
 		this.configReceiver = configReceiver;
 	}
-	
+
 	/**
 	 * Limit the number of returned facets to the given count.
-	 * 
+	 *
 	 * @param count
 	 * @return
 	 */
@@ -35,7 +35,7 @@ public class DateFacetQuery<Parent>
 		this.count = count;
 		return this;
 	}
-	
+
 	@Override
 	public Parent done()
 	{
