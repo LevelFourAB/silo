@@ -5,7 +5,7 @@
 
 	<groupId>se.l4.silo</groupId>
 	<artifactId>silo-base</artifactId>
-	<version>0.2.1</version>
+	<version>0.3.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>${project.artifactId}</name>
