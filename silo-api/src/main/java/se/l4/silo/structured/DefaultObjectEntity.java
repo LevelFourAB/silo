@@ -63,7 +63,7 @@ public class DefaultObjectEntity<T>
 			}
 			catch(IOException e)
 			{
-				throw new StorageException("Unable to read object; " + e.getMessage());
+				throw new StorageException("Unable to read object; " + e.getMessage(), e);
 			}
 		}
 	}
@@ -116,7 +116,7 @@ public class DefaultObjectEntity<T>
 		}
 		catch(IOException e)
 		{
-			throw new StorageException("Unable to read object; " + e.getMessage());
+			throw new StorageException("Unable to read object; " + e.getMessage(), e);
 		}
 		finally
 		{
