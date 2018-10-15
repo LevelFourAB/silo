@@ -184,9 +184,6 @@ public class SearchIndexQueryEngine
 		commitPolicy.close();
 
 		thread.interrupt();
-		manager.close();
-		writer.close();
-		directory.close();
 
 		try
 		{
@@ -196,6 +193,10 @@ public class SearchIndexQueryEngine
 		{
 			Thread.currentThread().interrupt();
 		}
+
+		manager.close();
+		writer.close();
+		directory.close();
 	}
 
 	@Override
