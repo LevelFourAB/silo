@@ -183,16 +183,7 @@ public class SearchIndexQueryEngine
 		commitPolicy.commit();
 		commitPolicy.close();
 
-		thread.interrupt();
-
-		try
-		{
-			thread.join();
-		}
-		catch(InterruptedException e)
-		{
-			Thread.currentThread().interrupt();
-		}
+		thread.close();
 
 		manager.close();
 		writer.close();
