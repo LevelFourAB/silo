@@ -172,20 +172,8 @@ public class MVStoreManagerImpl
 			return;
 		}
 
-		// TODO: This should really be smarter
-
 		int retentionTime = store.getRetentionTime();
-		store.setRetentionTime(0);
-
-		long start = System.currentTimeMillis();
-		while(store.compact(TARGET_RATE, DATA_SIZE))
-		{
-			store.sync();
-			store.compactMoveChunks(TARGET_RATE, DATA_SIZE);
-			long now = System.currentTimeMillis();
-			if(now - start > targetTime) break;
-		}
-
+		store.compactFile(targetTime);
 		store.setRetentionTime(retentionTime);
 	}
 }
