@@ -79,10 +79,15 @@ public class ThreadSafetyTest
 			});
 		}
 
-		waiter.await(1, TimeUnit.MINUTES, entries);
-
-		executor.shutdown();
-		executor.awaitTermination(1, TimeUnit.MINUTES);
+		try
+		{
+			waiter.await(1, TimeUnit.MINUTES, entries);
+		}
+		finally
+		{
+			executor.shutdown();
+			executor.awaitTermination(1, TimeUnit.MINUTES);
+		}
 	}
 
 	@Test
@@ -147,9 +152,14 @@ public class ThreadSafetyTest
 			});
 		}
 
-		waiter.await(1, TimeUnit.MINUTES, entries);
-
-		executor.shutdown();
-		executor.awaitTermination(1, TimeUnit.MINUTES);
+		try
+		{
+			waiter.await(1, TimeUnit.MINUTES, entries);
+		}
+		finally
+		{
+			executor.shutdown();
+			executor.awaitTermination(1, TimeUnit.MINUTES);
+		}
 	}
 }
