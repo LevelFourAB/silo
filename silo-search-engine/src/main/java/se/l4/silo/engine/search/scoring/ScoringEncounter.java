@@ -1,6 +1,9 @@
 package se.l4.silo.engine.search.scoring;
 
+import java.util.Optional;
+
 import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.search.DoubleValues;
 
 import se.l4.silo.engine.search.IndexDefinition;
 
@@ -33,4 +36,11 @@ public interface ScoringEncounter<T>
 	 * @return
 	 */
 	LeafReaderContext getLeafReader();
+
+	/**
+	 * Get the calculated scores if they are available.
+	 *
+	 * @return
+	 */
+	Optional<DoubleValues> getScores();
 }

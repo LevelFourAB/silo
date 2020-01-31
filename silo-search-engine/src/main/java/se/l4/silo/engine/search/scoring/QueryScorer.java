@@ -6,8 +6,7 @@ public interface QueryScorer
 	 * Score the given document.
 	 *
 	 * @param doc
-	 * @param currentScore
 	 * @return
 	 */
-	float score(int doc, float currentScore);
+	double score(int doc);
 }

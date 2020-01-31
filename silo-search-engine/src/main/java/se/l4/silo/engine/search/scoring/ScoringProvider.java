@@ -20,7 +20,20 @@ public interface ScoringProvider<T>
 	 *
 	 * @param encounter
 	 */
-	void setup(IndexDefinitionEncounter encounter);
+	default void setup(IndexDefinitionEncounter encounter)
+	{
+	}
+
+	/**
+	 * If this scoring needs the scores calculated by the query or if it works
+	 * without them.
+	 *
+	 * @return
+	 */
+	default boolean needsScores()
+	{
+		return false;
+	}
 
 	/**
 	 * Create a scorer for the given encounter.

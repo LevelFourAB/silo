@@ -27,6 +27,7 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queries.function.FunctionScoreQuery;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
@@ -212,7 +213,10 @@ public class SearchIndexQueryEngine
 			}
 			else if(request.getSortItems().isEmpty())
 			{
-				resultCollector = TopScoreDocCollector.create((int) (request.getOffset() + request.getLimit()));
+				resultCollector = TopScoreDocCollector.create(
+					(int) (request.getOffset() + request.getLimit()),
+					Integer.MAX_VALUE
+				);
 			}
 			else
 			{
@@ -220,10 +224,8 @@ public class SearchIndexQueryEngine
 				resultCollector = TopFieldCollector.create(
 					sort,
 					(int) (request.getOffset() + request.getLimit()),
-					false,
-					false,
-					false,
-					true
+					null,
+					Integer.MAX_VALUE
 				);
 			}
 
@@ -254,7 +256,7 @@ public class SearchIndexQueryEngine
 					}
 				}
 
-				hits = docs.totalHits;
+				hits = docs.totalHits.value;
 
 				for(ScoreDoc d : innerDocs)
 				{
@@ -343,7 +345,7 @@ public class SearchIndexQueryEngine
 				throw new StorageException("Unknown scoring provider with id " + item.getId());
 			}
 
-			query = new CustomScoreAdapter(def, query, provider, item.getPayload());
+			query = new FunctionScoreQuery(query, new CustomScoreFunction<>(def, provider, item.getPayload()));
 		}
 
 		searcher.search(query, collector);
