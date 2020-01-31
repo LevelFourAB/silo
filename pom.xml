@@ -28,7 +28,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<lucene-version>8.4.1</lucene-version>
-		<commons-version>1.1.0</commons-version>
+		<commons-version>1.2.1</commons-version>
 	</properties>
 
 	<modules>
