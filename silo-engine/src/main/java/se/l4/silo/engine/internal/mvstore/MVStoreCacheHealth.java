@@ -4,10 +4,10 @@ import org.h2.mvstore.MVStore;
 import org.h2.mvstore.Page;
 import org.h2.mvstore.cache.CacheLongKeyLIRS;
 
-import se.l4.vibe.mapping.KeyValueMappable;
-import se.l4.vibe.mapping.KeyValueReceiver;
-import se.l4.vibe.probes.AbstractSampledProbe;
 import se.l4.vibe.probes.SampledProbe;
+import se.l4.vibe.sampling.Sampler;
+import se.l4.vibe.snapshots.KeyValueReceiver;
+import se.l4.vibe.snapshots.Snapshot;
 
 /**
  * Cache health information extracted from a {@link MVStore}.
@@ -16,7 +16,7 @@ import se.l4.vibe.probes.SampledProbe;
  *
  */
 public class MVStoreCacheHealth
-	implements KeyValueMappable
+	implements Snapshot
 {
 	private final long hits;
 	private final long misses;
@@ -46,19 +46,13 @@ public class MVStoreCacheHealth
 
 	public static SampledProbe<MVStoreCacheHealth> createProbe(MVStore store)
 	{
-		return new AbstractSampledProbe<MVStoreCacheHealth>()
+		return () -> new Sampler<MVStoreCacheHealth>()
 		{
 			private long hits;
 			private long misses;
 
 			@Override
-			public MVStoreCacheHealth peek()
-			{
-				return sample0();
-			}
-
-			@Override
-			protected MVStoreCacheHealth sample0()
+			public MVStoreCacheHealth sample()
 			{
 				CacheLongKeyLIRS<Page> cache = store.getCache();
 				long hits = cache.getHits();

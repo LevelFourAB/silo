@@ -64,13 +64,13 @@ public class SharedStorages
 			if(vibe != null)
 			{
 				MVStore store = manager.getStore();
-				vibe.sample(MVStoreCacheHealth.createProbe(store))
-					.at(name + "/cache")
-					.export();
+				vibe.export(MVStoreCacheHealth.createProbe(store))
+					.at(name, "cache")
+					.done();
 
-				vibe.sample(MVStoreHealth.createProbe(store))
-					.at(name + "/data")
-					.export();
+				vibe.export(MVStoreHealth.createProbe(store))
+					.at(name, "data")
+					.done();
 			}
 
 			info = new ManagerInfo(name, manager);

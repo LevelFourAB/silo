@@ -54,10 +54,10 @@ import se.l4.silo.engine.internal.mvstore.SharedStorages;
 import se.l4.silo.engine.log.Log;
 import se.l4.silo.engine.log.LogBuilder;
 import se.l4.vibe.Vibe;
-import se.l4.vibe.percentile.CombinedProbes;
-import se.l4.vibe.percentile.CombinedProbes.CombinedData;
+import se.l4.vibe.operations.Change;
 import se.l4.vibe.probes.CountingProbe;
 import se.l4.vibe.probes.SampledProbe;
+import se.l4.vibe.snapshots.MapSnapshot;
 
 /**
  * Storage engine implementation over a streaming log.
@@ -221,35 +221,35 @@ public class StorageEngine
 		if(vibe != null)
 		{
 			// Monitor the operations
-			SampledProbe<CombinedData<Long>> probe = CombinedProbes.<Long>builder()
-				.add("stores", stores)
-				.add("deletes", deletes)
-				.add("reads", reads)
-				.create();
+			SampledProbe<MapSnapshot> probe = SampledProbe.merged()
+				.add("stores", stores.apply(Change.changeAsLong()))
+				.add("deletes", deletes.apply(Change.changeAsLong()))
+				.add("reads", reads.apply(Change.changeAsLong()))
+				.build();
 
-			vibe.sample(probe)
+			vibe.export(probe)
 				.at("ops", "summary")
-				.export();
+				.done();
 
 			// Monitor our main store
 			MVStore store = this.store.getStore();
-			vibe.sample(MVStoreCacheHealth.createProbe(store))
+			vibe.export(MVStoreCacheHealth.createProbe(store))
 				.at("store", "cache")
-				.export();
+				.done();
 
-			vibe.sample(MVStoreHealth.createProbe(store))
+			vibe.export(MVStoreHealth.createProbe(store))
 				.at("store", "data")
-				.export();
+				.done();
 
 			// Monitor our derived state
 			store = this.stateStore.getStore();
-			vibe.sample(MVStoreCacheHealth.createProbe(store))
+			vibe.export(MVStoreCacheHealth.createProbe(store))
 				.at("state", "cache")
-				.export();
+				.done();
 
-			vibe.sample(MVStoreHealth.createProbe(store))
+			vibe.export(MVStoreHealth.createProbe(store))
 				.at("state", "data")
-				.export();
+				.done();
 		}
 
 		loadConfig(config);

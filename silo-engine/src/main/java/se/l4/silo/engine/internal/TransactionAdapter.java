@@ -32,8 +32,10 @@ import se.l4.silo.engine.internal.tx.TransactionOperationType;
 import se.l4.silo.engine.log.LogEntry;
 import se.l4.silo.engine.types.LongArrayFieldType;
 import se.l4.vibe.Vibe;
-import se.l4.vibe.percentile.CombinedProbes;
+import se.l4.vibe.operations.Change;
 import se.l4.vibe.probes.CountingProbe;
+import se.l4.vibe.probes.SampledProbe;
+import se.l4.vibe.snapshots.MapSnapshot;
 
 /**
  * Adapter that handles the translation from individual transaction events
@@ -67,7 +69,7 @@ public class TransactionAdapter
 		this.store = store;
 		this.applier = applier;
 
-		activeTx = new CountingProbe(false);
+		activeTx = new CountingProbe();
 
 		txStarts = new CountingProbe();
 		txCommits = new CountingProbe();
@@ -77,19 +79,20 @@ public class TransactionAdapter
 
 		if(vibe != null)
 		{
-			vibe.sample(CombinedProbes.<Long>builder()
-					.add("active", activeTx)
-					.add("starts", txStarts)
-					.add("commits", txCommits)
-					.add("rollbacks", txRollbacks)
-					.create()
-				)
-				.at("tx/summary")
-				.export();
+			SampledProbe<MapSnapshot> summaryProbe = SampledProbe.merged()
+				.add("active", SampledProbe.over(activeTx))
+				.add("starts", txStarts.apply(Change.changeAsLong()))
+				.add("commits", txCommits.apply(Change.changeAsLong()))
+				.add("rollbacks", txRollbacks.apply(Change.changeAsLong()))
+				.build();
 
-			vibe.sample(logEvents)
-				.at("log/events")
-				.export();
+			vibe.export(summaryProbe)
+				.at("tx", "summary")
+				.done();
+
+			vibe.export(logEvents.apply(Change.changeAsLong()))
+				.at("log", "events")
+				.done();
 		}
 
 		reopen();
@@ -117,7 +120,7 @@ public class TransactionAdapter
 			}
 		}
 
-		logger.info(activeTx.peek() + " active transactions spread over " + log.size() + " entries in the log");
+		logger.info(activeTx.read() + " active transactions spread over " + log.size() + " entries in the log");
 	}
 
 	@Override
@@ -196,7 +199,7 @@ public class TransactionAdapter
 					removeTransaction(c.value);
 				}
 
-				logger.info("Reduced to " + activeTx.peek() + " active transactions");
+				logger.info("Reduced to " + activeTx.read() + " active transactions");
 			}
 		}
 	}

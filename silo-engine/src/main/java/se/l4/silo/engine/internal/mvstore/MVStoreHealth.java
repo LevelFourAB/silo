@@ -6,13 +6,13 @@ import org.h2.mvstore.FileStore;
 import org.h2.mvstore.MVStore;
 
 import se.l4.silo.StorageException;
-import se.l4.vibe.mapping.KeyValueMappable;
-import se.l4.vibe.mapping.KeyValueReceiver;
-import se.l4.vibe.probes.AbstractSampledProbe;
 import se.l4.vibe.probes.SampledProbe;
+import se.l4.vibe.sampling.Sampler;
+import se.l4.vibe.snapshots.KeyValueReceiver;
+import se.l4.vibe.snapshots.Snapshot;
 
 public class MVStoreHealth
-	implements KeyValueMappable
+	implements Snapshot
 {
 	private long currentVersion;
 
@@ -50,13 +50,12 @@ public class MVStoreHealth
 
 	public static SampledProbe<MVStoreHealth> createProbe(MVStore store)
 	{
-		return new AbstractSampledProbe<MVStoreHealth>()
+		return () -> new Sampler<MVStoreHealth>()
 		{
 			private long readBytes;
 			private long readCount;
 			private long writeBytes;
 			private long writeCount;
-
 
 			private long getFileSize(FileStore fs)
 			{
@@ -71,30 +70,7 @@ public class MVStoreHealth
 			}
 
 			@Override
-			public MVStoreHealth peek()
-			{
-				long currentVersion = store.getCurrentVersion();
-				FileStore fs = store.getFileStore();
-				long fileSize = getFileSize(fs);
-				long totalReadBytes = fs.getReadBytes();
-				long totalReadCount = fs.getReadCount();
-				long totalWriteBytes = fs.getWriteBytes();
-				long totalWriteCount = fs.getWriteCount();
-				int fillRate = fs.getFillRate();
-
-				return new MVStoreHealth(
-					currentVersion,
-					fileSize,
-					totalReadBytes - readBytes,
-					totalReadCount - readCount,
-					totalWriteBytes - writeBytes,
-					totalWriteCount - writeCount,
-					fillRate
-				);
-			}
-
-			@Override
-			protected MVStoreHealth sample0()
+			public MVStoreHealth sample()
 			{
 				long currentVersion = store.getCurrentVersion();
 
