@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import se.l4.commons.config.ConfigException;
@@ -61,7 +62,8 @@ public class ConvertableConfig
 			throw new ConfigException("Can not convert, this instance does not have access to SerializerCollection. Was this instance deserialized?");
 		}
 
-		Serializer<T> serializer = collection.find(type);
+		Serializer<T> serializer = collection.find(type)
+			.orElseThrow(() -> new ConfigException("Could not find serializer for " + type));
 		MapInput in = new MapInput("", data);
 		try
 		{
@@ -78,9 +80,9 @@ public class ConvertableConfig
 	{
 
 		@Override
-		public Serializer<ConvertableConfig> find(TypeEncounter encounter)
+		public Optional<Serializer<ConvertableConfig>> find(TypeEncounter encounter)
 		{
-			return new ConvertableConfigSerializer(encounter.getCollection());
+			return Optional.of(new ConvertableConfigSerializer(encounter.getCollection()));
 		}
 
 		@Override

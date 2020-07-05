@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.function.Function;
 
 import se.l4.commons.io.Bytes;
+import se.l4.commons.serialization.SerializationException;
 import se.l4.commons.serialization.SerializerCollection;
 import se.l4.commons.serialization.format.BinaryOutput;
 import se.l4.commons.serialization.format.StreamingInput;
@@ -88,7 +89,10 @@ public class StructuredEntityImpl
 	@Override
 	public <T> ObjectEntity<T> asObject(Class<T> type, Function<T, Object> identityMapper)
 	{
-		return asObject(serializers.find(type), identityMapper);
+		return asObject(
+			serializers.find(type).orElseThrow(() -> new SerializationException("No serializer available for " + type)),
+			identityMapper
+		);
 	}
 
 	protected Bytes toBytes(StreamingInput in)
