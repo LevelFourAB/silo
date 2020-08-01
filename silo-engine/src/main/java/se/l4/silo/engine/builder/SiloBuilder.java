@@ -1,8 +1,7 @@
 package se.l4.silo.engine.builder;
 
-import se.l4.commons.serialization.DefaultSerializerCollection;
-import se.l4.commons.serialization.SerializerCollection;
-import se.l4.commons.types.TypeFinder;
+import se.l4.exobytes.Serializers;
+import se.l4.exobytes.internal.DefaultSerializers;
 import se.l4.silo.Silo;
 import se.l4.silo.engine.EntityTypeFactory;
 import se.l4.silo.engine.LocalSilo;
@@ -21,21 +20,12 @@ public interface SiloBuilder
 {
 	/**
 	 * Set the serializer collection to use. If this is not called an
-	 * instance of {@link DefaultSerializerCollection} will be used.
+	 * instance of {@link DefaultSerializers} will be used.
 	 *
 	 * @param collection
 	 * @return
 	 */
-	SiloBuilder withSerializerCollection(SerializerCollection collection);
-
-	/**
-	 * Set the auto loader to use. If this is set the created instance will
-	 * be able to pick up extensions automatically.
-	 *
-	 * @param loader
-	 * @return
-	 */
-	SiloBuilder withTypeFinder(TypeFinder finder);
+	SiloBuilder withSerializerCollection(Serializers collection);
 
 	/**
 	 * Set the {@link Vibe} instance to use. Setting this will enable reporting

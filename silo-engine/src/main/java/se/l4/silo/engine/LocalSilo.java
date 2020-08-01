@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import se.l4.commons.serialization.SerializerCollection;
+import se.l4.exobytes.Serializers;
 import se.l4.silo.Entity;
 import se.l4.silo.ResourceHandle;
 import se.l4.silo.Silo;
@@ -41,7 +41,7 @@ public class LocalSilo
 	private final StorageEngine storageEngine;
 	private final ThreadLocal<TransactionImpl> transactions;
 
-	public LocalSilo(LocalEngineFactories factories, SerializerCollection serializers, Vibe vibe, LogBuilder logBuilder, Path storage, EngineConfig config)
+	public LocalSilo(LocalEngineFactories factories, Serializers serializers, Vibe vibe, LogBuilder logBuilder, Path storage, EngineConfig config)
 	{
 		Objects.requireNonNull(factories, "factories is required");
 		Objects.requireNonNull(serializers, "serializers is required");

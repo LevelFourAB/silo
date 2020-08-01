@@ -2,9 +2,9 @@ package se.l4.silo.engine.internal;
 
 import java.io.IOException;
 
-import se.l4.commons.io.ExtendedDataInput;
-import se.l4.commons.io.ExtendedDataOutput;
 import se.l4.silo.StorageException;
+import se.l4.silo.engine.io.ExtendedDataInput;
+import se.l4.silo.engine.io.ExtendedDataOutput;
 
 /**
  * Utilities to help with certain IO operations.

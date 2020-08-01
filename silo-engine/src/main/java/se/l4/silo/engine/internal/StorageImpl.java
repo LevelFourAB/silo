@@ -14,7 +14,6 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import se.l4.commons.io.Bytes;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.FetchResult;
 import se.l4.silo.StorageException;
@@ -34,6 +33,7 @@ import se.l4.silo.engine.internal.tx.TransactionExchange;
 import se.l4.silo.query.QueryFetchResult;
 import se.l4.silo.query.QueryResult;
 import se.l4.silo.results.IteratorFetchResult;
+import se.l4.ylem.io.Bytes;
 
 /**
  * Implementation of {@link Storage}.

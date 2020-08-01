@@ -2,7 +2,6 @@ package se.l4.silo.engine.internal;
 
 import java.util.function.Function;
 
-import se.l4.commons.io.Bytes;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.Entity;
 import se.l4.silo.FetchResult;
@@ -12,6 +11,7 @@ import se.l4.silo.engine.Snapshot;
 import se.l4.silo.engine.Storage;
 import se.l4.silo.query.QueryFetchResult;
 import se.l4.silo.query.QueryResult;
+import se.l4.ylem.io.Bytes;
 
 /**
  * {@link Storage} that delegates to another instance. This is what is

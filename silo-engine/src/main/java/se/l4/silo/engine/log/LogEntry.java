@@ -1,6 +1,6 @@
 package se.l4.silo.engine.log;
 
-import se.l4.commons.io.Bytes;
+import se.l4.ylem.io.Bytes;
 
 /**
  * Entry in a {@link Log log}, containing the actual logged data together

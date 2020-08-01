@@ -4,12 +4,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import se.l4.commons.serialization.AllowAny;
-import se.l4.commons.serialization.Expose;
-import se.l4.commons.serialization.ReflectionSerializer;
-import se.l4.commons.serialization.Use;
+import se.l4.exobytes.AllowAny;
+import se.l4.exobytes.AnnotationSerialization;
+import se.l4.exobytes.Expose;
+import se.l4.exobytes.Use;
+import se.l4.exobytes.internal.reflection.ReflectionSerializer;
 
-@Use(ReflectionSerializer.class)
+@AnnotationSerialization
 public class IndexQueryRequest
 {
 	@Expose

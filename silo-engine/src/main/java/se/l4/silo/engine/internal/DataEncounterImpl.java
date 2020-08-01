@@ -13,15 +13,15 @@ import java.util.function.BiConsumer;
 
 import com.google.common.collect.ImmutableSet;
 
-import se.l4.commons.io.Bytes;
-import se.l4.commons.io.IOConsumer;
-import se.l4.commons.io.IOFunction;
-import se.l4.commons.serialization.format.BinaryInput;
-import se.l4.commons.serialization.format.StreamingInput;
-import se.l4.commons.serialization.format.Token;
+import se.l4.exobytes.streaming.StreamingFormat;
+import se.l4.exobytes.streaming.StreamingInput;
+import se.l4.exobytes.streaming.Token;
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.DataEncounter;
 import se.l4.silo.engine.Storage;
+import se.l4.ylem.io.Bytes;
+import se.l4.ylem.io.IOConsumer;
+import se.l4.ylem.io.IOFunction;
 
 public class DataEncounterImpl
 	implements DataEncounter, AutoCloseable
@@ -58,7 +58,7 @@ public class DataEncounterImpl
 				throw new StorageException("Unknown storage version: " + tag + ", this version of Silo is either old or the data is corrupt");
 			}
 
-			return new BinaryInput(stream);
+			return StreamingFormat.LEGACY_BINARY.createInput(stream);
 		}
 		catch(IOException e)
 		{
@@ -76,8 +76,7 @@ public class DataEncounterImpl
 				throw new StorageException("Unknown storage version: " + tag + ", this version of Silo is either old or the data is corrupt");
 			}
 
-			BinaryInput in = new BinaryInput(stream);
-			return func.apply(in);
+			return func.apply(StreamingFormat.LEGACY_BINARY.createInput(stream));
 		}
 		catch(IOException e)
 		{
@@ -230,18 +229,18 @@ public class DataEncounterImpl
 		private void handleObject(StreamingInput in, String key)
 			throws IOException
 		{
+			in.next(Token.OBJECT_START);
+
 			if(key != null && ! paths.contains(key))
 			{
-				in.skipValue();
+				in.skip();
 				return;
 			}
-
-			in.next(Token.OBJECT_START);
 
 			while(in.peek() != Token.OBJECT_END)
 			{
 				in.next(Token.KEY);
-				String localKey = in.getString();
+				String localKey = in.readString();
 
 				String subKey = key(key, localKey);
 				handle(in, subKey);
@@ -253,13 +252,13 @@ public class DataEncounterImpl
 		private void handleList(StreamingInput in, String key)
 			throws IOException
 		{
+			in.next(Token.LIST_START);
+
 			if(key != null && ! paths.contains(key))
 			{
-				in.skipValue();
+				in.skip();
 				return;
 			}
-
-			in.next(Token.LIST_START);
 
 			while(in.peek() != Token.LIST_END)
 			{
@@ -276,7 +275,11 @@ public class DataEncounterImpl
 
 			if(keys.contains(key))
 			{
-				receiver.accept(key, in.getValue());
+				receiver.accept(key, in.readDynamic());
+			}
+			else
+			{
+				in.skip();
 			}
 		}
 
@@ -288,6 +291,10 @@ public class DataEncounterImpl
 			if(keys.contains(key))
 			{
 				receiver.accept(key, null);
+			}
+			else
+			{
+				in.skip();
 			}
 		}
 

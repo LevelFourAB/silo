@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.Function;
 
-import se.l4.commons.io.Bytes;
-import se.l4.commons.serialization.format.BinaryInput;
-import se.l4.commons.serialization.format.StreamingInput;
+import se.l4.exobytes.streaming.StreamingFormat;
+import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.silo.StorageException;
+import se.l4.ylem.io.Bytes;
 
 public class BytesToStreamingInputFunction
 	implements Function<Bytes, StreamingInput>
@@ -31,7 +31,7 @@ public class BytesToStreamingInputFunction
 				throw new StorageException("Data has an unknown version: " + version + ". Data is corrupt.");
 			}
 
-			return new BinaryInput(current);
+			return StreamingFormat.LEGACY_BINARY.createInput(current);
 		}
 		catch(IOException e)
 		{

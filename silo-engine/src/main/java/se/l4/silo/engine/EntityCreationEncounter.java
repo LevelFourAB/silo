@@ -1,6 +1,6 @@
 package se.l4.silo.engine;
 
-import se.l4.commons.serialization.SerializerCollection;
+import se.l4.exobytes.Serializers;
 import se.l4.silo.engine.builder.StorageBuilder;
 
 /**
@@ -27,11 +27,11 @@ public interface EntityCreationEncounter<Config>
 	Config getConfig();
 
 	/**
-	 * Get the {@link SerializerCollection} in use for this entity.
+	 * Get the {@link Serializers} in use for this entity.
 	 *
 	 * @return
 	 */
-	SerializerCollection getSerializerCollection();
+	Serializers getSerializerCollection();
 
 	/**
 	 * Create the main storage for this entity.

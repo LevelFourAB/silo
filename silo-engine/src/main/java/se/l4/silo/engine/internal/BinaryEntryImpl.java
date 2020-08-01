@@ -1,7 +1,7 @@
 package se.l4.silo.engine.internal;
 
-import se.l4.commons.io.Bytes;
 import se.l4.silo.binary.BinaryEntry;
+import se.l4.ylem.io.Bytes;
 
 /**
  * Implementation of {@link BinaryEntry}.

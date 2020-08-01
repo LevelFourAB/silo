@@ -5,13 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.validation.constraints.NotNull;
-
 import org.apache.lucene.store.NRTCachingDirectory;
 
-import se.l4.commons.serialization.Expose;
-import se.l4.commons.serialization.ReflectionSerializer;
-import se.l4.commons.serialization.Use;
+import se.l4.exobytes.Expose;
+import se.l4.exobytes.Use;
+import se.l4.exobytes.internal.reflection.ReflectionSerializer;
 import se.l4.silo.engine.config.QueryEngineConfig;
 import se.l4.silo.engine.search.facets.Facet;
 import se.l4.silo.engine.search.scoring.ScoringProvider;
@@ -185,11 +183,9 @@ public class SearchIndexConfig
 	public static class IndexReloadConfig
 	{
 		@Expose
-		@NotNull
 		private Cache cache;
 
 		@Expose
-		@NotNull
 		private Freshness freshness;
 
 		public IndexReloadConfig()

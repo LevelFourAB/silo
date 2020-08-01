@@ -1,10 +1,10 @@
 package se.l4.silo.binary;
 
-import se.l4.commons.io.Bytes;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.Entity;
 import se.l4.silo.FetchResult;
 import se.l4.silo.StoreResult;
+import se.l4.ylem.io.Bytes;
 
 /**
  * Simple binary key-value entity. Can be used to associate an identifier

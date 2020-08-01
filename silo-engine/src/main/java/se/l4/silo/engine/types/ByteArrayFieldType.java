@@ -2,9 +2,9 @@ package se.l4.silo.engine.types;
 
 import java.io.IOException;
 
-import se.l4.commons.io.ExtendedDataInput;
-import se.l4.commons.io.ExtendedDataOutput;
-import se.l4.commons.serialization.Serializer;
+import se.l4.exobytes.Serializer;
+import se.l4.silo.engine.io.ExtendedDataInput;
+import se.l4.silo.engine.io.ExtendedDataOutput;
 
 public class ByteArrayFieldType
 	implements FieldType<byte[]>

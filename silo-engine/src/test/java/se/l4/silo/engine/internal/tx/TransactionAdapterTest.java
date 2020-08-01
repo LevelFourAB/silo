@@ -8,8 +8,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import se.l4.commons.id.SimpleLongIdGenerator;
-import se.l4.commons.io.Bytes;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.internal.OpChecker;
 import se.l4.silo.engine.internal.StorageApplier;
@@ -18,6 +16,8 @@ import se.l4.silo.engine.internal.log.TransactionLogImpl;
 import se.l4.silo.engine.internal.mvstore.MVStoreManagerImpl;
 import se.l4.silo.engine.log.DirectApplyLog;
 import se.l4.silo.engine.log.Log;
+import se.l4.ylem.ids.SimpleLongIdGenerator;
+import se.l4.ylem.io.Bytes;
 
 /**
  * Tests for {@link TransactionAdapter} to check that transactions are
@@ -75,7 +75,7 @@ public class TransactionAdapterTest
 	{
 		try
 		{
-			return Bytes.viaDataOutput(o -> {
+			return Bytes.capture(o -> {
 				for(int i=0; i<size; i++)
 				{
 					o.write(i % 255);

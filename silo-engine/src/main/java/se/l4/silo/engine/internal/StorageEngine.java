@@ -27,10 +27,7 @@ import org.h2.mvstore.MVStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import se.l4.commons.id.LongIdGenerator;
-import se.l4.commons.id.SequenceLongIdGenerator;
-import se.l4.commons.io.Bytes;
-import se.l4.commons.serialization.SerializerCollection;
+import se.l4.exobytes.Serializers;
 import se.l4.silo.Entity;
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.EntityCreationEncounter;
@@ -58,6 +55,9 @@ import se.l4.vibe.operations.Change;
 import se.l4.vibe.probes.CountingProbe;
 import se.l4.vibe.probes.SampledProbe;
 import se.l4.vibe.snapshots.MapSnapshot;
+import se.l4.ylem.ids.LongIdGenerator;
+import se.l4.ylem.ids.SequenceLongIdGenerator;
+import se.l4.ylem.io.Bytes;
 
 /**
  * Storage engine implementation over a streaming log.
@@ -76,9 +76,9 @@ public class StorageEngine
 	private final EngineFactories factories;
 
 	/**
-	 * The {@link SerializerCollection} in use for this Silo instance.
+	 * The {@link Serializers} in use for this Silo instance.
 	 */
-	private SerializerCollection serializers;
+	private Serializers serializers;
 
 	/**
 	 * The log to use for replicating data. Created via the log builder passed
@@ -160,7 +160,7 @@ public class StorageEngine
 	private final CountingProbe reads;
 
 	public StorageEngine(EngineFactories factories,
-			SerializerCollection serializers,
+			Serializers serializers,
 			Vibe vibe,
 			TransactionSupport transactionSupport,
 			LogBuilder logBuilder,

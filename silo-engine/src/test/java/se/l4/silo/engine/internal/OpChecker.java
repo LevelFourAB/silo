@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.LinkedList;
 
-import se.l4.commons.io.Bytes;
+import se.l4.ylem.io.Bytes;
 
 /**
  * Helper to check against actual operations against a set of expected

@@ -9,22 +9,22 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Enumeration;
 
+import com.carrotsearch.hppc.LongArrayList;
+import com.google.common.annotations.VisibleForTesting;
+
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.carrotsearch.hppc.LongArrayList;
-import com.google.common.annotations.VisibleForTesting;
-
-import se.l4.commons.io.ByteArrayConsumer;
-import se.l4.commons.io.Bytes;
 import se.l4.silo.engine.DataStorage;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.types.ByteArrayFieldType;
 import se.l4.silo.engine.types.LongArrayFieldType;
 import se.l4.silo.engine.types.LongFieldType;
 import se.l4.silo.engine.types.VersionedType;
+import se.l4.ylem.io.ByteArrayConsumer;
+import se.l4.ylem.io.Bytes;
 
 /**
  * Data storage that uses {@link MVStore} to store all of the data. This

@@ -3,7 +3,7 @@ package se.l4.silo.engine.log;
 import java.io.Closeable;
 import java.io.IOException;
 
-import se.l4.commons.io.Bytes;
+import se.l4.ylem.io.Bytes;
 
 /**
  * Abstraction of a log that contains binary data. Logs are used to apply

@@ -28,7 +28,6 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<lucene-version>8.5.2</lucene-version>
-		<commons-version>2.0.0-SNAPSHOT</commons-version>
 	</properties>
 
 	<modules>

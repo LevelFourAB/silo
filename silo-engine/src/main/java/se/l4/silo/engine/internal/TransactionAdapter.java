@@ -23,12 +23,11 @@ import org.h2.mvstore.MVMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import se.l4.commons.io.Bytes;
-import se.l4.commons.io.ExtendedDataInput;
-import se.l4.commons.io.IOConsumer;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.internal.tx.TransactionOperation;
 import se.l4.silo.engine.internal.tx.TransactionOperationType;
+import se.l4.silo.engine.io.ExtendedDataInput;
+import se.l4.silo.engine.io.ExtendedDataInputStream;
 import se.l4.silo.engine.log.LogEntry;
 import se.l4.silo.engine.types.LongArrayFieldType;
 import se.l4.vibe.Vibe;
@@ -36,6 +35,8 @@ import se.l4.vibe.operations.Change;
 import se.l4.vibe.probes.CountingProbe;
 import se.l4.vibe.probes.SampledProbe;
 import se.l4.vibe.snapshots.MapSnapshot;
+import se.l4.ylem.io.Bytes;
+import se.l4.ylem.io.IOConsumer;
 
 /**
  * Adapter that handles the translation from individual transaction events
@@ -129,7 +130,7 @@ public class TransactionAdapter
 	{
 		logEvents.increase();
 
-		try(ExtendedDataInput in = item.getData().asDataInput())
+		try(ExtendedDataInput in = new ExtendedDataInputStream(item.getData().asInputStream()))
 		{
 			int msgType = in.readVInt();
 			long tx = in.readVLong();

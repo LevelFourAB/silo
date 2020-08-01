@@ -4,9 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.Function;
 
-import se.l4.commons.io.Bytes;
-import se.l4.commons.serialization.format.BinaryInput;
-import se.l4.commons.serialization.format.StreamingInput;
+import se.l4.exobytes.streaming.StreamingFormat;
+import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.Entity;
 import se.l4.silo.FetchResult;
@@ -14,6 +13,7 @@ import se.l4.silo.StorageException;
 import se.l4.silo.StoreResult;
 import se.l4.silo.query.QueryFetchResult;
 import se.l4.silo.query.QueryResult;
+import se.l4.ylem.io.Bytes;
 
 /**
  * Storage that can be used by {@link Entity entities}.
@@ -55,7 +55,7 @@ public interface Storage
 				throw new StorageException("Unknown storage version: " + tag + ", this version of Silo is either old or the data is corrupt");
 			}
 
-			return new BinaryInput(stream);
+			return StreamingFormat.LEGACY_BINARY.createInput(stream);
 		}
 		catch(IOException e)
 		{

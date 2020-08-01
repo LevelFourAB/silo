@@ -1,7 +1,7 @@
 package se.l4.silo.engine.internal;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -13,9 +13,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import se.l4.commons.serialization.format.BinaryInput;
-import se.l4.commons.serialization.format.BinaryOutput;
-import se.l4.commons.serialization.format.StreamingInput;
+import se.l4.exobytes.streaming.StreamingFormat;
+import se.l4.exobytes.streaming.StreamingInput;
+import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.silo.FetchResult;
 import se.l4.silo.Silo;
 import se.l4.silo.engine.Index;
@@ -75,21 +75,24 @@ public class IndexQueryEngineTest
 		DataUtils.removeRecursive(tmp);
 	}
 
-	private BinaryInput generateList()
+	private StreamingInput generateList()
 	{
 		try(ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			BinaryOutput out = new BinaryOutput(baos))
+			StreamingOutput out = StreamingFormat.LEGACY_BINARY.createOutput(baos))
 		{
-			out.writeObjectStart("");
-			out.writeListStart("field1");
-			out.write("entry", "value1");
-			out.write("entry", "value2");
-			out.writeListEnd("field");
-			out.write("field2", false);
-			out.writeObjectEnd("");
+			out.writeObjectStart();
+				out.writeString("field1");
+				out.writeListStart();
+					out.writeString("value1");
+					out.writeString("value2");
+				out.writeListEnd();
+
+				out.writeString("field2");
+				out.writeBoolean(false);
+			out.writeObjectEnd();
 			out.flush();
 
-			return new BinaryInput(new ByteArrayInputStream(baos.toByteArray()));
+			return StreamingFormat.LEGACY_BINARY.createInput(new ByteArrayInputStream(baos.toByteArray()));
 		}
 		catch(IOException e)
 		{
@@ -225,18 +228,20 @@ public class IndexQueryEngineTest
 	@Test
 	public void testStoreWithPath()
 	{
-		BinaryInput in;
+		StreamingInput in;
 		try(ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			BinaryOutput out = new BinaryOutput(baos))
+			StreamingOutput out = StreamingFormat.LEGACY_BINARY.createOutput(baos))
 		{
-			out.writeObjectStart("");
-			out.writeObjectStart("field3");
-			out.write("test", "hello");
-			out.writeObjectEnd("field3");
-			out.writeObjectEnd("");
+			out.writeObjectStart();
+				out.writeString("field3");
+				out.writeObjectStart();
+					out.writeString("test");
+					out.writeString("hello");
+				out.writeObjectEnd();
+			out.writeObjectEnd();
 			out.flush();
 
-			in = new BinaryInput(new ByteArrayInputStream(baos.toByteArray()));
+			in = StreamingFormat.LEGACY_BINARY.createInput(new ByteArrayInputStream(baos.toByteArray()));
 		}
 		catch(IOException e)
 		{

@@ -9,7 +9,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 
-import se.l4.commons.io.Bytes;
+import se.l4.ylem.io.Bytes;
 
 public class DataUtils
 {
@@ -21,7 +21,7 @@ public class DataUtils
 	{
 		try
 		{
-			return Bytes.viaDataOutput(o -> {
+			return Bytes.capture(o -> {
 				for(int i=0; i<size; i++)
 				{
 					o.write(i % 255);

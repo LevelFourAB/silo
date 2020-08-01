@@ -1,6 +1,5 @@
 package se.l4.silo.engine.internal.binary;
 
-import se.l4.commons.io.Bytes;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.FetchResult;
 import se.l4.silo.StoreResult;
@@ -8,6 +7,7 @@ import se.l4.silo.binary.BinaryEntity;
 import se.l4.silo.binary.BinaryEntry;
 import se.l4.silo.engine.Storage;
 import se.l4.silo.engine.internal.BinaryEntryImpl;
+import se.l4.ylem.io.Bytes;
 
 /**
  * Implementation of {@link BinaryEntity}.

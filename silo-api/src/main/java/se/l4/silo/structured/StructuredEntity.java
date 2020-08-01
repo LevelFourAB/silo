@@ -2,9 +2,9 @@ package se.l4.silo.structured;
 
 import java.util.function.Function;
 
-import se.l4.commons.serialization.Serializer;
-import se.l4.commons.serialization.SerializerCollection;
-import se.l4.commons.serialization.format.StreamingInput;
+import se.l4.exobytes.Serializer;
+import se.l4.exobytes.Serializers;
+import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.Entity;
 import se.l4.silo.FetchResult;
@@ -65,7 +65,7 @@ public interface StructuredEntity
 	/**
 	 * Get an entity that translates the structured data into objects. This
 	 * will call {@link #asObject(Serializer)} with a serializer fetched
-	 * from the current {@link SerializerCollection}.
+	 * from the current {@link Serializers}.
 	 *
 	 * @param type
 	 * @return

@@ -10,7 +10,6 @@ import org.h2.mvstore.MVMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import se.l4.commons.io.Bytes;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.QueryEngine;
 import se.l4.silo.engine.internal.DataEncounterImpl;
@@ -19,6 +18,7 @@ import se.l4.silo.engine.internal.StorageImpl;
 import se.l4.silo.engine.types.LongFieldType;
 import se.l4.silo.engine.types.StringFieldType;
 import se.l4.silo.engine.types.VersionedType;
+import se.l4.ylem.io.Bytes;
 
 /**
  * Updater that ensures that {@link QueryEngine}s have been updated with

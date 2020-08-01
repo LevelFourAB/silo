@@ -3,10 +3,10 @@ package se.l4.silo.engine.internal;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.type.ObjectDataType;
 
-import se.l4.commons.id.LongIdGenerator;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.types.DataTypeAdapter;
 import se.l4.silo.engine.types.LongFieldType;
+import se.l4.ylem.ids.LongIdGenerator;
 
 /**
  * Index that helps map objects to internal long identifiers.

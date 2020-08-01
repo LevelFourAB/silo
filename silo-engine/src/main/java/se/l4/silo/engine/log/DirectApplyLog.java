@@ -2,8 +2,8 @@ package se.l4.silo.engine.log;
 
 import java.io.IOException;
 
-import se.l4.commons.io.Bytes;
-import se.l4.commons.io.IOConsumer;
+import se.l4.ylem.io.Bytes;
+import se.l4.ylem.io.IOConsumer;
 
 /**
  * Log that simply forwards whatever is appended to the consumer of entries.

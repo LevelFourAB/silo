@@ -20,21 +20,27 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>se.l4.commons</groupId>
-			<artifactId>commons-id</artifactId>
-			<version>${commons-version}</version>
+			<groupId>se.l4.ylem.ids</groupId>
+			<artifactId>ylem-ids</artifactId>
+			<version>1.0.0</version>
 		</dependency>
 
 		<dependency>
-			<groupId>se.l4.commons</groupId>
-			<artifactId>commons-io</artifactId>
-			<version>${commons-version}</version>
+			<groupId>se.l4.ylem.io</groupId>
+			<artifactId>ylem-io</artifactId>
+			<version>1.0.0</version>
 		</dependency>
 
 		<dependency>
-			<groupId>se.l4.commons</groupId>
-			<artifactId>commons-serialization</artifactId>
-			<version>${commons-version}</version>
+			<groupId>se.l4.exobytes</groupId>
+			<artifactId>exobytes</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>29.0-jre</version>
 		</dependency>
 	</dependencies>
 

@@ -6,9 +6,9 @@ import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.carrotsearch.hppc.cursors.IntCursor;
 
-import se.l4.commons.io.ExtendedDataInput;
-import se.l4.commons.io.ExtendedDataOutput;
-import se.l4.commons.serialization.Serializer;
+import se.l4.exobytes.Serializer;
+import se.l4.silo.engine.io.ExtendedDataInput;
+import se.l4.silo.engine.io.ExtendedDataOutput;
 
 public class VersionedType<T>
 	implements FieldType<T>

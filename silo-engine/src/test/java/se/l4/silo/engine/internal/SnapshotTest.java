@@ -11,7 +11,6 @@ import com.google.common.io.ByteStreams;
 import org.junit.Assert;
 import org.junit.Test;
 
-import se.l4.commons.io.Bytes;
 import se.l4.silo.FetchResult;
 import se.l4.silo.binary.BinaryEntity;
 import se.l4.silo.binary.BinaryEntry;
@@ -20,6 +19,7 @@ import se.l4.silo.engine.Index;
 import se.l4.silo.engine.LocalSilo;
 import se.l4.silo.engine.Snapshot;
 import se.l4.silo.structured.ObjectEntity;
+import se.l4.ylem.io.Bytes;
 
 public class SnapshotTest
 {

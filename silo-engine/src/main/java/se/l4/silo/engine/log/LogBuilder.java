@@ -1,6 +1,6 @@
 package se.l4.silo.engine.log;
 
-import se.l4.commons.io.IOConsumer;
+import se.l4.ylem.io.IOConsumer;
 
 /**
  * Builder that can create an instance of a {@link Log}.

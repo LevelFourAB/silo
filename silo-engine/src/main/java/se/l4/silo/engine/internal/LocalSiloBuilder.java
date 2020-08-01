@@ -6,9 +6,7 @@ import java.util.Map;
 
 import com.google.common.base.Joiner;
 
-import se.l4.commons.serialization.DefaultSerializerCollection;
-import se.l4.commons.serialization.SerializerCollection;
-import se.l4.commons.types.TypeFinder;
+import se.l4.exobytes.Serializers;
 import se.l4.silo.engine.EntityTypeFactory;
 import se.l4.silo.engine.Index;
 import se.l4.silo.engine.LocalSilo;
@@ -39,8 +37,7 @@ public class LocalSiloBuilder
 	private final Map<String, FieldType<?>> fieldTypes;
 
 	private EngineConfig config;
-	private SerializerCollection serializers;
-	private TypeFinder typeFinder;
+	private Serializers serializers;
 	private Vibe vibe;
 
 	public LocalSiloBuilder(LogBuilder logBuilder, Path dataPath)
@@ -72,16 +69,9 @@ public class LocalSiloBuilder
 	}
 
 	@Override
-	public SiloBuilder withSerializerCollection(SerializerCollection collection)
+	public SiloBuilder withSerializerCollection(Serializers collection)
 	{
 		this.serializers = collection;
-		return this;
-	}
-
-	@Override
-	public SiloBuilder withTypeFinder(TypeFinder typeFinder)
-	{
-		this.typeFinder = typeFinder;
 		return this;
 	}
 
@@ -141,27 +131,9 @@ public class LocalSiloBuilder
 	@Override
 	public LocalSilo build()
 	{
-		autoLoad();
 
 		LocalEngineFactories factories = new LocalEngineFactories(entityTypes.values(), queryEngineTypes.values(), fieldTypes.values());
-		SerializerCollection serializers = this.serializers == null ? new DefaultSerializerCollection() : this.serializers;
+		Serializers serializers = this.serializers == null ? Serializers.create().build() : this.serializers;
 		return new LocalSilo(factories, serializers, vibe, logBuilder, dataPath, config);
-	}
-
-	private void autoLoad()
-	{
-		if(typeFinder == null) return;
-
-		// Find all available field types
-		for(FieldType<?> ft : typeFinder.getSubTypesAsInstances(FieldType.class))
-		{
-			addFieldType(ft);
-		}
-
-		// Find all entity types
-		for(EntityTypeFactory<?, ?> et : typeFinder.getSubTypesAsInstances(EntityTypeFactory.class))
-		{
-			addEntityType(et);
-		}
 	}
 }

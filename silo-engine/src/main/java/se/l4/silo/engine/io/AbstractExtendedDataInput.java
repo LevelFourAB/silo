@@ -1,12 +1,10 @@
-package se.l4.silo.engine.types;
+package se.l4.silo.engine.io;
 
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 
-import se.l4.commons.io.Bytes;
-import se.l4.commons.io.BytesBuilder;
-import se.l4.commons.io.ExtendedDataInput;
+import se.l4.ylem.io.Bytes;
 
 public abstract class AbstractExtendedDataInput
 	implements ExtendedDataInput
@@ -167,16 +165,17 @@ public abstract class AbstractExtendedDataInput
 	public Bytes readBytes()
 		throws IOException
 	{
-		BytesBuilder builder = Bytes.create();
-		byte[] buffer = new byte[8192];
-		while(true)
-		{
-			int len = readVInt();
-			if(len == 0) return builder.build();
+		return Bytes.capture(out -> {
+			byte[] buffer = new byte[8192];
+			while(true)
+			{
+				int len = readVInt();
+				if(len == 0) return;
 
-			readFully(buffer, 0, len);
-			builder.addChunk(buffer, 0, len);
-		}
+				readFully(buffer, 0, len);
+				out.write(buffer, 0, len);
+			}
+		});
 	}
 
 	@Override

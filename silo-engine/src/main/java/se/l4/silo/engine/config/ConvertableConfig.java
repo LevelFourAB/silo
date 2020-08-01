@@ -1,22 +1,18 @@
 package se.l4.silo.engine.config;
 
 import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
-import se.l4.commons.config.ConfigException;
-import se.l4.commons.config.internal.RawFormatReader;
-import se.l4.commons.config.internal.streaming.MapInput;
-import se.l4.commons.serialization.Serializer;
-import se.l4.commons.serialization.SerializerCollection;
-import se.l4.commons.serialization.Use;
-import se.l4.commons.serialization.format.StreamingInput;
-import se.l4.commons.serialization.format.StreamingOutput;
-import se.l4.commons.serialization.spi.SerializerResolver;
-import se.l4.commons.serialization.spi.TypeEncounter;
+import se.l4.exobytes.SerializationException;
+import se.l4.exobytes.Serializer;
+import se.l4.exobytes.SerializerResolver;
+import se.l4.exobytes.Serializers;
+import se.l4.exobytes.TypeEncounter;
+import se.l4.exobytes.Use;
+import se.l4.exobytes.streaming.ObjectStreaming;
+import se.l4.exobytes.streaming.StreamingInput;
+import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.silo.engine.config.ConvertableConfig.ConfigSerializerResolver;
 
 /**
@@ -31,7 +27,7 @@ import se.l4.silo.engine.config.ConvertableConfig.ConfigSerializerResolver;
 public class ConvertableConfig
 {
 	private final Map<String, Object> data;
-	private final SerializerCollection collection;
+	private final Serializers collection;
 
 	public ConvertableConfig()
 	{
@@ -39,7 +35,7 @@ public class ConvertableConfig
 		collection = null;
 	}
 
-	public ConvertableConfig(Map<String, Object> data, SerializerCollection collection)
+	public ConvertableConfig(Map<String, Object> data, Serializers collection)
 	{
 		this.data = data;
 		this.collection = collection;
@@ -59,46 +55,36 @@ public class ConvertableConfig
 
 		if(collection == null)
 		{
-			throw new ConfigException("Can not convert, this instance does not have access to SerializerCollection. Was this instance deserialized?");
+			throw new SerializationException("Can not convert, this instance does not have access to SerializerCollection. Was this instance deserialized?");
 		}
 
-		Serializer<T> serializer = collection.find(type)
-			.orElseThrow(() -> new ConfigException("Could not find serializer for " + type));
-		MapInput in = new MapInput("", data);
+		Serializer<T> serializer = collection.get(type);
 		try
 		{
-			return serializer.read(in);
+			return serializer.read(ObjectStreaming.createInput(data));
 		}
 		catch(IOException e)
 		{
-			throw new ConfigException("Unable to convert to " + type.getName() + "; " + e.getMessage(), e);
+			throw new SerializationException("Unable to convert to " + type.getName() + "; " + e.getMessage(), e);
 		}
 	}
 
 	public static class ConfigSerializerResolver
 		implements SerializerResolver<ConvertableConfig>
 	{
-
 		@Override
 		public Optional<Serializer<ConvertableConfig>> find(TypeEncounter encounter)
 		{
 			return Optional.of(new ConvertableConfigSerializer(encounter.getCollection()));
 		}
-
-		@Override
-		public Set<Class<? extends Annotation>> getHints()
-		{
-			return Collections.emptySet();
-		}
-
 	}
 
 	private static class ConvertableConfigSerializer
 		implements Serializer<ConvertableConfig>
 	{
-		private final SerializerCollection collection;
+		private final Serializers collection;
 
-		public ConvertableConfigSerializer(SerializerCollection collection)
+		public ConvertableConfigSerializer(Serializers collection)
 		{
 			this.collection = collection;
 		}
@@ -107,15 +93,14 @@ public class ConvertableConfig
 		public ConvertableConfig read(StreamingInput in)
 			throws IOException
 		{
-			Map<String, Object> data = RawFormatReader.read(in);
+			Map<String, Object> data = (Map) in.readDynamic();
 			return new ConvertableConfig(data, collection);
 		}
 
 		@Override
-		public void write(ConvertableConfig object, String name, StreamingOutput stream)
+		public void write(ConvertableConfig object, StreamingOutput stream)
 			throws IOException
 		{
 		}
-
 	}
 }

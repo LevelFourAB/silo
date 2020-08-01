@@ -1,9 +1,8 @@
-package se.l4.silo.engine.types;
+package se.l4.silo.engine.io;
 
 import java.io.IOException;
 
-import se.l4.commons.io.Bytes;
-import se.l4.commons.io.ExtendedDataOutput;
+import se.l4.ylem.io.Bytes;
 
 public abstract class AbstractExtendedDataOutput
 	implements ExtendedDataOutput

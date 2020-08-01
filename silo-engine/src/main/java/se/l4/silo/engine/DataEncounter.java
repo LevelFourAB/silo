@@ -4,8 +4,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-import se.l4.commons.io.Bytes;
-import se.l4.commons.serialization.format.StreamingInput;
+import se.l4.exobytes.streaming.StreamingInput;
+import se.l4.ylem.io.Bytes;
 
 public interface DataEncounter
 {

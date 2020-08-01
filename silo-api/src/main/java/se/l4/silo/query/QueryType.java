@@ -1,6 +1,6 @@
 package se.l4.silo.query;
 
-import se.l4.commons.serialization.format.StreamingInput;
+import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.silo.Entity;
 import se.l4.silo.structured.ObjectEntity;
 import se.l4.silo.structured.StructuredEntity;

@@ -5,9 +5,9 @@ import java.util.Collection;
 
 import com.google.common.collect.Lists;
 
-import se.l4.commons.io.ExtendedDataInput;
-import se.l4.commons.io.ExtendedDataOutput;
-import se.l4.commons.serialization.Serializer;
+import se.l4.exobytes.Serializer;
+import se.l4.silo.engine.io.ExtendedDataInput;
+import se.l4.silo.engine.io.ExtendedDataOutput;
 
 public class LongArrayFieldType
 	implements FieldType<long[]>

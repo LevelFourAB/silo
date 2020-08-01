@@ -6,14 +6,16 @@ import java.util.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import se.l4.commons.id.LongIdGenerator;
-import se.l4.commons.io.Bytes;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.StorageException;
 import se.l4.silo.StoreResult;
 import se.l4.silo.engine.internal.IOUtils;
 import se.l4.silo.engine.internal.MessageConstants;
+import se.l4.silo.engine.io.ExtendedDataOutput;
+import se.l4.silo.engine.io.ExtendedDataOutputStream;
 import se.l4.silo.engine.log.Log;
+import se.l4.ylem.ids.LongIdGenerator;
+import se.l4.ylem.io.Bytes;
 
 /**
  * Implementation of {@link TransactionLog} that translates our transaction
@@ -47,7 +49,8 @@ public class TransactionLogImpl
 				logger.trace("[" + tx + "] Transaction started");
 			}
 
-			log.append(Bytes.viaDataOutput(out -> {
+			log.append(Bytes.capture(stream -> {
+				ExtendedDataOutput out = new ExtendedDataOutputStream(stream);
 				out.write(MessageConstants.START_TRANSACTION);
 				out.writeVLong(tx);
 			}));
@@ -71,7 +74,8 @@ public class TransactionLogImpl
 					logger.trace("[" + tx + "] Wrote chunk for " + entity + "[" + id + "]: " + Base64.getEncoder().encodeToString(data));
 				}
 
-				log.append(Bytes.viaDataOutput(out -> {
+				log.append(Bytes.capture(stream -> {
+					ExtendedDataOutput out = new ExtendedDataOutputStream(stream);
 					out.write(MessageConstants.STORE_CHUNK);
 					out.writeVLong(tx);
 					out.writeString(entity);
@@ -87,7 +91,8 @@ public class TransactionLogImpl
 				logger.trace("[" + tx + "] Wrote end of data for " + entity + "[" + id + "]");
 			}
 
-			log.append(Bytes.viaDataOutput(out -> {
+			log.append(Bytes.capture(stream -> {
+				ExtendedDataOutput out = new ExtendedDataOutputStream(stream);
 				out.write(MessageConstants.STORE_CHUNK);
 				out.writeVLong(tx);
 				out.writeString(entity);
@@ -99,7 +104,6 @@ public class TransactionLogImpl
 		{
 			throw new StorageException("Could not store " + entity + " with id " + id + " in transaction" + tx + "; " + e.getMessage(), e);
 		}
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -113,7 +117,8 @@ public class TransactionLogImpl
 				logger.trace("[" + tx + "] Wrote delete for " + entity + "[" + id + "]");
 			}
 
-			log.append(Bytes.viaDataOutput(out -> {
+			log.append(Bytes.capture(stream -> {
+				ExtendedDataOutput out = new ExtendedDataOutputStream(stream);
 				out.write(MessageConstants.DELETE);
 				out.writeVLong(tx);
 				out.writeString(entity);
@@ -146,7 +151,8 @@ public class TransactionLogImpl
 				logger.trace("[" + tx + "] Transaction committed");
 			}
 
-			log.append(Bytes.viaDataOutput(out -> {
+			log.append(Bytes.capture(stream -> {
+				ExtendedDataOutput out = new ExtendedDataOutputStream(stream);
 				out.write(MessageConstants.COMMIT_TRANSACTION);
 				out.writeVLong(tx);
 			}));
@@ -167,7 +173,8 @@ public class TransactionLogImpl
 				logger.trace("[" + tx + "] Transaction rolled back");
 			}
 
-			log.append(Bytes.viaDataOutput(out -> {
+			log.append(Bytes.capture(stream -> {
+				ExtendedDataOutput out = new ExtendedDataOutputStream(stream);
 				out.write(MessageConstants.ROLLBACK_TRANSACTION);
 				out.writeVLong(tx);
 			}));

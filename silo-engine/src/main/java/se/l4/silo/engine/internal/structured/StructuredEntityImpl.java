@@ -4,12 +4,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.function.Function;
 
-import se.l4.commons.io.Bytes;
-import se.l4.commons.serialization.SerializationException;
-import se.l4.commons.serialization.SerializerCollection;
-import se.l4.commons.serialization.format.BinaryOutput;
-import se.l4.commons.serialization.format.StreamingInput;
-import se.l4.commons.serialization.format.Token;
+import se.l4.exobytes.Serializers;
+import se.l4.exobytes.streaming.StreamingFormat;
+import se.l4.exobytes.streaming.StreamingInput;
+import se.l4.exobytes.streaming.StreamingOutput;
+import se.l4.exobytes.streaming.Token;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.FetchResult;
 import se.l4.silo.StorageException;
@@ -19,15 +18,16 @@ import se.l4.silo.query.Query;
 import se.l4.silo.query.QueryType;
 import se.l4.silo.structured.ObjectEntity;
 import se.l4.silo.structured.StructuredEntity;
+import se.l4.ylem.io.Bytes;
 
 public class StructuredEntityImpl
 	implements StructuredEntity
 {
-	private final SerializerCollection serializers;
+	private final Serializers serializers;
 	private final String name;
 	private final Storage entity;
 
-	public StructuredEntityImpl(SerializerCollection serializers, String name, Storage entity)
+	public StructuredEntityImpl(Serializers serializers, String name, Storage entity)
 	{
 		this.serializers = serializers;
 		this.name = name;
@@ -90,7 +90,7 @@ public class StructuredEntityImpl
 	public <T> ObjectEntity<T> asObject(Class<T> type, Function<T, Object> identityMapper)
 	{
 		return asObject(
-			serializers.find(type).orElseThrow(() -> new SerializationException("No serializer available for " + type)),
+			serializers.get(type),
 			identityMapper
 		);
 	}
@@ -99,7 +99,7 @@ public class StructuredEntityImpl
 		throws IOException
 	{
 		try(ByteArrayOutputStream baos = new ByteArrayOutputStream(1024);
-			BinaryOutput out = new BinaryOutput(baos))
+			StreamingOutput out = StreamingFormat.LEGACY_BINARY.createOutput(baos))
 		{
 			// Tag with a version
 			baos.write(0);
@@ -107,20 +107,20 @@ public class StructuredEntityImpl
 			switch(in.next())
 			{
 				case OBJECT_START:
-					copyObject(in, out, "");
+					copyObject(in, out);
 					break;
 				case LIST_START:
-					copyList(in, out, "");
+					copyList(in, out);
 					break;
 				case OBJECT_END:
 				case LIST_END:
 				case KEY:
 					throw new IOException("The given input was invalid, structured data can not start with OBJECT_END, LIST_END or KEY");
 				case NULL:
-					out.writeNull("");
+					out.writeNull();
 					break;
 				case VALUE:
-					copyValue(in, out, "");
+					copyValue(in, out);
 					break;
 			}
 
@@ -130,100 +130,70 @@ public class StructuredEntityImpl
 		}
 	}
 
-	private void copyObject(StreamingInput in, BinaryOutput out, String key)
+	private void copyObject(StreamingInput in, StreamingOutput out)
 		throws IOException
 	{
-		out.writeObjectStart(key);
+		out.writeObjectStart();
 		while(in.peek() != Token.OBJECT_END)
 		{
 			in.next(Token.KEY);
-			String subKey = in.getString();
+			String subKey = in.readString();
+			out.writeString(subKey);
 			switch(in.next())
 			{
 				case OBJECT_START:
-					copyObject(in, out, subKey);
+					copyObject(in, out);
 					break;
 				case LIST_START:
-					copyList(in, out, subKey);
+					copyList(in, out);
 					break;
 				case VALUE:
-					copyValue(in, out, subKey);
+					copyValue(in, out);
 					break;
 				case NULL:
-					out.writeNull(subKey);
+					out.writeNull();
 					break;
 				default:
 					throw new IOException("Can not copy, unexpected token: " + in.current());
 			}
 		}
 		in.next(Token.OBJECT_END);
-		out.writeObjectEnd(key);
+		out.writeObjectEnd();
 	}
 
-	private void copyList(StreamingInput in, BinaryOutput out, String key)
+	private void copyList(StreamingInput in, StreamingOutput out)
 		throws IOException
 	{
-		out.writeListStart(key);
+		out.writeListStart();
 		while(in.peek() != Token.LIST_END)
 		{
 			switch(in.next())
 			{
 				case OBJECT_START:
-					copyObject(in, out, "entry");
+					copyObject(in, out);
 					break;
 				case LIST_START:
-					copyList(in, out, "entry");
+					copyList(in, out);
 					break;
 				case VALUE:
-					copyValue(in, out, "entry");
+					copyValue(in, out);
 					break;
 				case NULL:
-					out.writeNull("entry");
+					out.writeNull();
 					break;
 				default:
 					throw new IOException("Can not copy, unexpected token: " + in.current());
 			}
 		}
 		in.next(Token.LIST_END);
-		out.writeListEnd(key);
+		out.writeListEnd();
 	}
 
-	private void copyValue(StreamingInput in, BinaryOutput out, String key)
+	private void copyValue(StreamingInput in, StreamingOutput out)
 		throws IOException
 	{
-		Object value = in.getValue();
-		if(value instanceof String)
-		{
-			out.write(key, (String) value);
-		}
-		else if(value instanceof Long)
-		{
-			out.write(key, (Long) value);
-		}
-		else if(value instanceof Integer)
-		{
-			out.write(key, (Integer) value);
-		}
-		else if(value instanceof Double)
-		{
-			out.write(key, (Double) value);
-		}
-		else if(value instanceof Float)
-		{
-			out.write(key, (Float) value);
-		}
-		else if(value instanceof Boolean)
-		{
-			out.write(key, (Boolean) value);
-		}
-		else if(value instanceof byte[])
-		{
-			out.write(key, (byte[]) value);
-		}
-		else
-		{
-			throw new IOException("Unsupported value: " + value);
-		}
+		Object value = in.readDynamic();
+		out.writeDynamic(value);
 	}
 
 }

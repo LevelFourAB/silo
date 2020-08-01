@@ -2,7 +2,7 @@ package se.l4.silo.engine.internal;
 
 import java.io.IOException;
 
-import se.l4.commons.io.Bytes;
+import se.l4.ylem.io.Bytes;
 
 /**
  * Interface representing the operations that acutally modify the underlying

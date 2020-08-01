@@ -4,11 +4,11 @@ import java.io.IOException;
 
 import com.google.common.collect.ComparisonChain;
 
-import se.l4.commons.io.ExtendedDataInput;
-import se.l4.commons.io.ExtendedDataOutput;
-import se.l4.commons.serialization.Serializer;
+import se.l4.exobytes.Serializer;
 import se.l4.silo.engine.internal.IOUtils;
 import se.l4.silo.engine.internal.tx.TransactionOperation.Type;
+import se.l4.silo.engine.io.ExtendedDataInput;
+import se.l4.silo.engine.io.ExtendedDataOutput;
 import se.l4.silo.engine.types.FieldType;
 
 public class TransactionOperationType

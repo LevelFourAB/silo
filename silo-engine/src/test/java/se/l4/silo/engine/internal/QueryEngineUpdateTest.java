@@ -9,10 +9,10 @@ import java.util.Iterator;
 
 import org.junit.Test;
 
-import se.l4.commons.serialization.format.BinaryInput;
-import se.l4.commons.serialization.format.BinaryOutput;
-import se.l4.commons.serialization.format.StreamingInput;
-import se.l4.commons.serialization.format.Token;
+import se.l4.exobytes.streaming.StreamingFormat;
+import se.l4.exobytes.streaming.StreamingInput;
+import se.l4.exobytes.streaming.StreamingOutput;
+import se.l4.exobytes.streaming.Token;
 import se.l4.silo.FetchResult;
 import se.l4.silo.Silo;
 import se.l4.silo.engine.Index;
@@ -65,17 +65,18 @@ public class QueryEngineUpdateTest
 		DataUtils.removeRecursive(tmp);
 	}
 
-	private BinaryInput generateTestData()
+	private StreamingInput generateTestData()
 	{
 		try(ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			BinaryOutput out = new BinaryOutput(baos);)
+			StreamingOutput out = StreamingFormat.LEGACY_BINARY.createOutput(baos);)
 		{
-			out.writeObjectStart("");
-			out.write("field", "value");
-			out.writeObjectEnd("");
+			out.writeObjectStart();
+			out.writeString("field");
+			out.writeString("value");
+			out.writeObjectEnd();
 			out.flush();
 
-			return new BinaryInput(new ByteArrayInputStream(baos.toByteArray()));
+			return StreamingFormat.LEGACY_BINARY.createInput(new ByteArrayInputStream(baos.toByteArray()));
 		}
 		catch(IOException e)
 		{
@@ -99,17 +100,17 @@ public class QueryEngineUpdateTest
 			while(c.peek() != Token.OBJECT_END)
 			{
 				c.next(Token.KEY);
-				switch(c.getString())
+				switch(c.readString())
 				{
 					case "field":
 						c.next(Token.VALUE);
-						if(! "value".equals(c.getString()))
+						if(! "value".equals(c.readString()))
 						{
 							throw new AssertionError("Not the same as the test data");
 						}
 						break;
 					default:
-						throw new AssertionError("Got an unknown field " + c.getString());
+						throw new AssertionError("Got an unknown field " + c.readString());
 				}
 			}
 			c.next(Token.OBJECT_END);

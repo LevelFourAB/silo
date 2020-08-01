@@ -1,7 +1,7 @@
 package se.l4.silo.binary;
 
-import se.l4.commons.io.Bytes;
 import se.l4.silo.FetchResult;
+import se.l4.ylem.io.Bytes;
 
 /**
  * Item as returned via {@link FetchResult}.

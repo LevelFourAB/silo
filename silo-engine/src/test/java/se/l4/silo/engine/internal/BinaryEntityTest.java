@@ -10,13 +10,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import se.l4.commons.io.Bytes;
 import se.l4.silo.FetchResult;
 import se.l4.silo.Silo;
 import se.l4.silo.Transaction;
 import se.l4.silo.binary.BinaryEntity;
 import se.l4.silo.binary.BinaryEntry;
 import se.l4.silo.engine.LocalSilo;
+import se.l4.ylem.io.Bytes;
 
 public class BinaryEntityTest
 {

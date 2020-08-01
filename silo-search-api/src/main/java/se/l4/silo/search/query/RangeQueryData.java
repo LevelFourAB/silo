@@ -1,8 +1,8 @@
 package se.l4.silo.search.query;
 
-import se.l4.commons.serialization.Expose;
-import se.l4.commons.serialization.ReflectionSerializer;
-import se.l4.commons.serialization.Use;
+import se.l4.exobytes.Expose;
+import se.l4.exobytes.Use;
+import se.l4.exobytes.internal.reflection.ReflectionSerializer;
 
 @Use(ReflectionSerializer.class)
 public class RangeQueryData

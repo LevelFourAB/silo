@@ -1,14 +1,16 @@
 package se.l4.silo.structured;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.function.Function;
 
-import se.l4.commons.serialization.Serializer;
-import se.l4.commons.serialization.format.BinaryInput;
-import se.l4.commons.serialization.format.StreamingInput;
+import se.l4.exobytes.Serializer;
+import se.l4.exobytes.streaming.StreamingFormat;
+import se.l4.exobytes.streaming.StreamingInput;
+import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.silo.FetchResult;
 import se.l4.silo.StorageException;
 import se.l4.silo.query.Query;
@@ -87,8 +89,13 @@ public class DefaultObjectEntity<T>
 		try
 		{
 			Object id = identityMapper.apply(data);
-			byte[] binary = serializer.toBytes(data);
-			parent.store(id, new BinaryInput(new ByteArrayInputStream(binary)));
+
+			ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+			try(StreamingOutput out = StreamingFormat.LEGACY_BINARY.createOutput(bytes))
+			{
+				out.writeObject(serializer, data);
+			}
+			parent.store(id, StreamingFormat.LEGACY_BINARY.createInput(new ByteArrayInputStream(bytes.toByteArray())));
 		}
 		catch(Exception e)
 		{

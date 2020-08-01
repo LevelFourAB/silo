@@ -7,6 +7,9 @@ import java.nio.ByteBuffer;
 import org.h2.mvstore.WriteBuffer;
 import org.h2.mvstore.type.DataType;
 
+import se.l4.silo.engine.io.AbstractExtendedDataInput;
+import se.l4.silo.engine.io.AbstractExtendedDataOutput;
+
 public class DataTypeAdapter
 	implements DataType
 {

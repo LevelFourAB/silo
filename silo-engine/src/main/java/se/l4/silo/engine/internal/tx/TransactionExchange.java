@@ -1,9 +1,9 @@
 package se.l4.silo.engine.internal.tx;
 
-import se.l4.commons.io.Bytes;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.StoreResult;
 import se.l4.silo.Transaction;
+import se.l4.ylem.io.Bytes;
 
 /**
  * Exchange to allow entities to interact with a transaction. Exchanges map
