@@ -2,101 +2,109 @@ package se.l4.silo.engine.internal;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.function.Function;
 
-import com.google.common.collect.ImmutableMap;
-
+import org.eclipse.collections.api.RichIterable;
+import org.eclipse.collections.api.map.ImmutableMap;
+import org.eclipse.collections.api.map.MapIterable;
+import org.eclipse.collections.api.tuple.primitive.LongObjectPair;
+import org.eclipse.collections.impl.tuple.primitive.PrimitiveTuples;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.FetchResult;
 import se.l4.silo.StorageException;
 import se.l4.silo.StoreResult;
 import se.l4.silo.engine.DataStorage;
-import se.l4.silo.engine.Fields;
+import se.l4.silo.engine.EntityCodec;
+import se.l4.silo.engine.IndexDefinition;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.QueryEngine;
-import se.l4.silo.engine.QueryEngineFactory;
 import se.l4.silo.engine.Storage;
-import se.l4.silo.engine.config.QueryEngineConfig;
 import se.l4.silo.engine.internal.mvstore.SharedStorages;
 import se.l4.silo.engine.internal.query.QueryEncounterImpl;
 import se.l4.silo.engine.internal.query.QueryEngineCreationEncounterImpl;
 import se.l4.silo.engine.internal.query.QueryEngineUpdater;
 import se.l4.silo.engine.internal.tx.TransactionExchange;
-import se.l4.silo.query.QueryFetchResult;
-import se.l4.silo.query.QueryResult;
-import se.l4.silo.results.IteratorFetchResult;
+import se.l4.silo.engine.io.ExtendedDataOutputStream;
+import se.l4.silo.query.Query;
 import se.l4.ylem.io.Bytes;
 
 /**
  * Implementation of {@link Storage}.
- *
- * @author Andreas Holstenson
- *
  */
-public class StorageImpl
-	implements Storage, Closeable
+public class StorageImpl<T>
+	implements Storage<T>, Closeable
 {
 	private static final Logger log = LoggerFactory.getLogger(StorageImpl.class);
-	private final String name;
 	private final TransactionSupport transactionSupport;
 	private final DataStorage storage;
-	private final PrimaryIndex primary;
 
-	private final ImmutableMap<String, QueryEngine<?>> queryEngines;
-	private final QueryEngineUpdater queryEngineUpdater;
+	private final String name;
+	private final EntityCodec<T> codec;
+
+	private final PrimaryIndex primary;
+	private final MapIterable<String, QueryEngine<T, ?>> queryEngines;
+	private final QueryEngineUpdater<T> queryEngineUpdater;
+
+	private long previousForIndex;
 
 	public StorageImpl(
-			StorageEngine engine,
-			SharedStorages storages,
-			EngineFactories factories,
-			ScheduledExecutorService executor,
-			TransactionSupport transactionSupport,
-			MVStoreManager stateStore,
-			Path dataDir,
-			DataStorage storage,
-			PrimaryIndex primary,
-			String name,
-			Fields fields,
-			Map<String, QueryEngineConfig> queryEngines)
+		StorageEngine engine,
+		SharedStorages storages,
+		ScheduledExecutorService executor,
+		TransactionSupport transactionSupport,
+
+		MVStoreManager store,
+		MVStoreManager stateStore,
+
+		Path dataDir,
+		DataStorage storage,
+
+		String name,
+		EntityCodec<T> codec,
+
+		PrimaryIndex primary,
+		RichIterable<IndexDefinition<?>> indexes
+	)
 	{
 		this.name = name;
 		this.transactionSupport = transactionSupport;
 		this.storage = storage;
 		this.primary = primary;
 
-		ImmutableMap.Builder<String, QueryEngine<?>> builder = ImmutableMap.builder();
-		for(Map.Entry<String, QueryEngineConfig> queryEngineConfig : queryEngines.entrySet())
-		{
-			String key = queryEngineConfig.getKey();
-			QueryEngineConfig config = queryEngineConfig.getValue();
+		this.codec = codec;
 
-			String type = config.getType();
-			QueryEngineFactory<?, ?> queryEngineFactory = factories.forQueryEngine(type);
-
-			@SuppressWarnings({ "rawtypes", "unchecked" })
-			QueryEngine<?> queryEngine = queryEngineFactory.create(new QueryEngineCreationEncounterImpl(
+		this.queryEngines = (ImmutableMap) indexes.toMap(IndexDefinition::getName, def -> {
+			String key = def.getName();
+			return def.create(new QueryEngineCreationEncounterImpl(
 				storages,
 				executor,
 				dataDir,
 				key,
-				name + "-" + key,
-				config.as(queryEngineFactory.getConfigClass()),
-				fields
+				name + "-" + key
 			));
+		}).toImmutable();
 
-			builder.put(key, queryEngine);
-		}
+		this.queryEngineUpdater = new QueryEngineUpdater<>(
+			engine,
 
-		this.queryEngines = builder.build();
-		this.queryEngineUpdater = new QueryEngineUpdater(engine, stateStore, this, executor, name, this.queryEngines);
+			storage,
+			store,
+			stateStore,
+			this,
+			executor,
+			name,
+			this.queryEngines
+		);
 	}
 
 	@Override
@@ -104,85 +112,106 @@ public class StorageImpl
 		throws IOException
 	{
 		// Close all of our query engines
-		for(QueryEngine<?> engine : this.queryEngines.values())
+		for(QueryEngine<?, ?> engine : this.queryEngines)
 		{
 			engine.close();
 		}
 	}
 
 	@Override
-	public StoreResult store(Object id, Bytes bytes)
+	public Mono<StoreResult<T>> store(Object id, T instance)
 	{
-		if(log.isTraceEnabled())
-		{
-			log.trace("[" + name + "] TX store of " + id);
-		}
+		return Mono.fromSupplier(() -> {
+			if(log.isTraceEnabled())
+			{
+				log.trace("[" + name + "] TX store of " + id);
+			}
 
-		TransactionExchange tx = transactionSupport.getExchange();
-		try
-		{
-			StoreResult result = tx.store(name, id, bytes);
-			tx.commit();
-			return result;
-		}
-		catch(Throwable e)
-		{
-			tx.rollback();
+			TransactionExchange tx = transactionSupport.getExchange();
+			try
+			{
+				// Encode the main object
+				Bytes bytes = Bytes.capture(out -> {
+					codec.encode(instance, out);
+				});
+				StoreResult result = tx.store(name, id, bytes);
 
-			throw new StorageException("Unable to store data with id " + id + "; " + e.getMessage(), e);
-		}
+				// Generate index data for the object
+				for(QueryEngine<T, ?> engine : queryEngines)
+				{
+					Bytes indexBytes = Bytes.capture(out0 -> {
+						try(ExtendedDataOutputStream out = new ExtendedDataOutputStream(out0))
+						{
+							engine.generate(instance, out);
+						}
+					});
+
+					tx.index(name, engine.getName(), id, indexBytes);
+				}
+
+				tx.commit();
+				return result;
+			}
+			catch(Throwable e)
+			{
+				tx.rollback();
+
+				throw new StorageException("Unable to store data with id " + id + "; " + e.getMessage(), e);
+			}
+		});
 	}
 
 	@Override
-	public DeleteResult delete(Object id)
+	public Mono<DeleteResult> delete(Object id)
 	{
-		if(log.isTraceEnabled())
-		{
-			log.trace("[" + name + "] TX delete of " + id);
-		}
+		return Mono.fromSupplier(() -> {
+			if(log.isTraceEnabled())
+			{
+				log.trace("[" + name + "] TX delete of " + id);
+			}
 
-		TransactionExchange tx = transactionSupport.getExchange();
-		try
-		{
-			DeleteResult result = tx.delete(name, id);
-			tx.commit();
-			return result;
-		}
-		catch(Throwable e)
-		{
-			tx.rollback();
+			TransactionExchange tx = transactionSupport.getExchange();
+			try
+			{
+				DeleteResult result = tx.delete(name, id);
+				tx.commit();
+				return result;
+			}
+			catch(Throwable e)
+			{
+				tx.rollback();
 
-			throw new StorageException("Unable to delete data with id " + id + "; " + e.getMessage(), e);
-		}
+				throw new StorageException("Unable to delete data with id " + id + "; " + e.getMessage(), e);
+			}
+		});
 	}
 
 	@Override
-	public Bytes get(Object id)
+	public Mono<T> get(Object id)
 	{
-		long internalId = primary.get(id);
+		return Mono.fromSupplier(() -> {
+			long internalId = primary.get(id);
 
-		if(log.isTraceEnabled())
-		{
-			log.trace("[" + name + "] Getting " + id + " mapped to internal id " + internalId);
-		}
+			if(log.isTraceEnabled())
+			{
+				log.trace("[" + name + "] Getting " + id + " mapped to internal id " + internalId);
+			}
 
-		if(internalId == 0) return null;
+			if(internalId == 0) return null;
 
-		try
-		{
-			return storage.get(internalId);
-		}
-		catch(IOException e)
-		{
-			throw new StorageException("Unable to get data with id " + id + "; " + e.getMessage(), e);
-		}
+			return getInternal(internalId);
+		});
 	}
 
-	public Bytes getInternal(long id)
+	public T getInternal(long id)
 	{
 		try
 		{
-			return storage.get(id);
+			Bytes data = storage.get(id);
+			try(InputStream in = data.asInputStream())
+			{
+				return codec.decode(in);
+			}
 		}
 		catch(IOException e)
 		{
@@ -205,47 +234,46 @@ public class StorageImpl
 		return primary.size();
 	}
 
-	@Override
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public <R> QueryFetchResult<QueryResult<R>> query(String engine, Object query, Function<Bytes, R> dataLoader)
+	private QueryEncounterImpl createQueryEncounter(Query query)
 	{
-		QueryEngine<?> qe = queryEngines.get(engine);
-		if(qe == null)
-		{
-			throw new StorageException("Unknown query engine `" + engine + "`");
-		}
-
-		QueryEncounterImpl encounter = new QueryEncounterImpl<>(query, id -> {
-			try
-			{
-				Bytes data = storage.get(id);
-				if(data == null)
-				{
-					throw new StorageException("Unable to fetch data for internal id " + id + "; Not available from storage");
-				}
-				return dataLoader.apply(data);
-			}
-			catch(IOException e)
-			{
-				throw new StorageException("Unable to fetch data for internal id " + id + "; " + e.getMessage(), e);
-			}
-		});
-
-		qe.query(encounter);
-
-		return encounter.getResult();
+		return new QueryEncounterImpl<Query<T,?,?>, T>(query, this::getInternal);
 	}
 
 	@Override
-	public FetchResult<Bytes> stream()
+	public <R, FR extends FetchResult<R>> Mono<FR> fetch(
+		Query<T, R, FR> query
+	)
+	{
+		QueryEngine<?, ?> qe = queryEngines.get(query.getIndex());
+		if(qe == null)
+		{
+			throw new StorageException("Unknown query engine `" + query.getIndex() + "`");
+		}
+
+		return qe.fetch(createQueryEncounter(query));
+	}
+
+	@Override
+	public <R> Flux<R> stream(Query<T, R, ?> query)
+	{
+		QueryEngine<?, ?> qe = queryEngines.get(query.getIndex());
+		if(qe == null)
+		{
+			throw new StorageException("Unknown query engine `" + query.getIndex() + "`");
+		}
+
+		return qe.stream(createQueryEncounter(query));
+	}
+
+	public Iterator<LongObjectPair<T>> iterator()
 	{
 		long first = primary.first();
 		if(first == 0)
 		{
-			return FetchResult.empty();
+			return Collections.emptyIterator();
 		}
 
-		return new IteratorFetchResult<>(new Iterator<Bytes>()
+		return new Iterator<LongObjectPair<T>>()
 		{
 			private long current = first;
 
@@ -256,7 +284,7 @@ public class StorageImpl
 			}
 
 			@Override
-			public Bytes next()
+			public LongObjectPair<T> next()
 			{
 				if(current == 0)
 				{
@@ -267,14 +295,65 @@ public class StorageImpl
 				{
 					long toFetch = current;
 					current = primary.nextAfter(current);
-					return storage.get(toFetch);
+					Bytes data = storage.get(toFetch);
+					try(InputStream in = data.asInputStream())
+					{
+						return PrimitiveTuples.pair(toFetch, codec.decode(in));
+					}
 				}
 				catch(IOException e)
 				{
 					throw new StorageException("Unable to get next item; " + e.getMessage(), e);
 				}
 			}
-		}, -1, 0, -1, -1);
+		};
+	}
+
+	@Override
+	public Flux<T> stream()
+	{
+		return Flux.fromIterable(() -> {
+			long first = primary.first();
+			if(first == 0)
+			{
+				return Collections.emptyIterator();
+			}
+
+			return new Iterator<T>()
+			{
+				private long current = first;
+
+				@Override
+				public boolean hasNext()
+				{
+					return current != 0;
+				}
+
+				@Override
+				public T next()
+				{
+					if(current == 0)
+					{
+						throw new NoSuchElementException();
+					}
+
+					try
+					{
+						long toFetch = current;
+						current = primary.nextAfter(current);
+						Bytes data = storage.get(toFetch);
+						try(InputStream in = data.asInputStream())
+						{
+							return codec.decode(in);
+						}
+					}
+					catch(IOException e)
+					{
+						throw new StorageException("Unable to get next item; " + e.getMessage(), e);
+					}
+				}
+			};
+		});
 	}
 
 	/**
@@ -287,19 +366,25 @@ public class StorageImpl
 	public void directStore(Object id, Bytes bytes)
 		throws IOException
 	{
-		long previous = primary.latest();
-		long internalId = primary.store(id);
-
 		if(log.isTraceEnabled())
 		{
-			log.trace("[" + name + "] Direct store of " + id + " mapped to internal id " + internalId);
+			log.trace("[" + name + "] Direct store of " + id);
 		}
 
-		storage.store(internalId, bytes);
+		this.previousForIndex = primary.latest();
+		long previousInternalId = primary.get(id);
 
-		Bytes storedBytes = storage.get(internalId);
+		// Store the new data and associate it with the primary index
+		long internalId = storage.store(bytes);
+		primary.store(id, internalId);
 
-		queryEngineUpdater.store(previous, internalId, storedBytes);
+		// TODO: Replacement for indexes?
+		if(previousInternalId != 0)
+		{
+			// Remove the old data
+			storage.delete(previousInternalId);
+			queryEngineUpdater.delete(previousInternalId);
+		}
 	}
 
 	/**
@@ -320,11 +405,17 @@ public class StorageImpl
 
 		if(internalId == 0) return;
 
-		long previous = primary.before(internalId);
-		queryEngineUpdater.delete(previous, internalId);
+		queryEngineUpdater.delete(internalId);
 
 		storage.delete(internalId);
 		primary.remove(id);
+	}
+
+	public void directIndex(String index, Object id, Bytes bytes)
+		throws IOException
+	{
+		long internalId = primary.get(id);
+		queryEngineUpdater.store(this.previousForIndex, internalId, index, bytes);
 	}
 
 	public void awaitQueryEngines()

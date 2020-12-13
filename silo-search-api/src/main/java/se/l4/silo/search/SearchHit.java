@@ -1,7 +1,5 @@
 package se.l4.silo.search;
 
-import java.util.function.Function;
-
 public interface SearchHit<T>
 {
 	/**
@@ -17,9 +15,4 @@ public interface SearchHit<T>
 	 * @return
 	 */
 	T item();
-
-	default <R> SearchHit<R> transform(Function<T, R> func)
-	{
-		return new SearchHitImpl<>(func.apply(item()), score());
-	}
 }

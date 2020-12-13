@@ -6,24 +6,17 @@ import org.h2.mvstore.type.ObjectDataType;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.types.DataTypeAdapter;
 import se.l4.silo.engine.types.LongFieldType;
-import se.l4.ylem.ids.LongIdGenerator;
 
 /**
  * Index that helps map objects to internal long identifiers.
- *
- * @author Andreas Holstenson
- *
  */
 public class PrimaryIndex
 {
 	private final MVMap<Object, Long> map;
 	private final MVMap<Long, Object> reverse;
 
-	private final LongIdGenerator ids;
-
-	public PrimaryIndex(MVStoreManager storeManager, LongIdGenerator ids, String name)
+	public PrimaryIndex(MVStoreManager storeManager, String name)
 	{
-		this.ids = ids;
 		map = storeManager.openMap("primary.toExternal." + name, new MVMap.Builder<Object, Long>()
 			.keyType(new ObjectDataType())
 			.valueType(new DataTypeAdapter(LongFieldType.INSTANCE))
@@ -53,17 +46,10 @@ public class PrimaryIndex
 	 * @param key
 	 * @return
 	 */
-	public long store(Object key)
+	public void store(Object key, long id)
 	{
-		if(map.containsKey(key))
-		{
-			return map.get(key);
-		}
-
-		long id = ids.next();
 		map.put(key, id);
 		reverse.put(id, key);
-		return id;
 	}
 
 	/**

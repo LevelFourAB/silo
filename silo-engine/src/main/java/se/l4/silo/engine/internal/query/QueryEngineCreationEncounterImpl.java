@@ -8,41 +8,36 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.h2.mvstore.MVStore;
 
 import se.l4.silo.StorageException;
-import se.l4.silo.engine.Fields;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.QueryEngineCreationEncounter;
-import se.l4.silo.engine.config.QueryEngineConfig;
 import se.l4.silo.engine.internal.mvstore.MVStoreManagerImpl;
 import se.l4.silo.engine.internal.mvstore.SharedStorages;
 
 /**
  * Implementation of {@link QueryEngineCreationEncounter}.
- *
- * @author Andreas Holstenson
- *
- * @param <C>
  */
-public class QueryEngineCreationEncounterImpl<C extends QueryEngineConfig>
-	implements QueryEngineCreationEncounter<C>
+public class QueryEngineCreationEncounterImpl
+	implements QueryEngineCreationEncounter
 {
 	private final SharedStorages storages;
 	private final ScheduledExecutorService executor;
 	private final Path root;
 	private final String name;
 	private final String uniqueName;
-	private final C config;
-	private final Fields fields;
 
-	public QueryEngineCreationEncounterImpl(SharedStorages storages, ScheduledExecutorService executor,
-			Path root, String name, String uniqueName, C config, Fields fields)
+	public QueryEngineCreationEncounterImpl(
+		SharedStorages storages,
+		ScheduledExecutorService executor,
+		Path root,
+		String name,
+		String uniqueName
+	)
 	{
 		this.storages = storages;
 		this.executor = executor;
 		this.root = root;
 		this.name = name;
 		this.uniqueName = uniqueName;
-		this.config = config;
-		this.fields = fields;
 	}
 
 	@Override
@@ -55,18 +50,6 @@ public class QueryEngineCreationEncounterImpl<C extends QueryEngineConfig>
 	public String getUniqueName()
 	{
 		return uniqueName;
-	}
-
-	@Override
-	public C getConfig()
-	{
-		return config;
-	}
-
-	@Override
-	public Fields getFields()
-	{
-		return fields;
 	}
 
 	@Override

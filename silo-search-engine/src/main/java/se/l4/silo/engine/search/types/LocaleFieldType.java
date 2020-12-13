@@ -1,5 +1,6 @@
 package se.l4.silo.engine.search.types;
 
+import java.io.IOException;
 import java.util.Locale;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -19,13 +20,21 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.util.BytesRef;
 
-import se.l4.silo.StorageException;
-import se.l4.silo.engine.search.Language;
+import se.l4.exobytes.streaming.StreamingInput;
+import se.l4.exobytes.streaming.StreamingOutput;
+import se.l4.exobytes.streaming.Token;
+import se.l4.silo.engine.search.LocaleSupport;
 import se.l4.silo.engine.search.SearchFieldType;
 import se.l4.silo.engine.search.internal.LocaleAnalyzer;
+import se.l4.silo.query.EqualsMatcher;
+import se.l4.silo.query.Matcher;
+import se.l4.silo.search.SearchIndexException;
 
+/**
+ * {@link SearchFieldType} for indexing a {@link Locale}.
+ */
 public class LocaleFieldType
-	implements SearchFieldType
+	implements SearchFieldType<Locale>
 {
 	private static final LocaleAnalyzer ANALYZER = new LocaleAnalyzer();
 	private static final FieldType TYPE = new FieldType();
@@ -36,6 +45,21 @@ public class LocaleFieldType
 		TYPE.setIndexOptions(IndexOptions.DOCS);
 		TYPE.setTokenized(true);
 		TYPE.freeze();
+	}
+
+	@Override
+	public Locale read(StreamingInput in)
+		throws IOException
+	{
+		in.next(Token.VALUE);
+		return Locale.forLanguageTag(in.readString());
+	}
+
+	@Override
+	public void write(Locale instance, StreamingOutput out)
+		throws IOException
+	{
+		out.writeString(instance.toLanguageTag());
 	}
 
 	@Override
@@ -51,134 +75,63 @@ public class LocaleFieldType
 	}
 
 	@Override
-	public Analyzer getAnalyzer(Language lang)
+	public Analyzer getAnalyzer(LocaleSupport lang)
 	{
 		return ANALYZER;
 	}
 
 	@Override
 	public IndexableField create(
-			String field,
-			FieldType type,
-			Language lang,
-			Object object)
+		String field,
+		FieldType type,
+		LocaleSupport lang,
+		Locale object
+	)
 	{
-		String value;
-		if(object instanceof Locale)
-		{
-			value = ((Locale) object).toLanguageTag();
-		}
-		else if(object instanceof String)
-		{
-			value = (String) object;
-		}
-		else if(object == null)
-		{
-			value = null;
-		}
-		else
-		{
-			throw new StorageException("Locale fields can only handle objects of type Locale or String");
-		}
-
-		return new Field(field, value, type);
+		return new Field(field, object.toLanguageTag(), type);
 	}
 
 	@Override
-	public IndexableField createValuesField(String field, Language lang, Object object)
+	public IndexableField createValuesField(String field, LocaleSupport lang, Locale object)
 	{
-		String value;
-		if(object instanceof Locale)
-		{
-			value = ((Locale) object).toLanguageTag();
-		}
-		else if(object instanceof String)
-		{
-			value = (String) object;
-		}
-		else
-		{
-			throw new StorageException("Locale fields can only handle objects of type Locale or String");
-		}
-
-		return new SortedSetDocValuesField(field, new BytesRef(value));
+		return new SortedSetDocValuesField(field, new BytesRef(object.toLanguageTag()));
 	}
 
 	@Override
-	public IndexableField createSortingField(String field, Language lang, Object object)
+	public IndexableField createSortingField(String field, LocaleSupport lang, Locale object)
 	{
-		String value;
-		if(object instanceof Locale)
-		{
-			value = ((Locale) object).toLanguageTag();
-		}
-		else if(object instanceof String)
-		{
-			value = (String) object;
-		}
-		else
-		{
-			throw new StorageException("Locale fields can only handle objects of type Locale or String");
-		}
-
-		return new SortedDocValuesField(field, new BytesRef(value));
+		return new SortedDocValuesField(field, new BytesRef(object.toLanguageTag()));
 	}
 
 	@Override
-	public SortField createSortField(String field, boolean ascending, Object params)
+	public SortField createSortField(String field, boolean ascending)
 	{
 		return new SortField(field, SortField.Type.STRING, ! ascending);
 	}
 
 	@Override
-	public Object extract(IndexableField field)
+	public Query createQuery(String field, Matcher matcher)
 	{
-		return Locale.forLanguageTag(field.stringValue());
-	}
-
-	@Override
-	public Query createEqualsQuery(String field, Object value)
-	{
-		Locale locale;
-		if(value instanceof String)
+		if(matcher instanceof EqualsMatcher)
 		{
-			String asString = (String) value;
-			if(asString.indexOf('*') >= 0)
+			Locale value = (Locale) ((EqualsMatcher) matcher).getValue();
+			BooleanQuery.Builder builder = new BooleanQuery.Builder();
+
+			/*
+			 * Matching is always done in such a way that all the parts are required. This currently focuses on simplified
+			 * matching of a codes with a language and a region.
+			 */
+			builder.add(new TermQuery(new Term(field, value.toLanguageTag())), Occur.SHOULD);
+
+			if(! value.getCountry().isEmpty() && value.getScript().isEmpty())
 			{
-				throw new StorageException("Locale querying does not support wildcards");
+				String q = value.getLanguage() + "-*-" + value.getCountry();
+				builder.add(new WildcardQuery(new Term(field, q)), Occur.SHOULD);
 			}
 
-			locale = Locale.forLanguageTag(asString);
-		}
-		else if(value instanceof Locale)
-		{
-			locale = (Locale) value;
-		}
-		else
-		{
-			throw new StorageException("Unknown type of query for `" + field + "`: " + value);
+			return new ConstantScoreQuery(builder.build());
 		}
 
-		BooleanQuery.Builder builder = new BooleanQuery.Builder();
-
-		/*
-		 * Matching is always done in such a way that all the parts are required. This currently focuses on simplified
-		 * matching of a codes with a language and a region.
-		 */
-		builder.add(new TermQuery(new Term(field, locale.toLanguageTag())), Occur.SHOULD);
-
-		if(! locale.getCountry().isEmpty() && locale.getScript().isEmpty())
-		{
-			String q = locale.getLanguage() + "-*-" + locale.getCountry();
-			builder.add(new WildcardQuery(new Term(field, q)), Occur.SHOULD);
-		}
-
-		return new ConstantScoreQuery(builder.build());
-	}
-
-	@Override
-	public Query createRangeQuery(String field, Object from, Object to)
-	{
-		throw new UnsupportedOperationException("Locale fields do not support range queries; Internal field name was " + field);
+		throw new SearchIndexException("Locale field queries only support EqualsMatcher");
 	}
 }

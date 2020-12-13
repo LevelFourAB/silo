@@ -1,8 +1,8 @@
 package se.l4.silo.engine.types;
 
 import java.io.IOException;
+import java.util.Arrays;
 
-import se.l4.exobytes.Serializer;
 import se.l4.silo.engine.io.ExtendedDataInput;
 import se.l4.silo.engine.io.ExtendedDataOutput;
 
@@ -25,12 +25,6 @@ public class MergedFieldType
 	public FieldType[] getTypes()
 	{
 		return types;
-	}
-
-	@Override
-	public String uniqueId()
-	{
-		return "merged";
 	}
 
 	@Override
@@ -99,13 +93,6 @@ public class MergedFieldType
 	}
 
 	@Override
-	public Serializer<Object[]> getSerializer()
-	{
-		// TODO: Create a custom serializer?
-		return null;
-	}
-
-	@Override
 	@SuppressWarnings("unchecked")
 	public void write(Object[] instance, ExtendedDataOutput out)
 		throws IOException
@@ -146,4 +133,15 @@ public class MergedFieldType
 		return result;
 	}
 
+	@Override
+	public Object[] nextDown(Object[] in)
+	{
+		throw new UnsupportedOperationException("merged types can not be compared");
+	}
+
+	@Override
+	public Object[] nextUp(Object[] in)
+	{
+		throw new UnsupportedOperationException("merged types can not be compared");
+	}
 }

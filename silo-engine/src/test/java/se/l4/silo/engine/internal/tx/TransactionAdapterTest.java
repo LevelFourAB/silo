@@ -4,9 +4,9 @@ import java.io.IOException;
 
 import org.h2.mvstore.MVStore;
 import org.h2.mvstore.OffHeapStore;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.internal.OpChecker;
@@ -23,8 +23,6 @@ import se.l4.ylem.io.Bytes;
  * Tests for {@link TransactionAdapter} to check that transactions are
  * translated into a proper set of storage operations.
  *
- * @author Andreas Holstenson
- *
  */
 public class TransactionAdapterTest
 {
@@ -33,7 +31,7 @@ public class TransactionAdapterTest
 	private OpChecker ops;
 	private TransactionLogImpl tx;
 
-	@Before
+	@BeforeEach
 	public void before()
 	{
 		store = new MVStoreManagerImpl(new MVStore.Builder()
@@ -56,6 +54,13 @@ public class TransactionAdapterTest
 			{
 				ops.check("delete", entity, id);
 			}
+
+			@Override
+			public void index(String entity, String index, Object id, Bytes data)
+				throws IOException
+			{
+				ops.check("index", entity, index, id, data);
+			}
 		});
 
 		Log log = DirectApplyLog.builder()
@@ -64,7 +69,7 @@ public class TransactionAdapterTest
 		tx = new TransactionLogImpl(log, new SimpleLongIdGenerator());
 	}
 
-	@After
+	@AfterEach
 	public void after()
 		throws IOException
 	{
@@ -96,6 +101,11 @@ public class TransactionAdapterTest
 	private void expectDelete(String entity, Object id)
 	{
 		ops.expect("delete", entity, id);
+	}
+
+	private void expectIndex(String entity, String index, Object id, Bytes data)
+	{
+		ops.expect("index", entity, index, id, data);
 	}
 
 	@Test
@@ -140,6 +150,19 @@ public class TransactionAdapterTest
 
 		long id = tx.startTransaction();
 		tx.store(id, "test", 12, data);
+		tx.commitTransaction(id);
+
+		ops.checkEmpty();
+	}
+
+	@Test
+	public void testIndex()
+	{
+		Bytes data = generateData(1024);
+		expectIndex("test", "idx1", 12, data);
+
+		long id = tx.startTransaction();
+		tx.storeIndex(id, "test", "idx1", 12, data);
 		tx.commitTransaction(id);
 
 		ops.checkEmpty();

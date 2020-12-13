@@ -1,46 +1,67 @@
 package se.l4.silo.query;
 
+import java.util.OptionalLong;
+
 /**
  * Extension for {@link Query} that indicates that a query can limit its
  * results.
- *
- * @author Andreas Holstenson
- *
  */
-public interface LimitableQuery<Self extends LimitableQuery<Self>>
+public interface LimitableQuery
 {
 	/**
-	 * Set the offset of this query.
+	 * Get the offset of this query.
 	 *
-	 * @param offset
 	 * @return
 	 */
-	Self offset(long offset);
+	OptionalLong getResultOffset();
 
 	/**
-	 * Set the number of results this query can return.
+	 * Get the limit of this query.
 	 *
-	 * @param limit
 	 * @return
 	 */
-	Self limit(long limit);
+	OptionalLong getResultLimit();
 
 	/**
-	 * Paginate this query, this will invoke {@link #offset(long)} and
-	 * {@link #limit(long)} with arguments calculated from the page.
-	 *
-	 * @param page
-	 * @param pageSize
-	 * @return
+	 * Builder that supports limiting the range of results.
 	 */
-	@SuppressWarnings("unchecked")
-	default Self paginate(int page, int pageSize)
+	public interface Builder<Self extends Builder<Self>>
 	{
-		if(page < 1) throw new IllegalArgumentException("page must be a positive integer");
-		if(pageSize < 1) throw new IllegalArgumentException("pageSize must be a positive integer");
+		/**
+		 * Set the offset of this query.
+		 *
+		 * @param offset
+		 *   the offset to start returning from
+		 * @return
+		 *   copy of this builder with an offset set
+		 */
+		Self offset(long offset);
 
-		offset((page-1) * pageSize);
-		limit(pageSize);
-		return (Self) this;
+		/**
+		 * Set the number of results this query can return.
+		 *
+		 * @param limit
+		 *   number of results to limit to
+		 * @return
+		 *   copy of this builder with a limit set
+		 */
+		Self limit(long limit);
+
+		/**
+		 * Paginate this query, this will invoke {@link #offset(long)} and
+		 * {@link #limit(long)} with arguments calculated from the page.
+		 *
+		 * @param page
+		 * @param pageSize
+		 * @return
+		 */
+		default Self paginate(int page, int pageSize)
+		{
+			if(page < 1) throw new IllegalArgumentException("page must be a positive integer");
+			if(pageSize < 1) throw new IllegalArgumentException("pageSize must be a positive integer");
+
+			return offset((page-1) * pageSize)
+				.limit(pageSize);
+		}
 	}
 }

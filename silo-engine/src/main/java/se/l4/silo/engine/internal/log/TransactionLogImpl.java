@@ -142,6 +142,52 @@ public class TransactionLogImpl
 	}
 
 	@Override
+	public void storeIndex(long tx, String entity, String index, Object id, Bytes bytes)
+	{
+		try
+		{
+			bytes.asChunks(8192, (data, offset, length) -> {
+				if(logger.isTraceEnabled())
+				{
+					logger.trace("[" + tx + "] Wrote index chunk for " + entity + "[" + id + "]: " + Base64.getEncoder().encodeToString(data));
+				}
+
+				log.append(Bytes.capture(stream -> {
+					ExtendedDataOutput out = new ExtendedDataOutputStream(stream);
+					out.write(MessageConstants.INDEX_CHUNK);
+					out.writeVLong(tx);
+					out.writeString(entity);
+					out.writeString(index);
+					IOUtils.writeId(id, out);
+					IOUtils.writeByteArray(data, offset, length, out);
+				}));
+			});
+
+			// Write a zero length chunk to indicate end of entity
+
+			if(logger.isTraceEnabled())
+			{
+				logger.trace("[" + tx + "] Wrote end of data for " + entity + "[" + id + "]");
+			}
+
+			log.append(Bytes.capture(stream -> {
+				ExtendedDataOutput out = new ExtendedDataOutputStream(stream);
+				out.write(MessageConstants.INDEX_CHUNK);
+				out.writeVLong(tx);
+				out.writeString(entity);
+				out.writeString(index);
+				IOUtils.writeId(id, out);
+				out.writeVInt(0);
+			}));
+		}
+		catch(IOException e)
+		{
+			throw new StorageException("Could not store index " + entity + "::" + index + " with id " + id + " in transaction" + tx + "; " + e.getMessage(), e);
+		}
+	}
+
+
+	@Override
 	public void commitTransaction(long tx)
 	{
 		try

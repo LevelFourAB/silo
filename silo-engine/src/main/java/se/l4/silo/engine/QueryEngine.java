@@ -1,30 +1,62 @@
 package se.l4.silo.engine;
 
 import java.io.Closeable;
+import java.io.IOException;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import se.l4.silo.FetchResult;
+import se.l4.silo.engine.io.ExtendedDataInputStream;
+import se.l4.silo.engine.io.ExtendedDataOutputStream;
+import se.l4.silo.query.Query;
 
 /**
  * Engine that provides query abilities for stored data.
- *
- * @author Andreas Holstenson
- *
  */
-public interface QueryEngine<T>
+public interface QueryEngine<T, Q extends Query<T, ?, ?>>
 	extends Closeable
 {
 	/**
-	 * Query this query engine.
+	 * Get the name that this engine is available as.
 	 *
-	 * @param encounter
+	 * @return
 	 */
-	void query(QueryEncounter<T> encounter);
+	String getName();
 
 	/**
-	 * Update this query engine with new data.
+	 * Fetch some results using this engine.
 	 *
-	 * @param id
 	 * @param encounter
 	 */
-	void update(long id, DataEncounter encounter);
+	Mono<? extends FetchResult<?>> fetch(QueryEncounter<? extends Q, T> encounter);
+
+	/**
+	 *
+	 * @param <R>
+	 * @param encounter
+	 * @return
+	 */
+	Flux<?> stream(QueryEncounter<? extends Q, T> encounter);
+
+	/**
+	 * Generate data for this index. This data will be applied by the index
+	 * after the current transaction is committed.
+	 *
+	 * @param data
+	 * @param out
+	 * @return
+	 */
+	void generate(T data, ExtendedDataOutputStream out)
+		throws IOException;
+
+	/**
+	 * Apply previously generated data.
+	 *
+	 * @param id
+	 * @param in
+	 */
+	void apply(long id, ExtendedDataInputStream in)
+		throws IOException;
 
 	/**
 	 * Delete something from this query engine.

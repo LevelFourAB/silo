@@ -2,7 +2,6 @@ package se.l4.silo.engine.types;
 
 import java.io.IOException;
 
-import se.l4.exobytes.Serializer;
 import se.l4.silo.engine.io.ExtendedDataInput;
 import se.l4.silo.engine.io.ExtendedDataOutput;
 
@@ -15,14 +14,6 @@ import se.l4.silo.engine.io.ExtendedDataOutput;
  */
 public interface FieldType<T>
 {
-	/**
-	 * Get the unique id of this field type. This is used to reference a
-	 * field type in configurations.
-	 *
-	 * @return
-	 */
-	String uniqueId();
-
 	/**
 	 * Compare the two fields.
 	 *
@@ -49,14 +40,6 @@ public interface FieldType<T>
 	T convert(Object in);
 
 	/**
-	 * Get the serializer to use for higher level representation of this
-	 * type.
-	 *
-	 * @return
-	 */
-	Serializer<T> getSerializer();
-
-	/**
 	 * Write the given instance to the output.
 	 *
 	 * @param instance
@@ -76,4 +59,20 @@ public interface FieldType<T>
 	 */
 	T read(ExtendedDataInput in)
 		throws IOException;
+
+	/**
+	 * Get the value that would be just before the given value when compared.
+	 *
+	 * @param in
+	 * @return
+	 */
+	T nextDown(T in);
+
+	/**
+	 * Get the value that would be just below the given value when compared.
+	 *
+	 * @param in
+	 * @return
+	 */
+	T nextUp(T in);
 }

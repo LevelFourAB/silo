@@ -1,11 +1,9 @@
 package se.l4.silo.engine.types;
 
 import java.io.IOException;
-import java.util.Collection;
 
-import com.google.common.collect.Lists;
+import org.eclipse.collections.impl.factory.primitive.LongLists;
 
-import se.l4.exobytes.Serializer;
 import se.l4.silo.engine.io.ExtendedDataInput;
 import se.l4.silo.engine.io.ExtendedDataOutput;
 
@@ -14,12 +12,6 @@ public class LongArrayFieldType
 {
 	public LongArrayFieldType()
 	{
-	}
-
-	@Override
-	public String uniqueId()
-	{
-		return "long-array";
 	}
 
 	@Override
@@ -69,13 +61,9 @@ public class LongArrayFieldType
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public long[] convert(Object in)
 	{
-		if(in instanceof Collection)
+		if(in instanceof Iterable)
 		{
-			return subConvert(((Collection) in).toArray());
-		}
-		else if(in instanceof Iterable)
-		{
-			return subConvert(Lists.newArrayList((Iterable) in).toArray());
+			return LongLists.immutable.ofAll((Iterable) in).toArray();
 		}
 		else if(in instanceof Object[])
 		{
@@ -85,13 +73,6 @@ public class LongArrayFieldType
 		{
 			return new long[] { LongFieldType.INSTANCE.convert(in) };
 		}
-	}
-
-	@Override
-	public Serializer<long[]> getSerializer()
-	{
-		// TODO: Create a custom serializer?
-		return null;
 	}
 
 	@Override
@@ -118,4 +99,15 @@ public class LongArrayFieldType
 		return result;
 	}
 
+	@Override
+	public long[] nextDown(long[] in)
+	{
+		throw new UnsupportedOperationException("long arrays can not be compared");
+	}
+
+	@Override
+	public long[] nextUp(long[] in)
+	{
+		throw new UnsupportedOperationException("long arrays can not be compared");
+	}
 }

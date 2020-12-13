@@ -3,57 +3,39 @@ package se.l4.silo.engine;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
-import se.l4.exobytes.Serializers;
-import se.l4.silo.Entity;
-import se.l4.silo.ResourceHandle;
+import org.eclipse.collections.api.factory.Lists;
+
+import reactor.core.publisher.Mono;
 import se.l4.silo.Silo;
-import se.l4.silo.StorageException;
-import se.l4.silo.Transaction;
-import se.l4.silo.binary.BinaryEntity;
-import se.l4.silo.engine.builder.SiloBuilder;
-import se.l4.silo.engine.config.EngineConfig;
-import se.l4.silo.engine.internal.LocalEngineFactories;
 import se.l4.silo.engine.internal.LocalSiloBuilder;
-import se.l4.silo.engine.internal.StorageEngine;
-import se.l4.silo.engine.internal.TransactionSupport;
-import se.l4.silo.engine.internal.tx.TransactionExchange;
-import se.l4.silo.engine.internal.tx.TransactionImpl;
-import se.l4.silo.engine.internal.tx.WrappedTransaction;
 import se.l4.silo.engine.log.DirectApplyLog;
 import se.l4.silo.engine.log.LogBuilder;
-import se.l4.silo.structured.StructuredEntity;
 import se.l4.vibe.Vibe;
 
-/**
- * {@link Silo} instance that stores data locally. You can use this to embed
- * the storage together with a server.
- *
- * @author Andreas Holstenson
- *
- */
-public class LocalSilo
-	implements Silo
+public interface LocalSilo
+	extends Silo
 {
-	private final TransactionSupport tx;
-	private final StorageEngine storageEngine;
-	private final ThreadLocal<TransactionImpl> transactions;
+	/**
+	 * Close this instance.
+	 */
+	void close();
 
-	public LocalSilo(LocalEngineFactories factories, Serializers serializers, Vibe vibe, LogBuilder logBuilder, Path storage, EngineConfig config)
-	{
-		Objects.requireNonNull(factories, "factories is required");
-		Objects.requireNonNull(serializers, "serializers is required");
-		Objects.requireNonNull(logBuilder, "logBuilder is required");
-		Objects.requireNonNull(storage, "storage path is required");
-		Objects.requireNonNull(config, "configuration is required");
+	/**
+	 * Create a snapshot of this instance.
+	 *
+	 * @return
+	 */
+	Snapshot createSnapshot();
 
-		tx = createTransactionSupport();
-		transactions = new ThreadLocal<>();
-
-		storageEngine = new StorageEngine(factories, serializers, vibe, tx, logBuilder, storage, config);
-	}
+	/**
+	 * Install a snapshot into this instance.
+	 *
+	 * @param snapshot
+	 * @throws IOException
+	 */
+	void installSnapshot(Snapshot snapshot)
+		throws IOException;
 
 	/**
 	 * Start creating a local instance of Silo. The built instance will use a
@@ -64,9 +46,9 @@ public class LocalSilo
 	 *   the directory where data will be stored
 	 * @return
 	 */
-	public static SiloBuilder open(Path path)
+	public static Builder open(Path path)
 	{
-		return new LocalSiloBuilder(DirectApplyLog.builder(), path);
+		return open(DirectApplyLog.builder(), path);
 	}
 
 	/**
@@ -77,7 +59,7 @@ public class LocalSilo
 	 *   the directory where data will be stored
 	 * @return
 	 */
-	public static SiloBuilder open(File path)
+	public static Builder open(File path)
 	{
 		return open(path.toPath());
 	}
@@ -89,143 +71,62 @@ public class LocalSilo
 	 * @param path
 	 * @return
 	 */
-	public static SiloBuilder open(LogBuilder logBuilder, Path path)
+	public static Builder open(LogBuilder logBuilder, Path path)
 	{
-		return new LocalSiloBuilder(logBuilder, path);
-	}
-
-	@Override
-	public void close()
-	{
-		try
-		{
-			storageEngine.close();
-		}
-		catch(IOException e)
-		{
-			throw new StorageException("Unable to close; " + e.getMessage(), e);
-		}
-	}
-
-	private TransactionSupport createTransactionSupport()
-	{
-		return new TransactionSupport()
-		{
-			@Override
-			public TransactionExchange getExchange()
-			{
-				TransactionImpl tx = transactions.get();
-				if(tx != null)
-				{
-					return tx.getExchange();
-				}
-
-				// No active transaction, create a new transaction
-				return new TransactionImpl(storageEngine.getTransactionLog(), (i) -> {});
-			}
-
-			@Override
-			public Transaction newTransaction()
-			{
-				TransactionImpl tx = transactions.get();
-				if(tx != null)
-				{
-					return new WrappedTransaction(tx);
-				}
-
-				tx = new TransactionImpl(storageEngine.getTransactionLog(), this::deactivateTransaction);
-				transactions.set(tx);
-				return tx;
-			}
-
-			private void deactivateTransaction(Transaction tx)
-			{
-				if(transactions.get() == tx)
-				{
-					transactions.remove();
-				}
-			}
-		};
-	}
-
-	@Override
-	public <T> T create(Class<T> siloInterface)
-	{
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean hasEntity(String entityName)
-	{
-		return storageEngine.getEntity(entityName) != null;
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	public <T extends Entity> T entity(String entityName, Class<T> type)
-	{
-		Object instance = storageEngine.getEntity(entityName);
-		if(instance == null)
-		{
-			throw new StorageException("The entity `" + entityName + "` does not exist");
-		}
-
-		if(! type.isAssignableFrom(instance.getClass()))
-		{
-			throw new StorageException("The entity `" + entityName + "` is not of type " + type + ", instead it is of type " + instance.getClass());
-		}
-		return (T) instance;
-	}
-
-	@Override
-	public BinaryEntity binary(String entityName)
-	{
-		return entity(entityName, BinaryEntity.class);
-	}
-
-	@Override
-	public StructuredEntity structured(String entityName)
-	{
-		return entity(entityName, StructuredEntity.class);
-	}
-
-	@Override
-	public Transaction newTransaction()
-	{
-		return tx.newTransaction();
-	}
-
-	@Override
-	public ResourceHandle acquireResourceHandle()
-	{
-		return new ResourceHandle()
-		{
-			@Override
-			public void close()
-			{
-				// Local implementations of Silo have nothing to close
-			}
-		};
+		return new LocalSiloBuilder(
+			logBuilder,
+			path,
+			new EngineConfig(),
+			Lists.immutable.empty(),
+			null
+		);
 	}
 
 	/**
-	 * Create a snapshot of this instance.
-	 *
-	 * @return
+	 * Builder for instances of {@link LocalSilo}.
 	 */
-	public Snapshot createSnapshot()
+	interface Builder
 	{
-		return storageEngine.createSnapshot();
-	}
+		/**
+		 * Set the {@link Vibe} instance to use. Setting this will enable
+		 * reporting of health values.
+		 *
+		 * @param vibe
+		 * @param path
+		 * @return
+		 */
+		Builder withVibe(Vibe vibe, String... path);
 
-	public void installSnapshot(Snapshot snapshot)
-		throws IOException
-	{
-		storageEngine.installSnapshot(snapshot);
-	}
+		/**
+		 * Set the size used to cache data in this instance. This controls the
+		 * cache size of the main storage, but does not do anything for indexes.
+		 *
+		 * @param cacheSizeInMb
+		 * @return
+		 */
+		Builder withCacheSize(int cacheSizeInMb);
 
-	public void compact(long time, TimeUnit unit)
-	{
-		storageEngine.compact(time, unit);
+		/**
+		 * Add an entity that should be available.
+		 *
+		 * @param definition
+		 * @return
+		 */
+		Builder addEntity(EntityDefinition<?, ?> definition);
+
+		/**
+		 * Add multiple definitions to this instance.
+		 *
+		 * @param definitions
+		 * @return
+		 */
+		Builder addEntities(Iterable<? extends EntityDefinition<?, ?>> definitions);
+
+		/**
+		 * Return a mono that will start this instance.
+		 *
+		 * @return
+		 */
+		Mono<LocalSilo> start();
 	}
 }

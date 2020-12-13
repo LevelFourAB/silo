@@ -4,19 +4,15 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexOptions;
-import org.apache.lucene.index.IndexableField;
 
-import se.l4.silo.engine.search.Language;
+import se.l4.silo.engine.search.LocaleSupport;
 import se.l4.silo.engine.search.SearchFieldType;
 
 /**
  * Abstract base for field types for numeric values.
- *
- * @author Andreas Holstenson
- *
  */
-public abstract class NumericFieldType
-	implements SearchFieldType
+public abstract class NumericFieldType<T extends Number>
+	implements SearchFieldType<T>
 {
 	private static final Analyzer ANALYZER = new KeywordAnalyzer();
 
@@ -47,30 +43,8 @@ public abstract class NumericFieldType
 	}
 
 	@Override
-	public Analyzer getAnalyzer(Language lang)
+	public Analyzer getAnalyzer(LocaleSupport lang)
 	{
 		return ANALYZER;
 	}
-
-	@Override
-	public IndexableField create(
-			String field,
-			FieldType type,
-			Language lang,
-			Object object)
-	{
-		return create(field, (Number) object, type);
-	}
-
-	protected abstract IndexableField create(String field,
-			Number number,
-			FieldType type);
-
-	@Override
-	public Object extract(IndexableField field)
-	{
-		return field.numericValue();
-	}
-
-
 }

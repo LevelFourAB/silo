@@ -1,41 +1,28 @@
 package se.l4.silo.search.query;
 
-import java.util.List;
+import org.eclipse.collections.api.RichIterable;
 
-import com.google.common.collect.Lists;
+import se.l4.silo.search.QueryClause;
+import se.l4.silo.search.internal.OrQueryImpl;
 
-import se.l4.silo.search.QueryItem;
-import se.l4.silo.search.QueryPart;
-import se.l4.silo.search.QueryWithSubqueries;
-
-public class OrQuery<ReturnPath>
-	extends AbstractQueryPart<ReturnPath>
-	implements QueryWithSubqueries<OrQuery<ReturnPath>, ReturnPath>
+public interface OrQuery
+	extends QueryBranch
 {
-	private final List<QueryItem> items;
+	RichIterable<? extends QueryClause> getItems();
 
-	public OrQuery()
+	static Builder create()
 	{
-		items = Lists.newArrayList();
+		return OrQueryImpl.create();
 	}
 
-	@Override
-	public void addQuery(QueryItem item)
+	interface Builder
+		extends QueryBranch.Builder<Builder>
 	{
-		items.add(item);
-	}
-
-	@Override
-	public <P extends QueryPart<OrQuery<ReturnPath>>> P query(P q)
-	{
-		q.parent(this, this);
-		return q;
-	}
-
-	@Override
-	public ReturnPath done()
-	{
-		receiver.addQuery(new QueryItem("or", items));
-		return parent;
+		/**
+		 * Build the final query.
+		 *
+		 * @return
+		 */
+		OrQuery build();
 	}
 }

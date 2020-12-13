@@ -16,11 +16,6 @@ public class StorageException
 		super();
 	}
 
-	public StorageException(String message, Throwable cause)
-	{
-		super(message, cause);
-	}
-
 	public StorageException(String message)
 	{
 		super(message);
@@ -31,4 +26,18 @@ public class StorageException
 		super(cause);
 	}
 
+	public StorageException(String message, Throwable cause)
+	{
+		super(message, cause);
+	}
+
+	public StorageException(
+		String message,
+		Throwable cause,
+		boolean enableSuppression,
+		boolean writableStackTrace
+	)
+	{
+		super(message, cause, enableSuppression, writableStackTrace);
+	}
 }

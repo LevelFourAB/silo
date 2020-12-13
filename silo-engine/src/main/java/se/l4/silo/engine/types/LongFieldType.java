@@ -2,7 +2,6 @@ package se.l4.silo.engine.types;
 
 import java.io.IOException;
 
-import se.l4.exobytes.Serializer;
 import se.l4.silo.engine.io.ExtendedDataInput;
 import se.l4.silo.engine.io.ExtendedDataOutput;
 
@@ -10,12 +9,6 @@ public class LongFieldType
 	implements FieldType<Long>
 {
 	public static final FieldType<Long> INSTANCE = new LongFieldType();
-
-	@Override
-	public String uniqueId()
-	{
-		return "long";
-	}
 
 	@Override
 	public int compare(Long o1, Long o2)
@@ -34,13 +27,6 @@ public class LongFieldType
 		if(in instanceof Number) return ((Number) in).longValue();
 
 		throw new IllegalArgumentException("Can't convert " + in + " to a long");
-	}
-
-	@Override
-	public Serializer<Long> getSerializer()
-	{
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override
@@ -63,4 +49,15 @@ public class LongFieldType
 		out.writeLong(instance);
 	}
 
+	@Override
+	public Long nextDown(Long in)
+	{
+		return Math.addExact(in, -1);
+	}
+
+	@Override
+	public Long nextUp(Long in)
+	{
+		return Math.addExact(in, 1);
+	}
 }

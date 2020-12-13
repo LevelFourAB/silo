@@ -1,36 +1,26 @@
 package se.l4.silo.engine;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.function.Function;
-
-import se.l4.exobytes.streaming.StreamingFormat;
-import se.l4.exobytes.streaming.StreamingInput;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.Entity;
 import se.l4.silo.FetchResult;
-import se.l4.silo.StorageException;
 import se.l4.silo.StoreResult;
-import se.l4.silo.query.QueryFetchResult;
-import se.l4.silo.query.QueryResult;
-import se.l4.ylem.io.Bytes;
+import se.l4.silo.query.Query;
 
 /**
  * Storage that can be used by {@link Entity entities}.
- *
- * @author Andreas Holstenson
- *
  */
-public interface Storage
+public interface Storage<T>
 {
 	/**
 	 * Store some data in this storage.
 	 *
 	 * @param id
-	 * @param bytes
+	 * @param data
 	 * @return
 	 */
-	StoreResult store(Object id, Bytes bytes);
+	Mono<StoreResult<T>> store(Object id, T data);
 
 	/**
 	 * Get some data in this storage.
@@ -38,30 +28,7 @@ public interface Storage
 	 * @param id
 	 * @return
 	 */
-	Bytes get(Object id);
-
-	default StreamingInput getStructured(Object id)
-	{
-		Bytes bytes = get(id);
-		if(bytes == null) return null;
-
-		try
-		{
-			InputStream stream = bytes.asInputStream();
-
-			int tag = stream.read();
-			if(tag != 0)
-			{
-				throw new StorageException("Unknown storage version: " + tag + ", this version of Silo is either old or the data is corrupt");
-			}
-
-			return StreamingFormat.LEGACY_BINARY.createInput(stream);
-		}
-		catch(IOException e)
-		{
-			throw new StorageException("Could not read data from storage during query engine update; " + e.getMessage(), e);
-		}
-	}
+	Mono<T> get(Object id);
 
 	/**
 	 * Delete some data in this storage.
@@ -69,7 +36,7 @@ public interface Storage
 	 * @param id
 	 * @return
 	 */
-	DeleteResult delete(Object id);
+	Mono<DeleteResult> delete(Object id);
 
 	/**
 	 * Invoke a query engine by passing it a pre-built query.
@@ -78,12 +45,49 @@ public interface Storage
 	 * @param query
 	 * @return
 	 */
-	<R> QueryFetchResult<QueryResult<R>> query(String engine, Object query, Function<Bytes, R> dataLoader);
+	<R, FR extends FetchResult<R>> Mono<FR> fetch(Query<T, R, FR> query);
 
 	/**
-	 * Stream everything stored in this storage.
+	 * Invoke a query engine by passing it a pre-built query.
+	 *
+	 * @param engine
+	 * @param query
+	 * @return
+	 */
+	<R> Flux<R> stream(Query<T, R, ?> query);
+
+	/**
+	 * Stream everything in this storage.
 	 *
 	 * @return
 	 */
-	FetchResult<Bytes> stream();
+	Flux<T> stream();
+
+	interface Builder<T>
+	{
+		/**
+		 * Add an index to this storage.
+		 *
+		 * @param index
+		 * @return
+		 *   new instance
+		 */
+		Builder<T> addIndex(IndexDefinition<T> index);
+
+		/**
+		 * Add all of the given indexes to this storage.
+		 *
+		 * @param indexes
+		 * @return
+		 *   new instance
+		 */
+		Builder<T> addIndexes(Iterable<IndexDefinition<T>> indexes);
+
+		/**
+		 * Build and return the storage.
+		 *
+		 * @return
+		 */
+		Storage<T> build();
+	}
 }

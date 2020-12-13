@@ -1,21 +1,20 @@
 package se.l4.silo;
 
+import reactor.core.publisher.Mono;
+
 /**
  * Transaction in {@link Silo}. See {@link Silo} for details on the
  * transaction semantics in use.
- *
- * @author Andreas Holstenson
- *
  */
 public interface Transaction
 {
 	/**
 	 * Rollback any changes made.
 	 */
-	void rollback();
+	Mono<Void> rollback();
 
 	/**
 	 * Commit any changes made.
 	 */
-	void commit();
+	Mono<Void> commit();
 }

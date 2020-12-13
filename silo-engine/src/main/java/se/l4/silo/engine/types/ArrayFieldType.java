@@ -3,9 +3,8 @@ package se.l4.silo.engine.types;
 import java.io.IOException;
 import java.util.Collection;
 
-import com.google.common.collect.Lists;
+import org.eclipse.collections.api.factory.Lists;
 
-import se.l4.exobytes.Serializer;
 import se.l4.silo.engine.io.ExtendedDataInput;
 import se.l4.silo.engine.io.ExtendedDataOutput;
 
@@ -22,12 +21,6 @@ public class ArrayFieldType
 	public ArrayFieldType(FieldType type)
 	{
 		this.type = type;
-	}
-
-	@Override
-	public String uniqueId()
-	{
-		return "merged:" + type.uniqueId();
 	}
 
 	@Override
@@ -103,7 +96,7 @@ public class ArrayFieldType
 		}
 		else if(in instanceof Iterable)
 		{
-			return subConvert(Lists.newArrayList((Iterable) in).toArray());
+			return subConvert(Lists.mutable.ofAll((Iterable) in).toArray());
 		}
 		else if(in instanceof Object[])
 		{
@@ -113,13 +106,6 @@ public class ArrayFieldType
 		{
 			return new Object[] { in == null ? null : type.convert(in) };
 		}
-	}
-
-	@Override
-	public Serializer<Object[]> getSerializer()
-	{
-		// TODO: Create a custom serializer?
-		return null;
 	}
 
 	@Override
@@ -163,4 +149,15 @@ public class ArrayFieldType
 		return result;
 	}
 
+	@Override
+	public Object[] nextDown(Object[] in)
+	{
+		throw new UnsupportedOperationException("arrays can not be compared");
+	}
+
+	@Override
+	public Object[] nextUp(Object[] in)
+	{
+		throw new UnsupportedOperationException("arrays can not be compared");
+	}
 }

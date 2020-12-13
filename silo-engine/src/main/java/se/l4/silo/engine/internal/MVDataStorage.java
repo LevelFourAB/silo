@@ -10,7 +10,6 @@ import java.util.Base64;
 import java.util.Enumeration;
 
 import com.carrotsearch.hppc.LongArrayList;
-import com.google.common.annotations.VisibleForTesting;
 
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
@@ -59,9 +58,12 @@ public class MVDataStorage
 	}
 
 	@Override
-	public void store(long id, Bytes bytes)
+	public long store(Bytes bytes)
 		throws IOException
 	{
+		Long lastId = keys.lastKey();
+		long id = lastId == null ? 1 : lastId + 1;
+
 		LongArrayList ids = new LongArrayList();
 		bytes.asChunks(CHUNK_SIZE, (data, offset, length) -> {
 			long nextId = nextInternalId();
@@ -81,16 +83,10 @@ public class MVDataStorage
 			log.trace("Store: Mapped " + id + " to " + Arrays.toString(ids.toArray()));
 		}
 
-		long[] old = keys.get(id);
-		if(old != null)
-		{
-			for(long chunk : old)
-			{
-				chunks.remove(chunk);
-			}
-		}
-
+		// Store the new ids
 		keys.put(id, ids.toArray());
+
+		return id;
 	}
 
 	@Override
@@ -128,7 +124,6 @@ public class MVDataStorage
 		keys.remove(id);
 	}
 
-	@VisibleForTesting
 	long nextInternalId()
 	{
 		Long lastKey = chunks.lastKey();

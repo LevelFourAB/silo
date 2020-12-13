@@ -2,32 +2,25 @@ package se.l4.silo.engine.search.internal;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Locale;
-import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.primitives.Longs;
+import java.util.function.Function;
 
 import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.StringField;
-import org.apache.lucene.facet.FacetsCollector;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queries.function.FunctionScoreQuery;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
@@ -35,7 +28,6 @@ import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.ControlledRealTimeReopenThread;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.MultiCollector;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.SearcherFactory;
@@ -51,70 +43,101 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.NRTCachingDirectory;
 import org.apache.lucene.util.BytesRef;
+import org.eclipse.collections.api.RichIterable;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ListIterable;
+import org.eclipse.collections.api.list.MutableList;
+import org.eclipse.collections.api.map.ImmutableMap;
+import org.eclipse.collections.api.map.MapIterable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import se.l4.exobytes.streaming.StreamingFormat;
+import se.l4.exobytes.streaming.StreamingInput;
+import se.l4.exobytes.streaming.StreamingOutput;
+import se.l4.exobytes.streaming.Token;
+import se.l4.silo.FetchResult;
 import se.l4.silo.StorageException;
-import se.l4.silo.engine.DataEncounter;
 import se.l4.silo.engine.QueryEncounter;
 import se.l4.silo.engine.QueryEngine;
-import se.l4.silo.engine.search.CustomFieldCreator;
-import se.l4.silo.engine.search.FacetDefinition;
-import se.l4.silo.engine.search.FieldCreationEncounter;
-import se.l4.silo.engine.search.FieldDefinition;
-import se.l4.silo.engine.search.IndexDefinition;
-import se.l4.silo.engine.search.IndexedFieldBuilder;
-import se.l4.silo.engine.search.Language;
+import se.l4.silo.engine.io.ExtendedDataInputStream;
+import se.l4.silo.engine.io.ExtendedDataOutputStream;
+import se.l4.silo.engine.search.LocaleSupport;
+import se.l4.silo.engine.search.Locales;
+import se.l4.silo.engine.search.SearchFieldDefinition;
 import se.l4.silo.engine.search.SearchFieldType;
-import se.l4.silo.engine.search.SearchIndexConfig;
-import se.l4.silo.engine.search.SearchIndexConfig.CommitConfig;
-import se.l4.silo.engine.search.facets.FacetCollectionEncounter;
-import se.l4.silo.engine.search.query.QueryParseEncounter;
-import se.l4.silo.engine.search.query.QueryParser;
-import se.l4.silo.engine.search.scoring.ScoringProvider;
-import se.l4.silo.search.FacetEntry;
-import se.l4.silo.search.FacetItem;
-import se.l4.silo.search.FacetsImpl;
-import se.l4.silo.search.QueryItem;
-import se.l4.silo.search.ScoringItem;
-import se.l4.silo.search.SearchIndexQueryRequest;
+import se.l4.silo.engine.search.SearchIndexEncounter;
+import se.l4.silo.engine.search.config.IndexCacheConfig;
+import se.l4.silo.engine.search.config.IndexCommitConfig;
+import se.l4.silo.engine.search.config.IndexFreshnessConfig;
+import se.l4.silo.engine.search.config.IndexReloadConfig;
+import se.l4.silo.engine.search.query.QueryBuilder;
+import se.l4.silo.engine.search.query.QueryBuilders;
+import se.l4.silo.search.QueryClause;
+import se.l4.silo.search.SearchHit;
+import se.l4.silo.search.SearchIndexException;
+import se.l4.silo.search.SearchIndexQuery;
+import se.l4.silo.search.SearchResult;
 
 /**
  * Query engine that maintains a Lucene index for an entity.
- *
- * @author Andreas Holstenson
- *
  */
-public class SearchIndexQueryEngine
-	implements QueryEngine<SearchIndexQueryRequest>
+public class SearchIndexQueryEngine<T>
+	implements QueryEngine<T, SearchIndexQuery<T, ?>>
 {
 	private static final Logger log = LoggerFactory.getLogger(SearchIndexQueryEngine.class);
+	private static final long DEFAULT_OFFSET = 0;
+	private static final long DEFAULT_LIMIT = 10;
 
-	private final IndexDefinitionImpl def;
-	private final SearchEngine engine;
+	private final String name;
+
+	private final Locales locales;
+	private final Function<T, Locale> localeSupplier;
+
+	private final QueryBuilders queryParsers;
+
+	private final IndexDefinitionImpl encounter;
+	private final ImmutableMap<String, SearchFieldDefinition<T>> fields;
 
 	private final Directory directory;
 	private final IndexWriter writer;
 	private final SearcherManager manager;
-
-	private final ImmutableSet<String> fieldNames;
-	private final ImmutableList<CustomFieldCreator> fieldCreators;
 
 	private final ControlledRealTimeReopenThread<IndexSearcher> thread;
 	private final CommitPolicy commitPolicy;
 
 	private final AtomicLong latestGeneration;
 
-	private final Map<String, ScoringProvider<?>> scoringProviders;
-
-	public SearchIndexQueryEngine(SearchEngine engine, ScheduledExecutorService executor, String name, Path directory, SearchIndexConfig config)
+	public SearchIndexQueryEngine(
+		ScheduledExecutorService executor,
+		String name,
+		String uniqueName,
+		Path directory,
+		Locales locales,
+		QueryBuilders queryParsers,
+		IndexCommitConfig commitConfig,
+		IndexReloadConfig reloadConfig,
+		Function<T, Locale> localeSupplier,
+		ImmutableMap<String, SearchFieldDefinition<T>> fields
+	)
 		throws IOException
 	{
-		this.engine = engine;
-		def = new IndexDefinitionImpl(engine, config);
+		this.name = name;
+		this.locales = locales;
+		this.queryParsers = queryParsers;
+
+		this.localeSupplier = localeSupplier;
+		this.fields = fields;
+
+		encounter = new IndexDefinitionImpl(
+			locales,
+			(MapIterable) fields
+		);
 
 		// Create the directory implementation to use
-		this.directory = createDirectory(FSDirectory.open(directory), config);
+		this.directory = createDirectory(FSDirectory.open(directory), reloadConfig.getCache());
 
 		// Setup a basic configuration for the index writer
 		IndexWriterConfig conf = new IndexWriterConfig(new SimpleAnalyzer());
@@ -134,47 +157,31 @@ public class SearchIndexQueryEngine
 			}
 		});
 
-
-		SearchIndexConfig.Freshness freshness = config.getReload().getFreshness();
+		IndexFreshnessConfig freshness = reloadConfig.getFreshness();
 		thread = new ControlledRealTimeReopenThread<>(writer, manager, freshness.getMaxStale(), freshness.getMinStale());
 		thread.setPriority(Math.min(Thread.currentThread().getPriority()+2, Thread.MAX_PRIORITY));
 		thread.setDaemon(true);
 		thread.start();
 
-		CommitConfig commit = config.getCommit();
-		commitPolicy = new CommitPolicy(log, name, executor, writer, commit.getMaxUpdates(), commit.getMaxTime());
-
-		// Figure out which fields that are going to be indexed
-		ImmutableSet.Builder<String> fieldNames = ImmutableSet.builder();
-		for(SearchIndexConfig.FieldConfig fc : config.getFields())
-		{
-			fieldNames.add(fc.getName());
-		}
-
-		if(def.getLanguageField() != null)
-		{
-			// Add the language field if we have one
-			fieldNames.add(def.getLanguageField());
-		}
-
-		this.fieldNames = fieldNames.build();
-
-		this.fieldCreators = ImmutableList.copyOf(config.getFieldCreators());
-
-		this.scoringProviders = ImmutableMap.copyOf(config.getScoringProviders());
+		commitPolicy = new CommitPolicy(log, uniqueName, executor, writer, commitConfig.getMaxUpdates(), commitConfig.getMaxTime());
 	}
 
-	private static Directory createDirectory(Directory directory, SearchIndexConfig config)
+	private static Directory createDirectory(Directory directory, IndexCacheConfig config)
 	{
-		SearchIndexConfig.Cache cache = config.getReload().getCache();
-		if(cache.isActive())
+		if(config.isActive())
 		{
-			return new NRTCachingDirectory(directory, cache.getMaxMergeSize(), cache.getMaxSize());
+			return new NRTCachingDirectory(directory, config.getMaxMergeSize(), config.getMaxSize());
 		}
 		else
 		{
 			return directory;
 		}
+	}
+
+	@Override
+	public String getName()
+	{
+		return name;
 	}
 
 	@Override
@@ -192,89 +199,298 @@ public class SearchIndexQueryEngine
 	}
 
 	@Override
-	public void query(QueryEncounter<SearchIndexQueryRequest> encounter)
+	public void generate(T data, ExtendedDataOutputStream rawOut)
+		throws IOException
 	{
-		SearchIndexQueryRequest request = encounter.getData();
+		// Write a version tag
+		rawOut.write(0);
 
+		// Number of fields that are going to be written
+		try(StreamingOutput out = StreamingFormat.CBOR.createOutput(rawOut))
+		{
+			// Write the locale of the item first
+			Locale locale = localeSupplier.apply(data);
+			if(locale == null)
+			{
+				locale = Locale.ENGLISH;
+			}
+			out.writeString(locale.toLanguageTag());
+
+			// Write all of the extracted fields
+			out.writeListStart(fields.size());
+
+			for(SearchFieldDefinition<T> field : fields)
+			{
+				out.writeListStart(2);
+
+				// Write the name of the field
+				out.writeString(field.getName());
+
+				// Get and write the value
+				Object value = field.getSupplier().apply(data);
+				if(value == null)
+				{
+					out.writeNull();
+				}
+				else
+				{
+					SearchFieldType type = field.getType();
+					if(value instanceof RichIterable)
+					{
+						RichIterable<?> iterable = (RichIterable<?>) value;
+						out.writeListStart(iterable.size());
+
+						for(Object o : iterable)
+						{
+							type.write(o, out);
+						}
+
+						out.writeListEnd();
+					}
+					else if(value instanceof Collection)
+					{
+						Collection<?> iterable = (Collection<?>) value;
+						out.writeListStart(iterable.size());
+
+						for(Object o : iterable)
+						{
+							type.write(o, out);
+						}
+
+						out.writeListEnd();
+					}
+					else if(value instanceof Iterable)
+					{
+						out.writeListStart();
+
+						for(Object o : (Iterable<?>) value)
+						{
+							type.write(o, out);
+						}
+
+						out.writeListEnd();
+					}
+					else
+					{
+						type.write(value, out);
+					}
+				}
+
+				out.writeListEnd();
+			}
+
+			out.writeListEnd();
+		}
+	}
+
+	@Override
+	public void apply(long id, ExtendedDataInputStream rawIn)
+		throws IOException
+	{
+		int version = rawIn.read();
+		if(version != 0)
+		{
+			throw new StorageException("Unknown search index version encountered: " + version);
+		}
+
+		Document doc = new Document();
+
+		BytesRef idRef = new BytesRef(serializeId(id));
+
+		FieldType ft = new FieldType();
+		ft.setStored(true);
+		ft.setTokenized(false);
+		ft.setIndexOptions(IndexOptions.DOCS);
+		doc.add(new Field("_:id", idRef, ft));
+
+		LocaleSupport defaultLangSupport = locales.get("en").get();
+
+		try(StreamingInput in = StreamingFormat.CBOR.createInput(rawIn))
+		{
+			in.next(Token.VALUE);
+			String rawLocale = in.readString();
+			doc.add(new Field("_:lang", rawLocale, StringField.TYPE_STORED));
+
+			// Resolve locale support
+			LocaleSupport specificLanguageSupport = locales.getOrDefault(rawLocale);
+
+			in.next(Token.LIST_START);
+
+			while(in.peek() != Token.LIST_END)
+			{
+				in.next(Token.LIST_START);
+
+				in.next(Token.VALUE);
+				String fieldName = in.readString();
+
+				SearchFieldDefinition field = encounter.getField(fieldName);
+				if(field == null)
+				{
+					in.skipNext();
+				}
+
+				if(in.peek() == Token.NULL)
+				{
+					in.next();
+					addField(doc, defaultLangSupport, specificLanguageSupport, field, null);
+				}
+				else if(in.peek() == Token.LIST_START)
+				{
+					// Stored a list of values, extract and index them
+					in.next(Token.LIST_START);
+
+					while(in.peek() != Token.LIST_END)
+					{
+						Object value = field.getType().read(in);
+						addField(doc, defaultLangSupport, specificLanguageSupport, field, value);
+					}
+
+					in.next(Token.LIST_END);
+				}
+				else
+				{
+					Object value = field.getType().read(in);
+					addField(doc, defaultLangSupport, specificLanguageSupport, field, value);
+				}
+
+				in.next(Token.LIST_END);
+			}
+
+			in.next(Token.LIST_END);
+		}
+
+		// Update the index
+		Term idTerm = new Term("_:id", idRef);
+		try
+		{
+			long generation = writer.updateDocument(idTerm, doc);
+			latestGeneration.set(generation);
+		}
+		catch(IOException e)
+		{
+			throw new StorageException("Unable to update search index; " + e.getMessage(), e);
+		}
+
+		// Tell our commit policy that we have modified the index
+		commitPolicy.indexModified();
+	}
+
+	private <V> void addField(
+		Document document,
+		LocaleSupport fallback,
+		LocaleSupport current,
+		SearchFieldDefinition<V> field,
+		V object
+	)
+	{
+		if(object == null)
+		{
+			String fieldName = encounter.nullName(field);
+			FieldType ft = new FieldType();
+			ft.setStored(false);
+			ft.setIndexOptions(IndexOptions.DOCS);
+			ft.setTokenized(false);
+			ft.setOmitNorms(true);
+			document.add(new Field(fieldName, BytesRef.EMPTY_BYTES, ft));
+			return;
+		}
+
+		boolean needValues = encounter.getValueFields().contains(field.getName());
+
+		if(field.isLanguageSpecific() && fallback != current)
+		{
+			// This field is locale specific and the provided locales are different
+			IndexableField f1 = encounter.createIndexableField(current, field, object);
+			document.add(f1);
+
+			if(needValues)
+			{
+				document.add(encounter.createValuesField(current, field, object));
+			}
+		}
+
+		// Create field on the fallback value
+		IndexableField f2 = encounter.createIndexableField(fallback, field, object);
+		document.add(f2);
+
+		if(needValues)
+		{
+			document.add(encounter.createValuesField(fallback, field, object));
+		}
+
+		if(field.isSorted())
+		{
+			document.add(encounter.createSortingField(fallback, field, object));
+		}
+	}
+
+	@Override
+	public void delete(long id)
+	{
+		BytesRef idRef = new BytesRef(serializeId((id)));
+		try
+		{
+			writer.deleteDocuments(new Term("_:id", idRef));
+		}
+		catch(IOException e)
+		{
+			throw new StorageException("Unable to delete from search index; " + e.getMessage(), e);
+		}
+
+		// Tell our commit policy that we have modified the index
+		commitPolicy.indexModified();
+	}
+
+	@Override
+	public Mono<? extends FetchResult<?>> fetch(
+		QueryEncounter<? extends SearchIndexQuery<T, ?>, T> encounter
+	)
+	{
+		return Mono.fromSupplier(() -> {
+			ResultHitCollector<T> collector = new ResultHitCollector<>(encounter);
+			query(
+				encounter.getQuery(),
+				collector
+			);
+			return collector.create();
+		});
+	}
+
+	@Override
+	public Flux<?> stream(
+		QueryEncounter<? extends SearchIndexQuery<T, ?>, T> encounter
+	)
+	{
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public void query(
+		SearchIndexQuery<T, ?> query,
+		HitCollector<T> hitCollector
+	)
+	{
 		IndexSearcher searcher = null;
 		try
 		{
-			if(request.isWaitForLatest())
+			if(query.isWaitForLatest())
 			{
 				thread.waitForGeneration(latestGeneration.get());
 			}
 
 			searcher = manager.acquire();
 
-			Collector resultCollector;
-			if(request.getLimit() == 0)
+			if(query instanceof SearchIndexQuery.Limited)
 			{
-				resultCollector = new TotalHitCountCollector();
-			}
-			else if(request.getSortItems().isEmpty())
-			{
-				resultCollector = TopScoreDocCollector.create(
-					(int) (request.getOffset() + request.getLimit()),
-					Integer.MAX_VALUE
-				);
+				SearchIndexQuery.Limited<T> limited = (SearchIndexQuery.Limited<T>) query;
+				limitedSearch(limited, hitCollector, searcher);
 			}
 			else
 			{
-				Sort sort = createSort(request);
-				resultCollector = TopFieldCollector.create(
-					sort,
-					(int) (request.getOffset() + request.getLimit()),
-					null,
-					Integer.MAX_VALUE
-				);
+				// TODO: Streaming via cursors
+				throw new SearchIndexException("Unsupported type of query: " + query);
 			}
 
-			FacetsImpl facets = search(request, searcher, resultCollector, request.getLimit() > 0, true);
-
-			long hits;
-			if(request.getLimit() == 0)
-			{
-				hits = ((TotalHitCountCollector) resultCollector).getTotalHits();
-			}
-			else
-			{
-				TopDocs docs = ((TopDocsCollector<?>) resultCollector).topDocs();
-				ScoreDoc[] innerDocs = docs.scoreDocs;
-				if(request.getOffset() > 0)
-				{
-					if(innerDocs.length < request.getOffset())
-					{
-						innerDocs = new ScoreDoc[0];
-					}
-					else
-					{
-						innerDocs = Arrays.copyOfRange(
-							innerDocs,
-							(int) request.getOffset(),
-							Math.min(innerDocs.length, (int) (request.getOffset() + request.getLimit()))
-						);
-					}
-				}
-
-				hits = docs.totalHits.value;
-
-				for(ScoreDoc d : innerDocs)
-				{
-					Document doc = searcher.doc(d.doc);
-					BytesRef idRef = doc.getBinaryValue("_:id");
-
-					long id = Longs.fromByteArray(idRef.bytes);
-					encounter.receive(id, v -> {
-						v.accept("score", d.score);
-					});
-
-					// TODO: Support for highlighting
-				}
-			}
-
-			encounter.addMetadata("facets", facets);
-
-			encounter.setMetadata(request.getOffset(), request.getLimit(), hits);
 
 		}
 		catch(IOException e)
@@ -301,41 +517,117 @@ public class SearchIndexQueryEngine
 		}
 	}
 
-	private Sort createSort(SearchIndexQueryRequest request)
+	/**
+	 * Perform a search for {@link SearchIndexQuery.Limited} applying
+	 * pagination as needed.
+	 *
+	 * @param query
+	 * @param hitCollector
+	 * @param searcher
+	 * @throws IOException
+	 */
+	private void limitedSearch(
+		SearchIndexQuery.Limited<T> query,
+		HitCollector<T> hitCollector,
+		IndexSearcher searcher
+	)
+		throws IOException
 	{
-		SortField[] fields = request.getSortItems()
-			.stream()
-			.map(s -> {
-				FieldDefinition fdef = def.getField(s.getField());
-				if(fdef == null)
-				{
-					throw new StorageException("Field with name `" + s.getField() + "` could not be found");
-				}
-				else
-				{
-					String name = fdef.sortValuesName(null);
-					return fdef.getType().createSortField(name, s.isAscending(), s.getParams());
-				}
+		long offset = query.getResultOffset().orElse(DEFAULT_OFFSET);
+		long limit = query.getResultLimit().orElse(DEFAULT_LIMIT);
+
+		Collector resultCollector;
+		if(limit == 0)
+		{
+			// If limit is set to zero this is counting requests
+			resultCollector = new TotalHitCountCollector();
+		}
+		else if(query.getSortOrder().isEmpty())
+		{
+			// No sorting, only collect the top scoring ones
+			resultCollector = TopScoreDocCollector.create(
+				(int) (offset + limit),
+				Integer.MAX_VALUE
+			);
+		}
+		else
+		{
+			// Sorting results
+			Sort sort = createSort(query);
+			resultCollector = TopFieldCollector.create(
+				sort,
+				(int) (offset + limit),
+				null,
+				Integer.MAX_VALUE
+			);
+		}
+
+		search(query, searcher, resultCollector, limit > 0, true);
+
+		long hits;
+		if(limit == 0)
+		{
+			// No results requested, just collect the number of hits
+			hits = ((TotalHitCountCollector) resultCollector).getTotalHits();
+		}
+		else
+		{
+			// Results requested, slice things up and load the data
+			TopDocs docs = ((TopDocsCollector<?>) resultCollector).topDocs();
+			hits = docs.totalHits.value;
+
+			for(long i=offset, n=docs.scoreDocs.length; i<n; i++)
+			{
+				ScoreDoc d = docs.scoreDocs[(int) i];
+				hitCollector.collect(searcher, d);
+			}
+		}
+
+		// TODO: Support estimated totals
+		hitCollector.metadata(hits, false);
+	}
+
+	private Sort createSort(SearchIndexQuery<T, ?> query)
+	{
+		SortField[] fields = query.getSortOrder()
+			.collect(s -> {
+				SearchFieldDefinition<?> fdef = encounter.getField(s.getField());
+
+				// TODO: LocaleSupport?
+				String name = encounter.sortValuesName(fdef, null);
+				return fdef.getType().createSortField(name, s.isAscending());
 			})
-			.toArray(c -> new SortField[c]);
+			.toArray(new SortField[0]);
 
 		return new Sort(fields);
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private FacetsImpl search(SearchIndexQueryRequest request, IndexSearcher searcher, Collector collector, boolean score, boolean withFacets)
+	private void search(
+		SearchIndexQuery query,
+		IndexSearcher searcher,
+		Collector collector,
+		boolean score,
+		boolean withFacets
+	)
 		throws IOException
 	{
+		/*
 		FacetsCollector facetsCollector = null;
 		if(withFacets && ! request.getFacetItems().isEmpty())
 		{
 			facetsCollector = new FacetsCollector();
 			collector = MultiCollector.wrap(collector, facetsCollector);
 		}
+		*/
 
-		Query query = createQuery(request);
-		log.debug("Searching with query {}", query);
+		// TODO: Get the language of the query here
+		LocaleSupport currentLocale = locales.getDefault();
 
+		Query parsedQuery = createRootQuery(currentLocale, query.getClauses());
+		log.debug("Searching with query {}", parsedQuery);
+
+		/*
 		if(score && request.getScoring() != null)
 		{
 			ScoringItem item = request.getScoring();
@@ -347,9 +639,11 @@ public class SearchIndexQueryEngine
 
 			query = new FunctionScoreQuery(query, new CustomScoreFunction<>(def, provider, item.getPayload()));
 		}
+		*/
 
-		searcher.search(query, collector);
+		searcher.search(parsedQuery, collector);
 
+		/*
 		if(withFacets && ! request.getFacetItems().isEmpty())
 		{
 			FacetsCollector fc = facetsCollector;
@@ -408,26 +702,29 @@ public class SearchIndexQueryEngine
 		}
 
 		return null;
+		*/
 	}
 
-	private Query createQuery(SearchIndexQueryRequest request)
+	private Query createRootQuery(
+		LocaleSupport currentLocale,
+		ListIterable<QueryClause> clauses
+	)
 		throws IOException
 	{
-		List<QueryItem> items = request.getQueryItems();
-		if(items.isEmpty())
+		if(clauses.isEmpty())
 		{
 			return new MatchAllDocsQuery();
 		}
-		else if(items.size() == 1)
+		else if(clauses.size() == 1)
 		{
-			return createQuery(request, items.get(0));
+			return createQuery(currentLocale, clauses.getFirst());
 		}
 		else
 		{
 			BooleanQuery.Builder result = new BooleanQuery.Builder();
-			for(QueryItem item : items)
+			for(QueryClause clause : clauses)
 			{
-				Query q = createQuery(request, item);
+				Query q = createQuery(currentLocale, clause);
 				if(q instanceof BooleanQuery)
 				{
 					boolean hasShoulds = false;
@@ -463,404 +760,157 @@ public class SearchIndexQueryEngine
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private Query createQuery(SearchIndexQueryRequest request, QueryItem item)
+	private Query createQuery(
+		LocaleSupport queryLocale,
+		QueryClause clause
+	)
 		throws IOException
 	{
-		QueryParser<?> qp = engine.queryParser(item.getType());
-		if(qp == null)
-		{
-			throw new IOException("Unknown query type: " + item.getType());
-		}
+		QueryBuilder<?> qp = queryParsers.get(clause.getClass())
+			.orElseThrow(() -> new SearchIndexException("Unknown type of query, got: " + clause));
 
-		Language defaultLanguage = engine.getLanguage(def.getDefaultLanguage());
-		Language current = request.getLanguage() == null ? defaultLanguage : engine.getLanguage(Locale.forLanguageTag(request.getLanguage()));
+		LocaleSupport defaultLanguage = locales.getDefault();
 		return qp.parse(new QueryParserEncounterImpl(
-			request,
-			current,
+			queryLocale,
 			defaultLanguage,
-			item.getPayload()
+			clause
 		));
 	}
 
-	@Override
-	public void update(long id, DataEncounter encounter)
+	private static final long deserializeId(byte[] data)
 	{
-		Document doc = new Document();
-
-		BytesRef idRef = new BytesRef(Longs.toByteArray(id));
-
-		FieldType ft = new FieldType();
-		ft.setStored(true);
-		ft.setTokenized(false);
-		ft.setIndexOptions(IndexOptions.DOCS);
-		doc.add(new Field("_:id", idRef, ft));
-
-		// Fetch all the fields and find the language to use
-		MutableString lang = new MutableString();
-		List<Tuple> fields = new ArrayList<>();
-		encounter.findStructuredKeys(fieldNames, (k, v) -> {
-			fields.add(new Tuple(k, v));
-
-			if(k.equals(def.getLanguageField()))
-			{
-				lang.value = v.toString();
-			}
-		});
-
-		// Resolve the language to use
-		Locale locale = null;
-		if(lang.value != null)
-		{
-			locale = Locale.forLanguageTag(lang.value);
-			if(! engine.isSupportedLanguage(locale))
-			{
-				// No support for the given language, just use the default
-				locale = null;
-			}
-		}
-
-		if(locale == null)
-		{
-			// Always use default if nothing else is available
-			locale = def.getDefaultLanguage();
-		}
-
-		doc.add(new Field("_:lang", locale.toLanguageTag(), StringField.TYPE_STORED));
-
-
-		Language langObj = engine.getLanguage(locale);
-		Language defaultLangObj = engine.getLanguage(def.getDefaultLanguage());
-
-		// Add the fields
-		for(Tuple t : fields)
-		{
-			FieldDefinition fd = def.getField(t.key);
-			addField(doc, defaultLangObj, langObj, fd, t.key, t.value);
-		}
-
-		// Run the custom field creators
-		FieldCreationEncounterImpl fe = new FieldCreationEncounterImpl(encounter, doc, defaultLangObj, langObj);
-		for(CustomFieldCreator c : fieldCreators)
-		{
-			c.apply(fe);
-		}
-
-		Term idTerm = new Term("_:id", idRef);
-		try
-		{
-			long generation = writer.updateDocument(idTerm, doc);
-			latestGeneration.set(generation);
-		}
-		catch(IOException e)
-		{
-			throw new StorageException("Unable to update search index; " + e.getMessage(), e);
-		}
-
-		// Tell our commit policy that we have modified the index
-		commitPolicy.indexModified();
+		return ((long) data[7] << 56)
+			| ((long) data[6] & 0xff) << 48
+			| ((long) data[5] & 0xff) << 40
+			| ((long) data[4] & 0xff) << 32
+			| ((long) data[3] & 0xff) << 24
+			| ((long) data[2] & 0xff) << 16
+			| ((long) data[1] & 0xff) << 8
+			| ((long) data[0] & 0xff);
 	}
 
-	private void addField(Document document, Language fallback, Language current, FieldDefinition field, String name, Object object)
+	private static final byte[] serializeId(long id)
 	{
-		if(object == null)
+		return new byte[] {
+			(byte) id,
+			(byte) (id >> 8),
+			(byte) (id >> 16),
+			(byte) (id >> 24),
+			(byte) (id >> 32),
+			(byte) (id >> 40),
+			(byte) (id >> 48),
+			(byte) (id >> 56)
+		};
+	}
+
+	private static class ResultHitCollector<T>
+		extends HitCollector<T>
+	{
+		private final MutableList<SearchHit<T>> results;
+		private long totalHits;
+		private boolean totalEstimated;
+
+		public ResultHitCollector(
+			QueryEncounter<? extends SearchIndexQuery<T, ?>, T> encounter
+		)
 		{
-			String fieldName = field.nullName(name);
-			FieldType ft = new FieldType();
-			ft.setStored(false);
-			ft.setIndexOptions(IndexOptions.DOCS);
-			ft.setTokenized(false);
-			ft.setOmitNorms(true);
-			document.add(new Field(fieldName, BytesRef.EMPTY_BYTES, ft));
-			return;
+			super(encounter);
+
+			this.results = Lists.mutable.empty();
 		}
 
-		boolean needValues = def.getValueFields().contains(name) || field.isStoreValues();
-
-		if(field.isLanguageSpecific())
+		@Override
+		public void searchHit(SearchHit<T> hit)
 		{
-			// Create language specific fields
-			if(fallback != current)
-			{
-				IndexableField f1 = field.createIndexableField(name, current, object);
-				document.add(f1);
-
-				if(needValues)
-				{
-					document.add(field.createValuesField(name, current, object));
-				}
-			}
-
-			// Add a field for the default language
-			IndexableField f2 = field.createIndexableField(name, fallback, object);
-			document.add(f2);
-
-			if(needValues)
-			{
-				document.add(field.createValuesField(name, fallback, object));
-			}
-
-			if(field.isSorted())
-			{
-				document.add(field.createSortingField(name, null, object));
-			}
+			results.add(hit);
 		}
-		else
+
+		@Override
+		public void metadata(
+			long totalHits,
+			boolean isTotalEstimated
+		)
 		{
-			// Create standard field
-			IndexableField f2 = field.createIndexableField(name, current, object);
-			document.add(f2);
+			this.totalHits = totalHits;
+			this.totalEstimated = isTotalEstimated;
+		}
 
-			if(needValues)
+		@SuppressWarnings("unchecked")
+		public SearchResult<T> create()
+		{
+			if(encounter.getQuery() instanceof SearchIndexQuery.Limited)
 			{
-				document.add(field.createValuesField(name, current, object));
+				SearchIndexQuery.Limited<T> limited = (SearchIndexQuery.Limited<T>) encounter.getQuery();
+				return new AbstractSearchResult.LimitedImpl<>(
+					results.toImmutable(),
+					totalHits,
+					totalEstimated,
+					limited.getResultOffset().orElse(DEFAULT_OFFSET),
+					limited.getResultLimit().orElse(DEFAULT_LIMIT),
+					null // TODO: Facets
+				);
 			}
-
-			if(field.isSorted())
+			else
 			{
-				document.add(field.createSortingField(name, null, object));
+				throw new SearchIndexException("Unsupported query: " + encounter);
 			}
 		}
 	}
 
-
-	@Override
-	public void delete(long id)
+	private static abstract class HitCollector<T>
 	{
-		BytesRef idRef = new BytesRef(Longs.toByteArray((id)));
-		try
-		{
-			writer.deleteDocuments(new Term("_:id", idRef));
-		}
-		catch(IOException e)
-		{
-			throw new StorageException("Unable to delete from search index; " + e.getMessage(), e);
-		}
+		protected final QueryEncounter<? extends SearchIndexQuery<T, ?>, T> encounter;
+		private final Set<String> fields;
 
-		// Tell our commit policy that we have modified the index
-		commitPolicy.indexModified();
-	}
-
-	private static class Tuple
-	{
-		private final String key;
-		private final Object value;
-
-		public Tuple(String key, Object value)
-		{
-			this.key = key;
-			this.value = value;
-		}
-	}
-
-	private static class MutableString
-	{
-		private String value;
-	}
-
-	private class FieldCreationEncounterImpl
-		implements FieldCreationEncounter
-	{
-		private final Document doc;
-		private final Language fallbackLang;
-		private final Language currentLang;
-		private final DataEncounter encounter;
-
-		public FieldCreationEncounterImpl(DataEncounter encounter, Document doc, Language fallback, Language current)
+		public HitCollector(
+			QueryEncounter<? extends SearchIndexQuery<T, ?>, T> encounter
+		)
 		{
 			this.encounter = encounter;
-			this.doc = doc;
-			this.fallbackLang = fallback;
-			this.currentLang = current;
+
+			this.fields = Collections.singleton("_:id");
 		}
 
-		@Override
-		public DataEncounter data()
+		public void collect(
+			IndexSearcher searcher,
+			ScoreDoc scoreDoc
+		)
+			throws IOException
 		{
-			return encounter;
+			// TODO: Switch this to using a StoredFieldVisitor
+			// TODO: Support for highlighting
+
+			Document doc = searcher.doc(scoreDoc.doc, fields);
+			BytesRef idRef = doc.getBinaryValue("_:id");
+
+			long id = deserializeId(idRef.bytes);
+			T data = encounter.load(id);
+
+			searchHit(new SearchHitImpl<>(data, scoreDoc.score));
 		}
 
-		@Override
-		public void add(String name, Object value)
-		{
-			FieldDefinition fd = def.getField(name);
-			if(fd == null)
-			{
-				throw new StorageException("The field " + name + " has not been defined");
-			}
+		public abstract void searchHit(SearchHit<T> hit);
 
-			addField(doc, fallbackLang, currentLang, fd, name, value);
-		}
-
-		@Override
-		public IndexedFieldBuilder add(String name, Object value, SearchFieldType fieldType)
-		{
-			return new IndexedFieldBuilderImpl(this, doc, fallbackLang, currentLang, name, value, fieldType);
-		}
+		public abstract void metadata(
+			long totalHits,
+			boolean isTotalEstimated
+		);
 	}
 
-	private class IndexedFieldBuilderImpl
-		extends AbstractFieldDefinition
-		implements IndexedFieldBuilder, FieldDefinition
+	private class QueryParserEncounterImpl<C extends QueryClause>
+		implements se.l4.silo.engine.search.query.QueryEncounter<C>
 	{
-		private final FieldCreationEncounter parent;
-
-		private final Document doc;
-		private final Language fallbackLang;
-		private final Language currentLang;
-
-		private final String name;
-		private final Object value;
-		private final SearchFieldType fieldType;
-
-		private boolean values;
-		private boolean sorting;
-		private boolean languageSpecific;
-		private boolean stored;
-		private boolean highlighted;
-
-		public IndexedFieldBuilderImpl(FieldCreationEncounter parent, Document doc, Language fallback, Language current, String name, Object value, SearchFieldType fieldType)
-		{
-			this.parent = parent;
-
-			this.doc = doc;
-			this.fallbackLang = fallback;
-			this.currentLang = current;
-
-			this.name = name;
-			this.value = value;
-			this.fieldType = fieldType;
-
-			languageSpecific = fieldType.isLanguageSpecific();
-		}
-
-		@Override
-		public IndexedFieldBuilder withValues()
-		{
-			this.values = true;
-			return this;
-		}
-
-		@Override
-		public IndexedFieldBuilder withValues(boolean values)
-		{
-			this.values = values;
-			return this;
-		}
-
-		@Override
-		public IndexedFieldBuilder withSorting()
-		{
-			this.sorting = true;
-			return this;
-		}
-
-		@Override
-		public IndexedFieldBuilder withSorting(boolean sorted)
-		{
-			this.sorting = sorted;
-			return this;
-		}
-
-		@Override
-		public IndexedFieldBuilder withHighlighting()
-		{
-			this.highlighted = true;
-			return this;
-		}
-
-		@Override
-		public IndexedFieldBuilder withHighlighting(boolean highlighted)
-		{
-			this.highlighted = highlighted;
-			return this;
-		}
-
-		@Override
-		public IndexedFieldBuilder languageSpecific()
-		{
-			this.languageSpecific = true;
-			return this;
-		}
-
-		@Override
-		public IndexedFieldBuilder languageSpecific(boolean isSpecific)
-		{
-			this.languageSpecific = isSpecific;
-			return this;
-		}
-
-		@Override
-		public FieldCreationEncounter add()
-		{
-			addField(doc, fallbackLang, currentLang, this, name, value);
-			return parent;
-		}
-
-		@Override
-		public String getName()
-		{
-			return name;
-		}
-
-		@Override
-		public boolean isIndexed()
-		{
-			return true;
-		}
-
-		@Override
-		public boolean isHighlighted()
-		{
-			return highlighted;
-		}
-
-		@Override
-		public boolean isLanguageSpecific()
-		{
-			return languageSpecific;
-		}
-
-		@Override
-		public boolean isSorted()
-		{
-			return sorting;
-		}
-
-		@Override
-		public boolean isStored()
-		{
-			return stored;
-		}
-
-		@Override
-		public boolean isStoreValues()
-		{
-			return values;
-		}
-
-		@Override
-		public SearchFieldType getType()
-		{
-			return fieldType;
-		}
-	}
-
-	private class QueryParserEncounterImpl<T>
-		implements QueryParseEncounter<T>
-	{
-		private final SearchIndexQueryRequest request;
-		private final Language current;
-		private final Language defaultLanguage;
-		private final T data;
+		private final LocaleSupport currentLocaleSupport;
+		private final LocaleSupport defaultLanguage;
+		private final C data;
 
 		public QueryParserEncounterImpl(
-				SearchIndexQueryRequest request,
-				Language current,
-				Language defaultLanguage,
-				T data)
+			LocaleSupport current,
+			LocaleSupport defaultLanguage,
+			C data
+		)
 		{
-			this.request = request;
-			this.current = current;
+			this.currentLocaleSupport = current;
 			this.defaultLanguage = defaultLanguage;
 			this.data = data;
 		}
@@ -868,44 +918,38 @@ public class SearchIndexQueryEngine
 		@Override
 		public boolean isSpecificLanguage()
 		{
-			return current != defaultLanguage;
+			return currentLocaleSupport != defaultLanguage;
 		}
 
 		@Override
-		public Language currentLanguage()
+		public LocaleSupport currentLanguage()
 		{
-			return current == null ? defaultLanguage : current;
+			return currentLocaleSupport == null ? defaultLanguage : currentLocaleSupport;
 		}
 
 		@Override
-		public Language defaultLanguage()
+		public LocaleSupport defaultLanguage()
 		{
 			return defaultLanguage;
 		}
 
 		@Override
-		public IndexDefinition def()
+		public SearchIndexEncounter index()
 		{
-			return def;
+			return encounter;
 		}
 
 		@Override
-		public T data()
+		public C clause()
 		{
 			return data;
 		}
 
 		@Override
-		public Query parse(QueryItem item)
+		public Query parse(QueryClause item)
 			throws IOException
 		{
-			return createQuery(request, item);
-		}
-
-		@Override
-		public <C> QueryParseEncounter<C> withData(C data)
-		{
-			return new QueryParserEncounterImpl<>(request, current, defaultLanguage, data);
+			return createQuery(currentLocaleSupport, item);
 		}
 	}
 }

@@ -2,7 +2,6 @@ package se.l4.silo.engine.types;
 
 import java.io.IOException;
 
-import se.l4.exobytes.Serializer;
 import se.l4.silo.engine.io.ExtendedDataInput;
 import se.l4.silo.engine.io.ExtendedDataOutput;
 
@@ -10,12 +9,6 @@ public class IntFieldType
 	implements FieldType<Integer>
 {
 	public static final FieldType<Integer> INSTANCE = new IntFieldType();
-
-	@Override
-	public String uniqueId()
-	{
-		return "int";
-	}
 
 	@Override
 	public int compare(Integer o1, Integer o2)
@@ -43,13 +36,6 @@ public class IntFieldType
 	}
 
 	@Override
-	public Serializer<Integer> getSerializer()
-	{
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public int estimateMemory(Integer instance)
 	{
 		return 24;
@@ -69,4 +55,15 @@ public class IntFieldType
 		return in.readInt();
 	}
 
+	@Override
+	public Integer nextDown(Integer in)
+	{
+		return Math.addExact(in, -1);
+	}
+
+	@Override
+	public Integer nextUp(Integer in)
+	{
+		return Math.addExact(in, 1);
+	}
 }

@@ -2,7 +2,6 @@ package se.l4.silo.engine.types;
 
 import java.io.IOException;
 
-import se.l4.exobytes.Serializer;
 import se.l4.silo.engine.io.ExtendedDataInput;
 import se.l4.silo.engine.io.ExtendedDataOutput;
 
@@ -10,12 +9,6 @@ public class BooleanFieldType
 	implements FieldType<Boolean>
 {
 	public static final FieldType<Boolean> INSTANCE = new BooleanFieldType();
-
-	@Override
-	public String uniqueId()
-	{
-		return "boolean";
-	}
 
 	@Override
 	public int compare(Boolean o1, Boolean o2)
@@ -33,13 +26,6 @@ public class BooleanFieldType
 		if(in instanceof Boolean) return (Boolean) in;
 
 		throw new IllegalArgumentException("Can't convert " + in + " to a boolean");
-	}
-
-	@Override
-	public Serializer<Boolean> getSerializer()
-	{
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override
@@ -62,4 +48,15 @@ public class BooleanFieldType
 		return in.readBoolean();
 	}
 
+	@Override
+	public Boolean nextDown(Boolean in)
+	{
+		throw new UnsupportedOperationException("boolean can not be compared");
+	}
+
+	@Override
+	public Boolean nextUp(Boolean in)
+	{
+		throw new UnsupportedOperationException("boolean can not be compared");
+	}
 }

@@ -2,9 +2,6 @@ package se.l4.silo.engine.internal.tx;
 
 import java.io.IOException;
 
-import com.google.common.collect.ComparisonChain;
-
-import se.l4.exobytes.Serializer;
 import se.l4.silo.engine.internal.IOUtils;
 import se.l4.silo.engine.internal.tx.TransactionOperation.Type;
 import se.l4.silo.engine.io.ExtendedDataInput;
@@ -14,20 +11,13 @@ import se.l4.silo.engine.types.FieldType;
 public class TransactionOperationType
 	implements FieldType<TransactionOperation>
 {
-
-	@Override
-	public String uniqueId()
-	{
-		return "internal:tx-op";
-	}
-
 	@Override
 	public int compare(TransactionOperation o1, TransactionOperation o2)
 	{
-		return ComparisonChain.start()
-			.compare(o1.getType(), o2.getType())
-			.compare(o1.getEntity(), o2.getEntity())
-			.result();
+		int c = o1.getType().compareTo(o2.getType());
+		if(c != 0) return c;
+
+		return o1.getEntity().compareTo(o2.getEntity());
 	}
 
 	@Override
@@ -86,13 +76,6 @@ public class TransactionOperationType
 	}
 
 	@Override
-	public Serializer<TransactionOperation> getSerializer()
-	{
-		throw new UnsupportedOperationException();
-	}
-
-	@SuppressWarnings("incomplete-switch")
-	@Override
 	public void write(TransactionOperation instance, ExtendedDataOutput out)
 		throws IOException
 	{
@@ -100,20 +83,20 @@ public class TransactionOperationType
 
 		switch(instance.getType())
 		{
+			case START:
+				out.writeVLong(instance.getTimestamp());
+				break;
 			case STORE_CHUNK:
+				out.writeString(instance.getEntity());
+				IOUtils.writeId(instance.getId(), out);
+				IOUtils.writeByteArray(instance.getData(), out);
+				break;
+			case INDEX_CHUNK:
 			case DELETE:
 				out.writeString(instance.getEntity());
 				IOUtils.writeId(instance.getId(), out);
 				break;
-		}
 
-		if(instance.getType() == TransactionOperation.Type.STORE_CHUNK)
-		{
-			IOUtils.writeByteArray(instance.getData(), out);
-		}
-		else if(instance.getType() == TransactionOperation.Type.START)
-		{
-			out.writeVLong(instance.getTimestamp());
 		}
 	}
 
@@ -140,6 +123,15 @@ public class TransactionOperationType
 					IOUtils.readId(in),
 					IOUtils.readByteArray(in)
 				);
+			case INDEX_CHUNK:
+				String rawEntity = in.readString();
+				int idx = rawEntity.lastIndexOf("::");
+				return TransactionOperation.indexChunk(
+					rawEntity.substring(0, idx),
+					rawEntity.substring(idx + 2),
+					IOUtils.readId(in),
+					IOUtils.readByteArray(in)
+				);
 			case START:
 				long timestamp = in.readVLong();
 				return TransactionOperation.start(timestamp);
@@ -148,4 +140,15 @@ public class TransactionOperationType
 		return null;
 	}
 
+	@Override
+	public TransactionOperation nextDown(TransactionOperation in)
+	{
+		throw new UnsupportedOperationException("TX ops can not be compared");
+	}
+
+	@Override
+	public TransactionOperation nextUp(TransactionOperation in)
+	{
+		throw new UnsupportedOperationException("TX ops can not be compared");
+	}
 }

@@ -6,7 +6,6 @@ import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.carrotsearch.hppc.cursors.IntCursor;
 
-import se.l4.exobytes.Serializer;
 import se.l4.silo.engine.io.ExtendedDataInput;
 import se.l4.silo.engine.io.ExtendedDataOutput;
 
@@ -38,12 +37,6 @@ public class VersionedType<T>
 	}
 
 	@Override
-	public String uniqueId()
-	{
-		return "versioned";
-	}
-
-	@Override
 	public int compare(T o1, T o2)
 	{
 		return latestType.compare(o1, o2);
@@ -59,12 +52,6 @@ public class VersionedType<T>
 	public T convert(Object in)
 	{
 		return latestType.convert(in);
-	}
-
-	@Override
-	public Serializer<T> getSerializer()
-	{
-		return latestType.getSerializer();
 	}
 
 	@Override
@@ -86,4 +73,15 @@ public class VersionedType<T>
 		return ft.read(in);
 	}
 
+	@Override
+	public T nextDown(T in)
+	{
+		throw new UnsupportedOperationException("versioned types can not be compared");
+	}
+
+	@Override
+	public T nextUp(T in)
+	{
+		throw new UnsupportedOperationException("versioned types can not be compared");
+	}
 }

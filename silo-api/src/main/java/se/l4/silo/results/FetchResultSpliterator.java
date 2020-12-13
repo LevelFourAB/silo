@@ -10,8 +10,6 @@ import se.l4.silo.FetchResult;
 /**
  * {@link Spliterator} for any {@link FetchResult}.
  *
- * @author Andreas Holstenson
- *
  * @param <T>
  */
 public class FetchResultSpliterator<T>
@@ -21,7 +19,7 @@ public class FetchResultSpliterator<T>
 
 	public FetchResultSpliterator(FetchResult<T> fr)
 	{
-		super(fr.getSize() < 0 ? Integer.MAX_VALUE : fr.getSize(), Spliterator.ORDERED | Spliterator.IMMUTABLE);
+		super(getSize(fr), Spliterator.ORDERED | Spliterator.IMMUTABLE);
 		it = fr.iterator();
 	}
 
@@ -34,5 +32,16 @@ public class FetchResultSpliterator<T>
 		action.accept(next);
 
 		return true;
+	}
+
+	private static long getSize(FetchResult<?> fr)
+	{
+		if(fr instanceof SizeAwareResult)
+		{
+			long size = ((SizeAwareResult<?>) fr).getSize();
+			return size < 0 ? Integer.MAX_VALUE : size;
+		}
+
+		return Integer.MAX_VALUE;
 	}
 }

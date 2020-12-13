@@ -1,13 +1,11 @@
 package se.l4.silo.engine.internal.tx;
 
+import reactor.core.publisher.Mono;
 import se.l4.silo.Transaction;
 
 /**
  * {@link Transaction} that wraps another transaction. This is used internally
  * when the user requests a new transaction when one is already active.
- *
- * @author Andreas Holstenson
- *
  */
 public class WrappedTransaction
 	implements Transaction
@@ -21,13 +19,15 @@ public class WrappedTransaction
 	}
 
 	@Override
-	public void rollback()
+	public Mono<Void> rollback()
 	{
 		// TODO: Should this rollback?
+		return Mono.empty();
 	}
 
 	@Override
-	public void commit()
+	public Mono<Void> commit()
 	{
+		return Mono.empty();
 	}
 }

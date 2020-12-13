@@ -1,5 +1,7 @@
 package se.l4.silo.engine.search.types;
 
+import java.io.IOException;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.document.Field;
@@ -14,13 +16,34 @@ import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
 
-import se.l4.silo.engine.search.Language;
+import se.l4.exobytes.streaming.StreamingInput;
+import se.l4.exobytes.streaming.StreamingOutput;
+import se.l4.exobytes.streaming.Token;
+import se.l4.silo.engine.search.LocaleSupport;
 import se.l4.silo.engine.search.SearchFieldType;
+import se.l4.silo.query.EqualsMatcher;
+import se.l4.silo.query.Matcher;
+import se.l4.silo.search.SearchIndexException;
 
 public class TokenFieldType
-	implements SearchFieldType
+	implements SearchFieldType<String>
 {
 	private static final Analyzer TOKEN_ANALYZER = new KeywordAnalyzer();
+
+	@Override
+	public String read(StreamingInput in)
+		throws IOException
+	{
+		in.next(Token.VALUE);
+		return in.readString();
+	}
+
+	@Override
+	public void write(String instance, StreamingOutput out)
+		throws IOException
+	{
+		out.writeString(instance);
+	}
 
 	@Override
 	public boolean isLanguageSpecific()
@@ -35,54 +58,49 @@ public class TokenFieldType
 	}
 
 	@Override
-	public Analyzer getAnalyzer(Language lang)
+	public Analyzer getAnalyzer(LocaleSupport lang)
 	{
 		return TOKEN_ANALYZER;
 	}
 
 	@Override
 	public IndexableField create(
-			String field,
-			FieldType type,
-			Language lang,
-			Object object)
+		String field,
+		FieldType type,
+		LocaleSupport lang,
+		String object
+	)
 	{
-		return new Field(field, object == null ? null : object.toString(), type);
+		return new Field(field, object, type);
 	}
 
 	@Override
-	public IndexableField createValuesField(String field, Language lang, Object object)
+	public IndexableField createValuesField(String field, LocaleSupport lang, String object)
 	{
-		return new SortedSetDocValuesField(field, new BytesRef(object.toString()));
+		return new SortedSetDocValuesField(field, new BytesRef(object));
 	}
 
 	@Override
-	public IndexableField createSortingField(String field, Language lang, Object object)
+	public IndexableField createSortingField(String field, LocaleSupport lang, String object)
 	{
-		return new SortedDocValuesField(field, new BytesRef(object.toString()));
+		return new SortedDocValuesField(field, new BytesRef(object));
 	}
 
 	@Override
-	public SortField createSortField(String field, boolean ascending, Object params)
+	public SortField createSortField(String field, boolean ascending)
 	{
 		return new SortField(field, SortField.Type.STRING, ! ascending);
 	}
 
 	@Override
-	public Object extract(IndexableField field)
+	public Query createQuery(String field, Matcher matcher)
 	{
-		return field.stringValue();
-	}
+		if(matcher instanceof EqualsMatcher)
+		{
+			Object value = ((EqualsMatcher) matcher).getValue();
+			return new TermQuery(new Term(field, value.toString()));
+		}
 
-	@Override
-	public Query createEqualsQuery(String field, Object value)
-	{
-		return new TermQuery(new Term(field, value.toString()));
-	}
-
-	@Override
-	public Query createRangeQuery(String field, Object from, Object to)
-	{
-		throw new UnsupportedOperationException("Token fields do not support range queries; Internal field name was " + field);
+		throw new SearchIndexException("Token field queries require a " + EqualsMatcher.class.getName());
 	}
 }

@@ -45,40 +45,50 @@
 		    <version>1.7.19</version>
 		</dependency>
 
- 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<version>5.6.2</version>
 			<scope>test</scope>
 		</dependency>
 
 		<dependency>
-		    <groupId>com.carrotsearch.randomizedtesting</groupId>
-		    <artifactId>randomizedtesting-runner</artifactId>
-		    <version>2.7.3</version>
-		    <scope>test</scope>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<version>5.6.2</version>
+			<scope>test</scope>
 		</dependency>
 
 		<dependency>
-		    <groupId>net.jodah</groupId>
-		    <artifactId>concurrentunit</artifactId>
-		    <version>0.4.6</version>
-		    <scope>test</scope>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-params</artifactId>
+			<version>5.6.2</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.hamcrest</groupId>
+			<artifactId>hamcrest-core</artifactId>
+			<version>2.2</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>nl.jqno.equalsverifier</groupId>
+			<artifactId>equalsverifier</artifactId>
+			<version>3.4.1</version>
+			<scope>test</scope>
 		</dependency>
  	</dependencies>
 
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
-				<groupId>junit</groupId>
-				<artifactId>junit</artifactId>
-				<version>4.12</version>
-				<scope>test</scope>
-			</dependency>
-
-			<dependency>
-			    <groupId>com.google.inject</groupId>
-			    <artifactId>guice</artifactId>
-			    <version>4.2.2</version>
+				<groupId>io.projectreactor</groupId>
+				<artifactId>reactor-bom</artifactId>
+				<version>2020.0.0</version>
+				<type>pom</type>
+				<scope>import</scope>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -89,32 +99,155 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.8.1</version>
+				<configuration>
+					<release>9</release>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.22.2</version>
+			</plugin>
+
+			<plugin>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<version>2.22.2</version>
+			</plugin>
+
+			<plugin>
+				<groupId>net.bytebuddy</groupId>
+				<artifactId>byte-buddy-maven-plugin</artifactId>
+
+				<dependencies>
+					<dependency>
+						<groupId>io.projectreactor</groupId>
+						<artifactId>reactor-tools</artifactId>
+						<classifier>original</classifier>
+						<scope>runtime</scope>
+						<version>3.3.9.RELEASE</version>
+					</dependency>
+				</dependencies>
 
 				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
+					<transformations>
+						<transformation>
+							<plugin>reactor.tools.agent.ReactorDebugByteBuddyPlugin</plugin>
+						</transformation>
+					</transformations>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>com.github.spotbugs</groupId>
+				<artifactId>spotbugs-maven-plugin</artifactId>
+				<version>4.0.0</version>
+
+				<dependencies>
+					<dependency>
+						<groupId>com.github.spotbugs</groupId>
+						<artifactId>spotbugs</artifactId>
+						<version>4.0.4</version>
+					</dependency>
+				</dependencies>
+				<executions>
+					<execution>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<effort>max</effort>
+					<failOnError>false</failOnError>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.revapi</groupId>
+				<artifactId>revapi-maven-plugin</artifactId>
+				<version>0.11.5</version>
+				<dependencies>
+					<dependency>
+						<groupId>org.revapi</groupId>
+						<artifactId>revapi-java</artifactId>
+						<version>0.21.0</version>
+					</dependency>
+				</dependencies>
+				<executions>
+					<execution>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<reportSeverity>nonBreaking</reportSeverity>
+					<failSeverity>breaking</failSeverity>
+
+					<analysisConfiguration>
+						<revapi.java>
+							<filter>
+								<packages>
+									<regex>true</regex>
+									<include>
+										<item>se\.l4\..*</item>
+									</include>
+									<exclude>
+										<item>.*\.impl(\..+)?</item>
+										<item>.*\.internal(\..+)?</item>
+									</exclude>
+								</packages>
+							</filter>
+						</revapi.java>
+
+						<revapi.semver.ignore>
+							<enabled>true</enabled>
+							<versionIncreaseAllows>
+								<major>breaking</major>
+								<minor>nonBreaking</minor>
+								<patch>equivalent</patch>
+							</versionIncreaseAllows>
+							<passThroughDifferences>
+								<item>java.class.nonPublicPartOfAPI</item>
+							</passThroughDifferences>
+						</revapi.semver.ignore>>
+
+						<revapi.ignore>
+							<item>
+								<code>java.annotation.added</code>
+								<annotationType>edu.umd.cs.findbugs.annotations.NonNull</annotationType>
+								<justification>SpotBugs annotations are for bug finding and not code generation</justification>
+							</item>
+
+							<item>
+								<code>java.annotation.added</code>
+								<annotationType>edu.umd.cs.findbugs.annotations.Nullable</annotationType>
+								<justification>SpotBugs annotations are for bug finding and not code generation</justification>
+							</item>
+
+							<item>
+								<code>java.annotation.added</code>
+								<annotationType>edu.umd.cs.findbugs.annotations.UnknownNullness</annotationType>
+								<justification>SpotBugs annotations are for bug finding and not code generation</justification>
+							</item>
+
+							<item>
+								<code>java.annotation.added</code>
+								<annotationType>edu.umd.cs.findbugs.annotations.CheckReturnValue</annotationType>
+								<justification>SpotBugs annotations are for bug finding and not code generation</justification>
+							</item>
+
+							<item>
+								<code>java.annotation.added</code>
+								<annotationType>edu.umd.cs.findbugs.annotations.SuppressFBWarnings</annotationType>
+								<justification>SpotBugs annotations are for bug finding and not code generation</justification>
+							</item>
+						</revapi.ignore>
+					</analysisConfiguration>
 				</configuration>
 			</plugin>
 		</plugins>
 	</build>
-
-	<!-- Main Github repo -->
-	<scm>
-		<connection>scm:git:git@github.com:LevelFourAB/silo.git</connection>
-		<url>scm:git:git@github.com:LevelFourAB/silo.git</url>
-		<developerConnection>scm:git:git@github.com:LevelFourAB/silo.git</developerConnection>
-	</scm>
-
-	<distributionManagement>
-		<snapshotRepository>
-			<id>ossrh</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-		</snapshotRepository>
-		<repository>
-			<id>ossrh</id>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-		</repository>
-	</distributionManagement>
 
 	<profiles>
 		<profile>
@@ -124,7 +257,7 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-source-plugin</artifactId>
-						<version>3.1.0</version>
+						<version>3.2.1</version>
 						<executions>
 							<execution>
 								<id>attach-sources</id>
@@ -138,10 +271,12 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-javadoc-plugin</artifactId>
-						<version>3.1.1</version>
+						<version>3.2.0</version>
 						<configuration>
 							<doclint>none</doclint>
-							<source>8</source>
+							<source>9</source>
+
+							<excludePackageNames>*.internal.*</excludePackageNames>
 						</configuration>
 						<executions>
 							<execution>
@@ -166,7 +301,7 @@
 								</goals>
 							</execution>
 						</executions>
-		    		</plugin>
+					</plugin>
 
 					<plugin>
 						<groupId>org.sonatype.plugins</groupId>
@@ -183,6 +318,24 @@
 			</build>
 		</profile>
 	</profiles>
+
+	<!-- Main Github repo -->
+	<scm>
+		<connection>scm:git:git@github.com:LevelFourAB/silo.git</connection>
+		<url>scm:git:git@github.com:LevelFourAB/silo.git</url>
+		<developerConnection>scm:git:git@github.com:LevelFourAB/silo.git</developerConnection>
+	</scm>
+
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
 
 	<developers>
 		<developer>

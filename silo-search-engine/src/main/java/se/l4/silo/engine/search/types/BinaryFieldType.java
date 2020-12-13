@@ -1,6 +1,6 @@
 package se.l4.silo.engine.search.types;
 
-import java.util.Arrays;
+import java.io.IOException;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Field;
@@ -12,18 +12,21 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
 
-import se.l4.silo.engine.search.Language;
+import se.l4.exobytes.streaming.StreamingInput;
+import se.l4.exobytes.streaming.StreamingOutput;
+import se.l4.exobytes.streaming.Token;
+import se.l4.silo.engine.search.LocaleSupport;
 import se.l4.silo.engine.search.SearchFieldType;
 import se.l4.silo.engine.search.SearchFields;
+import se.l4.silo.query.EqualsMatcher;
+import se.l4.silo.query.Matcher;
+import se.l4.silo.search.SearchIndexException;
 
 /**
  * Field type for indexing binary data.
- *
- * @author Andreas Holstenson
- *
  */
 public final class BinaryFieldType
-	implements SearchFieldType
+	implements SearchFieldType<byte[]>
 {
 	private final FieldType type = createFieldType();
 
@@ -35,6 +38,21 @@ public final class BinaryFieldType
 		ft.setTokenized(false);
 		ft.freeze();
 		return ft;
+	}
+
+	@Override
+	public byte[] read(StreamingInput in)
+		throws IOException
+	{
+		in.next(Token.VALUE);
+		return in.readByteArray();
+	}
+
+	@Override
+	public void write(byte[] instance, StreamingOutput out)
+		throws IOException
+	{
+		out.writeByteArray(instance);
 	}
 
 	@Override
@@ -50,37 +68,31 @@ public final class BinaryFieldType
 	}
 
 	@Override
-	public Analyzer getAnalyzer(Language lang)
+	public Analyzer getAnalyzer(LocaleSupport lang)
 	{
 		return SearchFields.DEFAULT_ANALYZER;
 	}
 
 	@Override
 	public IndexableField create(
-			String field,
-			FieldType type,
-			Language lang,
-			Object object)
+		String field,
+		FieldType type,
+		LocaleSupport localeSupport,
+		byte[] object
+	)
 	{
-		return new Field(field, object == null ? null : (byte[]) object, type);
+		return new Field(field, object, type);
 	}
 
 	@Override
-	public Object extract(IndexableField field)
+	public Query createQuery(String field, Matcher matcher)
 	{
-		BytesRef bytes = field.binaryValue();
-		return Arrays.copyOfRange(bytes.bytes, bytes.offset, bytes.offset + bytes.length);
-	}
+		if(matcher instanceof EqualsMatcher)
+		{
+			byte[] data = (byte[]) ((EqualsMatcher) matcher).getValue();
+			return new TermQuery(new Term(field, new BytesRef(data)));
+		}
 
-	@Override
-	public Query createEqualsQuery(String field, Object value)
-	{
-		return new TermQuery(new Term(field, new BytesRef((byte[]) value)));
-	}
-
-	@Override
-	public Query createRangeQuery(String field, Object from, Object to)
-	{
-		throw new UnsupportedOperationException("binary fields do not support range queries");
+		throw new SearchIndexException("Binary fields only support equality matching");
 	}
 }

@@ -1,6 +1,6 @@
 package se.l4.silo;
 
-public interface StoreResult
+public interface StoreResult<T>
 {
 	/**
 	 * Get the identifier of the stored object.
@@ -8,11 +8,4 @@ public interface StoreResult
 	 * @return
 	 */
 	Object getId();
-
-	/**
-	 * Get the size of the stream stored.
-	 *
-	 * @return
-	 */
-	long getSize();
 }

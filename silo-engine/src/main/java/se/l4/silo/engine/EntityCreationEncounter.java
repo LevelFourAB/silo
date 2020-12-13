@@ -1,16 +1,10 @@
 package se.l4.silo.engine;
 
-import se.l4.exobytes.Serializers;
-import se.l4.silo.engine.builder.StorageBuilder;
-
 /**
  * Encounter for top level entity types to help with creating and managing
  * underlying storage.
- *
- * @author Andreas Holstenson
- *
  */
-public interface EntityCreationEncounter<Config>
+public interface EntityCreationEncounter
 {
 	/**
 	 * Get the name of the entity being built.
@@ -20,31 +14,16 @@ public interface EntityCreationEncounter<Config>
 	String getEntityName();
 
 	/**
-	 * Get the configuration for this entity.
-	 *
-	 * @return
-	 */
-	Config getConfig();
-
-	/**
-	 * Get the {@link Serializers} in use for this entity.
-	 *
-	 * @return
-	 */
-	Serializers getSerializerCollection();
-
-	/**
 	 * Create the main storage for this entity.
 	 *
 	 * @return
 	 */
-	StorageBuilder createMainEntity();
+	<T> Storage.Builder<T> createMainEntity(EntityCodec<T> codec);
 
 	/**
 	 * Create a storage that can be used
 	 * @param sub
 	 * @return
 	 */
-	StorageBuilder createSubEntity(String sub);
-
+	<T> Storage.Builder<T> createSubEntity(String sub, EntityCodec<T> codec);
 }

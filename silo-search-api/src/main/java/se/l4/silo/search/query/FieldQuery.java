@@ -1,26 +1,51 @@
 package se.l4.silo.search.query;
 
-import se.l4.silo.search.QueryItem;
+import se.l4.silo.query.FieldLimit;
+import se.l4.silo.query.Matcher;
+import se.l4.silo.search.QueryClause;
+import se.l4.silo.search.internal.FieldQueryImpl;
 
-public class FieldQuery<R>
-	extends AbstractQueryPart<R>
+/**
+ * Query a specific field using a {@link Matcher}.
+ */
+public interface FieldQuery
+	extends QueryClause
 {
-	private String field;
+	/**
+	 * Get the field being limited.
+	 *
+	 * @return
+	 *   the name of the field this limit is for
+	 */
+	String getField();
 
-	public FieldQuery(String field)
-	{
-		this.field = field;
-	}
+	/**
+	 * Get the matcher for the field.
+	 *
+	 * @return
+	 *   the matcher being used to limit the field
+	 */
+	Matcher getMatcher();
 
-	public R is(Object value)
-	{
-		receiver.addQuery(new QueryItem("field", new FieldQueryData(field, value)));
-		return parent;
-	}
+	/**
+	 * Get boost of this query.
+	 *
+	 * @return
+	 */
+	float getBoost();
 
-	public R isEmpty()
+	/**
+	 * Create a query for a field.
+	 *
+	 * @param field
+	 *   the field being limited
+	 * @param matcher
+	 *   the matcher to use for limiting
+	 * @return
+	 *   new instance of {@link FieldLimit}
+	 */
+	static FieldQuery create(String field, Matcher matcher)
 	{
-		receiver.addQuery(new QueryItem("field", new FieldQueryData(field, null)));
-		return parent;
+		return new FieldQueryImpl(field, matcher, 1f);
 	}
 }

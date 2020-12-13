@@ -2,7 +2,6 @@ package se.l4.silo.engine.types;
 
 import java.io.IOException;
 
-import se.l4.exobytes.Serializer;
 import se.l4.silo.engine.io.ExtendedDataInput;
 import se.l4.silo.engine.io.ExtendedDataOutput;
 
@@ -10,12 +9,6 @@ public class ByteArrayFieldType
 	implements FieldType<byte[]>
 {
 	public static final FieldType<byte[]> INSTANCE = new ByteArrayFieldType();
-
-	@Override
-	public String uniqueId()
-	{
-		return "byte-array";
-	}
 
 	@Override
 	public int compare(byte[] o1, byte[] o2)
@@ -74,12 +67,6 @@ public class ByteArrayFieldType
 	}
 
 	@Override
-	public Serializer<byte[]> getSerializer()
-	{
-		return null;
-	}
-
-	@Override
 	public void write(byte[] instance, ExtendedDataOutput out)
 		throws IOException
 	{
@@ -97,4 +84,15 @@ public class ByteArrayFieldType
 		return result;
 	}
 
+	@Override
+	public byte[] nextDown(byte[] in)
+	{
+		throw new UnsupportedOperationException("byte array can not be compared");
+	}
+
+	@Override
+	public byte[] nextUp(byte[] in)
+	{
+		throw new UnsupportedOperationException("byt array can not be compared");
+	}
 }

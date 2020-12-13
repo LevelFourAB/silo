@@ -12,9 +12,6 @@ import org.slf4j.Logger;
 /**
  * Helper that handles committing a {@link IndexWriter} based on a preset
  * configuration.
- *
- * @author Andreas Holstenson
- *
  */
 public class CommitPolicy
 {
@@ -32,12 +29,14 @@ public class CommitPolicy
 
 	private volatile Future<?> future;
 
-	public CommitPolicy(Logger logger,
-			String name,
-			ScheduledExecutorService executor,
-			IndexWriter writer,
-			int maxDocumentChanges,
-			long maxTimeBetweenCommits)
+	public CommitPolicy(
+		Logger logger,
+		String name,
+		ScheduledExecutorService executor,
+		IndexWriter writer,
+		int maxDocumentChanges,
+		long maxTimeBetweenCommits
+	)
 	{
 		this.logger = logger;
 		this.name = name;
@@ -68,7 +67,7 @@ public class CommitPolicy
 		long t1 = System.currentTimeMillis();
 		writer.commit();
 		long t2 = System.currentTimeMillis();
-		lastCommit.set(System.currentTimeMillis());
+		lastCommit.set(t2);
 
 		if(logger.isDebugEnabled())
 		{

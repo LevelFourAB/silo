@@ -2,7 +2,6 @@ package se.l4.silo.engine.types;
 
 import java.io.IOException;
 
-import se.l4.exobytes.Serializer;
 import se.l4.silo.engine.io.ExtendedDataInput;
 import se.l4.silo.engine.io.ExtendedDataOutput;
 
@@ -10,12 +9,6 @@ public class StringFieldType
 	implements FieldType<String>
 {
 	public static final FieldType<String> INSTANCE = new StringFieldType();
-
-	@Override
-	public String uniqueId()
-	{
-		return "string";
-	}
 
 	@Override
 	public int compare(String o1, String o2)
@@ -31,13 +24,6 @@ public class StringFieldType
 	public String convert(Object in)
 	{
 		return in == null ? null : in.toString();
-	}
-
-	@Override
-	public Serializer<String> getSerializer()
-	{
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override
@@ -60,4 +46,15 @@ public class StringFieldType
 		out.writeString(instance);
 	}
 
+	@Override
+	public String nextDown(String in)
+	{
+		throw new UnsupportedOperationException("strings can not be compared");
+	}
+
+	@Override
+	public String nextUp(String in)
+	{
+		throw new UnsupportedOperationException("strings can not be compared");
+	}
 }

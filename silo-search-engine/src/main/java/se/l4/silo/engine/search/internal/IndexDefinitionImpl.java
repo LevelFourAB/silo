@@ -1,85 +1,88 @@
 package se.l4.silo.engine.search.internal;
 
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.DelegatingAnalyzerWrapper;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.FieldType;
+import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.IndexableField;
+import org.eclipse.collections.api.RichIterable;
+import org.eclipse.collections.api.factory.Sets;
+import org.eclipse.collections.api.map.MapIterable;
+import org.eclipse.collections.api.set.ImmutableSet;
+import org.eclipse.collections.api.set.SetIterable;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-
-import se.l4.silo.StorageException;
-import se.l4.silo.engine.search.FacetDefinition;
-import se.l4.silo.engine.search.FieldDefinition;
-import se.l4.silo.engine.search.IndexDefinition;
-import se.l4.silo.engine.search.IndexDefinitionEncounter;
+import se.l4.silo.engine.search.LocaleSupport;
+import se.l4.silo.engine.search.Locales;
+import se.l4.silo.engine.search.SearchFieldDefinition;
 import se.l4.silo.engine.search.SearchFieldType;
-import se.l4.silo.engine.search.SearchIndexConfig;
-import se.l4.silo.engine.search.facets.Facet;
-import se.l4.silo.engine.search.scoring.ScoringProvider;
+import se.l4.silo.engine.search.SearchIndexEncounter;
 
 public class IndexDefinitionImpl
-	implements IndexDefinition
+	implements SearchIndexEncounter
 {
-	private final Locale locale;
-	private final String languageField;
-	private final Map<String, FieldDefinition> fields;
-	private final Map<String, FacetDefinition> facets;
-	private final Set<String> valueFields;
+	private final MapIterable<String, SearchFieldDefinition<?>> fields;
+	private final ImmutableSet<String> valueFields;
+	private final Analyzer analyzer;
 
-	public IndexDefinitionImpl(SearchEngine engine, SearchIndexConfig config)
+	public IndexDefinitionImpl(
+		Locales locales,
+		MapIterable<String, SearchFieldDefinition<?>> fields
+	)
 	{
-		locale = engine.getDefaultLanguage();
-		languageField = config.getLanguageField();
+		this.fields = fields;
 
-		ImmutableMap.Builder<String, FieldDefinition> fields = ImmutableMap.builder();
-		for(SearchIndexConfig.FieldConfig fc : config.getFields())
+		this.valueFields = Sets.immutable.empty();
+
+		this.analyzer = new DelegatingAnalyzerWrapper(Analyzer.PER_FIELD_REUSE_STRATEGY)
 		{
-			fields.put(fc.getName(), new FieldDefinitionImpl(fc));
-		}
+			private final Analyzer standard = new StandardAnalyzer();
 
-		this.fields = fields.build();
+			@Override
+			protected Analyzer getWrappedAnalyzer(String fieldName)
+			{
+				if(fieldName.startsWith("f:"))
+				{
+					int last = fieldName.lastIndexOf(':');
+					String locale = fieldName.substring(last + 1);
 
-		IndexDefinitionEncounterImpl encounter = new IndexDefinitionEncounterImpl(this.fields);
+					if(locale.equals("_"))
+					{
+						return locales.getDefault().getTextAnalyzer();
+					}
+					else
+					{
+						LocaleSupport localeSupport = locales.getOrDefault(locale);
+						SearchFieldDefinition<?> def = fields.get(fieldName.substring(2, last));
+						if(def == null)
+						{
+							return localeSupport.getTextAnalyzer();
+						}
+						else
+						{
+							return def.getType().getAnalyzer(localeSupport);
+						}
+					}
+				}
 
-		ImmutableMap.Builder<String, FacetDefinition> facets = ImmutableMap.builder();
-		for(Map.Entry<String, Facet<?>> f : config.getFacets().entrySet())
-		{
-			String id = f.getKey();
-			Facet<?> instance = f.getValue();
-			instance.setup(encounter);
-			facets.put(id, new FacetDefinitionImpl(id, instance));
-		}
-		this.facets = facets.build();
+				return standard;
+			}
+		};
+	}
 
-		for(ScoringProvider<?> sp : config.getScoringProviders().values())
-		{
-			sp.setup(encounter);
-		}
-
-		this.valueFields = ImmutableSet.copyOf(encounter.valueFields);
+	public Analyzer getAnalyzer()
+	{
+		return analyzer;
 	}
 
 	@Override
-	public Locale getDefaultLanguage()
-	{
-		return locale;
-	}
-
-	@Override
-	public String getLanguageField()
-	{
-		return languageField;
-	}
-
-	@Override
-	public FieldDefinition getField(String name)
+	public SearchFieldDefinition<?> getField(String name)
 	{
 		return fields.get(name);
 	}
 
 	@Override
-	public FieldDefinition getFieldFromIndexName(String name)
+	public SearchFieldDefinition<?> getFieldFromIndexName(String name)
 	{
 		name = getNameFromIndexName(name);
 		return getField(name);
@@ -98,128 +101,118 @@ public class IndexDefinitionImpl
 	}
 
 	@Override
-	public Iterable<FieldDefinition> getFields()
+	public RichIterable<SearchFieldDefinition<?>> getFields()
 	{
-		return fields.values();
+		return fields;
 	}
 
 	@Override
-	public FacetDefinition getFacet(String facetId)
-	{
-		return facets.get(facetId);
-	}
-
-	@Override
-	public Set<String> getValueFields()
+	public SetIterable<String> getValueFields()
 	{
 		return valueFields;
 	}
 
-	private static class IndexDefinitionEncounterImpl
-		implements IndexDefinitionEncounter
+	private String name(SearchFieldDefinition<?> field, LocaleSupport localeSupport, char p)
 	{
-		private final Set<String> valueFields;
-		private final Map<String, FieldDefinition> currentFields;
-
-		public IndexDefinitionEncounterImpl(Map<String, FieldDefinition> currentFields)
-		{
-			this.currentFields = currentFields;
-			valueFields = new HashSet<>();
-		}
-
-		@Override
-		public void addValuesField(String field)
-		{
-			if(! currentFields.containsKey(field))
-			{
-				throw new StorageException("The field `" + field + "` has not been defined");
-			}
-
-			valueFields.add(field);
-		}
+		return (! field.isLanguageSpecific() || localeSupport == null) ? p + ":" + field.getName() + ":_" : p + ":" + field.getName() + ":" + localeSupport.getLocale().toLanguageTag();
 	}
 
-	private static class FieldDefinitionImpl
-		extends AbstractFieldDefinition
+	@Override
+	public String name(
+		SearchFieldDefinition<?> field,
+		LocaleSupport localeSupport
+	)
 	{
-		private final SearchIndexConfig.FieldConfig fc;
-
-		public FieldDefinitionImpl(SearchIndexConfig.FieldConfig fc)
-		{
-			this.fc = fc;
-		}
-
-		@Override
-		public String getName()
-		{
-			return fc.getName();
-		}
-
-		@Override
-		public SearchFieldType getType()
-		{
-			return fc.getType();
-		}
-
-		@Override
-		public boolean isLanguageSpecific()
-		{
-			return fc.isLanguageSpecific();
-		}
-
-		@Override
-		public boolean isIndexed()
-		{
-			return fc.isIndexed();
-		}
-
-		@Override
-		public boolean isSorted()
-		{
-			return fc.isSorted();
-		}
-
-		@Override
-		public boolean isStored()
-		{
-			return fc.isStored();
-		}
-
-		@Override
-		public boolean isHighlighted()
-		{
-			return fc.isHighlighted();
-		}
-
-		@Override
-		public boolean isStoreValues()
-		{
-			return fc.isStoreValues();
-		}
+		return name(field, localeSupport, 'f');
 	}
 
-	private static class FacetDefinitionImpl
-		implements FacetDefinition
+	@Override
+	public String docValuesName(
+		SearchFieldDefinition<?> field,
+		LocaleSupport localeSupport
+	)
 	{
-		private final String id;
-		private final Facet<?> instance;
+		return name(field, localeSupport, 'v');
+	}
 
-		public FacetDefinitionImpl(String id, Facet<?> instance)
+	@Override
+	public String sortValuesName(
+		SearchFieldDefinition<?> field,
+		LocaleSupport localeSupport
+	)
+	{
+		return name(field, localeSupport, 's');
+	}
+
+	@Override
+	public String nullName(SearchFieldDefinition<?> field)
+	{
+		return name(field, null, 'n');
+	}
+
+	@Override
+	public IndexableField createIndexableField(
+		LocaleSupport localeSupport,
+		SearchFieldDefinition<?> field,
+		Object data
+	)
+	{
+		FieldType ft = createFieldType(field.getType());
+
+		//ft.setStored(field.isStored());
+
+		if(! field.isIndexed())
 		{
-			this.id = id;
-			this.instance = instance;
+			ft.setIndexOptions(IndexOptions.NONE);
+		}
+		else
+		{
+			ft.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
 		}
 
-		@Override
-		public String getId()
+		if(field.isHighlighted())
 		{
-			return id;
+			ft.setStored(true);
+			ft.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
 		}
 
-		@Override
-		public Facet<?> getInstance()
-		{
-			return instance;
-		}
+		// TODO: Set stored/indexed values
+		String fieldName = name(field, localeSupport);
+		return ((SearchFieldType) field.getType()).create(fieldName, ft, localeSupport, data);
+	}
+
+	@Override
+	public IndexableField createValuesField(
+		LocaleSupport localeSupport,
+		SearchFieldDefinition<?> field,
+		Object data
+	)
+	{
+		String fieldName = docValuesName(field, localeSupport);
+		return ((SearchFieldType) field.getType()).createValuesField(fieldName, localeSupport, data);
+	}
+
+	@Override
+	public IndexableField createSortingField(
+		LocaleSupport localeSupport,
+		SearchFieldDefinition<?> field,
+		Object data
+	)
+	{
+		String fieldName = sortValuesName(field, localeSupport);
+		return ((SearchFieldType) field.getType()).createSortingField(fieldName, localeSupport, data);
+	}
+
+	private FieldType createFieldType(SearchFieldType<?> fieldType)
+	{
+		FieldType ft = new FieldType();
+		FieldType defaults = fieldType.getDefaultFieldType();
+		ft.setIndexOptions(defaults.indexOptions());
+		ft.setOmitNorms(defaults.omitNorms());
+		ft.setStoreTermVectorOffsets(false);
+		ft.setStoreTermVectorPositions(false);
+		ft.setStoreTermVectors(false);
+		ft.setTokenized(defaults.tokenized());
+		return ft;
 	}
 }

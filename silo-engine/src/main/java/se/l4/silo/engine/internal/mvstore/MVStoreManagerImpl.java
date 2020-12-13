@@ -8,8 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.google.common.io.ByteStreams;
-
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVMap.Builder;
 import org.h2.mvstore.MVStore;
@@ -132,7 +130,7 @@ public class MVStoreManagerImpl
 
 		try(InputStream in = snapshot.asStream(); OutputStream out = new FileOutputStream(fileName))
 		{
-			ByteStreams.copy(in, out);
+			in.transferTo(out);
 		}
 
 		store = builder.open();

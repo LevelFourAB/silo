@@ -1,18 +1,16 @@
 package se.l4.silo.query;
 
+import se.l4.silo.FetchResult;
+
 /**
- * Query builder.
- *
- * @author Andreas Holstenson
- *
- * @param <R>
+ * Query for a certain index.
  */
-public interface Query<R>
+public interface Query<T, R, FR extends FetchResult<R>>
 {
 	/**
-	 * Run this query and return the result.
+	 * Get the index this query runs on.
 	 *
 	 * @return
 	 */
-	R run();
+	String getIndex();
 }

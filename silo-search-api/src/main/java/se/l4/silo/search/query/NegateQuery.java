@@ -1,27 +1,23 @@
 package se.l4.silo.search.query;
 
-import se.l4.silo.search.QueryCriteriaBuilder;
-import se.l4.silo.search.QueryItem;
-import se.l4.silo.search.QueryPart;
+import se.l4.silo.search.QueryClause;
+import se.l4.silo.search.internal.NegateQueryImpl;
 
-public class NegateQuery<R>
-	extends AbstractQueryPart<R>
-	implements QueryCriteriaBuilder<R>
+/**
+ * {@link QueryClause} used to negate another clause.
+ */
+public interface NegateQuery
+	extends QueryClause
 {
-	public NegateQuery()
-	{
-	}
+	/**
+	 * The clause that may no longer match.
+	 *
+	 * @return
+	 */
+	QueryClause getClause();
 
-	@Override
-	public void addQuery(QueryItem item)
+	static NegateQuery create(QueryClause other)
 	{
-		receiver.addQuery(new QueryItem("negate", item));
-	}
-
-	@Override
-	public <P extends QueryPart<R>> P query(P q)
-	{
-		q.parent(parent, this);
-		return q;
+		return new NegateQueryImpl(other);
 	}
 }

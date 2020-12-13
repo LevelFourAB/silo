@@ -5,15 +5,11 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import org.h2.mvstore.MVStore;
 
-import se.l4.silo.engine.config.QueryEngineConfig;
-
 /**
  * Encounter for when a {@link QueryEngine} is being constructed.
  *
- * @author Andreas Holstenson
- *
  */
-public interface QueryEngineCreationEncounter<Config extends QueryEngineConfig>
+public interface QueryEngineCreationEncounter
 {
 	/**
 	 * Get the name of the engine being created.
@@ -28,21 +24,6 @@ public interface QueryEngineCreationEncounter<Config extends QueryEngineConfig>
 	 * @return
 	 */
 	String getUniqueName();
-
-	/**
-	 * Get the configuration of this query engine.
-	 *
-	 * @return
-	 */
-	Config getConfig();
-
-	/**
-	 * Get access to fields defined on the entity this query engine will
-	 * belong to.
-	 *
-	 * @return
-	 */
-	Fields getFields();
 
 	/**
 	 * Resolve a name against the data directory of the entity the query

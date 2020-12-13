@@ -17,6 +17,8 @@ public class MessageConstants
 	public static final int STORE_CHUNK = 10;
 	public static final int DELETE = 11;
 
+	public static final int INDEX_CHUNK = 20;
+
 	private MessageConstants()
 	{
 	}

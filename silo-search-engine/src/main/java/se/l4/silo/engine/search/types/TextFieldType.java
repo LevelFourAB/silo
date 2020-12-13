@@ -1,6 +1,6 @@
 package se.l4.silo.engine.search.types;
 
-import java.io.Reader;
+import java.io.IOException;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Field;
@@ -11,17 +11,38 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.util.BytesRef;
 
-import se.l4.silo.engine.search.Language;
+import se.l4.exobytes.streaming.StreamingInput;
+import se.l4.exobytes.streaming.StreamingOutput;
+import se.l4.exobytes.streaming.Token;
+import se.l4.silo.engine.search.LocaleSupport;
 import se.l4.silo.engine.search.SearchFieldType;
+import se.l4.silo.query.Matcher;
+import se.l4.silo.search.SearchIndexException;
+import se.l4.silo.search.query.UserQuery;
 
 public class TextFieldType
-	implements SearchFieldType
+	implements SearchFieldType<String>
 {
 	private final boolean suggest;
 
 	public TextFieldType(boolean suggest)
 	{
 		this.suggest = suggest;
+	}
+
+	@Override
+	public String read(StreamingInput in)
+		throws IOException
+	{
+		in.next(Token.VALUE);
+		return in.readString();
+	}
+
+	@Override
+	public void write(String instance, StreamingOutput out)
+		throws IOException
+	{
+		out.writeString(instance);
 	}
 
 	@Override
@@ -37,59 +58,41 @@ public class TextFieldType
 	}
 
 	@Override
-	public Analyzer getAnalyzer(Language lang)
+	public Analyzer getAnalyzer(LocaleSupport lang)
 	{
 		return suggest ? lang.getSuggestAnalyzer() : lang.getTextAnalyzer();
 	}
 
 	@Override
 	public IndexableField create(
-			String field,
-			FieldType type,
-			Language lang,
-			Object object)
+		String field,
+		FieldType type,
+		LocaleSupport lang,
+		String object
+	)
 	{
-		if(object instanceof Reader)
-		{
-			return new Field(field, (Reader) object, type);
-		}
-		else if(object instanceof String)
-		{
-			return new Field(field, (String) object, type);
-		}
-		else
-		{
-			throw new IllegalArgumentException("Text fields can not handle data of type: " + object.getClass());
-		}
+		return new Field(field, (String) object, type);
 	}
 
 	@Override
-	public IndexableField createSortingField(String field, Language lang, Object object)
+	public IndexableField createSortingField(String field, LocaleSupport lang, String object)
 	{
-		return new SortedDocValuesField(field, new BytesRef(object.toString()));
+		return new SortedDocValuesField(field, new BytesRef(object));
 	}
 
 	@Override
-	public SortField createSortField(String field, boolean ascending, Object params)
+	public SortField createSortField(String field, boolean ascending)
 	{
 		return new SortField(field, SortField.Type.STRING, ! ascending);
 	}
 
 	@Override
-	public Object extract(IndexableField field)
+	public Query createQuery(String field, Matcher matcher)
 	{
-		return field.stringValue();
-	}
+		if(matcher instanceof UserQuery.Matcher)
+		{
 
-	@Override
-	public Query createEqualsQuery(String field, Object value)
-	{
-		throw new UnsupportedOperationException("equals not supported for text fields");
-	}
-
-	@Override
-	public Query createRangeQuery(String field, Object from, Object to)
-	{
-		throw new UnsupportedOperationException("range query not supported for text fields");
+		}
+		throw new SearchIndexException("Text field queries do not support any matchers");
 	}
 }

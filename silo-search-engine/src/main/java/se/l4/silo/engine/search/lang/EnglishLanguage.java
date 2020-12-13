@@ -4,17 +4,16 @@ import java.util.Locale;
 
 import org.apache.lucene.analysis.Analyzer;
 
-import se.l4.silo.engine.search.Language;
+import se.l4.silo.engine.search.LocaleSupport;
 
 /**
  * Implementation of English for Silo.
- *
- * @author Andreas Holstenson
- *
  */
 public class EnglishLanguage
-	implements Language
+	implements LocaleSupport
 {
+	public static final LocaleSupport INSTANCE = new EnglishLanguage();
+
 	private final Locale locale;
 	private final Analyzer textAnalyzer;
 	private final Analyzer prefixAnalyzer;

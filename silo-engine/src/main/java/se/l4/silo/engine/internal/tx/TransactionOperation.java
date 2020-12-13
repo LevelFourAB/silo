@@ -17,7 +17,8 @@ public class TransactionOperation
 		ROLLBACK,
 		STORE_CHUNK,
 		DELETE,
-		START
+		START,
+		INDEX_CHUNK
 	}
 
 	private final Type type;
@@ -83,5 +84,10 @@ public class TransactionOperation
 	public static TransactionOperation delete(String entity, Object id)
 	{
 		return new TransactionOperation(Type.DELETE, 0, entity, id, null);
+	}
+
+	public static TransactionOperation indexChunk(String entity, String index, Object id, byte[] chunk)
+	{
+		return new TransactionOperation(Type.INDEX_CHUNK, 0, entity + "::" + index, id, chunk);
 	}
 }

@@ -1,10 +1,12 @@
 package se.l4.silo;
 
-import java.io.Closeable;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
-import se.l4.silo.binary.BinaryEntity;
-import se.l4.silo.structured.StructuredEntity;
+import org.reactivestreams.Publisher;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Silo storage, provides access to all entities stored, transactions and
@@ -52,22 +54,9 @@ import se.l4.silo.structured.StructuredEntity;
  *   entity.store("test id", object);
  * });
  * </pre>
- *
- * @author Andreas Holstenson
- *
  */
 public interface Silo
-	extends Closeable
 {
-	/**
-	 * Create a new instance of the specified interface for usage with the
-	 * storage.
-	 *
-	 * @param siloInterface
-	 * @return
-	 */
-	<T> T create(Class<T> siloInterface);
-
 	/**
 	 * Check if the given entity is available.
 	 *
@@ -77,42 +66,30 @@ public interface Silo
 	boolean hasEntity(String entityName);
 
 	/**
-	 * Get an entity of the given type.
+	 * Get an entity.
+	 *
+	 * @param entityName
+	 * @param ref
+	 */
+	<ID, T> Entity<ID, T> entity(EntityRef<ID, T> ref);
+
+	/**
+	 * Get an entity.
 	 *
 	 * @param entityName
 	 * @param type
 	 */
-	<T extends Entity> T entity(String entityName, Class<T> type);
-
-	/**
-	 * Get access to the binary entity with the given name.
-	 *
-	 * @param entityName
-	 * @return
-	 */
-	BinaryEntity binary(String entityName);
-
-	/**
-	 * Get an entity used for storing structured data with the given name.
-	 *
-	 * @param entityName
-	 * @return
-	 */
-	StructuredEntity structured(String entityName);
+	default <ID, T> Entity<ID, T> entity(String name, Class<ID> idType, Class<T> objectType)
+	{
+		return entity(EntityRef.create(name, idType, objectType));
+	}
 
 	/**
 	 * Create a new transaction for the current thread.
 	 *
 	 * @return
 	 */
-	Transaction newTransaction();
-
-	/**
-	 * Acquire a new resource lock for the current thread.
-	 *
-	 * @return
-	 */
-	ResourceHandle acquireResourceHandle();
+	Mono<Transaction> newTransaction();
 
 	/**
 	 * Run the given {@link Supplier} in a transaction.
@@ -125,18 +102,18 @@ public interface Silo
 		StorageTransactionException firstException = null;
 		for(int i=0, n=5; i<n; i++)
 		{
-			Transaction tx = newTransaction();
+			Transaction tx = newTransaction().block();
 			try
 			{
 				T result = supplier.get();
-				tx.commit();
+				tx.commit().block();
 				return result;
 			}
 			catch(StorageTransactionException e)
 			{
 				// TODO: Slight delay before retrying?
 				firstException = e;
-				tx.rollback();
+				tx.rollback().block();
 			}
 			catch(Throwable t)
 			{
@@ -164,18 +141,18 @@ public interface Silo
 		StorageTransactionException firstException = null;
 		for(int i=0, n=5; i<n; i++)
 		{
-			Transaction tx = newTransaction();
+			Transaction tx = newTransaction().block();
 			try
 			{
 				runnable.run();
-				tx.commit();
+				tx.commit().block();
 				return;
 			}
 			catch(StorageTransactionException e)
 			{
 				// TODO: Slight delay before retrying?
 				firstException = e;
-				tx.rollback();
+				tx.rollback().block();
 			}
 			catch(Throwable t)
 			{
@@ -192,6 +169,30 @@ public interface Silo
 		throw firstException;
 	}
 
-	@Override
-	void close();
+	/**
+	 * Perform an operation within a transaction.
+	 *
+	 * <pre>
+	 * silo.withTransaction(tx -> {
+	 *   // This runs within a transaction
+	 *   return entity.store(new TestData());
+	 * })
+	 *   // Everything else is outside the transaction
+	 *   .map(result -> ...);
+	 * </pre>
+	 *
+	 * @param <V>
+	 * @param scopeFunction
+	 * @return
+	 */
+	default <V> Flux<V> withTransaction(Function<Transaction, Publisher<V>> scopeFunction)
+	{
+        return Flux.usingWhen(
+			newTransaction(),
+			tx -> scopeFunction.apply(tx),
+			Transaction::commit,
+			(tx, error) -> tx.rollback(),
+			Transaction::rollback
+		);
+    }
 }

@@ -1,6 +1,7 @@
 package se.l4.silo.engine.internal;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
@@ -15,9 +16,6 @@ import java.util.concurrent.TimeUnit;
 import com.carrotsearch.hppc.LongHashSet;
 import com.carrotsearch.hppc.LongSet;
 import com.carrotsearch.hppc.cursors.LongCursor;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
-import com.google.common.io.ByteStreams;
 
 import org.h2.mvstore.MVMap;
 import org.slf4j.Logger;
@@ -157,6 +155,16 @@ public class TransactionAdapter
 						delete(tx, entity, id);
 					}
 					break;
+				case MessageConstants.INDEX_CHUNK:
+					// Store data
+					{
+						String entity = in.readString();
+						String index = in.readString();
+						Object id = IOUtils.readId(in);
+						byte[] data = IOUtils.readByteArray(in);
+						indexChunk(tx, entity, index, id, data);
+					}
+					break;
 				case MessageConstants.COMMIT_TRANSACTION:
 					txCommits.increase();
 					applyTransaction(tx);
@@ -169,7 +177,6 @@ public class TransactionAdapter
 		}
 	}
 
-	@VisibleForTesting
 	public void removeStale()
 	{
 		logger.trace("Looking for stale transactions");
@@ -304,6 +311,41 @@ public class TransactionAdapter
 		}
 	}
 
+		/**
+	 * Store information about a store operation for a given entity. This
+	 * method will take chunked data and store it in the internal log.
+	 *
+	 * @param tx
+	 * @param entity
+	 * @param id
+	 * @param data
+	 * @throws IOException
+	 */
+	private void indexChunk(long tx, String entity, String index, Object id, byte[] data)
+		throws IOException
+	{
+		// Locate the next local id for this transaction
+		long[] ceil = log.floorKey(new long[] { tx, Integer.MAX_VALUE });
+		long nextId;
+		if(ceil == null || ceil[0] != tx)
+		{
+			nextId = 0;
+		}
+		else
+		{
+			nextId = ceil[1] + 1;
+		}
+
+		// Store the data
+		long[] key = new long[] { tx, nextId };
+		log.put(key, TransactionOperation.indexChunk(entity, index, id, data));
+
+		if(logger.isTraceEnabled())
+		{
+			logger.trace("[" + tx + "] Wrote " + nextId + " for " + entity + "::" + index + "[" + id + "] with data " + Base64.getEncoder().encodeToString(data));
+		}
+	}
+
 	/**
 	 * Remove a transaction from the log.
 	 *
@@ -343,7 +385,7 @@ public class TransactionAdapter
 		throws IOException
 	{
 		Iterator<long[]> it = log.keyIterator(new long[] { tx, 0l });
-		List<long[]> keys = Lists.newArrayList();
+		List<long[]> keys = new ArrayList<>();
 		while(it.hasNext())
 		{
 			long[] key = it.next();
@@ -361,6 +403,26 @@ public class TransactionAdapter
 						// Zero length chunk means end of data
 						ChunkedBytes bytes = new ChunkedBytes(keys);
 						applier.store(op.getEntity(), op.getId(), bytes);
+						keys.clear();
+					}
+					else
+					{
+						keys.add(key);
+					}
+					break;
+				case INDEX_CHUNK:
+					if(op.getData().length == 0)
+					{
+						// Zero length chunk means end of data
+						ChunkedBytes bytes = new ChunkedBytes(keys);
+						String rawEntity = op.getEntity();
+						int idx = rawEntity.lastIndexOf("::");
+						applier.index(
+							rawEntity.substring(0, idx),
+							rawEntity.substring(idx + 2),
+							op.getId(),
+							bytes
+						);
 						keys.clear();
 					}
 					else
@@ -393,9 +455,15 @@ public class TransactionAdapter
 		}
 
 		@Override
-		public byte[] toByteArray() throws IOException
+		public byte[] toByteArray()
+			throws IOException
 		{
-			return ByteStreams.toByteArray(asInputStream());
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			try(InputStream in = asInputStream())
+			{
+				in.transferTo(out);
+			}
+			return out.toByteArray();
 		}
 	}
 

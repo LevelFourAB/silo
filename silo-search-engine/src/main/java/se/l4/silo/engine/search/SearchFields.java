@@ -13,7 +13,6 @@ import se.l4.silo.engine.search.types.LocaleFieldType;
 import se.l4.silo.engine.search.types.LongFieldType;
 import se.l4.silo.engine.search.types.TextFieldType;
 import se.l4.silo.engine.search.types.TokenFieldType;
-import se.l4.silo.search.query.SuggestQuery;
 
 /**
  * {@link SearchFieldType types} that can be used within a
@@ -30,42 +29,36 @@ public class SearchFields
 	 * Token field, saved the entire input string as single token. Does not
 	 * use localization and does not store the input by default.
 	 */
-	public static final SearchFieldType TOKEN = new TokenFieldType();
+	public static final SearchFieldType<String> TOKEN = new TokenFieldType();
 
 	/**
 	 * Text field.
 	 */
-	public static final SearchFieldType TEXT = new TextFieldType(false);
-
-	/**
-	 * Type that can be used for building fields that are suitable for
-	 * use with {@link SuggestQuery}.
-	 */
-	public static final SearchFieldType SUGGEST = new TextFieldType(true);
+	public static final SearchFieldType<String> TEXT = new TextFieldType(false);
 
 	/**
 	 * Field for storing numbers.
 	 */
-	public static final SearchFieldType INTEGER = new IntFieldType();
+	public static final SearchFieldType<Integer> INTEGER = new IntFieldType();
 	/**
 	 * Field for storing numbers.
 	 */
-	public static final SearchFieldType LONG = new LongFieldType();
+	public static final SearchFieldType<Long> LONG = new LongFieldType();
 
 	/**
 	 * Type for booleans.
 	 */
-	public static final SearchFieldType BOOLEAN = new BooleanFieldType();
+	public static final SearchFieldType<Boolean> BOOLEAN = new BooleanFieldType();
 
 	/**
 	 * Binary field.
 	 */
-	public static final SearchFieldType BINARY = new BinaryFieldType();
+	public static final SearchFieldType<byte[]> BINARY = new BinaryFieldType();
 
 	/**
 	 * Field suitable for storing {@link Locale}s.
 	 */
-	public static final SearchFieldType LOCALE = new LocaleFieldType();
+	public static final SearchFieldType<Locale> LOCALE = new LocaleFieldType();
 
 	private SearchFields()
 	{

@@ -50,6 +50,17 @@ public interface TransactionLog
 	DeleteResult delete(long tx, String entity, Object id);
 
 	/**
+	 * Store some index data in this transaction.
+	 *
+	 * @param tx
+	 * @param entity
+	 * @param id
+	 * @param index
+	 * @param bytes
+	 */
+	void storeIndex(long tx, String entity, String index, Object id, Bytes bytes);
+
+	/**
 	 * Commit the given transaction.
 	 *
 	 * @param tx

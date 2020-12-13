@@ -32,4 +32,15 @@ public interface StorageApplier
 	 */
 	void delete(String entity, Object id)
 		throws IOException;
+
+	/**
+	 *
+	 * @param entity
+	 * @param index
+	 * @param id
+	 * @param data
+	 * @throws IOException
+	 */
+	void index(String entity, String index, Object id, Bytes data)
+		throws IOException;
 }

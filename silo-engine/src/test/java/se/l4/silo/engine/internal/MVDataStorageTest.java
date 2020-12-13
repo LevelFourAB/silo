@@ -1,33 +1,30 @@
 package se.l4.silo.engine.internal;
 
-import java.io.IOException;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 
-import com.carrotsearch.randomizedtesting.RandomizedTest;
+import java.io.IOException;
 
 import org.h2.mvstore.MVStore;
 import org.h2.mvstore.OffHeapStore;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import junit.framework.Assert;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.internal.mvstore.MVStoreManagerImpl;
 import se.l4.ylem.io.Bytes;
 
 /**
  * Tests for {@link MVDataStorage}.
- *
- * @author Andreas Holstenson
- *
  */
 public class MVDataStorageTest
-	extends RandomizedTest
 {
 	private MVDataStorage storage;
 	private MVStoreManager storeManager;
 
-	@Before
+	@BeforeEach
 	public void before()
 	{
 		storeManager = new MVStoreManagerImpl(new MVStore.Builder()
@@ -35,7 +32,7 @@ public class MVDataStorageTest
 		storage = new MVDataStorage(storeManager);
 	}
 
-	@After
+	@AfterEach
 	public void after()
 		throws IOException
 	{
@@ -46,28 +43,31 @@ public class MVDataStorageTest
 	public void testStoreEmptyData()
 		throws IOException
 	{
-		storage.store(1, Bytes.empty());
+		long id = storage.store(Bytes.empty());
+		assertThat(id, is(1l));
 	}
 
 	@Test
 	public void testStoreSmallData()
 		throws IOException
 	{
-		storage.store(1, DataUtils.generate(1024));
+		long id = storage.store(DataUtils.generate(1024));
+		assertThat(id, is(1l));
 	}
 
 	@Test
 	public void testStoreLargeData()
 		throws IOException
 	{
-		storage.store(1, DataUtils.generate(1024 * 1024 * 4));
+		long id = storage.store(DataUtils.generate(1024 * 1024 * 4));
+		assertThat(id, is(1l));
 	}
 
 	private void testStoreAndRead(Bytes bytes)
 		throws IOException
 	{
-		storage.store(1, bytes);
-		Bytes data = storage.get(1);
+		long id = storage.store(bytes);
+		Bytes data = storage.get(id);
 
 		DataUtils.assertBytesEquals(bytes, data);
 	}
@@ -96,11 +96,11 @@ public class MVDataStorageTest
 	private void testStoreAndDelete(Bytes data)
 		throws IOException
 	{
-		storage.store(1, data);
-		storage.delete(1);
-		Assert.assertNull(storage.get(1));
+		long id = storage.store(data);
+		storage.delete(id);
 
-		Assert.assertEquals(storage.nextInternalId(), 1l);
+		assertThat(storage.get(id), nullValue());
+		assertThat(storage.nextInternalId(), is(1l));
 	}
 
 	@Test
@@ -127,11 +127,11 @@ public class MVDataStorageTest
 	private void testStoreAndReadMultiple(Bytes b1, Bytes b2)
 		throws IOException
 	{
-		storage.store(1, b1);
-		storage.store(2, b2);
+		long id1 = storage.store(b1);
+		long id2 = storage.store(b2);
 
-		DataUtils.assertBytesEquals(storage.get(1), b1);
-		DataUtils.assertBytesEquals(storage.get(2), b2);
+		DataUtils.assertBytesEquals(storage.get(id1), b1);
+		DataUtils.assertBytesEquals(storage.get(id2), b2);
 	}
 
 	@Test
@@ -155,29 +155,16 @@ public class MVDataStorageTest
 		Bytes b1 = DataUtils.generate(1024 * 17);
 		Bytes b2 = DataUtils.generate(1024 * 1024 * 4);
 		Bytes b3 = DataUtils.generate(1024 * 1024 * 2);
-		storage.store(1, b1);
-		storage.store(2, b2);
-		storage.store(3, b3);
+		long id1 = storage.store(b1);
+		long id2 = storage.store(b2);
+		long id3 = storage.store(b3);
 
-		DataUtils.assertBytesEquals(storage.get(1), b1);
-		DataUtils.assertBytesEquals(storage.get(2), b2);
-		DataUtils.assertBytesEquals(storage.get(3), b3);
+		DataUtils.assertBytesEquals(storage.get(id1), b1);
+		DataUtils.assertBytesEquals(storage.get(id2), b2);
+		DataUtils.assertBytesEquals(storage.get(id3), b3);
 
-		storage.delete(1);
-		DataUtils.assertBytesEquals(storage.get(2), b2);
-		DataUtils.assertBytesEquals(storage.get(3), b3);
-	}
-
-	@Test
-	public void testRandomSizeData()
-		throws IOException
-	{
-		for(int i=0, n=scaledRandomIntBetween(100, 1000); i<n; i++)
-		{
-			int id = randomIntBetween(0, n / 2);
-			byte[] data = randomBytesOfLength(512 * 1024);
-			storage.store(id, Bytes.create(data));
-			DataUtils.assertBytesEquals(Bytes.create(data), storage.get(id));
-		}
+		storage.delete(id1);
+		DataUtils.assertBytesEquals(storage.get(id2), b2);
+		DataUtils.assertBytesEquals(storage.get(id3), b3);
 	}
 }

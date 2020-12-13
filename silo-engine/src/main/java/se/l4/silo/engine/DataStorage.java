@@ -20,7 +20,7 @@ public interface DataStorage
 	 * @param bytes
 	 * @throws IOException
 	 */
-	void store(long id, Bytes bytes)
+	long store(Bytes bytes)
 		throws IOException;
 
 	/**

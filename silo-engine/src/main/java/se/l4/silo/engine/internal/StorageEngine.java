@@ -9,39 +9,34 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ListIterable;
+import org.eclipse.collections.api.list.MutableList;
+import org.eclipse.collections.api.map.ImmutableMap;
 import org.h2.mvstore.MVStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import se.l4.exobytes.Serializers;
+import reactor.core.publisher.Mono;
 import se.l4.silo.Entity;
 import se.l4.silo.StorageException;
-import se.l4.silo.engine.EntityCreationEncounter;
-import se.l4.silo.engine.EntityTypeFactory;
-import se.l4.silo.engine.Fields;
-import se.l4.silo.engine.QueryEngineFactory;
+import se.l4.silo.engine.EngineConfig;
+import se.l4.silo.engine.EntityCodec;
+import se.l4.silo.engine.EntityDefinition;
+import se.l4.silo.engine.IndexDefinition;
 import se.l4.silo.engine.Snapshot;
 import se.l4.silo.engine.Storage;
-import se.l4.silo.engine.builder.StorageBuilder;
-import se.l4.silo.engine.config.EngineConfig;
-import se.l4.silo.engine.config.EntityConfig;
-import se.l4.silo.engine.config.FieldConfig;
-import se.l4.silo.engine.config.QueryEngineConfig;
-import se.l4.silo.engine.config.QueryableEntityConfig;
+import se.l4.silo.engine.Storage.Builder;
 import se.l4.silo.engine.internal.log.TransactionLog;
 import se.l4.silo.engine.internal.log.TransactionLogImpl;
 import se.l4.silo.engine.internal.mvstore.MVStoreCacheHealth;
@@ -71,16 +66,6 @@ public class StorageEngine
 	private static final Logger logger = LoggerFactory.getLogger(StorageEngine.class);
 
 	/**
-	 * Factories that can be used to fetch registered factories.
-	 */
-	private final EngineFactories factories;
-
-	/**
-	 * The {@link Serializers} in use for this Silo instance.
-	 */
-	private Serializers serializers;
-
-	/**
 	 * The log to use for replicating data. Created via the log builder passed
 	 * to the storage engine.
 	 */
@@ -95,7 +80,7 @@ public class StorageEngine
 	/**
 	 * Instances of {@link Entity} created via configuration.
 	 */
-	private final Map<String, Entity> entities;
+	private final ImmutableMap<String, Entity<?, ?>> entities;
 
 	/**
 	 * The store used for storing main data.
@@ -159,18 +144,18 @@ public class StorageEngine
 	private final CountingProbe deletes;
 	private final CountingProbe reads;
 
-	public StorageEngine(EngineFactories factories,
-			Serializers serializers,
-			Vibe vibe,
-			TransactionSupport transactionSupport,
-			LogBuilder logBuilder,
-			Path root,
-			EngineConfig config)
+	public StorageEngine(
+		Vibe vibe,
+		TransactionSupport transactionSupport,
+		LogBuilder logBuilder,
+		Path root,
+
+		EngineConfig config,
+		ListIterable<EntityDefinition> entities
+	)
 	{
 		logger.debug("Creating new storage engine in {}", root);
 
-		this.factories = factories;
-		this.serializers = serializers;
 		this.transactionSupport = transactionSupport;
 		this.root = root;
 		this.sharedStorages = new SharedStorages(root, vibe);
@@ -207,11 +192,18 @@ public class StorageEngine
 		ids = new SequenceLongIdGenerator();
 		dataStorage = new MVDataStorage(this.store);
 		storages = new ConcurrentHashMap<>();
-		entities = new ConcurrentHashMap<>();
 
-		executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 2, new ThreadFactoryBuilder()
-			.setNameFormat("Silo Background Thread %d")
-			.build()
+		executor = Executors.newScheduledThreadPool(
+			Runtime.getRuntime().availableProcessors() + 2,
+			new ThreadFactory()
+			{
+				private final AtomicInteger count = new AtomicInteger(0);
+
+				public Thread newThread(Runnable runnable)
+				{
+					return new Thread(runnable, "Silo Background " + count.incrementAndGet());
+				}
+			}
 		);
 
 		stores = new CountingProbe();
@@ -252,7 +244,7 @@ public class StorageEngine
 				.done();
 		}
 
-		loadConfig(config);
+		this.entities = createEntities(entities);
 
 		// Build log and start receiving log entries
 		transactionAdapter = new TransactionAdapter(vibe, executor, store, createApplier());
@@ -295,7 +287,6 @@ public class StorageEngine
 				{
 					mutationLock.unlock();
 				}
-
 			}
 
 			@Override
@@ -306,6 +297,21 @@ public class StorageEngine
 					deletes.increase();
 					mutationLock.lock();
 					resolveStorage(entity).directDelete(id);
+				}
+				finally
+				{
+					mutationLock.unlock();
+				}
+			}
+
+			@Override
+			public void index(String entity, String index, Object id, Bytes data)
+				throws IOException
+			{
+				try
+				{
+					mutationLock.lock();
+					resolveStorage(entity).directIndex(index, id, data);
 				}
 				finally
 				{
@@ -341,32 +347,18 @@ public class StorageEngine
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private EntityCreationEncounter createEncounter(String name, Object config)
+	private final ImmutableMap<String, Entity<?, ?>> createEntities(ListIterable<EntityDefinition> entities)
 	{
-		return new EntityCreationEncounterImpl(serializers, this, name, config);
-	}
-
-	/**
-	 * Load the given configuration.
-	 *
-	 * @param config
-	 */
-	@SuppressWarnings("unchecked")
-	private void loadConfig(EngineConfig config)
-	{
-		for(Map.Entry<String, EntityConfig> entry : config.getEntities().entrySet())
-		{
-			String key = entry.getKey();
-			EntityConfig ec = entry.getValue();
-
-			// TODO: Check if the configuration has actually changed for existing entities before recreating
-
-			EntityTypeFactory<?, ?> factory = factories.forEntity(ec.getType());
-			Entity entity = (Entity) factory.create(createEncounter(key, ec.as(factory.getConfigType())));
-			entities.put(key, entity);
-		}
-
-		// TODO: Support for entity removal
+		// TODO: Support for different entity implementations?
+		return (ImmutableMap) entities.collect(def -> {
+			return new EntityImpl(
+				def.getName(),
+				def.getIdSupplier(),
+				createStorage(def.getName(), def.getCodec())
+					.addIndexes(def.getIndexes())
+					.build()
+			);
+		}).toMap(v -> v.getName(), v -> v).toImmutable();
 	}
 
 	private StorageImpl resolveStorage(String entity)
@@ -395,9 +387,9 @@ public class StorageEngine
 	 * @param name
 	 * @return
 	 */
-	public StorageBuilder createStorage(String name)
+	public <T> Storage.Builder<T> createStorage(String name, EntityCodec<T> codec)
 	{
-		return createStorage(name, "main");
+		return createStorage(name, "main", codec);
 	}
 
 	/**
@@ -407,44 +399,33 @@ public class StorageEngine
 	 * @param subName
 	 * @return
 	 */
-	public StorageBuilder createStorage(String name, String subName)
+	public <T> Storage.Builder<T> createStorage(String name, String subName, EntityCodec<T> codec)
 	{
 		String storageName = name + "::" + subName;
 		Path dataPath = resolveDataPath(name, subName);
-		StorageDef def = new StorageDef(storageName, dataPath);
-		return new StorageBuilder()
+		StorageDef<T> def = new StorageDef<>(storageName, dataPath, codec);
+		return new Storage.Builder<T>()
 		{
-			private final Map<String, QueryEngineConfig> queryEngines = new HashMap<>();
-			private final List<FieldConfig> fields = new ArrayList<>();
+			private final MutableList<IndexDefinition<T>> indexes = Lists.mutable.empty();
 
 			@Override
-			public StorageBuilder withFields(Iterable<FieldConfig> fields)
+			public Builder<T> addIndexes(Iterable<IndexDefinition<T>> indexes)
 			{
-				for(FieldConfig f : fields)
-				{
-					this.fields.add(f);
-				}
+				this.indexes.withAll(indexes);
 				return this;
 			}
 
 			@Override
-			public StorageBuilder withQueryEngines(QueryableEntityConfig config)
+			public Builder<T> addIndex(IndexDefinition<T> index)
 			{
-				queryEngines.putAll(config.getQueryEngines());
+				this.indexes.add(index);
 				return this;
 			}
 
 			@Override
-			public <C extends QueryEngineConfig> StorageBuilder withQueryEngine(QueryEngineFactory<?, C> factory, C config)
+			public Storage<T> build()
 			{
-				queryEngines.put(factory.getId(), config);
-				return this;
-			}
-
-			@Override
-			public Storage build()
-			{
-				def.update(fields, queryEngines);
+				def.update(indexes);
 				storages.put(storageName, def);
 				return def.getStorage();
 			}
@@ -478,10 +459,9 @@ public class StorageEngine
 	 * @param entityName
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
-	public <T> T getEntity(String entityName)
+	public Entity<?, ?> getEntity(String entityName)
 	{
-		return (T) entities.get(entityName);
+		return entities.get(entityName);
 	}
 
 	/**
@@ -555,23 +535,29 @@ public class StorageEngine
 		store.compact(unit.toMillis(time));
 	}
 
-	private class StorageDef
+	private class StorageDef<T>
 	{
-		private final DelegatingStorage storage;
+		private final DelegatingStorage<T> storage;
 		private final String storageName;
 		private final Path dataPath;
 
-		private Map<String, QueryEngineConfig> queryEngines;
-		private List<FieldConfig> fieldConfigs;
+		private final EntityCodec<T> codec;
+		private ListIterable<IndexDefinition<T>> queryEngines;
 
-		public StorageDef(String name, Path dataPath)
+		public StorageDef(
+			String name,
+			Path dataPath,
+			EntityCodec<T> codec
+		)
 		{
 			this.storageName = name;
 			this.dataPath = dataPath;
-			storage = new DelegatingStorage()
+			this.codec = codec;
+
+			storage = new DelegatingStorage<T>()
 			{
 				@Override
-				public Bytes get(Object id)
+				public Mono<T> get(Object id)
 				{
 					reads.increase();
 					return super.get(id);
@@ -623,7 +609,7 @@ public class StorageEngine
 			}
 
 			// Recreate it as we last saw it
-			update(this.fieldConfigs, this.queryEngines);
+			update(this.queryEngines);
 		}
 
 		public void awaitQueryEngines()
@@ -631,7 +617,9 @@ public class StorageEngine
 			getImpl().awaitQueryEngines();
 		}
 
-		public void update(List<FieldConfig> fieldConfigs, Map<String, QueryEngineConfig> queryEngines)
+		public void update(
+			ListIterable<IndexDefinition<T>> queryEngines
+		)
 		{
 			if(storage.getStorage() != null)
 			{
@@ -648,35 +636,26 @@ public class StorageEngine
 			}
 
 			// Create a new storage instance
-			PrimaryIndex primaryIndex = new PrimaryIndex(store, ids, storageName);
-			Fields fields = new FieldsImpl(Iterables.transform(fieldConfigs, c -> {
-				try
-				{
-					String type = c.getType();
-					return new FieldDefImpl(c.getName(), factories.getFieldType(type), c.isCollection());
-				}
-				catch(StorageException e)
-				{
-					throw new StorageException("Unable to create field information for " + c.getName() + " in entity " + storageName + ": " + e.getMessage());
-				}
-			}));
+			PrimaryIndex primaryIndex = new PrimaryIndex(store, storageName);
 			StorageImpl impl = new StorageImpl(
 				StorageEngine.this,
 				sharedStorages,
-				factories,
 				executor,
 				transactionSupport,
+
+				store,
 				stateStore,
 				dataPath,
 				dataStorage,
-				primaryIndex,
+
 				storageName,
-				fields,
+				codec,
+
+				primaryIndex,
 				queryEngines
 			);
 
 			// Save the configuration for later usage
-			this.fieldConfigs = fieldConfigs;
 			this.queryEngines = queryEngines;
 
 			// Set the implementation used

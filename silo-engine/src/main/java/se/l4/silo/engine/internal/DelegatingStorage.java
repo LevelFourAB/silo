@@ -1,7 +1,7 @@
 package se.l4.silo.engine.internal;
 
-import java.util.function.Function;
-
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.Entity;
 import se.l4.silo.FetchResult;
@@ -9,78 +9,82 @@ import se.l4.silo.StorageException;
 import se.l4.silo.StoreResult;
 import se.l4.silo.engine.Snapshot;
 import se.l4.silo.engine.Storage;
-import se.l4.silo.query.QueryFetchResult;
-import se.l4.silo.query.QueryResult;
-import se.l4.ylem.io.Bytes;
+import se.l4.silo.query.Query;
 
 /**
  * {@link Storage} that delegates to another instance. This is what is
  * exposed to {@link Entity entity implementations}. This allows the
  * {@link StorageEngine} to switch the underlying storage when needed,
  * for example when a {@link Snapshot} is being installed.
- *
- * @author Andreas Holstenson
- *
  */
-public class DelegatingStorage
-	implements Storage
+public class DelegatingStorage<T>
+	implements Storage<T>
 {
-	private volatile Storage storage;
+	private volatile Storage<T> storage;
 
 	public DelegatingStorage()
 	{
 	}
 
-	public Storage getStorage()
+	public Storage<T> getStorage()
 	{
 		return storage;
 	}
 
-	public void setStorage(Storage storage)
+	public void setStorage(Storage<T> storage)
 	{
 		this.storage = storage;
 	}
 
-	private void check()
+	private Mono<Storage<T>> storage()
 	{
-		if(storage == null)
-		{
-			throw new StorageException("Storage instance is currently locked and can not be used");
-		}
+		return Mono.fromSupplier(() -> {
+			if(storage == null)
+			{
+				throw new StorageException("Storage instance is currently locked and can not be used");
+			}
+
+			return storage;
+		});
+	};
+
+
+
+	@Override
+	public Mono<StoreResult<T>> store(Object id, T instance)
+	{
+		return storage().flatMap(s -> storage.store(id, instance));
 	}
 
 	@Override
-	public StoreResult store(Object id, Bytes bytes)
+	public Mono<T> get(Object id)
 	{
-		check();
-		return storage.store(id, bytes);
+		return storage().flatMap(s -> s.get(id));
 	}
 
 	@Override
-	public Bytes get(Object id)
+	public Mono<DeleteResult> delete(Object id)
 	{
-		check();
-		return storage.get(id);
+		return storage().flatMap(s -> s.delete(id));
 	}
 
 	@Override
-	public DeleteResult delete(Object id)
+	public <R, FR extends FetchResult<R>> Mono<FR> fetch(
+		Query<T, R, FR> query
+	)
 	{
-		check();
-		return storage.delete(id);
+		return storage().flatMap(s -> s.fetch(query));
 	}
 
 	@Override
-	public <R> QueryFetchResult<QueryResult<R>> query(String engine, Object query, Function<Bytes, R> dataLoader)
+	public <R> Flux<R> stream(Query<T, R, ?> query)
 	{
-		check();
-		return storage.query(engine, query, dataLoader);
+		return storage().flatMapMany(s -> s.stream(query));
 	}
 
 	@Override
-	public FetchResult<Bytes> stream()
+	public Flux<T> stream()
 	{
-		check();
-		return storage.stream();
+		return storage().flatMapMany(s -> storage.stream());
 	}
 }

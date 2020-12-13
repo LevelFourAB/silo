@@ -32,6 +32,21 @@ public class TestUserData
 		return id;
 	}
 
+	public String getName()
+	{
+		return name;
+	}
+
+	public int getAge()
+	{
+		return age;
+	}
+
+	public boolean isActive()
+	{
+		return active;
+	}
+
 	@Override
 	public int hashCode()
 	{

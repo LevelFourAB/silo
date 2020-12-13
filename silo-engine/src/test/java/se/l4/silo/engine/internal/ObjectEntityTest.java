@@ -1,95 +1,74 @@
 package se.l4.silo.engine.internal;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 import java.util.Optional;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import se.l4.silo.FetchResult;
-import se.l4.silo.Silo;
-import se.l4.silo.engine.Index;
+import se.l4.silo.Entity;
+import se.l4.silo.EntityRef;
+import se.l4.silo.engine.EntityCodec;
+import se.l4.silo.engine.EntityDefinition;
 import se.l4.silo.engine.LocalSilo;
-import se.l4.silo.query.IndexQuery;
-import se.l4.silo.structured.ObjectEntity;
 
 public class ObjectEntityTest
+	extends BasicTest
 {
-	private ObjectEntity<TestUserData> entity;
-	private Path tmp;
-	private Silo silo;
-
-	@Before
-	public void before()
-		throws IOException
+	@Override
+	protected LocalSilo.Builder setup(LocalSilo.Builder builder)
 	{
-		tmp = Files.createTempDirectory("silo");
-		silo = LocalSilo.open(tmp)
-			.addEntity("test")
-				.asStructured()
-				.defineField("name", "string")
-				.defineField("age", "int")
-				.defineField("active", "boolean")
-				.add("byName", Index::queryEngine)
-					.addField("name")
-					.done()
-				.add("byAge", Index::queryEngine)
-					.addField("age")
-					.addSortField("name")
-					.done()
-				.done()
+		EntityDefinition<Integer, TestUserData> def = EntityDefinition.create("test", TestUserData.class)
+			.withCodec(EntityCodec.serialized(serializers, TestUserData.class))
+			.withId(Integer.class, TestUserData::getId)
 			.build();
 
-		entity = silo.structured("test").asObject(TestUserData.class, TestUserData::getId);
+		return builder.addEntity(def);
 	}
 
-	@After
-	public void after()
-		throws Exception
+	private Entity<Integer, TestUserData> entity()
 	{
-		silo.close();
-		DataUtils.removeRecursive(tmp);
+		return instance().entity(EntityRef.create("test", Integer.class, TestUserData.class));
 	}
 
 	@Test
 	public void testStoreNoTransaction()
 	{
+		Entity<Integer, TestUserData> entity = entity();
+
 		TestUserData obj = new TestUserData(2, "Donna Johnson", 28, false);
-		entity.store(obj);
+		entity.store(obj).block();
 
-		Optional<TestUserData> fetched = entity.get(2);
-
-		Assert.assertEquals(obj, fetched.get());
+		Optional<TestUserData> fetched = entity.get(2).blockOptional();
+		assertThat(fetched.get(), is(obj));
 	}
 
 	@Test
-	public void testQuery()
+	public void testStoreInTransaction()
 	{
-		for(int i=0; i<1000; i++)
-		{
-			entity.store(new TestUserData(i, i % 2 == 0 ? "Donna" : "Eric", 18 + i % 40, i % 2 == 0));
-		}
+		Entity<Integer, TestUserData> entity = entity();
 
-		try(FetchResult<TestUserData> fr = entity.query("byAge", IndexQuery.type())
-			.field("age")
-			.isMoreThan(30)
-			.field("name")
-			.sortAscending()
-			.run())
-		{
-			Assert.assertEquals(675, fr.getTotal());
+		TestUserData obj = new TestUserData(2, "Donna Johnson", 28, false);
 
-			for(TestUserData d : fr)
-			{
-				if(d.age <= 30)
-				{
-					throw new AssertionError("Returned results with age less than or equal to 30");
-				}
-			}
-		}
+		instance().inTransaction(() -> {
+			entity.store(obj).block();
+		});
+
+		Optional<TestUserData> fetched = entity.get(2).blockOptional();
+		assertThat(fetched.get(), is(obj));
+	}
+
+	@Test
+	public void testStoreDeleteNoTransaction()
+	{
+		Entity<Integer, TestUserData> entity = entity();
+
+		TestUserData obj = new TestUserData(2, "Donna Johnson", 28, false);
+		entity.store(obj).block();
+		entity.delete(2).block();
+
+		Optional<TestUserData> fetched = entity.get(2).blockOptional();
+		assertThat(fetched.isPresent(), is(false));
 	}
 }

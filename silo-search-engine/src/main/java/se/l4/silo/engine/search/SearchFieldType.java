@@ -1,25 +1,45 @@
 package se.l4.silo.engine.search;
 
+import java.io.IOException;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SortField;
 
-import se.l4.silo.engine.search.builder.FieldBuilder;
+import se.l4.exobytes.streaming.StreamingInput;
+import se.l4.exobytes.streaming.StreamingOutput;
+import se.l4.silo.query.Matcher;
 
 /**
- * Information about a field that can be placed in a {@link SearchIndex}.
- *
- * @author Andreas Holstenson
- *
+ * Type of data that can be used for {@link SearchFieldDefinition fields}.
  */
-public interface SearchFieldType
+public interface SearchFieldType<T>
 {
 	/**
-	 * Get if this field normally depends on {@link Language}. This will
-	 * automatically call {@link FieldBuilder#languageSpecific()} when
-	 * the field is used.
+	 * Write the given instance to the output.
+	 *
+	 * @param instance
+	 * @param out
+	 * @throws IOException
+	 */
+	void write(T instance, StreamingOutput out)
+		throws IOException;
+
+	/**
+	 * Read an instance from the given input.
+	 *
+	 * @param instance
+	 * @param in
+	 * @return
+	 * @throws IOException
+	 */
+	T read(StreamingInput in)
+		throws IOException;
+
+	/**
+	 * Get if this field normally depends on the language of text.
 	 *
 	 * @return
 	 */
@@ -39,7 +59,7 @@ public interface SearchFieldType
 	 * @param language
 	 * @return
 	 */
-	Analyzer getAnalyzer(Language lang);
+	Analyzer getAnalyzer(LocaleSupport lang);
 
 	/**
 	 * Create the field from the given object.
@@ -50,57 +70,37 @@ public interface SearchFieldType
 	IndexableField create(
 		String field,
 		FieldType type,
-		Language lang,
-		Object object
+		LocaleSupport localeSupport,
+		T object
 	);
 
 	/**
-	 * Extract a value from the given field.
+	 * Create a query for the given instance of {@link Matcher}.
 	 *
-	 * @param field
-	 * @param locale
+	 * @param matcher
 	 * @return
 	 */
-	Object extract(IndexableField field);
-
-	/**
-	 * Get a query that represents the given field name matching the given
-	 * value.
-	 *
-	 * @param value
-	 * @return
-	 */
-	Query createEqualsQuery(String field, Object value);
-
-	/**
-	 * Create a range query for the given field name.
-	 *
-	 * @param field
-	 * @param from
-	 * @param to
-	 * @return
-	 */
-	Query createRangeQuery(String field, Object from, Object to);
+	Query createQuery(String field, Matcher matcher);
 
 	/**
 	 * Create a {@link SortField} for this type.
 	 *
 	 * @param field
 	 * @param ascending
-	 * @param params TODO
+	 * @param params
 	 * @return
 	 */
-	default SortField createSortField(String field, boolean ascending, Object params)
+	default SortField createSortField(String field, boolean ascending)
 	{
 		throw new UnsupportedOperationException("The field type " + getClass().getSimpleName() + " does not support sorting");
 	}
 
-	default IndexableField createValuesField(String field, Language lang, Object object)
+	default IndexableField createValuesField(String field, LocaleSupport lang, T object)
 	{
 		throw new UnsupportedOperationException("The field type " + getClass().getSimpleName() + " does not support values and can not be used for things such as faceting and scoring");
 	}
 
-	default IndexableField createSortingField(String field, Language lang, Object object)
+	default IndexableField createSortingField(String field, LocaleSupport lang, T object)
 	{
 		throw new UnsupportedOperationException("The field type " + getClass().getSimpleName() + " does not support sorting");
 	}
