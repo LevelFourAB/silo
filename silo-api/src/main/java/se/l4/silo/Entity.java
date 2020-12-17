@@ -30,7 +30,7 @@ public interface Entity<ID, T>
 	 * @param object
 	 * @return
 	 */
-	Mono<StoreResult<T>> store(T object);
+	Mono<StoreResult<ID, T>> store(T object);
 
 	/**
 	 * Delete data associated with the given identifier.
@@ -38,7 +38,7 @@ public interface Entity<ID, T>
 	 * @param id
 	 * @return
 	 */
-	Mono<DeleteResult> delete(ID id);
+	Mono<DeleteResult<ID, T>> delete(ID id);
 
 	/**
 	 * Fetch data from this entity using the given query.

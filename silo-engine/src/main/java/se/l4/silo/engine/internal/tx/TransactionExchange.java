@@ -1,7 +1,5 @@
 package se.l4.silo.engine.internal.tx;
 
-import se.l4.silo.DeleteResult;
-import se.l4.silo.StoreResult;
 import se.l4.ylem.io.Bytes;
 
 /**
@@ -11,18 +9,31 @@ import se.l4.ylem.io.Bytes;
 public interface TransactionExchange
 {
 	/**
-	 * Rollback any changes made.
+	 * Store data for an entity.
+	 *
+	 * @param entity
+	 * @param id
+	 * @param bytes
+	 * @return
 	 */
-	void rollback();
+	void store(String entity, Object id, Bytes bytes);
 
 	/**
-	 * Commit any changes made.
+	 * Delete data associated with an entity.
+	 *
+	 * @param entity
+	 * @param id
+	 * @return
 	 */
-	void commit();
+	void delete(String entity, Object id);
 
-	StoreResult store(String entity, Object id, Bytes bytes);
-
-	DeleteResult delete(String entity, Object id);
-
+	/**
+	 * Store index data for an entity.
+	 *
+	 * @param entity
+	 * @param index
+	 * @param id
+	 * @param bytes
+	 */
 	void index(String entity, String index, Object id, Bytes bytes);
 }

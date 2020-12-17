@@ -1,7 +1,5 @@
 package se.l4.silo.engine.internal.log;
 
-import se.l4.silo.DeleteResult;
-import se.l4.silo.StoreResult;
 import se.l4.silo.engine.internal.StorageEngine;
 import se.l4.ylem.io.Bytes;
 
@@ -35,7 +33,7 @@ public interface TransactionLog
 	 * @return
 	 *   result of the store operation
 	 */
-	StoreResult store(long tx, String entity, Object id, Bytes bytes);
+	void store(long tx, String entity, Object id, Bytes bytes);
 
 	/**
 	 * Remove some data in this transaction.
@@ -47,7 +45,7 @@ public interface TransactionLog
 	 * @param id
 	 *   the id to delete
 	 */
-	DeleteResult delete(long tx, String entity, Object id);
+	void delete(long tx, String entity, Object id);
 
 	/**
 	 * Store some index data in this transaction.

@@ -42,14 +42,14 @@ public class EntityImpl<ID, T>
 	}
 
 	@Override
-	public Mono<StoreResult<T>> store(T object)
+	public Mono<StoreResult<ID, T>> store(T object)
 	{
-		Object id = idSupplier.apply(object);
+		ID id = idSupplier.apply(object);
 		return storage.store(id, object);
 	}
 
 	@Override
-	public Mono<DeleteResult> delete(Object id)
+	public Mono<DeleteResult<ID, T>> delete(ID id)
 	{
 		return storage.delete(id);
 	}

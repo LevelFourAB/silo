@@ -6,9 +6,7 @@ import java.util.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import se.l4.silo.DeleteResult;
 import se.l4.silo.StorageException;
-import se.l4.silo.StoreResult;
 import se.l4.silo.engine.internal.IOUtils;
 import se.l4.silo.engine.internal.MessageConstants;
 import se.l4.silo.engine.io.ExtendedDataOutput;
@@ -64,7 +62,7 @@ public class TransactionLogImpl
 	}
 
 	@Override
-	public StoreResult store(long tx, String entity, Object id, Bytes bytes)
+	public void store(long tx, String entity, Object id, Bytes bytes)
 	{
 		try
 		{
@@ -104,11 +102,10 @@ public class TransactionLogImpl
 		{
 			throw new StorageException("Could not store " + entity + " with id " + id + " in transaction" + tx + "; " + e.getMessage(), e);
 		}
-		return null;
 	}
 
 	@Override
-	public DeleteResult delete(long tx, String entity, Object id)
+	public void delete(long tx, String entity, Object id)
 	{
 		try
 		{
@@ -124,16 +121,6 @@ public class TransactionLogImpl
 				out.writeString(entity);
 				IOUtils.writeId(id, out);
 			}));
-
-			// TODO: How do we know if something was deleted?
-			return new DeleteResult()
-			{
-				@Override
-				public boolean wasDeleted()
-				{
-					return false;
-				}
-			};
 		}
 		catch(IOException e)
 		{

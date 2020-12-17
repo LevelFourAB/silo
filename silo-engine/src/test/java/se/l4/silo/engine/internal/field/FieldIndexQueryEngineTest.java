@@ -180,7 +180,7 @@ public class FieldIndexQueryEngineTest
 			entity.store(obj1).block();
 			TestData obj2 = new TestData(2, "value2", true, Collections.emptyList());
 			entity.store(obj2).block();
-		});
+		}).block();
 
 		FieldIndexResult<TestData> fr = entity.fetch(FieldIndexQuery.create("byField1", TestData.class)
 			.field("field1").isEqualTo("value2")

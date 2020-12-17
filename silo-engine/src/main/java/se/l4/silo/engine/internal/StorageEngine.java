@@ -43,6 +43,7 @@ import se.l4.silo.engine.internal.mvstore.MVStoreCacheHealth;
 import se.l4.silo.engine.internal.mvstore.MVStoreHealth;
 import se.l4.silo.engine.internal.mvstore.MVStoreManagerImpl;
 import se.l4.silo.engine.internal.mvstore.SharedStorages;
+import se.l4.silo.engine.internal.tx.LogBasedTransactionSupport;
 import se.l4.silo.engine.log.Log;
 import se.l4.silo.engine.log.LogBuilder;
 import se.l4.vibe.Vibe;
@@ -146,7 +147,6 @@ public class StorageEngine
 
 	public StorageEngine(
 		Vibe vibe,
-		TransactionSupport transactionSupport,
 		LogBuilder logBuilder,
 		Path root,
 
@@ -156,7 +156,6 @@ public class StorageEngine
 	{
 		logger.debug("Creating new storage engine in {}", root);
 
-		this.transactionSupport = transactionSupport;
 		this.root = root;
 		this.sharedStorages = new SharedStorages(root, vibe);
 
@@ -244,13 +243,14 @@ public class StorageEngine
 				.done();
 		}
 
-		this.entities = createEntities(entities);
-
 		// Build log and start receiving log entries
 		transactionAdapter = new TransactionAdapter(vibe, executor, store, createApplier());
 		log = logBuilder.build(transactionAdapter);
 
 		transactionLog = new TransactionLogImpl(log, ids);
+		transactionSupport = new LogBasedTransactionSupport(transactionLog);
+
+		this.entities = createEntities(entities);
 
 		if(! hasDerivedState)
 		{
@@ -369,6 +369,16 @@ public class StorageEngine
 			throw new StorageException("The entity " + entity + " does not exist");
 		}
 		return result.getImpl();
+	}
+
+	/**
+	 * Get the {@link TransactionSupport} this engine uses.
+	 *
+	 * @return
+	 */
+	public TransactionSupport getTransactionSupport()
+	{
+		return transactionSupport;
 	}
 
 	/**

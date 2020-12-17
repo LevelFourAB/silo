@@ -20,7 +20,7 @@ public interface Storage<T>
 	 * @param data
 	 * @return
 	 */
-	Mono<StoreResult<T>> store(Object id, T data);
+	<ID> Mono<StoreResult<ID, T>> store(ID id, T data);
 
 	/**
 	 * Get some data in this storage.
@@ -36,7 +36,7 @@ public interface Storage<T>
 	 * @param id
 	 * @return
 	 */
-	Mono<DeleteResult> delete(Object id);
+	<ID> Mono<DeleteResult<ID, T>> delete(ID id);
 
 	/**
 	 * Invoke a query engine by passing it a pre-built query.

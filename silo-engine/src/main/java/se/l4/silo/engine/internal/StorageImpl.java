@@ -33,7 +33,6 @@ import se.l4.silo.engine.internal.mvstore.SharedStorages;
 import se.l4.silo.engine.internal.query.QueryEncounterImpl;
 import se.l4.silo.engine.internal.query.QueryEngineCreationEncounterImpl;
 import se.l4.silo.engine.internal.query.QueryEngineUpdater;
-import se.l4.silo.engine.internal.tx.TransactionExchange;
 import se.l4.silo.engine.io.ExtendedDataOutputStream;
 import se.l4.silo.query.Query;
 import se.l4.ylem.io.Bytes;
@@ -119,22 +118,22 @@ public class StorageImpl<T>
 	}
 
 	@Override
-	public Mono<StoreResult<T>> store(Object id, T instance)
+	public <ID> Mono<StoreResult<ID, T>> store(ID id, T instance)
 	{
-		return Mono.fromSupplier(() -> {
+		return transactionSupport.withExchange(tx -> {
 			if(log.isTraceEnabled())
 			{
 				log.trace("[" + name + "] TX store of " + id);
 			}
 
-			TransactionExchange tx = transactionSupport.getExchange();
 			try
 			{
 				// Encode the main object
 				Bytes bytes = Bytes.capture(out -> {
 					codec.encode(instance, out);
 				});
-				StoreResult result = tx.store(name, id, bytes);
+
+				tx.store(name, id, bytes);
 
 				// Generate index data for the object
 				for(QueryEngine<T, ?> engine : queryEngines)
@@ -149,38 +148,37 @@ public class StorageImpl<T>
 					tx.index(name, engine.getName(), id, indexBytes);
 				}
 
-				tx.commit();
-				return result;
+				return new StoreResultImpl<>(id);
 			}
 			catch(Throwable e)
 			{
-				tx.rollback();
-
 				throw new StorageException("Unable to store data with id " + id + "; " + e.getMessage(), e);
 			}
 		});
 	}
 
 	@Override
-	public Mono<DeleteResult> delete(Object id)
+	public <ID> Mono<DeleteResult<ID, T>> delete(ID id)
 	{
-		return Mono.fromSupplier(() -> {
+		return transactionSupport.withExchange(tx -> {
 			if(log.isTraceEnabled())
 			{
 				log.trace("[" + name + "] TX delete of " + id);
 			}
 
-			TransactionExchange tx = transactionSupport.getExchange();
+			long internalId = primary.get(id);
+			if(internalId == 0)
+			{
+				return new DeleteResultImpl<>(id, false);
+			}
+
 			try
 			{
-				DeleteResult result = tx.delete(name, id);
-				tx.commit();
-				return result;
+				tx.delete(name, id);
+				return new DeleteResultImpl<ID,T>(id, true);
 			}
 			catch(Throwable e)
 			{
-				tx.rollback();
-
 				throw new StorageException("Unable to delete data with id " + id + "; " + e.getMessage(), e);
 			}
 		});
@@ -189,7 +187,7 @@ public class StorageImpl<T>
 	@Override
 	public Mono<T> get(Object id)
 	{
-		return Mono.fromSupplier(() -> {
+		return transactionSupport.withExchange(tx -> {
 			long internalId = primary.get(id);
 
 			if(log.isTraceEnabled())

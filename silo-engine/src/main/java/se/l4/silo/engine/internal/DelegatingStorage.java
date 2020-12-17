@@ -51,7 +51,7 @@ public class DelegatingStorage<T>
 
 
 	@Override
-	public Mono<StoreResult<T>> store(Object id, T instance)
+	public <ID> Mono<StoreResult<ID, T>> store(ID id, T instance)
 	{
 		return storage().flatMap(s -> storage.store(id, instance));
 	}
@@ -63,7 +63,7 @@ public class DelegatingStorage<T>
 	}
 
 	@Override
-	public Mono<DeleteResult> delete(Object id)
+	public <ID> Mono<DeleteResult<ID, T>> delete(ID id)
 	{
 		return storage().flatMap(s -> s.delete(id));
 	}

@@ -1,11 +1,11 @@
 package se.l4.silo;
 
-public interface StoreResult<T>
+public interface StoreResult<ID, T>
 {
 	/**
 	 * Get the identifier of the stored object.
 	 *
 	 * @return
 	 */
-	Object getId();
+	ID getId();
 }

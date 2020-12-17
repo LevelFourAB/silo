@@ -85,89 +85,30 @@ public interface Silo
 	}
 
 	/**
-	 * Create a new transaction for the current thread.
+	 * Create a new transaction that can be used for full control over a
+	 * transaction.
 	 *
 	 * @return
 	 */
 	Mono<Transaction> newTransaction();
 
 	/**
-	 * Run the given {@link Supplier} in a transaction.
+	 * Wrap the given {@link Mono} making it transactional.
 	 *
-	 * @param supplier
+	 * @param <V>
+	 * @param mono
 	 * @return
 	 */
-	default <T> T inTransaction(Supplier<T> supplier)
-	{
-		StorageTransactionException firstException = null;
-		for(int i=0, n=5; i<n; i++)
-		{
-			Transaction tx = newTransaction().block();
-			try
-			{
-				T result = supplier.get();
-				tx.commit().block();
-				return result;
-			}
-			catch(StorageTransactionException e)
-			{
-				// TODO: Slight delay before retrying?
-				firstException = e;
-				tx.rollback().block();
-			}
-			catch(Throwable t)
-			{
-				tx.rollback();
-				if(t instanceof RuntimeException)
-				{
-					throw (RuntimeException) t;
-				}
-
-				throw new StorageException("Uncaught error while handling transaction; " + t.getMessage(), t);
-			}
-		}
-
-		throw firstException;
-	}
+	<V> Mono<V> transactional(Mono<V> mono);
 
 	/**
-	 * Run the given {@link Runnable} in a transaction.
+	 * Wrap the given {@link Flux} making it transactional.
 	 *
-	 * @param runnable
+	 * @param <V>
+	 * @param flux
 	 * @return
 	 */
-	default void inTransaction(Runnable runnable)
-	{
-		StorageTransactionException firstException = null;
-		for(int i=0, n=5; i<n; i++)
-		{
-			Transaction tx = newTransaction().block();
-			try
-			{
-				runnable.run();
-				tx.commit().block();
-				return;
-			}
-			catch(StorageTransactionException e)
-			{
-				// TODO: Slight delay before retrying?
-				firstException = e;
-				tx.rollback().block();
-			}
-			catch(Throwable t)
-			{
-				tx.rollback();
-				if(t instanceof RuntimeException)
-				{
-					throw (RuntimeException) t;
-				}
-
-				throw new StorageException("Uncaught error while handling transaction; " + t.getMessage(), t);
-			}
-		}
-
-		throw firstException;
-	}
+	<V> Flux<V> transactional(Flux<V> flux);
 
 	/**
 	 * Perform an operation within a transaction.
@@ -185,14 +126,23 @@ public interface Silo
 	 * @param scopeFunction
 	 * @return
 	 */
-	default <V> Flux<V> withTransaction(Function<Transaction, Publisher<V>> scopeFunction)
-	{
-        return Flux.usingWhen(
-			newTransaction(),
-			tx -> scopeFunction.apply(tx),
-			Transaction::commit,
-			(tx, error) -> tx.rollback(),
-			Transaction::rollback
-		);
-    }
+	<V> Flux<V> withTransaction(Function<Transaction, Publisher<V>> scopeFunction);
+
+	/**
+	 * Run the given {@link Supplier} in a transaction.
+	 *
+	 *
+	 * @param supplier
+	 * @return
+	 */
+	<T> Mono<T> inTransaction(Supplier<T> supplier);
+
+	/**
+	 * Run the given {@link Runnable} in a transaction.
+	 *
+	 * @param runnable
+	 * @return
+	 */
+	Mono<Void> inTransaction(Runnable runnable);
+
 }

@@ -4,9 +4,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.eclipse.collections.api.list.ListIterable;
+import org.reactivestreams.Publisher;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import se.l4.silo.Entity;
 import se.l4.silo.EntityRef;
@@ -17,9 +21,6 @@ import se.l4.silo.engine.EngineConfig;
 import se.l4.silo.engine.EntityDefinition;
 import se.l4.silo.engine.LocalSilo;
 import se.l4.silo.engine.Snapshot;
-import se.l4.silo.engine.internal.tx.TransactionExchange;
-import se.l4.silo.engine.internal.tx.TransactionExchangeImpl;
-import se.l4.silo.engine.internal.tx.WrappedTransaction;
 import se.l4.silo.engine.log.LogBuilder;
 import se.l4.vibe.Vibe;
 
@@ -31,9 +32,8 @@ import se.l4.vibe.Vibe;
 public class LocalSiloImpl
 	implements LocalSilo
 {
-	private final TransactionSupport tx;
 	private final StorageEngine storageEngine;
-	private final ThreadLocal<TransactionExchangeImpl> transactions;
+	private final TransactionSupport transactionSupport;
 
 	@SuppressWarnings("rawtypes")
 	LocalSiloImpl(
@@ -44,10 +44,9 @@ public class LocalSiloImpl
 		ListIterable<EntityDefinition> entities
 	)
 	{
-		tx = createTransactionSupport();
-		transactions = new ThreadLocal<>();
+		storageEngine = new StorageEngine(vibe, logBuilder, storage, config, entities);
 
-		storageEngine = new StorageEngine(vibe, tx, logBuilder, storage, config, entities);
+		transactionSupport = storageEngine.getTransactionSupport();
 	}
 
 	@Override
@@ -63,46 +62,6 @@ public class LocalSiloImpl
 		}
 	}
 
-	private TransactionSupport createTransactionSupport()
-	{
-		return new TransactionSupport()
-		{
-			@Override
-			public TransactionExchange getExchange()
-			{
-				TransactionExchangeImpl tx = transactions.get();
-				if(tx != null)
-				{
-					return tx.getExchange();
-				}
-
-				// No active transaction, create a new transaction
-				return new TransactionExchangeImpl(storageEngine.getTransactionLog(), (i) -> {});
-			}
-
-			@Override
-			public Transaction newTransaction()
-			{
-				TransactionExchangeImpl tx = transactions.get();
-				if(tx != null)
-				{
-					return new WrappedTransaction(tx.getTransaction());
-				}
-
-				tx = new TransactionExchangeImpl(storageEngine.getTransactionLog(), this::deactivateTransaction);
-				transactions.set(tx);
-				return tx.getTransaction();
-			}
-
-			private void deactivateTransaction(TransactionExchangeImpl tx)
-			{
-				if(transactions.get() == tx)
-				{
-					transactions.remove();
-				}
-			}
-		};
-	}
 
 	@Override
 	public boolean hasEntity(String entityName)
@@ -128,7 +87,39 @@ public class LocalSiloImpl
 	@Override
 	public Mono<Transaction> newTransaction()
 	{
-		return Mono.fromSupplier(tx::newTransaction);
+		return transactionSupport.newTransaction();
+	}
+
+	@Override
+	public <V> Flux<V> transactional(Flux<V> flux)
+	{
+		return transactionSupport.transactional(flux);
+	}
+
+	@Override
+	public <V> Mono<V> transactional(Mono<V> mono)
+	{
+		return transactionSupport.transactional(mono);
+	}
+
+	@Override
+	public Mono<Void> inTransaction(Runnable runnable)
+	{
+		return transactionSupport.inTransaction(runnable);
+	}
+
+	@Override
+	public <T> Mono<T> inTransaction(Supplier<T> supplier)
+	{
+		return transactionSupport.inTransaction(supplier);
+	}
+
+	@Override
+	public <V> Flux<V> withTransaction(
+		Function<Transaction, Publisher<V>> scopeFunction
+	)
+	{
+		return transactionSupport.withTransaction(scopeFunction);
 	}
 
 	/**
