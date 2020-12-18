@@ -23,7 +23,6 @@ import se.l4.silo.DeleteResult;
 import se.l4.silo.FetchResult;
 import se.l4.silo.StorageException;
 import se.l4.silo.StoreResult;
-import se.l4.silo.engine.DataStorage;
 import se.l4.silo.engine.EntityCodec;
 import se.l4.silo.engine.IndexDefinition;
 import se.l4.silo.engine.MVStoreManager;
@@ -36,7 +35,6 @@ import se.l4.silo.engine.internal.query.QueryEngineUpdater;
 import se.l4.silo.engine.internal.tx.TransactionExchange;
 import se.l4.silo.engine.io.ExtendedDataOutputStream;
 import se.l4.silo.query.Query;
-import se.l4.ylem.io.Bytes;
 
 /**
  * Implementation of {@link Storage}.
@@ -200,8 +198,7 @@ public class StorageImpl<T>
 	{
 		try
 		{
-			Bytes data = storage.get(exchange, id);
-			try(InputStream in = data.asInputStream())
+			try(InputStream in = storage.get(exchange, id);)
 			{
 				return codec.decode(in);
 			}
@@ -288,8 +285,7 @@ public class StorageImpl<T>
 				{
 					long toFetch = current;
 					current = primary.nextAfter(current);
-					Bytes data = storage.get(null, toFetch);
-					try(InputStream in = data.asInputStream())
+					try(InputStream in = storage.get(null, toFetch))
 					{
 						return PrimitiveTuples.pair(toFetch, codec.decode(in));
 					}
@@ -334,8 +330,7 @@ public class StorageImpl<T>
 					{
 						long toFetch = current;
 						current = primary.nextAfter(current);
-						Bytes data = storage.get(null, toFetch);
-						try(InputStream in = data.asInputStream())
+						try(InputStream in = storage.get(null, toFetch))
 						{
 							return codec.decode(in);
 						}
@@ -368,7 +363,7 @@ public class StorageImpl<T>
 		long previousInternalId = primary.get(null, id);
 
 		// Store the new data and associate it with the primary index
-		long internalId = storage.store(Bytes.capture(in));
+		long internalId = storage.store(in::transferTo);
 		primary.store(id, internalId);
 
 		// TODO: Replacement for indexes?

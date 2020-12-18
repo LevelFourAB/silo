@@ -1,9 +1,9 @@
 package se.l4.silo.engine.internal;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Base64;
@@ -16,16 +16,15 @@ import org.h2.mvstore.MVStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import se.l4.silo.engine.DataStorage;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.internal.TransactionSupport.TransactionalValue;
+import se.l4.silo.engine.internal.log.ChunkOutputStream;
 import se.l4.silo.engine.internal.tx.TransactionExchange;
 import se.l4.silo.engine.types.ByteArrayFieldType;
 import se.l4.silo.engine.types.LongArrayFieldType;
 import se.l4.silo.engine.types.LongFieldType;
 import se.l4.silo.engine.types.VersionedType;
-import se.l4.ylem.io.ByteArrayConsumer;
-import se.l4.ylem.io.Bytes;
+import se.l4.ylem.io.IOConsumer;
 
 /**
  * Data storage that uses {@link MVStore} to store all of the data. This
@@ -72,14 +71,15 @@ public class MVDataStorage
 	}
 
 	@Override
-	public long store(Bytes bytes)
+	public long store(IOConsumer<OutputStream> generator)
 		throws IOException
 	{
 		Long lastId = keys.lastKey();
 		long id = lastId == null ? 1 : lastId + 1;
 
 		LongArrayList ids = new LongArrayList();
-		bytes.asChunks(CHUNK_SIZE, (data, offset, length) -> {
+
+		try(OutputStream chunkOutput = new ChunkOutputStream(CHUNK_SIZE, (data, offset, length) -> {
 			long nextId = nextInternalId();
 			ids.add(nextId);
 
@@ -90,7 +90,11 @@ public class MVDataStorage
 			{
 				log.trace("Store: Wrote " + nextId + " with data " + Base64.getEncoder().encodeToString(buf));
 			}
-		});
+		}))
+		{
+			// Ask the generator to write output
+			generator.accept(chunkOutput);
+		}
 
 		if(log.isTraceEnabled())
 		{
@@ -104,7 +108,7 @@ public class MVDataStorage
 	}
 
 	@Override
-	public Bytes get(TransactionExchange exchange, long id)
+	public InputStream get(TransactionExchange exchange, long id)
 		throws IOException
 	{
 		MVMap<Long, long[]> keys = exchange == null ? this.keys : exchange.get(readonlyKeys);
@@ -118,9 +122,11 @@ public class MVDataStorage
 
 		if(ids == null) return null;
 
-		return new ChunkedBytes(
-			exchange == null ? this.chunks : exchange.get(readonlyChunks),
-			ids
+		return new SequenceInputStream(
+			new ChunkedInputStreamEnumeration(
+				exchange == null ? this.chunks : exchange.get(readonlyChunks),
+				ids
+			)
 		);
 	}
 
@@ -147,57 +153,6 @@ public class MVDataStorage
 	{
 		Long lastKey = chunks.lastKey();
 		return lastKey == null ? 1 : lastKey + 1;
-	}
-
-	private class ChunkedBytes
-		implements Bytes
-	{
-		private final MVMap<Long, byte[]> chunks;
-		private final long[] ids;
-
-		public ChunkedBytes(
-			MVMap<Long, byte[]> chunks,
-			long[] ids
-		)
-		{
-			this.chunks = chunks;
-			this.ids = ids;
-		}
-
-		@Override
-		public InputStream asInputStream() throws IOException
-		{
-			return new SequenceInputStream(
-				new ChunkedInputStreamEnumeration(chunks, ids)
-			);
-		}
-
-		@Override
-		public byte[] toByteArray() throws IOException
-		{
-			if(ids.length == 1)
-			{
-				return chunks.get(ids[0]);
-			}
-
-			ByteArrayOutputStream out = new ByteArrayOutputStream(CHUNK_SIZE * ids.length);
-			for(long id : ids)
-			{
-				byte[] data = chunks.get(id);
-				out.write(data);
-			}
-			return out.toByteArray();
-		}
-
-		@Override
-		public void asChunks(ByteArrayConsumer consumer) throws IOException
-		{
-			for(long id : ids)
-			{
-				byte[] data = chunks.get(id);
-				consumer.consume(data, 0, data.length);
-			}
-		}
 	}
 
 	private class ChunkedInputStreamEnumeration

@@ -1,5 +1,6 @@
 package se.l4.silo.engine.internal;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.FileVisitResult;
@@ -7,7 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
 
 import se.l4.ylem.io.Bytes;
 
@@ -17,21 +17,14 @@ public class DataUtils
 	{
 	}
 
-	public static Bytes generate(int size)
+	public static ByteArrayInputStream generate(int size)
 	{
-		try
+		byte[] out = new byte[size];
+		for(int i=0; i<size; i++)
 		{
-			return Bytes.capture(o -> {
-				for(int i=0; i<size; i++)
-				{
-					o.write(i % 255);
-				}
-			});
+			out[i] = (byte) (i % 255);
 		}
-		catch(IOException e)
-		{
-			throw new RuntimeException(e);
-		}
+		return new ByteArrayInputStream(out);
 	}
 
 	/**
@@ -42,26 +35,10 @@ public class DataUtils
 	 * @param b2
 	 * @throws IOException
 	 */
-	public static void assertBytesEquals(Bytes b1, Bytes b2)
+	public static void assertBytesEquals(InputStream in1, InputStream in2)
 	{
 		try
 		{
-			byte[] a1 = b1.toByteArray();
-			byte[] a2 = b2.toByteArray();
-
-			if(a1.length != a2.length)
-			{
-				throw new AssertionError("Bytes not equal, size is different. First is " + a1.length + " bytes, second is " + a2.length);
-			}
-
-			if(! Arrays.equals(a1, a2))
-			{
-				throw new AssertionError("Bytes are not equal");
-			}
-
-			InputStream in1 = b1.asInputStream();
-			InputStream in2 = b2.asInputStream();
-
 			int i = 0;
 			int r1;
 			while((r1 = in1.read()) != -1)

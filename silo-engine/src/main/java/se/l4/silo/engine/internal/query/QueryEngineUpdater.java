@@ -12,9 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import se.l4.silo.StorageException;
-import se.l4.silo.engine.DataStorage;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.QueryEngine;
+import se.l4.silo.engine.internal.DataStorage;
 import se.l4.silo.engine.internal.StorageEngine;
 import se.l4.silo.engine.internal.StorageImpl;
 import se.l4.silo.engine.io.ExtendedDataInputStream;
@@ -23,7 +23,6 @@ import se.l4.silo.engine.types.LongFieldType;
 import se.l4.silo.engine.types.MergedFieldType;
 import se.l4.silo.engine.types.StringFieldType;
 import se.l4.silo.engine.types.VersionedType;
-import se.l4.ylem.io.Bytes;
 
 /**
  * Updater that ensures that {@link QueryEngine}s have been updated with
@@ -101,7 +100,7 @@ public class QueryEngineUpdater<T>
 		long storedId;
 		try
 		{
-			storedId = dataStorage.store(Bytes.capture(in));
+			storedId = dataStorage.store(in::transferTo);
 			data.put(new Object[] { id, index }, storedId);
 		}
 		catch(IOException e)
@@ -119,7 +118,7 @@ public class QueryEngineUpdater<T>
 			}
 
 			// This query engine is up to date, continue indexing
-			try(InputStream in0 = dataStorage.get(null, storedId).asInputStream();
+			try(InputStream in0 = dataStorage.get(null, storedId);
 				ExtendedDataInputStream eIn = new ExtendedDataInputStream(in0))
 			{
 				def.engine.apply(id, eIn);
@@ -239,14 +238,12 @@ public class QueryEngineUpdater<T>
 				// Store the data in the main storage
 				try
 				{
-					Bytes indexBytes = Bytes.capture(out0 -> {
+					long storedId = dataStorage.store(out0 -> {
 						try(ExtendedDataOutputStream out = new ExtendedDataOutputStream(out0))
 						{
 							def.engine.generate(pair.getTwo(), out);
 						}
 					});
-
-					long storedId = dataStorage.store(indexBytes);
 					data.put(new Object[] { pair.getOne(), def.name }, storedId);
 				}
 				catch(IOException e)
@@ -283,9 +280,7 @@ public class QueryEngineUpdater<T>
 				}
 
 				Long internalId = data.get(new Object[] { id, def.name });
-				Bytes bytes = dataStorage.get(null, internalId);
-
-				try(InputStream in0 = bytes.asInputStream();
+				try(InputStream in0 = dataStorage.get(null, internalId);
 					ExtendedDataInputStream in = new ExtendedDataInputStream(in0))
 				{
 					def.engine.apply(id, in);

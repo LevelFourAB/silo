@@ -1,16 +1,15 @@
-package se.l4.silo.engine;
+package se.l4.silo.engine.internal;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import se.l4.silo.engine.internal.tx.TransactionExchange;
-import se.l4.ylem.io.Bytes;
+import se.l4.ylem.io.IOConsumer;
 
 /**
  * Data storage for raw binary data. Binary data is always associated with an
  * identifier.
- *
- * @author Andreas Holstenson
- *
  */
 public interface DataStorage
 {
@@ -21,7 +20,7 @@ public interface DataStorage
 	 * @param bytes
 	 * @throws IOException
 	 */
-	long store(Bytes bytes)
+	long store(IOConsumer<OutputStream> out)
 		throws IOException;
 
 	/**
@@ -32,7 +31,7 @@ public interface DataStorage
 	 * @return
 	 * @throws IOException
 	 */
-	Bytes get(TransactionExchange exchange, long id)
+	InputStream get(TransactionExchange exchange, long id)
 		throws IOException;
 
 	/**

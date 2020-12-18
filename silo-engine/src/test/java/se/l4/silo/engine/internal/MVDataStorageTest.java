@@ -5,6 +5,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -21,7 +22,6 @@ import se.l4.silo.Transaction;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.internal.mvstore.MVStoreManagerImpl;
 import se.l4.silo.engine.internal.tx.TransactionExchange;
-import se.l4.ylem.io.Bytes;
 
 /**
  * Tests for {@link MVDataStorage}.
@@ -54,7 +54,7 @@ public class MVDataStorageTest
 	public void testStoreEmptyData()
 		throws IOException
 	{
-		long id = storage.store(Bytes.empty());
+		long id = storage.store(out -> {});
 		assertThat(id, is(1l));
 	}
 
@@ -62,7 +62,7 @@ public class MVDataStorageTest
 	public void testStoreSmallData()
 		throws IOException
 	{
-		long id = storage.store(DataUtils.generate(1024));
+		long id = storage.store(DataUtils.generate(1024)::transferTo);
 		assertThat(id, is(1l));
 	}
 
@@ -70,44 +70,43 @@ public class MVDataStorageTest
 	public void testStoreLargeData()
 		throws IOException
 	{
-		long id = storage.store(DataUtils.generate(1024 * 1024 * 4));
+		long id = storage.store(DataUtils.generate(1024 * 1024 * 4)::transferTo);
 		assertThat(id, is(1l));
 	}
 
-	private void testStoreAndRead(Bytes bytes)
+	private void testStoreAndRead(int size)
 		throws IOException
 	{
-		long id = storage.store(bytes);
-		Bytes data = storage.get(null, id);
-
-		DataUtils.assertBytesEquals(bytes, data);
+		long id = storage.store(DataUtils.generate(size)::transferTo);
+		InputStream data = storage.get(null, id);
+		DataUtils.assertBytesEquals(DataUtils.generate(size), data);
 	}
 
 	@Test
 	public void testStoreAndReadEmptyData()
 		throws IOException
 	{
-		testStoreAndRead(Bytes.empty());
+		testStoreAndRead(0);
 	}
 
 	@Test
 	public void testStoreAndReadSmallData()
 		throws IOException
 	{
-		testStoreAndRead(DataUtils.generate(1024));
+		testStoreAndRead(1024);
 	}
 
 	@Test
 	public void testStoreAndReadLargeData()
 		throws IOException
 	{
-		testStoreAndRead(DataUtils.generate(1024 * 1024 * 4));
+		testStoreAndRead(1024 * 1024 * 4);
 	}
 
-	private void testStoreAndDelete(Bytes data)
+	private void testStoreAndDelete(int size)
 		throws IOException
 	{
-		long id = storage.store(data);
+		long id = storage.store(DataUtils.generate(size)::transferTo);
 		storage.delete(id);
 
 		assertThat(storage.get(null, id), nullValue());
@@ -118,65 +117,62 @@ public class MVDataStorageTest
 	public void testStoreAndDeleteEmptyData()
 		throws IOException
 	{
-		testStoreAndDelete(Bytes.empty());
+		testStoreAndDelete(0);
 	}
 
 	@Test
 	public void testStoreAndDeleteSmallData()
 		throws IOException
 	{
-		testStoreAndDelete(DataUtils.generate(1024));
+		testStoreAndDelete(1024);
 	}
 
 	@Test
 	public void testStoreAndDeleteLargeData()
 		throws IOException
 	{
-		testStoreAndDelete(DataUtils.generate(1024 * 1024 * 4));
+		testStoreAndDelete(1024 * 1024 * 4);
 	}
 
-	private void testStoreAndReadMultiple(Bytes b1, Bytes b2)
+	private void testStoreAndReadMultiple(int b1, int b2)
 		throws IOException
 	{
-		long id1 = storage.store(b1);
-		long id2 = storage.store(b2);
+		long id1 = storage.store(DataUtils.generate(b1)::transferTo);
+		long id2 = storage.store(DataUtils.generate(b2)::transferTo);
 
-		DataUtils.assertBytesEquals(storage.get(null, id1), b1);
-		DataUtils.assertBytesEquals(storage.get(null, id2), b2);
+		DataUtils.assertBytesEquals(storage.get(null, id1), DataUtils.generate(b1));
+		DataUtils.assertBytesEquals(storage.get(null, id2), DataUtils.generate(b2));
 	}
 
 	@Test
 	public void testStoreMixedEmptyAndLarge()
 		throws IOException
 	{
-		testStoreAndReadMultiple(Bytes.empty(), DataUtils.generate(1024 * 1024 * 4));
+		testStoreAndReadMultiple(0, 1024 * 1024 * 4);
 	}
 
 	@Test
 	public void testStoreMixedLargeAndLarge()
 		throws IOException
 	{
-		testStoreAndReadMultiple(DataUtils.generate(1024 * 1024 * 4), DataUtils.generate(1024 * 1024 * 4));
+		testStoreAndReadMultiple(1024 * 1024 * 4, 1024 * 1024 * 4);
 	}
 
 	@Test
 	public void testStoreReadDelete()
 		throws IOException
 	{
-		Bytes b1 = DataUtils.generate(1024 * 17);
-		Bytes b2 = DataUtils.generate(1024 * 1024 * 4);
-		Bytes b3 = DataUtils.generate(1024 * 1024 * 2);
-		long id1 = storage.store(b1);
-		long id2 = storage.store(b2);
-		long id3 = storage.store(b3);
+		long id1 = storage.store(DataUtils.generate(1024 * 17)::transferTo);
+		long id2 = storage.store(DataUtils.generate(1024 * 1024 * 4)::transferTo);
+		long id3 = storage.store(DataUtils.generate(1024 * 1024 * 2)::transferTo);
 
-		DataUtils.assertBytesEquals(storage.get(null, id1), b1);
-		DataUtils.assertBytesEquals(storage.get(null, id2), b2);
-		DataUtils.assertBytesEquals(storage.get(null, id3), b3);
+		DataUtils.assertBytesEquals(storage.get(null, id1), DataUtils.generate(1024 * 17));
+		DataUtils.assertBytesEquals(storage.get(null, id2), DataUtils.generate(1024 * 1024 * 4));
+		DataUtils.assertBytesEquals(storage.get(null, id3), DataUtils.generate(1024 * 1024 * 2));
 
 		storage.delete(id1);
-		DataUtils.assertBytesEquals(storage.get(null, id2), b2);
-		DataUtils.assertBytesEquals(storage.get(null, id3), b3);
+		DataUtils.assertBytesEquals(storage.get(null, id2), DataUtils.generate(1024 * 1024 * 4));
+		DataUtils.assertBytesEquals(storage.get(null, id3), DataUtils.generate(1024 * 1024 * 2));
 	}
 
 	class FakeTransactionSupport
