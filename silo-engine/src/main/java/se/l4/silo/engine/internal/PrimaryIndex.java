@@ -4,6 +4,8 @@ import org.h2.mvstore.MVMap;
 import org.h2.mvstore.type.ObjectDataType;
 
 import se.l4.silo.engine.MVStoreManager;
+import se.l4.silo.engine.internal.TransactionSupport.TransactionalValue;
+import se.l4.silo.engine.internal.tx.TransactionExchange;
 import se.l4.silo.engine.types.DataTypeAdapter;
 import se.l4.silo.engine.types.LongFieldType;
 
@@ -12,10 +14,16 @@ import se.l4.silo.engine.types.LongFieldType;
  */
 public class PrimaryIndex
 {
+	private final TransactionalValue<MVMap<Object, Long>> readonlyMap;
+
 	private final MVMap<Object, Long> map;
 	private final MVMap<Long, Object> reverse;
 
-	public PrimaryIndex(MVStoreManager storeManager, String name)
+	public PrimaryIndex(
+		MVStoreManager storeManager,
+		TransactionSupport transactionSupport,
+		String name
+	)
 	{
 		map = storeManager.openMap("primary.toExternal." + name, new MVMap.Builder<Object, Long>()
 			.keyType(new ObjectDataType())
@@ -26,6 +34,9 @@ public class PrimaryIndex
 			.keyType(new DataTypeAdapter(LongFieldType.INSTANCE))
 			.valueType(new ObjectDataType())
 		);
+
+		readonlyMap = v -> map.openVersion(v);
+		transactionSupport.registerValue(readonlyMap);
 	}
 
 	/**
@@ -34,8 +45,18 @@ public class PrimaryIndex
 	 * @param key
 	 * @return
 	 */
-	public long get(Object key)
+	public long get(TransactionExchange exchange, Object key)
 	{
+		MVMap<Object, Long> map;
+		if(exchange != null)
+		{
+			map = exchange.get(readonlyMap);
+		}
+		else
+		{
+			map = this.map;
+		}
+
 		Long id = map.get(key);
 		return id == null ? 0 : id;
 	}

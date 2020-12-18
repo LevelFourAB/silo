@@ -38,6 +38,13 @@ public interface MVStoreManager
 	<K, V> MVMap<K, V> openMap(String name, MVMap.Builder<K, V> builder);
 
 	/**
+	 * Acquire a version handle for this store.
+	 *
+	 * @return
+	 */
+	VersionHandle acquireVersionHandle();
+
+	/**
 	 * Create a snapshot of this store. The snapshot temporarily disables
 	 * automatic disk space reuse until the snapshot is closed.
 	 *
@@ -69,4 +76,23 @@ public interface MVStoreManager
 	 */
 	void recreate()
 		throws IOException;
+
+	/**
+	 * Handle to a specific version of the store. Handles are used make sure a
+	 * certain version of the store is kept available.
+	 */
+	interface VersionHandle
+	{
+		/**
+		 * Get the version being held.
+		 *
+		 * @return
+		 */
+		long getVersion();
+
+		/**
+		 * Release this version allowing it to be removed.
+		 */
+		void release();
+	}
 }

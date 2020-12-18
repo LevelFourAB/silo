@@ -16,6 +16,14 @@ import se.l4.silo.engine.internal.tx.TransactionExchange;
 public interface TransactionSupport
 {
 	/**
+	 * Register a value that should be provided in instances of
+	 * {@link TransactionExchange}.
+	 *
+	 * @param value
+	 */
+	void registerValue(TransactionalValue<?> value);
+
+	/**
 	 * Create a {@link Transaction} for manual control over when it is
 	 * committed.
 	 *
@@ -85,4 +93,18 @@ public interface TransactionSupport
 	 * @return
 	 */
 	<V> Mono<V> withExchange(Function<TransactionExchange, V> func);
+
+	/**
+	 * Interface used for values that are automatically provided when a
+	 * {@link TransactionExchange} is created.
+	 */
+	interface TransactionalValue<V>
+	{
+		/**
+		 * Get a value to store in the {@link TransactionExchange}.
+		 *
+		 * @return
+		 */
+		V get(long transactionVersion);
+	}
 }

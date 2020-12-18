@@ -181,6 +181,12 @@ public class SharedStorages
 		}
 
 		@Override
+		public VersionHandle acquireVersionHandle()
+		{
+			return control.manager.acquireVersionHandle();
+		}
+
+		@Override
 		public Snapshot createSnapshot()
 		{
 			throw new UnsupportedOperationException("Shared stores can not create snapshots");

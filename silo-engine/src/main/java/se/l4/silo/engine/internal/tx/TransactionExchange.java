@@ -2,6 +2,7 @@ package se.l4.silo.engine.internal.tx;
 
 import java.io.OutputStream;
 
+import se.l4.silo.engine.internal.TransactionSupport;
 import se.l4.ylem.io.IOConsumer;
 
 /**
@@ -10,6 +11,13 @@ import se.l4.ylem.io.IOConsumer;
  */
 public interface TransactionExchange
 {
+	/**
+	 * Get the version of this exchange.
+	 *
+	 * @return
+	 */
+	long getVersion();
+
 	/**
 	 * Store data for an entity.
 	 *
@@ -38,4 +46,13 @@ public interface TransactionExchange
 	 * @param bytes
 	 */
 	void index(String entity, String index, Object id, IOConsumer<OutputStream> generator);
+
+	/**
+	 * Get a value stored in this exchange.
+	 *
+	 * @param <T>
+	 * @param type
+	 * @return
+	 */
+	<T> T get(TransactionSupport.TransactionalValue<T> value);
 }

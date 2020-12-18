@@ -65,6 +65,26 @@ public class MVStoreManagerImpl
 	}
 
 	@Override
+	public VersionHandle acquireVersionHandle()
+	{
+		MVStore.TxCounter counter = store.registerVersionUsage();
+		return new VersionHandle()
+		{
+			@Override
+			public long getVersion()
+			{
+				return counter.version;
+			}
+
+			@Override
+			public void release()
+			{
+				store.deregisterVersionUsage(counter);
+			}
+		};
+	}
+
+	@Override
 	public Snapshot createSnapshot()
 	{
 		snapshotsOpen.incrementAndGet();

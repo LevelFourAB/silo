@@ -6,6 +6,10 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ListIterable;
+import org.eclipse.collections.api.list.MutableList;
+import org.eclipse.collections.api.map.MutableMap;
 import org.reactivestreams.Publisher;
 
 import reactor.core.publisher.Flux;
@@ -13,6 +17,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.context.Context;
 import se.l4.silo.StorageException;
 import se.l4.silo.Transaction;
+import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.internal.TransactionSupport;
 import se.l4.silo.engine.internal.log.TransactionLog;
 import se.l4.ylem.io.IOConsumer;
@@ -24,16 +29,28 @@ import se.l4.ylem.io.IOConsumer;
 public class LogBasedTransactionSupport
 	implements TransactionSupport
 {
-	private final ThreadLocal<ExchangeImpl> activeExchange;
+	private final MVStoreManager storeManager;
 	private final TransactionLog log;
 
+	private final ThreadLocal<ExchangeImpl> activeExchange;
+	private final MutableList<TransactionalValue<?>> values;
+
 	public LogBasedTransactionSupport(
+		MVStoreManager storeManager,
 		TransactionLog log
 	)
 	{
+		this.storeManager = storeManager;
 		this.log = log;
 
 		activeExchange = new ThreadLocal<>();
+		values = Lists.mutable.empty();
+	}
+
+	@Override
+	public void registerValue(TransactionalValue<?> value)
+	{
+		values.add(value);
 	}
 
 	private Context getOrCreateExchange(Context context)
@@ -43,7 +60,11 @@ public class LogBasedTransactionSupport
 			ExchangeImpl exchange = activeExchange.get();
 			if(exchange == null)
 			{
-				exchange = new ExchangeImpl(log);
+				exchange = new ExchangeImpl(
+					log,
+					storeManager.acquireVersionHandle(),
+					values
+				);
 			}
 
 			return context.put(ExchangeImpl.class, exchange);
@@ -167,8 +188,10 @@ public class LogBasedTransactionSupport
 		implements TransactionExchange
 	{
 		private final TransactionLog log;
-
+		private final MVStoreManager.VersionHandle versionHandle;
 		private final ReentrantLock lock;
+
+		private final MutableMap<TransactionalValue<?>, Object> sharedData;
 
 		/** The id of the exchange */
 		private long id;
@@ -176,10 +199,27 @@ public class LogBasedTransactionSupport
 		/** The number of functions currently using this exchange */
 		private int handles;
 
-		public ExchangeImpl(TransactionLog log)
+		public ExchangeImpl(
+			TransactionLog log,
+			MVStoreManager.VersionHandle versionHandle,
+			ListIterable<TransactionalValue<?>> values
+		)
 		{
 			this.log = log;
+			this.versionHandle = versionHandle;
 			this.lock = new ReentrantLock();
+
+			long version = versionHandle.getVersion();
+			this.sharedData = values.toMap(
+				v -> v,
+				v -> v.get(version)
+			);
+		}
+
+		@Override
+		public long getVersion()
+		{
+			return versionHandle.getVersion();
 		}
 
 		@Override
@@ -245,8 +285,6 @@ public class LogBasedTransactionSupport
 				lock.lock();
 				try
 				{
-					if(id == 0) return;
-
 					if(id == -1)
 					{
 						throw new StorageException("Transaction has already been committed or rolled back");
@@ -254,8 +292,13 @@ public class LogBasedTransactionSupport
 
 					if(--handles == 0)
 					{
-						log.rollbackTransaction(id);
-						id = -1;
+						if(id > 0)
+						{
+							log.rollbackTransaction(id);
+							id = -1;
+						}
+
+						versionHandle.release();
 					}
 				}
 				finally
@@ -280,8 +323,13 @@ public class LogBasedTransactionSupport
 
 					if(--handles == 0)
 					{
-						log.commitTransaction(id);
-						id = -1;
+						if(id > 0)
+						{
+							log.commitTransaction(id);
+							id = -1;
+						}
+
+						versionHandle.release();
 					}
 				}
 				finally
@@ -289,6 +337,13 @@ public class LogBasedTransactionSupport
 					lock.unlock();
 				}
 			});
+		}
+
+		@Override
+		@SuppressWarnings("unchecked")
+		public <T> T get(TransactionalValue<T> key)
+		{
+			return (T) sharedData.get(key);
 		}
 
 		@Override

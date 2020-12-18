@@ -410,4 +410,65 @@ public class TransactionSafetyTest
 			nullValue()
 		);
 	}
+
+	@Test
+	public void testTransactionHidesUpdate()
+	{
+		TestUserData original = new TestUserData(1, "V1", 20, true);
+		TestUserData updated = new TestUserData(1, "V2", 20, true);
+
+		// Store the original data
+		entity().store(original).block();
+
+		// This transaction should keep old data
+		Transaction tx = instance().newTransaction().block();
+
+		// Update the original data, auto-committing it
+		entity().store(updated).block();
+
+		// Check that reading data outside TX shows updated data
+		assertThat(
+			entity().get(1).block(),
+			is(updated)
+		);
+
+		// Check that reading data inside TX shows original data
+		assertThat(
+			tx.wrap(entity().get(1)).block(),
+			is(original)
+		);
+
+		// Release the old transaction
+		tx.commit().block();
+	}
+
+	@Test
+	public void testTransactionHidesDelete()
+	{
+		TestUserData o = new TestUserData(1, "V1", 20, true);
+
+		// Store the original data
+		entity().store(o).block();
+
+		// This transaction should keep old data
+		Transaction tx = instance().newTransaction().block();
+
+		// Update the original data, auto-committing it
+		entity().delete(1).block();
+
+		// Check that reading data outside TX shows updated data
+		assertThat(
+			entity().get(1).block(),
+			nullValue()
+		);
+
+		// Check that reading data inside TX shows original data
+		assertThat(
+			tx.wrap(entity().get(1)).block(),
+			is(o)
+		);
+
+		// Release the old transaction
+		tx.commit().block();
+	}
 }

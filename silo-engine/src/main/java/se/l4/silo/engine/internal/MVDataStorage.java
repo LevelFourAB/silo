@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 
 import se.l4.silo.engine.DataStorage;
 import se.l4.silo.engine.MVStoreManager;
+import se.l4.silo.engine.internal.TransactionSupport.TransactionalValue;
+import se.l4.silo.engine.internal.tx.TransactionExchange;
 import se.l4.silo.engine.types.ByteArrayFieldType;
 import se.l4.silo.engine.types.LongArrayFieldType;
 import se.l4.silo.engine.types.LongFieldType;
@@ -42,13 +44,25 @@ public class MVDataStorage
 
 	private final MVStoreManager store;
 
+	private final TransactionalValue<MVMap<Long, long[]>> readonlyKeys;
+	private final TransactionalValue<MVMap<Long, byte[]>> readonlyChunks;
+
 	private volatile MVMap<Long, long[]> keys;
 	private volatile MVMap<Long, byte[]> chunks;
 
-	public MVDataStorage(MVStoreManager store)
+	public MVDataStorage(
+		MVStoreManager store,
+		TransactionSupport transactionSupport
+	)
 	{
 		this.store = store;
 		reopen();
+
+		readonlyChunks = version -> chunks.openVersion(version);
+		readonlyKeys = version -> keys.openVersion(version);
+
+		transactionSupport.registerValue(readonlyChunks);
+		transactionSupport.registerValue(readonlyKeys);
 	}
 
 	public void reopen()
@@ -90,9 +104,11 @@ public class MVDataStorage
 	}
 
 	@Override
-	public Bytes get(long id)
+	public Bytes get(TransactionExchange exchange, long id)
 		throws IOException
 	{
+		MVMap<Long, long[]> keys = exchange == null ? this.keys : exchange.get(readonlyKeys);
+
 		long[] ids = keys.get(id);
 
 		if(log.isTraceEnabled())
@@ -102,7 +118,10 @@ public class MVDataStorage
 
 		if(ids == null) return null;
 
-		return new ChunkedBytes(ids);
+		return new ChunkedBytes(
+			exchange == null ? this.chunks : exchange.get(readonlyChunks),
+			ids
+		);
 	}
 
 	@Override
@@ -133,10 +152,15 @@ public class MVDataStorage
 	private class ChunkedBytes
 		implements Bytes
 	{
+		private final MVMap<Long, byte[]> chunks;
 		private final long[] ids;
 
-		public ChunkedBytes(long[] ids)
+		public ChunkedBytes(
+			MVMap<Long, byte[]> chunks,
+			long[] ids
+		)
 		{
+			this.chunks = chunks;
 			this.ids = ids;
 		}
 
@@ -144,7 +168,7 @@ public class MVDataStorage
 		public InputStream asInputStream() throws IOException
 		{
 			return new SequenceInputStream(
-				new ChunkedInputStreamEnumeration(ids)
+				new ChunkedInputStreamEnumeration(chunks, ids)
 			);
 		}
 
@@ -179,11 +203,16 @@ public class MVDataStorage
 	private class ChunkedInputStreamEnumeration
 		implements Enumeration<InputStream>
 	{
+		private final MVMap<Long, byte[]> chunks;
 		private final long[] ids;
 		private int idx;
 
-		public ChunkedInputStreamEnumeration(long[] ids)
+		public ChunkedInputStreamEnumeration(
+			MVMap<Long, byte[]> chunks,
+			long[] ids
+		)
 		{
+			this.chunks = chunks;
 			this.ids = ids;
 			idx = 0;
 		}

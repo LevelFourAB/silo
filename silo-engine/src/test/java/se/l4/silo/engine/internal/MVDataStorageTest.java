@@ -5,15 +5,22 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.io.IOException;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.h2.mvstore.MVStore;
 import org.h2.mvstore.OffHeapStore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.reactivestreams.Publisher;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import se.l4.silo.Transaction;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.internal.mvstore.MVStoreManagerImpl;
+import se.l4.silo.engine.internal.tx.TransactionExchange;
 import se.l4.ylem.io.Bytes;
 
 /**
@@ -29,7 +36,11 @@ public class MVDataStorageTest
 	{
 		storeManager = new MVStoreManagerImpl(new MVStore.Builder()
 			.fileStore(new OffHeapStore()));
-		storage = new MVDataStorage(storeManager);
+
+		storage = new MVDataStorage(
+			storeManager,
+			new FakeTransactionSupport()
+		);
 	}
 
 	@AfterEach
@@ -67,7 +78,7 @@ public class MVDataStorageTest
 		throws IOException
 	{
 		long id = storage.store(bytes);
-		Bytes data = storage.get(id);
+		Bytes data = storage.get(null, id);
 
 		DataUtils.assertBytesEquals(bytes, data);
 	}
@@ -99,7 +110,7 @@ public class MVDataStorageTest
 		long id = storage.store(data);
 		storage.delete(id);
 
-		assertThat(storage.get(id), nullValue());
+		assertThat(storage.get(null, id), nullValue());
 		assertThat(storage.nextInternalId(), is(1l));
 	}
 
@@ -130,8 +141,8 @@ public class MVDataStorageTest
 		long id1 = storage.store(b1);
 		long id2 = storage.store(b2);
 
-		DataUtils.assertBytesEquals(storage.get(id1), b1);
-		DataUtils.assertBytesEquals(storage.get(id2), b2);
+		DataUtils.assertBytesEquals(storage.get(null, id1), b1);
+		DataUtils.assertBytesEquals(storage.get(null, id2), b2);
 	}
 
 	@Test
@@ -159,12 +170,66 @@ public class MVDataStorageTest
 		long id2 = storage.store(b2);
 		long id3 = storage.store(b3);
 
-		DataUtils.assertBytesEquals(storage.get(id1), b1);
-		DataUtils.assertBytesEquals(storage.get(id2), b2);
-		DataUtils.assertBytesEquals(storage.get(id3), b3);
+		DataUtils.assertBytesEquals(storage.get(null, id1), b1);
+		DataUtils.assertBytesEquals(storage.get(null, id2), b2);
+		DataUtils.assertBytesEquals(storage.get(null, id3), b3);
 
 		storage.delete(id1);
-		DataUtils.assertBytesEquals(storage.get(id2), b2);
-		DataUtils.assertBytesEquals(storage.get(id3), b3);
+		DataUtils.assertBytesEquals(storage.get(null, id2), b2);
+		DataUtils.assertBytesEquals(storage.get(null, id3), b3);
+	}
+
+	class FakeTransactionSupport
+		implements TransactionSupport
+	{
+		@Override
+		public void registerValue(TransactionalValue<?> value)
+		{
+			// Do nothing
+		}
+
+		@Override
+		public Mono<Void> inTransaction(Runnable runnable)
+		{
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <T> Mono<T> inTransaction(Supplier<T> supplier)
+		{
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Mono<Transaction> newTransaction()
+		{
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <V> Flux<V> transactional(Flux<V> flux)
+		{
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <V> Mono<V> transactional(Mono<V> mono)
+		{
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <V> Mono<V> withExchange(Function<TransactionExchange, V> func)
+		{
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <V> Flux<V> withTransaction(
+			Function<Transaction, Publisher<V>> scopeFunction
+		)
+		{
+			throw new UnsupportedOperationException();
+		}
 	}
 }

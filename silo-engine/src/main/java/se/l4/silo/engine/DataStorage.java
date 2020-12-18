@@ -2,6 +2,7 @@ package se.l4.silo.engine;
 
 import java.io.IOException;
 
+import se.l4.silo.engine.internal.tx.TransactionExchange;
 import se.l4.ylem.io.Bytes;
 
 /**
@@ -26,11 +27,12 @@ public interface DataStorage
 	/**
 	 * Load bytes associated with a certain id.
 	 *
+	 * @param exchange
 	 * @param id
 	 * @return
 	 * @throws IOException
 	 */
-	Bytes get(long id)
+	Bytes get(TransactionExchange exchange, long id)
 		throws IOException;
 
 	/**

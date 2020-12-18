@@ -189,7 +189,6 @@ public class StorageEngine
 			.fileName(derivedState.toString()));
 
 		ids = new SequenceLongIdGenerator();
-		dataStorage = new MVDataStorage(this.store);
 		storages = new ConcurrentHashMap<>();
 
 		executor = Executors.newScheduledThreadPool(
@@ -248,7 +247,9 @@ public class StorageEngine
 		log = logBuilder.build(transactionAdapter);
 
 		transactionLog = new TransactionLogImpl(log, ids);
-		transactionSupport = new LogBasedTransactionSupport(transactionLog);
+		transactionSupport = new LogBasedTransactionSupport(store, transactionLog);
+
+		dataStorage = new MVDataStorage(store, transactionSupport);
 
 		this.entities = createEntities(entities);
 
@@ -648,7 +649,12 @@ public class StorageEngine
 			}
 
 			// Create a new storage instance
-			PrimaryIndex primaryIndex = new PrimaryIndex(store, storageName);
+			PrimaryIndex primaryIndex = new PrimaryIndex(
+				store,
+				transactionSupport,
+				storageName
+			);
+
 			StorageImpl impl = new StorageImpl(
 				StorageEngine.this,
 				sharedStorages,

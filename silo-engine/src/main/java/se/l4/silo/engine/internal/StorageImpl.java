@@ -33,6 +33,7 @@ import se.l4.silo.engine.internal.mvstore.SharedStorages;
 import se.l4.silo.engine.internal.query.QueryEncounterImpl;
 import se.l4.silo.engine.internal.query.QueryEngineCreationEncounterImpl;
 import se.l4.silo.engine.internal.query.QueryEngineUpdater;
+import se.l4.silo.engine.internal.tx.TransactionExchange;
 import se.l4.silo.engine.io.ExtendedDataOutputStream;
 import se.l4.silo.query.Query;
 import se.l4.ylem.io.Bytes;
@@ -160,7 +161,7 @@ public class StorageImpl<T>
 				log.trace("[" + name + "] TX delete of " + id);
 			}
 
-			long internalId = primary.get(id);
+			long internalId = primary.get(tx, id);
 			if(internalId == 0)
 			{
 				return new DeleteResultImpl<>(id, false);
@@ -182,7 +183,7 @@ public class StorageImpl<T>
 	public Mono<T> get(Object id)
 	{
 		return transactionSupport.withExchange(tx -> {
-			long internalId = primary.get(id);
+			long internalId = primary.get(tx, id);
 
 			if(log.isTraceEnabled())
 			{
@@ -191,15 +192,15 @@ public class StorageImpl<T>
 
 			if(internalId == 0) return null;
 
-			return getInternal(internalId);
+			return getInternal(tx, internalId);
 		});
 	}
 
-	public T getInternal(long id)
+	public T getInternal(TransactionExchange exchange, long id)
 	{
 		try
 		{
-			Bytes data = storage.get(id);
+			Bytes data = storage.get(exchange, id);
 			try(InputStream in = data.asInputStream())
 			{
 				return codec.decode(in);
@@ -228,7 +229,7 @@ public class StorageImpl<T>
 
 	private QueryEncounterImpl createQueryEncounter(Query query)
 	{
-		return new QueryEncounterImpl<Query<T,?,?>, T>(query, this::getInternal);
+		return new QueryEncounterImpl<Query<T,?,?>, T>(query, id -> this.getInternal(null, id));
 	}
 
 	@Override
@@ -287,7 +288,7 @@ public class StorageImpl<T>
 				{
 					long toFetch = current;
 					current = primary.nextAfter(current);
-					Bytes data = storage.get(toFetch);
+					Bytes data = storage.get(null, toFetch);
 					try(InputStream in = data.asInputStream())
 					{
 						return PrimitiveTuples.pair(toFetch, codec.decode(in));
@@ -333,7 +334,7 @@ public class StorageImpl<T>
 					{
 						long toFetch = current;
 						current = primary.nextAfter(current);
-						Bytes data = storage.get(toFetch);
+						Bytes data = storage.get(null, toFetch);
 						try(InputStream in = data.asInputStream())
 						{
 							return codec.decode(in);
@@ -364,7 +365,7 @@ public class StorageImpl<T>
 		}
 
 		this.previousForIndex = primary.latest();
-		long previousInternalId = primary.get(id);
+		long previousInternalId = primary.get(null, id);
 
 		// Store the new data and associate it with the primary index
 		long internalId = storage.store(Bytes.capture(in));
@@ -388,7 +389,7 @@ public class StorageImpl<T>
 	public void directDelete(Object id)
 		throws IOException
 	{
-		long internalId = primary.get(id);
+		long internalId = primary.get(null, id);
 
 		if(log.isTraceEnabled())
 		{
@@ -406,7 +407,7 @@ public class StorageImpl<T>
 	public void directIndex(String index, Object id, InputStream data)
 		throws IOException
 	{
-		long internalId = primary.get(id);
+		long internalId = primary.get(null, id);
 		queryEngineUpdater.store(this.previousForIndex, internalId, index, data);
 	}
 

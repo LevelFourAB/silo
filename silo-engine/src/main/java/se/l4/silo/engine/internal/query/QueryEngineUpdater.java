@@ -119,7 +119,7 @@ public class QueryEngineUpdater<T>
 			}
 
 			// This query engine is up to date, continue indexing
-			try(InputStream in0 = dataStorage.get(storedId).asInputStream();
+			try(InputStream in0 = dataStorage.get(null, storedId).asInputStream();
 				ExtendedDataInputStream eIn = new ExtendedDataInputStream(in0))
 			{
 				def.engine.apply(id, eIn);
@@ -283,7 +283,7 @@ public class QueryEngineUpdater<T>
 				}
 
 				Long internalId = data.get(new Object[] { id, def.name });
-				Bytes bytes = dataStorage.get(internalId);
+				Bytes bytes = dataStorage.get(null, internalId);
 
 				try(InputStream in0 = bytes.asInputStream();
 					ExtendedDataInputStream in = new ExtendedDataInputStream(in0))
