@@ -129,23 +129,17 @@ public class StorageImpl<T>
 			try
 			{
 				// Encode the main object
-				Bytes bytes = Bytes.capture(out -> {
-					codec.encode(instance, out);
-				});
-
-				tx.store(name, id, bytes);
+				tx.store(name, id, out -> codec.encode(instance, out));
 
 				// Generate index data for the object
 				for(QueryEngine<T, ?> engine : queryEngines)
 				{
-					Bytes indexBytes = Bytes.capture(out0 -> {
+					tx.index(name, engine.getName(), id, out0 -> {
 						try(ExtendedDataOutputStream out = new ExtendedDataOutputStream(out0))
 						{
 							engine.generate(instance, out);
 						}
 					});
-
-					tx.index(name, engine.getName(), id, indexBytes);
 				}
 
 				return new StoreResultImpl<>(id);
@@ -361,7 +355,7 @@ public class StorageImpl<T>
 	 * @param bytes
 	 * @throws IOException
 	 */
-	public void directStore(Object id, Bytes bytes)
+	public void directStore(Object id, InputStream in)
 		throws IOException
 	{
 		if(log.isTraceEnabled())
@@ -373,7 +367,7 @@ public class StorageImpl<T>
 		long previousInternalId = primary.get(id);
 
 		// Store the new data and associate it with the primary index
-		long internalId = storage.store(bytes);
+		long internalId = storage.store(Bytes.capture(in));
 		primary.store(id, internalId);
 
 		// TODO: Replacement for indexes?
@@ -409,11 +403,11 @@ public class StorageImpl<T>
 		primary.remove(id);
 	}
 
-	public void directIndex(String index, Object id, Bytes bytes)
+	public void directIndex(String index, Object id, InputStream data)
 		throws IOException
 	{
 		long internalId = primary.get(id);
-		queryEngineUpdater.store(this.previousForIndex, internalId, index, bytes);
+		queryEngineUpdater.store(this.previousForIndex, internalId, index, data);
 	}
 
 	public void awaitQueryEngines()

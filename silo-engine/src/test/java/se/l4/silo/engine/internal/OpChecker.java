@@ -5,8 +5,6 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.LinkedList;
 
-import se.l4.ylem.io.Bytes;
-
 /**
  * Helper to check against actual operations against a set of expected
  * operations.
@@ -53,10 +51,9 @@ public class OpChecker
 			{
 				matches = false;
 			}
-			else if(a instanceof Bytes)
+			else if(a instanceof InputStream)
 			{
-				try(InputStream in1 = ((Bytes) a).asInputStream();
-						InputStream in2 = ((Bytes) b).asInputStream())
+				try(InputStream in1 = (InputStream) a; InputStream in2 = (InputStream) b)
 				{
 					int r1;
 					int idx = 0;

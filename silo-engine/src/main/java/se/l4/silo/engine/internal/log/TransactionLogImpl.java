@@ -1,6 +1,7 @@
 package se.l4.silo.engine.internal.log;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Base64;
 
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ import se.l4.silo.engine.io.ExtendedDataOutputStream;
 import se.l4.silo.engine.log.Log;
 import se.l4.ylem.ids.LongIdGenerator;
 import se.l4.ylem.io.Bytes;
+import se.l4.ylem.io.IOConsumer;
 
 /**
  * Implementation of {@link TransactionLog} that translates our transaction
@@ -25,6 +27,11 @@ import se.l4.ylem.io.Bytes;
 public class TransactionLogImpl
 	implements TransactionLog
 {
+	/**
+	 * The size used for chunks in the log.
+	 */
+	private static final int CHUNK_SIZE = 8192;
+
 	private static final Logger logger = LoggerFactory.getLogger(TransactionLogImpl.class);
 
 	private final Log log;
@@ -62,11 +69,16 @@ public class TransactionLogImpl
 	}
 
 	@Override
-	public void store(long tx, String entity, Object id, Bytes bytes)
+	public void store(
+		long tx,
+		String entity,
+		Object id,
+		IOConsumer<OutputStream> generator
+	)
 	{
 		try
 		{
-			bytes.asChunks(8192, (data, offset, length) -> {
+			OutputStream chunkOutput = new ChunkOutputStream(CHUNK_SIZE, (data, offset, length) -> {
 				if(logger.isTraceEnabled())
 				{
 					logger.trace("[" + tx + "] Wrote chunk for " + entity + "[" + id + "]: " + Base64.getEncoder().encodeToString(data));
@@ -82,8 +94,13 @@ public class TransactionLogImpl
 				}));
 			});
 
-			// Write a zero length chunk to indicate end of entity
+			// Ask the generator to write data
+			generator.accept(chunkOutput);
 
+			// Close and flush the output
+			chunkOutput.close();
+
+			// Write a zero length chunk to indicate end of entity
 			if(logger.isTraceEnabled())
 			{
 				logger.trace("[" + tx + "] Wrote end of data for " + entity + "[" + id + "]");
@@ -129,11 +146,17 @@ public class TransactionLogImpl
 	}
 
 	@Override
-	public void storeIndex(long tx, String entity, String index, Object id, Bytes bytes)
+	public void storeIndex(
+		long tx,
+		String entity,
+		String index,
+		Object id,
+		IOConsumer<OutputStream> generator
+	)
 	{
 		try
 		{
-			bytes.asChunks(8192, (data, offset, length) -> {
+			OutputStream chunkOutput = new ChunkOutputStream(CHUNK_SIZE, (data, offset, length) -> {
 				if(logger.isTraceEnabled())
 				{
 					logger.trace("[" + tx + "] Wrote index chunk for " + entity + "[" + id + "]: " + Base64.getEncoder().encodeToString(data));
@@ -150,7 +173,13 @@ public class TransactionLogImpl
 				}));
 			});
 
-			// Write a zero length chunk to indicate end of entity
+			// Ask the generator to write output
+			generator.accept(chunkOutput);
+
+			// Close and flush the output
+			chunkOutput.close();
+
+			// Write a zero length chunk to indicate end of index
 
 			if(logger.isTraceEnabled())
 			{

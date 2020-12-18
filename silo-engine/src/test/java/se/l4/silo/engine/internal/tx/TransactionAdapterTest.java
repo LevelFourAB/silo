@@ -1,6 +1,8 @@
 package se.l4.silo.engine.internal.tx;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.h2.mvstore.MVStore;
 import org.h2.mvstore.OffHeapStore;
@@ -17,7 +19,6 @@ import se.l4.silo.engine.internal.mvstore.MVStoreManagerImpl;
 import se.l4.silo.engine.log.DirectApplyLog;
 import se.l4.silo.engine.log.Log;
 import se.l4.ylem.ids.SimpleLongIdGenerator;
-import se.l4.ylem.io.Bytes;
 
 /**
  * Tests for {@link TransactionAdapter} to check that transactions are
@@ -42,7 +43,7 @@ public class TransactionAdapterTest
 		adapter = new TransactionAdapter(null, null, store, new StorageApplier()
 		{
 			@Override
-			public void store(String entity, Object id, Bytes data)
+			public void store(String entity, Object id, InputStream data)
 				throws IOException
 			{
 				ops.check("store", entity, id, data);
@@ -56,7 +57,7 @@ public class TransactionAdapterTest
 			}
 
 			@Override
-			public void index(String entity, String index, Object id, Bytes data)
+			public void index(String entity, String index, Object id, InputStream data)
 				throws IOException
 			{
 				ops.check("index", entity, index, id, data);
@@ -76,24 +77,17 @@ public class TransactionAdapterTest
 		store.close();
 	}
 
-	private Bytes generateData(int size)
+	private ByteArrayInputStream generateData(int size)
 	{
-		try
+		byte[] out = new byte[size];
+		for(int i=0; i<size; i++)
 		{
-			return Bytes.capture(o -> {
-				for(int i=0; i<size; i++)
-				{
-					o.write(i % 255);
-				}
-			});
+			out[i] = (byte) (i % 255);
 		}
-		catch(IOException e)
-		{
-			throw new RuntimeException(e);
-		}
+		return new ByteArrayInputStream(out);
 	}
 
-	private void expectStore(String entity, Object id, Bytes data)
+	private void expectStore(String entity, Object id, InputStream data)
 	{
 		ops.expect("store", entity, id, data);
 	}
@@ -103,7 +97,7 @@ public class TransactionAdapterTest
 		ops.expect("delete", entity, id);
 	}
 
-	private void expectIndex(String entity, String index, Object id, Bytes data)
+	private void expectIndex(String entity, String index, Object id, InputStream data)
 	{
 		ops.expect("index", entity, index, id, data);
 	}
@@ -120,10 +114,10 @@ public class TransactionAdapterTest
 	@Test
 	public void testOneEmptyStore()
 	{
-		expectStore("test", 12, Bytes.empty());
+		expectStore("test", 12, new ByteArrayInputStream(new byte[0]));
 
 		long id = tx.startTransaction();
-		tx.store(id, "test", 12, Bytes.empty());
+		tx.store(id, "test", 12, out -> {});
 		tx.commitTransaction(id);
 
 		ops.checkEmpty();
@@ -132,11 +126,10 @@ public class TransactionAdapterTest
 	@Test
 	public void testOneSmallStore()
 	{
-		Bytes data = generateData(1024);
-		expectStore("test", 12, data);
+		expectStore("test", 12, generateData(1024));
 
 		long id = tx.startTransaction();
-		tx.store(id, "test", 12, data);
+		tx.store(id, "test", 12, generateData(1024)::transferTo);
 		tx.commitTransaction(id);
 
 		ops.checkEmpty();
@@ -145,11 +138,10 @@ public class TransactionAdapterTest
 	@Test
 	public void testOneLargeStore()
 	{
-		Bytes data = generateData(1024 * 1024 * 4);
-		expectStore("test", 12, data);
+		expectStore("test", 12, generateData(1024 * 1024 * 4));
 
 		long id = tx.startTransaction();
-		tx.store(id, "test", 12, data);
+		tx.store(id, "test", 12, generateData(1024 * 1024 * 4)::transferTo);
 		tx.commitTransaction(id);
 
 		ops.checkEmpty();
@@ -158,11 +150,10 @@ public class TransactionAdapterTest
 	@Test
 	public void testIndex()
 	{
-		Bytes data = generateData(1024);
-		expectIndex("test", "idx1", 12, data);
+		expectIndex("test", "idx1", 12, generateData(1024));
 
 		long id = tx.startTransaction();
-		tx.storeIndex(id, "test", "idx1", 12, data);
+		tx.storeIndex(id, "test", "idx1", 12, generateData(1024)::transferTo);
 		tx.commitTransaction(id);
 
 		ops.checkEmpty();
@@ -178,10 +169,11 @@ public class TransactionAdapterTest
 	@Test
 	public void testRollbackStore()
 	{
-		Bytes data = generateData(1024 * 1024 * 4);
 		long id = tx.startTransaction();
-		tx.store(id, "test", 12, data);
+		tx.store(id, "test", 12, generateData(1024 * 1024 * 4)::transferTo);
 		tx.rollbackTransaction(id);
+
+		ops.checkEmpty();;
 	}
 
 	@Test
@@ -199,13 +191,12 @@ public class TransactionAdapterTest
 	@Test
 	public void testMultiple()
 	{
-		Bytes data = generateData(1024);
 		expectDelete("test", 12);
-		expectStore("test", 14, data);
+		expectStore("test", 14, generateData(1024));
 
 		long id = tx.startTransaction();
 		tx.delete(id, "test", 12);
-		tx.store(id, "test", 14, data);
+		tx.store(id, "test", 14, generateData(1024)::transferTo);
 		tx.commitTransaction(id);
 
 		ops.checkEmpty();
@@ -214,17 +205,15 @@ public class TransactionAdapterTest
 	@Test
 	public void testLargeTransaction()
 	{
-		Bytes d1 = generateData(1024);
-		Bytes d2 = generateData(512);
 		for(int i=0; i<2000; i++)
 		{
-			expectStore("test", i, i % 2 == 0 ? d1 : d2);
+			expectStore("test", i, i % 2 == 0 ? generateData(1024) : generateData(512));
 		}
 
 		long id = tx.startTransaction();
 		for(int i=0; i<2000; i++)
 		{
-			tx.store(id, "test", i, i % 2 == 0 ? d1 : d2);
+			tx.store(id, "test", i, (i % 2 == 0 ? generateData(1024) : generateData(512))::transferTo);
 		}
 		tx.commitTransaction(id);
 
@@ -234,13 +223,13 @@ public class TransactionAdapterTest
 	@Test
 	public void testMultipleCommits()
 	{
-		expectStore("test", 2, Bytes.empty());
-		expectStore("test", 1, Bytes.empty());
+		expectStore("test", 2, generateData(0));
+		expectStore("test", 1, generateData(0));
 
 		long t1 = tx.startTransaction();
 		long t2 = tx.startTransaction();
-		tx.store(t1, "test", 1, Bytes.empty());
-		tx.store(t2, "test", 2, Bytes.empty());
+		tx.store(t1, "test", 1, generateData(0)::transferTo);
+		tx.store(t2, "test", 2, generateData(0)::transferTo);
 		tx.commitTransaction(t2);
 		tx.commitTransaction(t1);
 
@@ -250,12 +239,12 @@ public class TransactionAdapterTest
 	@Test
 	public void testMultipleCommitAndRollback()
 	{
-		expectStore("test", 1, Bytes.empty());
+		expectStore("test", 1, generateData(0));
 
 		long t1 = tx.startTransaction();
 		long t2 = tx.startTransaction();
-		tx.store(t1, "test", 1, Bytes.empty());
-		tx.store(t2, "test", 2, Bytes.empty());
+		tx.store(t1, "test", 1, generateData(0)::transferTo);
+		tx.store(t2, "test", 2, generateData(0)::transferTo);
 		tx.rollbackTransaction(t2);
 		tx.commitTransaction(t1);
 
@@ -265,17 +254,15 @@ public class TransactionAdapterTest
 	@Test
 	public void testMultipleCommits2()
 	{
-		Bytes d1 = generateData(1024);
-		Bytes d2 = generateData(512);
-		expectStore("test", 2, Bytes.empty());
-		expectStore("test", 2, d2);
-		expectStore("test", 1, d1);
+		expectStore("test", 2, generateData(0));
+		expectStore("test", 2, generateData(1024));
+		expectStore("test", 1, generateData(512));
 
 		long t1 = tx.startTransaction();
 		long t2 = tx.startTransaction();
-		tx.store(t2, "test", 2, Bytes.empty());
-		tx.store(t1, "test", 1, d1);
-		tx.store(t2, "test", 2, d2);
+		tx.store(t2, "test", 2, generateData(0)::transferTo);
+		tx.store(t1, "test", 1, generateData(512)::transferTo);
+		tx.store(t2, "test", 2, generateData(1024)::transferTo);
 		tx.commitTransaction(t2);
 		tx.commitTransaction(t1);
 

@@ -87,7 +87,7 @@ public class QueryEngineUpdater<T>
 		ensureUpToDate(executor, latest);
 	}
 
-	public void store(long previous, long id, String index, Bytes bytes)
+	public void store(long previous, long id, String index, InputStream in)
 	{
 		EngineDef def = engines.get(index);
 		if(def == null)
@@ -98,9 +98,10 @@ public class QueryEngineUpdater<T>
 		}
 
 		// Store the data in the main storage
+		long storedId;
 		try
 		{
-			long storedId = dataStorage.store(bytes);
+			storedId = dataStorage.store(Bytes.capture(in));
 			data.put(new Object[] { id, index }, storedId);
 		}
 		catch(IOException e)
@@ -118,10 +119,10 @@ public class QueryEngineUpdater<T>
 			}
 
 			// This query engine is up to date, continue indexing
-			try(InputStream in0 = bytes.asInputStream();
-				ExtendedDataInputStream in = new ExtendedDataInputStream(in0))
+			try(InputStream in0 = dataStorage.get(storedId).asInputStream();
+				ExtendedDataInputStream eIn = new ExtendedDataInputStream(in0))
 			{
-				def.engine.apply(id, in);
+				def.engine.apply(id, eIn);
 			}
 			catch(IOException e)
 			{

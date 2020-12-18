@@ -1,8 +1,7 @@
 package se.l4.silo.engine.internal;
 
 import java.io.IOException;
-
-import se.l4.ylem.io.Bytes;
+import java.io.InputStream;
 
 /**
  * Interface representing the operations that acutally modify the underlying
@@ -21,7 +20,7 @@ public interface StorageApplier
 	 * @param data
 	 * @throws IOException
 	 */
-	void store(String entity, Object id, Bytes data)
+	void store(String entity, Object id, InputStream data)
 		throws IOException;
 
 	/**
@@ -41,6 +40,6 @@ public interface StorageApplier
 	 * @param data
 	 * @throws IOException
 	 */
-	void index(String entity, String index, Object id, Bytes data)
+	void index(String entity, String index, Object id, InputStream data)
 		throws IOException;
 }

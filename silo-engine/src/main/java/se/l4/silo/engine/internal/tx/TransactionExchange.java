@@ -1,6 +1,8 @@
 package se.l4.silo.engine.internal.tx;
 
-import se.l4.ylem.io.Bytes;
+import java.io.OutputStream;
+
+import se.l4.ylem.io.IOConsumer;
 
 /**
  * Exchange to allow entities to interact with a transaction. Exchanges map
@@ -16,7 +18,7 @@ public interface TransactionExchange
 	 * @param bytes
 	 * @return
 	 */
-	void store(String entity, Object id, Bytes bytes);
+	void store(String entity, Object id, IOConsumer<OutputStream> generator);
 
 	/**
 	 * Delete data associated with an entity.
@@ -35,5 +37,5 @@ public interface TransactionExchange
 	 * @param id
 	 * @param bytes
 	 */
-	void index(String entity, String index, Object id, Bytes bytes);
+	void index(String entity, String index, Object id, IOConsumer<OutputStream> generator);
 }

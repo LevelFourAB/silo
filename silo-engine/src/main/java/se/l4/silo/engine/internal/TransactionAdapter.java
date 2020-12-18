@@ -1,7 +1,6 @@
 package se.l4.silo.engine.internal;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
@@ -33,7 +32,6 @@ import se.l4.vibe.operations.Change;
 import se.l4.vibe.probes.CountingProbe;
 import se.l4.vibe.probes.SampledProbe;
 import se.l4.vibe.snapshots.MapSnapshot;
-import se.l4.ylem.io.Bytes;
 import se.l4.ylem.io.IOConsumer;
 
 /**
@@ -401,8 +399,11 @@ public class TransactionAdapter
 					if(op.getData().length == 0)
 					{
 						// Zero length chunk means end of data
-						ChunkedBytes bytes = new ChunkedBytes(keys);
-						applier.store(op.getEntity(), op.getId(), bytes);
+						applier.store(
+							op.getEntity(),
+							op.getId(),
+							new SequenceInputStream(new InputStreamEnumeration(keys))
+						);
 						keys.clear();
 					}
 					else
@@ -414,14 +415,13 @@ public class TransactionAdapter
 					if(op.getData().length == 0)
 					{
 						// Zero length chunk means end of data
-						ChunkedBytes bytes = new ChunkedBytes(keys);
 						String rawEntity = op.getEntity();
 						int idx = rawEntity.lastIndexOf("::");
 						applier.index(
 							rawEntity.substring(0, idx),
 							rawEntity.substring(idx + 2),
 							op.getId(),
-							bytes
+							new SequenceInputStream(new InputStreamEnumeration(keys))
 						);
 						keys.clear();
 					}
@@ -436,35 +436,6 @@ public class TransactionAdapter
 		}
 
 		removeTransaction(tx);
-	}
-
-	private class ChunkedBytes
-		implements Bytes
-	{
-		private final List<long[]> keys;
-
-		public ChunkedBytes(List<long[]> keys)
-		{
-			this.keys = keys;
-		}
-
-		@Override
-		public InputStream asInputStream() throws IOException
-		{
-			return new SequenceInputStream(new InputStreamEnumeration(keys));
-		}
-
-		@Override
-		public byte[] toByteArray()
-			throws IOException
-		{
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			try(InputStream in = asInputStream())
-			{
-				in.transferTo(out);
-			}
-			return out.toByteArray();
-		}
 	}
 
 	private class InputStreamEnumeration

@@ -1,5 +1,6 @@
 package se.l4.silo.engine.internal.tx;
 
+import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
@@ -14,7 +15,7 @@ import se.l4.silo.StorageException;
 import se.l4.silo.Transaction;
 import se.l4.silo.engine.internal.TransactionSupport;
 import se.l4.silo.engine.internal.log.TransactionLog;
-import se.l4.ylem.io.Bytes;
+import se.l4.ylem.io.IOConsumer;
 
 /**
  * {@link TransactionSupport} that runs over a {@link TransactionLog}. This
@@ -182,11 +183,11 @@ public class LogBasedTransactionSupport
 		}
 
 		@Override
-		public void store(String entity, Object id, Bytes bytes)
+		public void store(String entity, Object id, IOConsumer<OutputStream> generator)
 		{
 			prepareWrite();
 
-			log.store(this.id, entity, id, bytes);
+			log.store(this.id, entity, id, generator);
 		}
 
 		@Override
@@ -198,11 +199,11 @@ public class LogBasedTransactionSupport
 		}
 
 		@Override
-		public void index(String entity, String index, Object id, Bytes bytes)
+		public void index(String entity, String index, Object id, IOConsumer<OutputStream> generator)
 		{
 			prepareWrite();
 
-			log.storeIndex(this.id, entity, index, id, bytes);
+			log.storeIndex(this.id, entity, index, id, generator);
 		}
 
 		private void prepareWrite()

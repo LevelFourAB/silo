@@ -2,6 +2,7 @@ package se.l4.silo.engine.internal;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -53,7 +54,6 @@ import se.l4.vibe.probes.SampledProbe;
 import se.l4.vibe.snapshots.MapSnapshot;
 import se.l4.ylem.ids.LongIdGenerator;
 import se.l4.ylem.ids.SequenceLongIdGenerator;
-import se.l4.ylem.io.Bytes;
 
 /**
  * Storage engine implementation over a streaming log.
@@ -275,7 +275,8 @@ public class StorageEngine
 		return new StorageApplier()
 		{
 			@Override
-			public void store(String entity, Object id, Bytes data) throws IOException
+			public void store(String entity, Object id, InputStream data)
+				throws IOException
 			{
 				try
 				{
@@ -290,7 +291,8 @@ public class StorageEngine
 			}
 
 			@Override
-			public void delete(String entity, Object id) throws IOException
+			public void delete(String entity, Object id)
+				throws IOException
 			{
 				try
 				{
@@ -305,7 +307,7 @@ public class StorageEngine
 			}
 
 			@Override
-			public void index(String entity, String index, Object id, Bytes data)
+			public void index(String entity, String index, Object id, InputStream data)
 				throws IOException
 			{
 				try
