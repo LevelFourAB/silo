@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.Objects;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import org.eclipse.collections.api.factory.Lists;
@@ -106,9 +107,11 @@ public class FieldIndexQueryEngine<T>
 	}
 
 	@Override
-	public ListIterable<? extends TransactionValue<?>> getTransactionalValues()
+	public void provideTransactionValues(
+		Consumer<? super TransactionValue<?>> consumer
+	)
 	{
-		return Lists.immutable.of(indexMapValue);
+		consumer.accept(indexMapValue);
 	}
 
 	/**

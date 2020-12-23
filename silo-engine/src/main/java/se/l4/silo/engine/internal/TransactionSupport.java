@@ -9,6 +9,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import se.l4.silo.Transaction;
 import se.l4.silo.engine.TransactionValue;
+import se.l4.silo.engine.TransactionValueProvider;
 import se.l4.silo.engine.internal.tx.WriteableTransactionExchange;
 
 /**
@@ -93,7 +94,10 @@ public interface TransactionSupport
 	 * @param func
 	 * @return
 	 */
-	<V> Mono<V> withExchange(Function<WriteableTransactionExchange, V> func);
+	<V> Mono<V> withExchange(
+		Function<WriteableTransactionExchange, V> func,
+		TransactionValueProvider... valuesToCapture
+	);
 
 	/**
 	 * Execute a function that should have access to an instance of
@@ -103,7 +107,10 @@ public interface TransactionSupport
 	 * @param func
 	 * @return
 	 */
-	<V> Mono<V> monoWithExchange(Function<WriteableTransactionExchange, Mono<V>> func);
+	<V> Mono<V> monoWithExchange(
+		Function<WriteableTransactionExchange, Mono<V>> func,
+		TransactionValueProvider... valuesToCapture
+	);
 
 	/**
 	 * Execute a function that should have access to an instance of
@@ -113,5 +120,8 @@ public interface TransactionSupport
 	 * @param func
 	 * @return
 	 */
-	<V> Flux<V> fluxWithExchange(Function<WriteableTransactionExchange, Flux<V>> func);
+	<V> Flux<V> fluxWithExchange(
+		Function<WriteableTransactionExchange, Flux<V>> func,
+		TransactionValueProvider... valuesToCapture
+	);
 }

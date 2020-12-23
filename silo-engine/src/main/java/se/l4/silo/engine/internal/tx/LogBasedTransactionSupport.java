@@ -6,8 +6,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.factory.Lists;
-import org.eclipse.collections.api.list.ListIterable;
 import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.map.MutableMap;
 import org.reactivestreams.Publisher;
@@ -19,6 +19,7 @@ import se.l4.silo.StorageException;
 import se.l4.silo.Transaction;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.TransactionValue;
+import se.l4.silo.engine.TransactionValueProvider;
 import se.l4.silo.engine.internal.TransactionSupport;
 import se.l4.silo.engine.internal.log.TransactionLog;
 import se.l4.ylem.io.IOConsumer;
@@ -54,7 +55,10 @@ public class LogBasedTransactionSupport
 		values.add(value);
 	}
 
-	private Context getOrCreateExchange(Context context)
+	private Context getOrCreateExchange(
+		Context context,
+		RichIterable<? extends TransactionValue<?>> valuesToCapture
+	)
 	{
 		if(! context.hasKey(ExchangeImpl.class))
 		{
@@ -64,7 +68,7 @@ public class LogBasedTransactionSupport
 				exchange = new ExchangeImpl(
 					log,
 					storeManager.acquireVersionHandle(),
-					values
+					valuesToCapture
 				);
 			}
 
@@ -83,8 +87,23 @@ public class LogBasedTransactionSupport
 		});
 	}
 
+	private RichIterable<? extends TransactionValue<?>> generateValues(
+		TransactionValueProvider... valuesToCapture
+	)
+	{
+		MutableList<TransactionValue<?>> result = Lists.mutable.empty();
+		for(TransactionValueProvider p : valuesToCapture)
+		{
+			p.provideTransactionValues(result::add);
+		}
+		return result;
+	}
+
 	@Override
-	public <V> Mono<V> withExchange(Function<WriteableTransactionExchange, V> func)
+	public <V> Mono<V> withExchange(
+		Function<WriteableTransactionExchange, V> func,
+		TransactionValueProvider... valuesToCapture
+	)
 	{
 		return Mono.usingWhen(
 			getExchange(),
@@ -92,11 +111,14 @@ public class LogBasedTransactionSupport
 			ExchangeImpl::commit,
 			(e, err) -> e.rollback(),
 			ExchangeImpl::rollback
-		).contextWrite(this::getOrCreateExchange);
+		).contextWrite(ctx -> getOrCreateExchange(ctx, generateValues(valuesToCapture)));
 	}
 
 	@Override
-	public <V> Mono<V> monoWithExchange(Function<WriteableTransactionExchange, Mono<V>> func)
+	public <V> Mono<V> monoWithExchange(
+		Function<WriteableTransactionExchange, Mono<V>> func,
+		TransactionValueProvider... valuesToCapture
+	)
 	{
 		return Mono.usingWhen(
 			getExchange(),
@@ -104,11 +126,14 @@ public class LogBasedTransactionSupport
 			ExchangeImpl::commit,
 			(e, err) -> e.rollback(),
 			ExchangeImpl::rollback
-		).contextWrite(this::getOrCreateExchange);
+			).contextWrite(ctx -> getOrCreateExchange(ctx, generateValues(valuesToCapture)));
 	}
 
 	@Override
-	public <V> Flux<V> fluxWithExchange(Function<WriteableTransactionExchange, Flux<V>> func)
+	public <V> Flux<V> fluxWithExchange(
+		Function<WriteableTransactionExchange, Flux<V>> func,
+		TransactionValueProvider... valuesToCapture
+	)
 	{
 		return Flux.usingWhen(
 			getExchange(),
@@ -116,14 +141,14 @@ public class LogBasedTransactionSupport
 			ExchangeImpl::commit,
 			(e, err) -> e.rollback(),
 			ExchangeImpl::rollback
-		).contextWrite(this::getOrCreateExchange);
+			).contextWrite(ctx -> getOrCreateExchange(ctx, generateValues(valuesToCapture)));
 	}
 
 	@Override
 	public Mono<Transaction> newTransaction()
 	{
 		return getExchange()
-			.contextWrite(this::getOrCreateExchange)
+			.contextWrite(ctx -> getOrCreateExchange(ctx, values))
 			.map(TransactionImpl::new);
 	}
 
@@ -136,7 +161,7 @@ public class LogBasedTransactionSupport
 			ExchangeImpl::commit,
 			(e, err) -> e.rollback(),
 			ExchangeImpl::rollback
-		).contextWrite(this::getOrCreateExchange);
+		).contextWrite(ctx -> getOrCreateExchange(ctx, values));
 	}
 
 	@Override
@@ -148,7 +173,7 @@ public class LogBasedTransactionSupport
 			ExchangeImpl::commit,
 			(e, err) -> e.rollback(),
 			ExchangeImpl::rollback
-		).contextWrite(this::getOrCreateExchange);
+		).contextWrite(ctx -> getOrCreateExchange(ctx, values));
 	}
 
 	@Override
@@ -162,7 +187,7 @@ public class LogBasedTransactionSupport
 			Transaction::commit,
 			(tx, err) -> tx.rollback(),
 			Transaction::rollback
-		).contextWrite(this::getOrCreateExchange);
+		).contextWrite(ctx -> getOrCreateExchange(ctx, values));
 	}
 
 	@Override
@@ -184,7 +209,7 @@ public class LogBasedTransactionSupport
 			ExchangeImpl::commit,
 			(e, err) -> e.rollback(),
 			ExchangeImpl::rollback
-		).contextWrite(this::getOrCreateExchange);
+		).contextWrite(ctx -> getOrCreateExchange(ctx, values));
 	}
 
 	@Override
@@ -206,7 +231,7 @@ public class LogBasedTransactionSupport
 			ExchangeImpl::commit,
 			(e, err) -> e.rollback(),
 			ExchangeImpl::rollback
-		).contextWrite(this::getOrCreateExchange);
+		).contextWrite(ctx -> getOrCreateExchange(ctx, values));
 	}
 
 	private static class ExchangeImpl
@@ -227,7 +252,7 @@ public class LogBasedTransactionSupport
 		public ExchangeImpl(
 			TransactionLog log,
 			MVStoreManager.VersionHandle versionHandle,
-			ListIterable<TransactionValue<?>> values
+			RichIterable<? extends TransactionValue<?>> values
 		)
 		{
 			this.log = log;

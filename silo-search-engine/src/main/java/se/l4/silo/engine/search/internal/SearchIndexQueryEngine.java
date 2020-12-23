@@ -8,6 +8,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.apache.lucene.analysis.core.SimpleAnalyzer;
@@ -176,9 +177,11 @@ public class SearchIndexQueryEngine<T>
 	}
 
 	@Override
-	public ListIterable<? extends TransactionValue<?>> getTransactionalValues()
+	public void provideTransactionValues(
+		Consumer<? super TransactionValue<?>> consumer
+	)
 	{
-		return Lists.immutable.of(handleValue);
+		consumer.accept(handleValue);
 	}
 
 	@Override

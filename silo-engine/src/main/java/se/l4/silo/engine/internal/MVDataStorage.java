@@ -8,6 +8,7 @@ import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Enumeration;
+import java.util.function.Consumer;
 
 import com.carrotsearch.hppc.LongArrayList;
 
@@ -68,6 +69,15 @@ public class MVDataStorage
 	{
 		keys = store.openMap("data.keys", LongFieldType.INSTANCE, VersionedType.singleVersion(new LongArrayFieldType()));
 		chunks = store.openMap("data.chunks", LongFieldType.INSTANCE, ByteArrayFieldType.INSTANCE);
+	}
+
+	@Override
+	public void provideTransactionValues(
+		Consumer<? super TransactionValue<?>> consumer
+	)
+	{
+		consumer.accept(readonlyKeys);
+		consumer.accept(readonlyChunks);
 	}
 
 	@Override

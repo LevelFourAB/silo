@@ -1,10 +1,13 @@
 package se.l4.silo.engine.internal;
 
+import java.util.function.Consumer;
+
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.type.ObjectDataType;
 
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.TransactionValue;
+import se.l4.silo.engine.TransactionValueProvider;
 import se.l4.silo.engine.internal.tx.WriteableTransactionExchange;
 import se.l4.silo.engine.types.DataTypeAdapter;
 import se.l4.silo.engine.types.LongFieldType;
@@ -13,6 +16,7 @@ import se.l4.silo.engine.types.LongFieldType;
  * Index that helps map objects to internal long identifiers.
  */
 public class PrimaryIndex
+	implements TransactionValueProvider
 {
 	private final TransactionValue<MVMap<Object, Long>> readonlyMap;
 
@@ -37,6 +41,14 @@ public class PrimaryIndex
 
 		readonlyMap = v -> map.openVersion(v);
 		transactionSupport.registerValue(readonlyMap);
+	}
+
+	@Override
+	public void provideTransactionValues(
+		Consumer<? super TransactionValue<?>> consumer
+	)
+	{
+		consumer.accept(readonlyMap);
 	}
 
 	/**

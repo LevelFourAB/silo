@@ -106,8 +106,7 @@ public class StorageImpl<T>
 
 		// Register transactional values used by query engines
 		queryEngines
-			.flatCollect(e -> e.getTransactionalValues())
-			.each(transactionSupport::registerValue);
+			.each(q -> q.provideTransactionValues(transactionSupport::registerValue));
 	}
 
 	@Override
@@ -179,7 +178,7 @@ public class StorageImpl<T>
 			{
 				throw new StorageException("Unable to delete data with id " + id + "; " + e.getMessage(), e);
 			}
-		});
+		}, primary);
 	}
 
 	@Override
@@ -196,7 +195,7 @@ public class StorageImpl<T>
 			if(internalId == 0) return null;
 
 			return getInternal(tx, internalId);
-		});
+		}, storage, primary);
 	}
 
 	public T getInternal(WriteableTransactionExchange exchange, long id)
@@ -249,7 +248,8 @@ public class StorageImpl<T>
 		}
 
 		return transactionSupport.monoWithExchange(tx ->
-			(Mono<FR>) qe.fetch(createQueryEncounter(tx, query))
+			(Mono<FR>) qe.fetch(createQueryEncounter(tx, query)),
+			storage, primary, qe
 		);
 	}
 
@@ -263,7 +263,8 @@ public class StorageImpl<T>
 		}
 
 		return transactionSupport.fluxWithExchange(tx ->
-			(Flux<R>) qe.stream(createQueryEncounter(tx, query))
+			(Flux<R>) qe.stream(createQueryEncounter(tx, query)),
+			storage, primary, qe
 		);
 	}
 

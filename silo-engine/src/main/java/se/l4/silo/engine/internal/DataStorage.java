@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import se.l4.silo.engine.TransactionValueProvider;
 import se.l4.silo.engine.internal.tx.WriteableTransactionExchange;
 import se.l4.ylem.io.IOConsumer;
 
@@ -12,6 +13,7 @@ import se.l4.ylem.io.IOConsumer;
  * identifier.
  */
 public interface DataStorage
+	extends TransactionValueProvider
 {
 	/**
 	 * Store bytes associated with a certain id.
