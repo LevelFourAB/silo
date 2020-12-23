@@ -25,6 +25,7 @@ import se.l4.silo.StorageException;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.QueryEncounter;
 import se.l4.silo.engine.QueryEngine;
+import se.l4.silo.engine.TransactionValue;
 import se.l4.silo.engine.index.FieldDefinition;
 import se.l4.silo.engine.io.ExtendedDataInputStream;
 import se.l4.silo.engine.io.ExtendedDataOutputStream;
@@ -56,6 +57,7 @@ public class FieldIndexQueryEngine<T>
 	private final MVStoreManager store;
 	private final MVMap<Long, Object[]> indexedData;
 	private final MVMap<Object[], Object[]> index;
+	private final TransactionValue<ReadOnlyIndex> indexMapValue;
 
 	private final FieldDefinition<T>[] fields;
 	private final FieldDefinition<T>[] sortFields;
@@ -90,12 +92,23 @@ public class FieldIndexQueryEngine<T>
 		{
 			logger.debug(uniqueName + ": fields=" + Arrays.toString(this.fields) + ", sortFields=" + Arrays.toString(this.sortFields));
 		}
+
+		indexMapValue = v -> {
+			MVStoreManager.VersionHandle handle = store.acquireVersionHandle();
+			return new ReadOnlyIndex(handle, index.openVersion(handle.getVersion()));
+		};
 	}
 
 	@Override
 	public String getName()
 	{
 		return name;
+	}
+
+	@Override
+	public ListIterable<? extends TransactionValue<?>> getTransactionalValues()
+	{
+		return Lists.immutable.of(indexMapValue);
 	}
 
 	/**
@@ -420,6 +433,8 @@ public class FieldIndexQueryEngine<T>
 		LongAdder total = new LongAdder();
 		long maxSize = limit > 0 ? offset + limit : 0;
 		TreeSet<Result> tree = new TreeSet<>(sort);
+
+		MVMap<Object[], Object[]> index = encounter.get(indexMapValue).indexMap;
 		parts[fields.length] = new ResultCollector(index, fields.length, hasSort)
 		{
 			@Override
@@ -757,5 +772,27 @@ public class FieldIndexQueryEngine<T>
 		 * 		false if no more results are needed
 		 */
 		protected abstract boolean accept(long id, Object[] keys, Object[] values);
+	}
+
+	private static class ReadOnlyIndex
+		implements TransactionValue.Releasable
+	{
+		private final MVStoreManager.VersionHandle versionHandle;
+		private final MVMap<Object[], Object[]> indexMap;
+
+		public ReadOnlyIndex(
+			MVStoreManager.VersionHandle versionHandle,
+			MVMap<Object[], Object[]> indexMap
+		)
+		{
+			this.versionHandle = versionHandle;
+			this.indexMap = indexMap;
+		}
+
+		@Override
+		public void release()
+		{
+			versionHandle.release();
+		}
 	}
 }

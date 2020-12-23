@@ -7,7 +7,6 @@ import se.l4.silo.query.Query;
  * {@link QueryEngine} to return results.
  */
 public interface QueryEncounter<D extends Query<T, ?, ?>, T>
-	extends AutoCloseable
 {
 	/**
 	 * Get the data of the query.
@@ -25,7 +24,10 @@ public interface QueryEncounter<D extends Query<T, ?, ?>, T>
 	T load(long id);
 
 	/**
-	 * Close this encounter.
+	 * Get a value stored in this exchange.
+	 *
+	 * @param value
+	 * @return
 	 */
-	void close();
+	<V> V get(TransactionValue<V> value);
 }

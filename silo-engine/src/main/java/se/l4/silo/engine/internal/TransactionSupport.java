@@ -8,7 +8,8 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import se.l4.silo.Transaction;
-import se.l4.silo.engine.internal.tx.TransactionExchange;
+import se.l4.silo.engine.TransactionValue;
+import se.l4.silo.engine.internal.tx.WriteableTransactionExchange;
 
 /**
  * Transaction support as seen internally in the storage engine.
@@ -17,11 +18,11 @@ public interface TransactionSupport
 {
 	/**
 	 * Register a value that should be provided in instances of
-	 * {@link TransactionExchange}.
+	 * {@link WriteableTransactionExchange}.
 	 *
 	 * @param value
 	 */
-	void registerValue(TransactionalValue<?> value);
+	void registerValue(TransactionValue<?> value);
 
 	/**
 	 * Create a {@link Transaction} for manual control over when it is
@@ -86,25 +87,31 @@ public interface TransactionSupport
 
 	/**
 	 * Execute a function that should have access to an instance of
-	 * {@link TransactionExchange}.
+	 * {@link WriteableTransactionExchange}.
 	 *
 	 * @param <V>
 	 * @param func
 	 * @return
 	 */
-	<V> Mono<V> withExchange(Function<TransactionExchange, V> func);
+	<V> Mono<V> withExchange(Function<WriteableTransactionExchange, V> func);
 
 	/**
-	 * Interface used for values that are automatically provided when a
-	 * {@link TransactionExchange} is created.
+	 * Execute a function that should have access to an instance of
+	 * {@link WriteableTransactionExchange}.
+	 *
+	 * @param <V>
+	 * @param func
+	 * @return
 	 */
-	interface TransactionalValue<V>
-	{
-		/**
-		 * Get a value to store in the {@link TransactionExchange}.
-		 *
-		 * @return
-		 */
-		V get(long transactionVersion);
-	}
+	<V> Mono<V> monoWithExchange(Function<WriteableTransactionExchange, Mono<V>> func);
+
+	/**
+	 * Execute a function that should have access to an instance of
+	 * {@link WriteableTransactionExchange}.
+	 *
+	 * @param <V>
+	 * @param func
+	 * @return
+	 */
+	<V> Flux<V> fluxWithExchange(Function<WriteableTransactionExchange, Flux<V>> func);
 }

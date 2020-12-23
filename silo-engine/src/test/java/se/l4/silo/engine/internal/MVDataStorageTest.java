@@ -20,8 +20,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import se.l4.silo.Transaction;
 import se.l4.silo.engine.MVStoreManager;
+import se.l4.silo.engine.TransactionValue;
 import se.l4.silo.engine.internal.mvstore.MVStoreManagerImpl;
-import se.l4.silo.engine.internal.tx.TransactionExchange;
+import se.l4.silo.engine.internal.tx.WriteableTransactionExchange;
 
 /**
  * Tests for {@link MVDataStorage}.
@@ -179,7 +180,7 @@ public class MVDataStorageTest
 		implements TransactionSupport
 	{
 		@Override
-		public void registerValue(TransactionalValue<?> value)
+		public void registerValue(TransactionValue<?> value)
 		{
 			// Do nothing
 		}
@@ -215,7 +216,23 @@ public class MVDataStorageTest
 		}
 
 		@Override
-		public <V> Mono<V> withExchange(Function<TransactionExchange, V> func)
+		public <V> Mono<V> withExchange(Function<WriteableTransactionExchange, V> func)
+		{
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <V> Mono<V> monoWithExchange(
+			Function<WriteableTransactionExchange, Mono<V>> func
+		)
+		{
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <V> Flux<V> fluxWithExchange(
+			Function<WriteableTransactionExchange, Flux<V>> func
+		)
 		{
 			throw new UnsupportedOperationException();
 		}

@@ -32,7 +32,7 @@ import se.l4.silo.engine.internal.mvstore.SharedStorages;
 import se.l4.silo.engine.internal.query.QueryEncounterImpl;
 import se.l4.silo.engine.internal.query.QueryEngineCreationEncounterImpl;
 import se.l4.silo.engine.internal.query.QueryEngineUpdater;
-import se.l4.silo.engine.internal.tx.TransactionExchange;
+import se.l4.silo.engine.internal.tx.WriteableTransactionExchange;
 import se.l4.silo.engine.io.ExtendedDataOutputStream;
 import se.l4.silo.query.Query;
 
@@ -103,6 +103,11 @@ public class StorageImpl<T>
 			name,
 			this.queryEngines
 		);
+
+		// Register transactional values used by query engines
+		queryEngines
+			.flatCollect(e -> e.getTransactionalValues())
+			.each(transactionSupport::registerValue);
 	}
 
 	@Override
@@ -194,7 +199,7 @@ public class StorageImpl<T>
 		});
 	}
 
-	public T getInternal(TransactionExchange exchange, long id)
+	public T getInternal(WriteableTransactionExchange exchange, long id)
 	{
 		try
 		{
@@ -224,9 +229,12 @@ public class StorageImpl<T>
 		return primary.size();
 	}
 
-	private QueryEncounterImpl createQueryEncounter(Query query)
+	private QueryEncounterImpl createQueryEncounter(
+		WriteableTransactionExchange tx,
+		Query query
+	)
 	{
-		return new QueryEncounterImpl<Query<T,?,?>, T>(query, id -> this.getInternal(null, id));
+		return new QueryEncounterImpl<Query<T,?,?>, T>(tx, query, id -> this.getInternal(tx, id));
 	}
 
 	@Override
@@ -240,7 +248,9 @@ public class StorageImpl<T>
 			throw new StorageException("Unknown query engine `" + query.getIndex() + "`");
 		}
 
-		return qe.fetch(createQueryEncounter(query));
+		return transactionSupport.monoWithExchange(tx ->
+			(Mono<FR>) qe.fetch(createQueryEncounter(tx, query))
+		);
 	}
 
 	@Override
@@ -252,7 +262,9 @@ public class StorageImpl<T>
 			throw new StorageException("Unknown query engine `" + query.getIndex() + "`");
 		}
 
-		return qe.stream(createQueryEncounter(query));
+		return transactionSupport.fluxWithExchange(tx ->
+			(Flux<R>) qe.stream(createQueryEncounter(tx, query))
+		);
 	}
 
 	public Iterator<LongObjectPair<T>> iterator()

@@ -18,6 +18,7 @@ import reactor.util.context.Context;
 import se.l4.silo.StorageException;
 import se.l4.silo.Transaction;
 import se.l4.silo.engine.MVStoreManager;
+import se.l4.silo.engine.TransactionValue;
 import se.l4.silo.engine.internal.TransactionSupport;
 import se.l4.silo.engine.internal.log.TransactionLog;
 import se.l4.ylem.io.IOConsumer;
@@ -33,7 +34,7 @@ public class LogBasedTransactionSupport
 	private final TransactionLog log;
 
 	private final ThreadLocal<ExchangeImpl> activeExchange;
-	private final MutableList<TransactionalValue<?>> values;
+	private final MutableList<TransactionValue<?>> values;
 
 	public LogBasedTransactionSupport(
 		MVStoreManager storeManager,
@@ -48,7 +49,7 @@ public class LogBasedTransactionSupport
 	}
 
 	@Override
-	public void registerValue(TransactionalValue<?> value)
+	public void registerValue(TransactionValue<?> value)
 	{
 		values.add(value);
 	}
@@ -83,11 +84,35 @@ public class LogBasedTransactionSupport
 	}
 
 	@Override
-	public <V> Mono<V> withExchange(Function<TransactionExchange, V> func)
+	public <V> Mono<V> withExchange(Function<WriteableTransactionExchange, V> func)
 	{
 		return Mono.usingWhen(
 			getExchange(),
 			e -> Mono.fromSupplier(() -> func.apply(e)),
+			ExchangeImpl::commit,
+			(e, err) -> e.rollback(),
+			ExchangeImpl::rollback
+		).contextWrite(this::getOrCreateExchange);
+	}
+
+	@Override
+	public <V> Mono<V> monoWithExchange(Function<WriteableTransactionExchange, Mono<V>> func)
+	{
+		return Mono.usingWhen(
+			getExchange(),
+			func::apply,
+			ExchangeImpl::commit,
+			(e, err) -> e.rollback(),
+			ExchangeImpl::rollback
+		).contextWrite(this::getOrCreateExchange);
+	}
+
+	@Override
+	public <V> Flux<V> fluxWithExchange(Function<WriteableTransactionExchange, Flux<V>> func)
+	{
+		return Flux.usingWhen(
+			getExchange(),
+			func::apply,
 			ExchangeImpl::commit,
 			(e, err) -> e.rollback(),
 			ExchangeImpl::rollback
@@ -185,13 +210,13 @@ public class LogBasedTransactionSupport
 	}
 
 	private static class ExchangeImpl
-		implements TransactionExchange
+		implements WriteableTransactionExchange
 	{
 		private final TransactionLog log;
 		private final MVStoreManager.VersionHandle versionHandle;
 		private final ReentrantLock lock;
 
-		private final MutableMap<TransactionalValue<?>, Object> sharedData;
+		private final MutableMap<TransactionValue<?>, Object> sharedData;
 
 		/** The id of the exchange */
 		private long id;
@@ -202,7 +227,7 @@ public class LogBasedTransactionSupport
 		public ExchangeImpl(
 			TransactionLog log,
 			MVStoreManager.VersionHandle versionHandle,
-			ListIterable<TransactionalValue<?>> values
+			ListIterable<TransactionValue<?>> values
 		)
 		{
 			this.log = log;
@@ -212,7 +237,7 @@ public class LogBasedTransactionSupport
 			long version = versionHandle.getVersion();
 			this.sharedData = values.toMap(
 				v -> v,
-				v -> v.get(version)
+				v -> v.generate(version)
 			);
 		}
 
@@ -298,6 +323,13 @@ public class LogBasedTransactionSupport
 							id = -1;
 						}
 
+						sharedData.each(v -> {
+							if(v instanceof TransactionValue.Releasable)
+							{
+								((TransactionValue.Releasable) v).release();
+							}
+						});
+
 						versionHandle.release();
 					}
 				}
@@ -329,6 +361,13 @@ public class LogBasedTransactionSupport
 							id = -1;
 						}
 
+						sharedData.each(v -> {
+							if(v instanceof TransactionValue.Releasable)
+							{
+								((TransactionValue.Releasable) v).release();
+							}
+						});
+
 						versionHandle.release();
 					}
 				}
@@ -341,7 +380,7 @@ public class LogBasedTransactionSupport
 
 		@Override
 		@SuppressWarnings("unchecked")
-		public <T> T get(TransactionalValue<T> key)
+		public <T> T get(TransactionValue<T> key)
 		{
 			return (T) sharedData.get(key);
 		}

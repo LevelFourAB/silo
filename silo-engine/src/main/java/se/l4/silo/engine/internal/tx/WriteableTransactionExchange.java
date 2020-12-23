@@ -2,14 +2,15 @@ package se.l4.silo.engine.internal.tx;
 
 import java.io.OutputStream;
 
-import se.l4.silo.engine.internal.TransactionSupport;
+import se.l4.silo.engine.TransactionExchange;
 import se.l4.ylem.io.IOConsumer;
 
 /**
  * Exchange to allow entities to interact with a transaction. Exchanges map
  * to a single transaction and create transactions as needed.
  */
-public interface TransactionExchange
+public interface WriteableTransactionExchange
+	extends TransactionExchange
 {
 	/**
 	 * Get the version of this exchange.
@@ -46,13 +47,4 @@ public interface TransactionExchange
 	 * @param bytes
 	 */
 	void index(String entity, String index, Object id, IOConsumer<OutputStream> generator);
-
-	/**
-	 * Get a value stored in this exchange.
-	 *
-	 * @param <T>
-	 * @param type
-	 * @return
-	 */
-	<T> T get(TransactionSupport.TransactionalValue<T> value);
 }

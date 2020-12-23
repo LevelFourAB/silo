@@ -17,9 +17,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import se.l4.silo.engine.MVStoreManager;
-import se.l4.silo.engine.internal.TransactionSupport.TransactionalValue;
+import se.l4.silo.engine.TransactionValue;
 import se.l4.silo.engine.internal.log.ChunkOutputStream;
-import se.l4.silo.engine.internal.tx.TransactionExchange;
+import se.l4.silo.engine.internal.tx.WriteableTransactionExchange;
 import se.l4.silo.engine.types.ByteArrayFieldType;
 import se.l4.silo.engine.types.LongArrayFieldType;
 import se.l4.silo.engine.types.LongFieldType;
@@ -43,8 +43,8 @@ public class MVDataStorage
 
 	private final MVStoreManager store;
 
-	private final TransactionalValue<MVMap<Long, long[]>> readonlyKeys;
-	private final TransactionalValue<MVMap<Long, byte[]>> readonlyChunks;
+	private final TransactionValue<MVMap<Long, long[]>> readonlyKeys;
+	private final TransactionValue<MVMap<Long, byte[]>> readonlyChunks;
 
 	private volatile MVMap<Long, long[]> keys;
 	private volatile MVMap<Long, byte[]> chunks;
@@ -108,7 +108,7 @@ public class MVDataStorage
 	}
 
 	@Override
-	public InputStream get(TransactionExchange exchange, long id)
+	public InputStream get(WriteableTransactionExchange exchange, long id)
 		throws IOException
 	{
 		MVMap<Long, long[]> keys = exchange == null ? this.keys : exchange.get(readonlyKeys);

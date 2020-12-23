@@ -3,6 +3,8 @@ package se.l4.silo.engine.internal.query;
 import java.util.function.LongFunction;
 
 import se.l4.silo.engine.QueryEncounter;
+import se.l4.silo.engine.TransactionExchange;
+import se.l4.silo.engine.TransactionValue;
 import se.l4.silo.query.Query;
 
 /**
@@ -13,11 +15,17 @@ import se.l4.silo.query.Query;
 public class QueryEncounterImpl<D extends Query<T, ?, ?>, T>
 	implements QueryEncounter<D, T>
 {
+	private final TransactionExchange tx;
 	private final D data;
 	private final LongFunction<T> dataLoader;
 
-	public QueryEncounterImpl(D data, LongFunction<T> dataLoader)
+	public QueryEncounterImpl(
+		TransactionExchange tx,
+		D data,
+		LongFunction<T> dataLoader
+	)
 	{
+		this.tx = tx;
 		this.data = data;
 		this.dataLoader = dataLoader;
 	}
@@ -35,7 +43,8 @@ public class QueryEncounterImpl<D extends Query<T, ?, ?>, T>
 	}
 
 	@Override
-	public void close()
+	public <V> V get(TransactionValue<V> value)
 	{
+		return tx.get(value);
 	}
 }

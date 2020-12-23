@@ -3,6 +3,8 @@ package se.l4.silo.engine;
 import java.io.Closeable;
 import java.io.IOException;
 
+import org.eclipse.collections.api.list.ListIterable;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import se.l4.silo.FetchResult;
@@ -22,6 +24,14 @@ public interface QueryEngine<T, Q extends Query<T, ?, ?>>
 	 * @return
 	 */
 	String getName();
+
+	/**
+	 * Get the values that this engine needs available for reading in a
+	 * transaction.
+	 *
+	 * @return
+	 */
+	ListIterable<? extends TransactionValue<?>> getTransactionalValues();
 
 	/**
 	 * Fetch some results using this engine.

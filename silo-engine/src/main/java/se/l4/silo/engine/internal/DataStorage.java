@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import se.l4.silo.engine.internal.tx.TransactionExchange;
+import se.l4.silo.engine.internal.tx.WriteableTransactionExchange;
 import se.l4.ylem.io.IOConsumer;
 
 /**
@@ -31,7 +31,7 @@ public interface DataStorage
 	 * @return
 	 * @throws IOException
 	 */
-	InputStream get(TransactionExchange exchange, long id)
+	InputStream get(WriteableTransactionExchange exchange, long id)
 		throws IOException;
 
 	/**

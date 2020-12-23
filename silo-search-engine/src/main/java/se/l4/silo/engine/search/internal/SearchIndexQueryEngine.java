@@ -62,6 +62,7 @@ import se.l4.silo.FetchResult;
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.QueryEncounter;
 import se.l4.silo.engine.QueryEngine;
+import se.l4.silo.engine.TransactionValue;
 import se.l4.silo.engine.io.ExtendedDataInputStream;
 import se.l4.silo.engine.io.ExtendedDataOutputStream;
 import se.l4.silo.engine.search.LocaleSupport;
@@ -182,6 +183,12 @@ public class SearchIndexQueryEngine<T>
 	public String getName()
 	{
 		return name;
+	}
+
+	@Override
+	public ListIterable<? extends TransactionValue<?>> getTransactionalValues()
+	{
+		return Lists.immutable.empty();
 	}
 
 	@Override

@@ -4,8 +4,8 @@ import org.h2.mvstore.MVMap;
 import org.h2.mvstore.type.ObjectDataType;
 
 import se.l4.silo.engine.MVStoreManager;
-import se.l4.silo.engine.internal.TransactionSupport.TransactionalValue;
-import se.l4.silo.engine.internal.tx.TransactionExchange;
+import se.l4.silo.engine.TransactionValue;
+import se.l4.silo.engine.internal.tx.WriteableTransactionExchange;
 import se.l4.silo.engine.types.DataTypeAdapter;
 import se.l4.silo.engine.types.LongFieldType;
 
@@ -14,7 +14,7 @@ import se.l4.silo.engine.types.LongFieldType;
  */
 public class PrimaryIndex
 {
-	private final TransactionalValue<MVMap<Object, Long>> readonlyMap;
+	private final TransactionValue<MVMap<Object, Long>> readonlyMap;
 
 	private final MVMap<Object, Long> map;
 	private final MVMap<Long, Object> reverse;
@@ -45,7 +45,7 @@ public class PrimaryIndex
 	 * @param key
 	 * @return
 	 */
-	public long get(TransactionExchange exchange, Object key)
+	public long get(WriteableTransactionExchange exchange, Object key)
 	{
 		MVMap<Object, Long> map;
 		if(exchange != null)
