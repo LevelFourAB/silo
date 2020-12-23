@@ -63,12 +63,6 @@ public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 		return sortOrder;
 	}
 
-	@Override
-	public boolean isWaitForLatest()
-	{
-		return waitForLatest;
-	}
-
 	public static <T> Builder<T> create(String name, Class<T> type)
 	{
 		return new BuilderImpl<>(
@@ -186,18 +180,6 @@ public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 				locale,
 				clauses,
 				sortOrder.newWith(sort),
-				waitForLatest
-			);
-		}
-
-		@Override
-		public Self withWaitForLatest(boolean waitForLatest)
-		{
-			return create(
-				name,
-				locale,
-				clauses,
-				sortOrder,
 				waitForLatest
 			);
 		}

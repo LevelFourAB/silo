@@ -16,7 +16,6 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.IndexOptions;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexableField;
@@ -25,13 +24,10 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Collector;
-import org.apache.lucene.search.ControlledRealTimeReopenThread;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.SearcherFactory;
-import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TopDocs;
@@ -72,7 +68,6 @@ import se.l4.silo.engine.search.SearchFieldType;
 import se.l4.silo.engine.search.SearchIndexEncounter;
 import se.l4.silo.engine.search.config.IndexCacheConfig;
 import se.l4.silo.engine.search.config.IndexCommitConfig;
-import se.l4.silo.engine.search.config.IndexFreshnessConfig;
 import se.l4.silo.engine.search.config.IndexReloadConfig;
 import se.l4.silo.engine.search.query.QueryBuilder;
 import se.l4.silo.engine.search.query.QueryBuilders;
@@ -104,12 +99,12 @@ public class SearchIndexQueryEngine<T>
 
 	private final Directory directory;
 	private final IndexWriter writer;
-	private final SearcherManager manager;
+	private final IndexSearcherManager searchManager;
 
-	private final ControlledRealTimeReopenThread<IndexSearcher> thread;
 	private final CommitPolicy commitPolicy;
-
 	private final AtomicLong latestGeneration;
+
+	private final TransactionValue<IndexSearcherHandle> handleValue;
 
 	public SearchIndexQueryEngine(
 		ScheduledExecutorService executor,
@@ -148,23 +143,17 @@ public class SearchIndexQueryEngine<T>
 
 		latestGeneration = new AtomicLong();
 
-		manager = new SearcherManager(writer, true, false, new SearcherFactory()
-		{
-			@Override
-			public IndexSearcher newSearcher(IndexReader reader, IndexReader previousReader)
-				throws IOException
-			{
-				return new IndexSearcher(reader);
-			}
-		});
+		searchManager = new IndexSearcherManager(writer);
+		handleValue = v -> searchManager.acquire();
 
-		IndexFreshnessConfig freshness = reloadConfig.getFreshness();
-		thread = new ControlledRealTimeReopenThread<>(writer, manager, freshness.getMaxStale(), freshness.getMinStale());
-		thread.setPriority(Math.min(Thread.currentThread().getPriority()+2, Thread.MAX_PRIORITY));
-		thread.setDaemon(true);
-		thread.start();
-
-		commitPolicy = new CommitPolicy(log, uniqueName, executor, writer, commitConfig.getMaxUpdates(), commitConfig.getMaxTime());
+		commitPolicy = new CommitPolicy(
+			log,
+			uniqueName,
+			executor,
+			writer,
+			commitConfig.getMaxUpdates(),
+			commitConfig.getMaxTime()
+		);
 	}
 
 	private static Directory createDirectory(Directory directory, IndexCacheConfig config)
@@ -188,7 +177,7 @@ public class SearchIndexQueryEngine<T>
 	@Override
 	public ListIterable<? extends TransactionValue<?>> getTransactionalValues()
 	{
-		return Lists.immutable.empty();
+		return Lists.immutable.of(handleValue);
 	}
 
 	@Override
@@ -198,9 +187,8 @@ public class SearchIndexQueryEngine<T>
 		commitPolicy.commit();
 		commitPolicy.close();
 
-		thread.close();
+		searchManager.close();
 
-		manager.close();
 		writer.close();
 		directory.close();
 	}
@@ -299,6 +287,8 @@ public class SearchIndexQueryEngine<T>
 		{
 			throw new StorageException("Unknown search index version encountered: " + version);
 		}
+
+		searchManager.willMutate();
 
 		Document doc = new Document();
 
@@ -437,6 +427,8 @@ public class SearchIndexQueryEngine<T>
 		BytesRef idRef = new BytesRef(serializeId((id)));
 		try
 		{
+			searchManager.willMutate();
+
 			writer.deleteDocuments(new Term("_:id", idRef));
 		}
 		catch(IOException e)
@@ -454,8 +446,11 @@ public class SearchIndexQueryEngine<T>
 	)
 	{
 		return Mono.fromSupplier(() -> {
+			IndexSearcherHandle handle = encounter.get(handleValue);
+
 			ResultHitCollector<T> collector = new ResultHitCollector<>(encounter);
 			query(
+				handle,
 				encounter.getQuery(),
 				collector
 			);
@@ -473,54 +468,27 @@ public class SearchIndexQueryEngine<T>
 	}
 
 	public void query(
+		IndexSearcherHandle handle,
 		SearchIndexQuery<T, ?> query,
 		HitCollector<T> hitCollector
 	)
 	{
-		IndexSearcher searcher = null;
 		try
 		{
-			if(query.isWaitForLatest())
-			{
-				thread.waitForGeneration(latestGeneration.get());
-			}
-
-			searcher = manager.acquire();
-
 			if(query instanceof SearchIndexQuery.Limited)
 			{
 				SearchIndexQuery.Limited<T> limited = (SearchIndexQuery.Limited<T>) query;
-				limitedSearch(limited, hitCollector, searcher);
+				limitedSearch(limited, hitCollector, handle.getSearcher());
 			}
 			else
 			{
 				// TODO: Streaming via cursors
 				throw new SearchIndexException("Unsupported type of query: " + query);
 			}
-
-
 		}
 		catch(IOException e)
 		{
 			throw new StorageException("Unable to search; " + e.getMessage(), e);
-		}
-		catch(InterruptedException e)
-		{
-			Thread.currentThread().interrupt();
-			throw new StorageException("Unable to search; " + e.getMessage(), e);
-		}
-		finally
-		{
-			if(searcher != null)
-			{
-				try
-				{
-					manager.release(searcher);
-				}
-				catch(IOException e)
-				{
-				}
-			}
 		}
 	}
 

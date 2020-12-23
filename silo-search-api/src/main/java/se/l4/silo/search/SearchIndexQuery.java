@@ -36,13 +36,6 @@ public interface SearchIndexQuery<T, FR extends SearchResult<T>>
 	 */
 	ListIterable<FieldSort> getSortOrder();
 
-	/**
-	 * Get if this query should wait for the latest search data.
-	 *
-	 * @return
-	 */
-	boolean isWaitForLatest();
-
 	static <T> Builder<T> create(String name, Class<T> type)
 	{
 		return SearchIndexQueryImpl.create(name, type);
@@ -69,30 +62,6 @@ public interface SearchIndexQuery<T, FR extends SearchResult<T>>
 		 * @return
 		 */
 		Self withLocale(Locale locale);
-
-		/**
-		 * Indicate that this query should wait for the absolute freshest index
-		 * data. By default a search index lags after as reopening the index has
-		 * a cost associated with it. Use this method to request that this query
-		 * is run against the absolute stored data. This is useful in the
-		 * scenario where a user stores something and you need to query for it
-		 * directly afterwards.
-		 *
-		 * @return
-		 */
-		default Self waitForLatest()
-		{
-			return withWaitForLatest(true);
-		}
-
-		/**
-		 * Set if this query should wait for the latest results to be available
-		 * or not.
-		 *
-		 * @param waitForLatest
-		 * @return
-		 */
-		Self withWaitForLatest(boolean waitForLatest);
 
 		/**
 		 * Sort on the given field, specifying ascending or descending order

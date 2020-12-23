@@ -6,6 +6,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import org.junit.jupiter.api.Test;
 
 import se.l4.silo.Entity;
+import se.l4.silo.Transaction;
 import se.l4.silo.engine.EntityCodec;
 import se.l4.silo.engine.EntityDefinition;
 import se.l4.silo.engine.LocalSilo;
@@ -76,11 +77,44 @@ public class SearchObjectEntityTest
 
 		PaginatedSearchResult<TestUserData> result = entity.fetch(
 			SearchIndexQuery.create("index", TestUserData.class)
-				.waitForLatest()
 				.limited()
 				.build()
 		).block();
 
 		assertThat(result.getSize(), is(1l));
+	}
+
+	@Test
+	public void testQueryInTransaction()
+	{
+		Entity<Long, TestUserData> entity = entity();
+
+		entity.store(new TestUserData(1, "Donna", 30, true))
+			.block();
+
+		Transaction tx = instance().newTransaction().block();
+
+		entity.store(new TestUserData(2, "Steve", 30, true))
+			.block();
+
+		PaginatedSearchResult<TestUserData> result = tx.execute(v ->
+			entity.fetch(
+				SearchIndexQuery.create("index", TestUserData.class)
+					.limited()
+					.build()
+			)
+		).blockLast();
+
+		assertThat(result.getSize(), is(1l));
+
+		tx.commit();
+
+		result = entity.fetch(
+			SearchIndexQuery.create("index", TestUserData.class)
+				.limited()
+				.build()
+		).block();
+
+		assertThat(result.getSize(), is(2l));
 	}
 }
