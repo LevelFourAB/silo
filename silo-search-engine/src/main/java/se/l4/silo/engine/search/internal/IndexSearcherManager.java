@@ -64,6 +64,11 @@ public class IndexSearcherManager
 	 */
 	private final MutableLongObjectMap<SearcherRef> searcherRefs;
 
+	/**
+	 * Boolean that keeps track of there has been deletions.
+	 */
+	private boolean hasDeletions;
+
 	public IndexSearcherManager(
 		IndexWriter writer
 	)
@@ -97,7 +102,7 @@ public class IndexSearcherManager
 	 *
 	 * @throws IOException
 	 */
-	public void willMutate()
+	public void willMutate(boolean isDeletion)
 		throws IOException
 	{
 		searcherLock.lock();
@@ -108,11 +113,24 @@ public class IndexSearcherManager
 				// This will resolve the searcher
 				h.getSearcher();
 			}
+
+			if(isDeletion)
+			{
+				hasDeletions = true;
+			}
 		}
 		finally
 		{
 			searcherLock.unlock();
 		}
+	}
+
+	/**
+	 * Indicate that changes have been committed.
+	 */
+	public void changesCommitted()
+	{
+		hasDeletions = false;
 	}
 
 	/**
@@ -155,7 +173,7 @@ public class IndexSearcherManager
 				 * Open a new reader and searcher on the current writer and
 				 * start tracking it.
 				 */
-				DirectoryReader reader =  DirectoryReader.open(writer, true, false);
+				DirectoryReader reader = DirectoryReader.open(writer, hasDeletions, false);
 				SearcherRef ref = new SearcherRef(sequence, reader);
 
 				searcherRefs.put(sequence, ref);

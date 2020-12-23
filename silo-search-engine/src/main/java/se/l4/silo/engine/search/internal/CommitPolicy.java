@@ -23,9 +23,8 @@ public class CommitPolicy
 	private final long maxTime;
 
 	private final AtomicLong count;
-	private final AtomicLong lastCommit;
-
 	private final ScheduledExecutorService executor;
+	private final Runnable onCommit;
 
 	private volatile Future<?> future;
 
@@ -35,7 +34,8 @@ public class CommitPolicy
 		ScheduledExecutorService executor,
 		IndexWriter writer,
 		int maxDocumentChanges,
-		long maxTimeBetweenCommits
+		long maxTimeBetweenCommits,
+		Runnable onCommit
 	)
 	{
 		this.logger = logger;
@@ -44,9 +44,9 @@ public class CommitPolicy
 		this.writer = writer;
 		this.maxDocuments = maxDocumentChanges;
 		this.maxTime = maxTimeBetweenCommits;
+		this.onCommit = onCommit;
 
 		count = new AtomicLong();
-		lastCommit = new AtomicLong();
 	}
 
 	public void indexModified()
@@ -67,12 +67,13 @@ public class CommitPolicy
 		long t1 = System.currentTimeMillis();
 		writer.commit();
 		long t2 = System.currentTimeMillis();
-		lastCommit.set(t2);
 
 		if(logger.isDebugEnabled())
 		{
 			logger.debug("{}, Commit took {} ms", name, (t2-t1));
 		}
+
+		onCommit.run();
 
 		synchronized(this)
 		{

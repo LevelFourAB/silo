@@ -152,7 +152,8 @@ public class SearchIndexQueryEngine<T>
 			executor,
 			writer,
 			commitConfig.getMaxUpdates(),
-			commitConfig.getMaxTime()
+			commitConfig.getMaxTime(),
+			searchManager::changesCommitted
 		);
 	}
 
@@ -288,7 +289,7 @@ public class SearchIndexQueryEngine<T>
 			throw new StorageException("Unknown search index version encountered: " + version);
 		}
 
-		searchManager.willMutate();
+		searchManager.willMutate(false);
 
 		Document doc = new Document();
 
@@ -427,7 +428,7 @@ public class SearchIndexQueryEngine<T>
 		BytesRef idRef = new BytesRef(serializeId((id)));
 		try
 		{
-			searchManager.willMutate();
+			searchManager.willMutate(true);
 
 			writer.deleteDocuments(new Term("_:id", idRef));
 		}

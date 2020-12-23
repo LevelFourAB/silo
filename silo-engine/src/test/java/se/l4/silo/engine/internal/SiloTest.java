@@ -18,7 +18,7 @@ public abstract class SiloTest
 	protected static Serializers serializers = Serializers.create().build();
 
 	@TempDir
-	Path tmp;
+	protected Path tmp;
 
 	private LocalSilo silo;
 
