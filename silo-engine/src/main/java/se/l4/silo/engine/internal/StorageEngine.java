@@ -543,9 +543,9 @@ public class StorageEngine
 		}
 	}
 
-	public void compact(long time, TimeUnit unit)
+	public void compact(long timeInMillis)
 	{
-		store.compact(unit.toMillis(time));
+		store.compact(timeInMillis);
 	}
 
 	private class StorageDef<T>

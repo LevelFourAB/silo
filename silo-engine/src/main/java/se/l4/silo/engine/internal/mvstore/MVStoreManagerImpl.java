@@ -27,11 +27,6 @@ import se.l4.silo.engine.types.FieldType;
 public class MVStoreManagerImpl
 	implements MVStoreManager
 {
-	/** Target fill rate for MVStore */
-	private static final int TARGET_RATE = 95;
-	/** Data size to move when compacting */
-	private static final int DATA_SIZE = 16 * 1024 * 1024;
-
 	private final MVStore.Builder builder;
 
 	private volatile MVStore store;
@@ -190,8 +185,6 @@ public class MVStoreManagerImpl
 			return;
 		}
 
-		int retentionTime = store.getRetentionTime();
 		store.compactFile(targetTime);
-		store.setRetentionTime(retentionTime);
 	}
 }

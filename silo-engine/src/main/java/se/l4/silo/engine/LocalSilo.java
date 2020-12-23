@@ -3,6 +3,7 @@ package se.l4.silo.engine;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Duration;
 
 import org.eclipse.collections.api.factory.Lists;
 
@@ -36,6 +37,14 @@ public interface LocalSilo
 	 */
 	void installSnapshot(Snapshot snapshot)
 		throws IOException;
+
+	/**
+	 * Compact the storage.
+	 *
+	 * @param maxTime
+	 *   the maximum time to spend compacting
+	 */
+	void compact(Duration maxTime);
 
 	/**
 	 * Start creating a local instance of Silo. The built instance will use a

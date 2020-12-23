@@ -2,8 +2,8 @@ package se.l4.silo.engine.internal;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -140,8 +140,9 @@ public class LocalSiloImpl
 		storageEngine.installSnapshot(snapshot);
 	}
 
-	public void compact(long time, TimeUnit unit)
+	@Override
+	public void compact(Duration maxTime)
 	{
-		storageEngine.compact(time, unit);
+		storageEngine.compact(maxTime.toMillis());
 	}
 }
