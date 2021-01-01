@@ -45,6 +45,13 @@ public interface MVStoreManager
 	VersionHandle acquireVersionHandle();
 
 	/**
+	 * Register a commit action.
+	 *
+	 * @param action
+	 */
+	void registerCommitAction(CommitAction action);
+
+	/**
 	 * Create a snapshot of this store. The snapshot temporarily disables
 	 * automatic disk space reuse until the snapshot is closed.
 	 *
@@ -94,5 +101,21 @@ public interface MVStoreManager
 		 * Release this version allowing it to be removed.
 		 */
 		void release();
+	}
+
+	/**
+	 * Action tied to a commit of the store.
+	 */
+	interface CommitAction
+	{
+		/**
+		 * Hook to call before a commit occurs.
+		 */
+		void preCommit();
+
+		/**
+		 * Hook to call after a commit occurs.
+		 */
+		void afterCommit();
 	}
 }

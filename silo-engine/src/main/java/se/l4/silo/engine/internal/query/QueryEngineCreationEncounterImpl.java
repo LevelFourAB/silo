@@ -91,7 +91,7 @@ public class QueryEngineCreationEncounterImpl
 			throw new StorageException("Unable to create data directory: " + root + "; " + e.getMessage(), e);
 		}
 
-		return new MVStoreManagerImpl(new MVStore.Builder()
+		return new MVStoreManagerImpl(executor, new MVStore.Builder()
 			.fileName(resolveDataFile(name).toString())
 			.compress());
 	}

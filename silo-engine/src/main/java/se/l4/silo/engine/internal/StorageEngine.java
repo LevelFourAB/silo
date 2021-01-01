@@ -152,29 +152,6 @@ public class StorageEngine
 		logger.debug("Creating new storage engine in {}", root);
 
 		this.root = root;
-		this.sharedStorages = new SharedStorages(root, vibe);
-
-		mutationLock = new ReentrantLock();
-
-		try
-		{
-			Files.createDirectories(root);
-		}
-		catch(IOException e)
-		{
-			throw new StorageException("Could not create initial directory; " + e.getMessage(), e);
-		}
-
-		this.store = new MVStoreManagerImpl(new MVStore.Builder()
-			.compress()
-			.backgroundExceptionHandler((thread, t) -> {
-				logger.error("Error occured in background for data store; " + t.getMessage(), t);
-			})
-			.cacheSize(config.getCacheSizeInMb())
-			.fileName(root.resolve("storage.mv.bin").toString()));
-
-		ids = new SequenceLongIdGenerator();
-		storages = new ConcurrentHashMap<>();
 
 		executor = Executors.newScheduledThreadPool(
 			Runtime.getRuntime().availableProcessors() + 2,
@@ -188,6 +165,30 @@ public class StorageEngine
 				}
 			}
 		);
+
+		this.sharedStorages = new SharedStorages(executor, root, vibe);
+
+		mutationLock = new ReentrantLock();
+
+		try
+		{
+			Files.createDirectories(root);
+		}
+		catch(IOException e)
+		{
+			throw new StorageException("Could not create initial directory; " + e.getMessage(), e);
+		}
+
+		this.store = new MVStoreManagerImpl(executor, new MVStore.Builder()
+			.compress()
+			.backgroundExceptionHandler((thread, t) -> {
+				logger.error("Error occured in background for data store; " + t.getMessage(), t);
+			})
+			.cacheSize(config.getCacheSizeInMb())
+			.fileName(root.resolve("storage.mv.bin").toString()));
+
+		ids = new SequenceLongIdGenerator();
+		storages = new ConcurrentHashMap<>();
 
 		stores = new CountingProbe();
 		deletes = new CountingProbe();

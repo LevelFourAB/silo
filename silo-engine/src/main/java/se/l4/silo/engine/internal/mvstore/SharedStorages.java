@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -27,14 +28,20 @@ import se.l4.vibe.Vibe;
  */
 public class SharedStorages
 {
+	private final ScheduledExecutorService executorService;
 	private final Path root;
 	private final Vibe vibe;
 
 	private final Lock fetchLock;
 	private final Map<String, ManagerInfo> storages;
 
-	public SharedStorages(Path root, Vibe vibe)
+	public SharedStorages(
+		ScheduledExecutorService executorService,
+		Path root,
+		Vibe vibe
+	)
 	{
+		this.executorService = executorService;
 		this.root = root;
 		this.vibe = vibe;
 		fetchLock = new ReentrantLock();
@@ -56,7 +63,7 @@ public class SharedStorages
 
 			// Create a new storage for the given path
 			Files.createDirectories(absolutePath.getParent());
-			MVStoreManagerImpl manager = new MVStoreManagerImpl(new MVStore.Builder()
+			MVStoreManagerImpl manager = new MVStoreManagerImpl(executorService, new MVStore.Builder()
 				.fileName(absolutePath.toString())
 				.compress());
 
@@ -166,6 +173,12 @@ public class SharedStorages
 				open = false;
 				control.release(this);
 			}
+		}
+
+		@Override
+		public void registerCommitAction(CommitAction action)
+		{
+			control.manager.registerCommitAction(action);
 		}
 
 		@Override

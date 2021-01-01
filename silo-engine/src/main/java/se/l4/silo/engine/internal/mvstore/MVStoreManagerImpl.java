@@ -6,6 +6,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.h2.mvstore.MVMap;
@@ -27,22 +31,55 @@ import se.l4.silo.engine.types.FieldType;
 public class MVStoreManagerImpl
 	implements MVStoreManager
 {
+	private final ScheduledExecutorService executorService;
 	private final MVStore.Builder builder;
 
 	private volatile MVStore store;
 	private AtomicLong snapshotsOpen;
 
-	public MVStoreManagerImpl(MVStore.Builder builder)
+	private Future<?> future;
+	private final CopyOnWriteArrayList<CommitAction> commitActions;
+
+	public MVStoreManagerImpl(
+		ScheduledExecutorService executorService,
+		MVStore.Builder builder
+	)
 	{
+		this.executorService = executorService;
 		this.builder = builder;
 		store = builder.open();
 
 		snapshotsOpen = new AtomicLong();
+		commitActions = new CopyOnWriteArrayList<>();
 	}
 
 	public MVStore getStore()
 	{
 		return store;
+	}
+
+	@Override
+	public void registerCommitAction(CommitAction action)
+	{
+		if(future == null)
+		{
+			future = executorService.scheduleAtFixedRate(this::runCommitActions, 30, 30, TimeUnit.SECONDS);
+		}
+	}
+
+	private void runCommitActions()
+	{
+		for(CommitAction ac : commitActions)
+		{
+			ac.preCommit();
+		}
+
+		store.commit();
+
+		for(CommitAction ac : commitActions)
+		{
+			ac.afterCommit();
+		}
 	}
 
 	@Override
@@ -175,6 +212,11 @@ public class MVStoreManagerImpl
 	public void close()
 		throws IOException
 	{
+		if(future != null)
+		{
+			future.cancel(false);
+		}
+
 		store.close();
 	}
 

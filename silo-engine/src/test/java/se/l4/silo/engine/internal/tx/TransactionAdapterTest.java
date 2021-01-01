@@ -3,6 +3,7 @@ package se.l4.silo.engine.internal.tx;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.Executors;
 
 import org.h2.mvstore.MVStore;
 import org.h2.mvstore.OffHeapStore;
@@ -35,8 +36,11 @@ public class TransactionAdapterTest
 	@BeforeEach
 	public void before()
 	{
-		store = new MVStoreManagerImpl(new MVStore.Builder()
-			.fileStore(new OffHeapStore()));
+		store = new MVStoreManagerImpl(
+			Executors.newScheduledThreadPool(1),
+			new MVStore.Builder()
+				.fileStore(new OffHeapStore())
+		);
 
 		ops = new OpChecker();
 
