@@ -12,6 +12,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.apache.lucene.analysis.core.SimpleAnalyzer;
+import org.apache.lucene.document.BinaryDocValuesField;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
@@ -25,8 +26,9 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Collector;
+import org.apache.lucene.search.ConstantScoreQuery;
+import org.apache.lucene.search.DocValuesFieldExistsQuery;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Sort;
@@ -102,7 +104,7 @@ public class SearchIndexQueryEngine<T>
 	private final IndexWriter writer;
 	private final IndexSearcherManager searchManager;
 
-	private final CommitPolicy commitPolicy;
+	private final CommitManager commitManager;
 	private final AtomicLong latestGeneration;
 
 	private final TransactionValue<IndexSearcherHandle> handleValue;
@@ -147,14 +149,14 @@ public class SearchIndexQueryEngine<T>
 		searchManager = new IndexSearcherManager(writer);
 		handleValue = v -> searchManager.acquire();
 
-		commitPolicy = new CommitPolicy(
+		commitManager = new CommitManager(
 			log,
 			uniqueName,
 			executor,
 			writer,
 			commitConfig.getMaxUpdates(),
 			commitConfig.getMaxTime(),
-			searchManager::changesCommitted
+			searchManager
 		);
 	}
 
@@ -177,6 +179,12 @@ public class SearchIndexQueryEngine<T>
 	}
 
 	@Override
+	public long getLastHardCommit()
+	{
+		return commitManager.getHardCommit();
+	}
+
+	@Override
 	public void provideTransactionValues(
 		Consumer<? super TransactionValue<?>> consumer
 	)
@@ -185,11 +193,26 @@ public class SearchIndexQueryEngine<T>
 	}
 
 	@Override
+	public void clear()
+	{
+		try
+		{
+			writer.deleteAll();
+			commitManager.reinitialize();
+			writer.commit();
+		}
+		catch(IOException e)
+		{
+			throw new SearchIndexException("Unable to clear index");
+		}
+	}
+
+	@Override
 	public void close()
 		throws IOException
 	{
-		commitPolicy.commit();
-		commitPolicy.close();
+		commitManager.commit();
+		commitManager.close();
 
 		searchManager.close();
 
@@ -283,7 +306,7 @@ public class SearchIndexQueryEngine<T>
 	}
 
 	@Override
-	public void apply(long id, ExtendedDataInputStream rawIn)
+	public void apply(long op, long id, ExtendedDataInputStream rawIn)
 		throws IOException
 	{
 		int version = rawIn.read();
@@ -303,6 +326,7 @@ public class SearchIndexQueryEngine<T>
 		ft.setTokenized(false);
 		ft.setIndexOptions(IndexOptions.DOCS);
 		doc.add(new Field("_:id", idRef, ft));
+		doc.add(new BinaryDocValuesField("_:id", idRef));
 
 		LocaleSupport defaultLangSupport = locales.get("en").get();
 
@@ -373,7 +397,7 @@ public class SearchIndexQueryEngine<T>
 		}
 
 		// Tell our commit policy that we have modified the index
-		commitPolicy.indexModified();
+		commitManager.indexModified(op);
 	}
 
 	private <V> void addField(
@@ -426,7 +450,7 @@ public class SearchIndexQueryEngine<T>
 	}
 
 	@Override
-	public void delete(long id)
+	public void delete(long op, long id)
 	{
 		BytesRef idRef = new BytesRef(serializeId((id)));
 		try
@@ -441,7 +465,7 @@ public class SearchIndexQueryEngine<T>
 		}
 
 		// Tell our commit policy that we have modified the index
-		commitPolicy.indexModified();
+		commitManager.indexModified(op);
 	}
 
 	@Override
@@ -690,52 +714,43 @@ public class SearchIndexQueryEngine<T>
 	)
 		throws IOException
 	{
-		if(clauses.isEmpty())
-		{
-			return new MatchAllDocsQuery();
-		}
-		else if(clauses.size() == 1)
-		{
-			return createQuery(currentLocale, clauses.getFirst());
-		}
-		else
-		{
-			BooleanQuery.Builder result = new BooleanQuery.Builder();
-			for(QueryClause clause : clauses)
-			{
-				Query q = createQuery(currentLocale, clause);
-				if(q instanceof BooleanQuery)
-				{
-					boolean hasShoulds = false;
-					for(BooleanClause c : ((BooleanQuery) q).clauses())
-					{
-						if(c.getOccur() == BooleanClause.Occur.SHOULD)
-						{
-							hasShoulds = true;
-							break;
-						}
-					}
+		BooleanQuery.Builder result = new BooleanQuery.Builder();
+		result.add(new ConstantScoreQuery(new DocValuesFieldExistsQuery("_:id")), Occur.MUST);
 
-					if(hasShoulds)
+		for(QueryClause clause : clauses)
+		{
+			Query q = createQuery(currentLocale, clause);
+			if(q instanceof BooleanQuery)
+			{
+				boolean hasShoulds = false;
+				for(BooleanClause c : ((BooleanQuery) q).clauses())
+				{
+					if(c.getOccur() == BooleanClause.Occur.SHOULD)
 					{
-						result.add(q, Occur.MUST);
-					}
-					else
-					{
-						for(BooleanClause c : ((BooleanQuery) q).clauses())
-						{
-							result.add(c);
-						}
+						hasShoulds = true;
+						break;
 					}
 				}
-				else
+
+				if(hasShoulds)
 				{
 					result.add(q, Occur.MUST);
 				}
+				else
+				{
+					for(BooleanClause c : ((BooleanQuery) q).clauses())
+					{
+						result.add(c);
+					}
+				}
 			}
-
-			return result.build();
+			else
+			{
+				result.add(q, Occur.MUST);
+			}
 		}
+
+		return result.build();
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })

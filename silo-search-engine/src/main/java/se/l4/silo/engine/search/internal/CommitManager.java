@@ -6,14 +6,22 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.FieldType;
+import org.apache.lucene.document.StoredField;
+import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.TopDocs;
 import org.slf4j.Logger;
 
 /**
  * Helper that handles committing a {@link IndexWriter} based on a preset
  * configuration.
  */
-public class CommitPolicy
+public class CommitManager
 {
 	private final Logger logger;
 	private final String name;
@@ -28,15 +36,19 @@ public class CommitPolicy
 
 	private volatile Future<?> future;
 
-	public CommitPolicy(
+	private volatile long latestOp;
+	private volatile long hardCommitOp;
+
+	public CommitManager(
 		Logger logger,
 		String name,
 		ScheduledExecutorService executor,
 		IndexWriter writer,
 		int maxDocumentChanges,
 		long maxTimeBetweenCommits,
-		Runnable onCommit
+		IndexSearcherManager searcherManager
 	)
+		throws IOException
 	{
 		this.logger = logger;
 		this.name = name;
@@ -44,13 +56,75 @@ public class CommitPolicy
 		this.writer = writer;
 		this.maxDocuments = maxDocumentChanges;
 		this.maxTime = maxTimeBetweenCommits;
-		this.onCommit = onCommit;
+		this.onCommit = searcherManager::changesCommitted;
 
 		count = new AtomicLong();
+		if(writer.getDocStats().numDocs == 0)
+		{
+			// This is a fresh index, add our commit tracker
+			reinitialize();
+		}
+		else
+		{
+			// Need to load
+			IndexSearcherHandle handle = searcherManager.acquire();
+			try
+			{
+				TopDocs td = handle.getSearcher()
+					.search(new TermQuery(new Term("_:type", "op")), 1);
+
+				if(td.totalHits.value != 1l)
+				{
+					logger.warn("Index corrupt, could not find last operation applied. Index will be rebuilt");
+					writer.deleteAll();
+					reinitialize();
+				}
+				else
+				{
+					hardCommitOp = handle.getSearcher().doc(td.scoreDocs[0].doc)
+						.getField("_:op")
+						.numericValue()
+						.longValue();
+				}
+			}
+			finally
+			{
+				handle.release();
+			}
+		}
 	}
 
-	public void indexModified()
+	public void reinitialize()
+		throws IOException
 	{
+		latestOp = 0;
+		hardCommitOp = 0;
+		writer.addDocument(getOpDoc(0));
+	}
+
+	private Document getOpDoc(long op)
+	{
+		Document doc = new Document();
+
+		FieldType ft = new FieldType();
+		ft.setStored(false);
+		ft.setTokenized(false);
+		ft.setIndexOptions(IndexOptions.DOCS);
+		doc.add(new Field("_:type", "op", ft));
+
+		doc.add(new StoredField("_:op", op));
+
+		return doc;
+	}
+
+	public long getHardCommit()
+	{
+		return hardCommitOp;
+	}
+
+	public void indexModified(long opId)
+	{
+		latestOp = opId;
 		increment();
 	}
 
@@ -65,7 +139,17 @@ public class CommitPolicy
 	{
 		logger.debug("{}: Committing index updates", name);
 		long t1 = System.currentTimeMillis();
+
+		// Keep track of the latest operation
+		long op = latestOp;
+		writer.updateDocument(new Term("_:type", "op"), getOpDoc(op));
+
+		// Perform commit
 		writer.commit();
+
+		// Reference
+		hardCommitOp = op;
+
 		long t2 = System.currentTimeMillis();
 
 		if(logger.isDebugEnabled())
