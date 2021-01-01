@@ -204,18 +204,5 @@ public class SharedStorages
 		{
 			throw new UnsupportedOperationException("Shared stores can not create snapshots");
 		}
-
-		@Override
-		public void installSnapshot(Snapshot snapshot)
-			throws IOException
-		{
-			throw new UnsupportedOperationException("Shared stores can not install snapshots");
-		}
-
-		@Override
-		public void recreate() throws IOException
-		{
-			throw new UnsupportedOperationException("Shared stores can not be recreated");
-		}
 	}
 }

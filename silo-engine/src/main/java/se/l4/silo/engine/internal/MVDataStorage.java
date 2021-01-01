@@ -42,29 +42,21 @@ public class MVDataStorage
 
 	private static final int CHUNK_SIZE = 8192;
 
-	private final MVStoreManager store;
-
 	private final TransactionValue<MVMap<Long, long[]>> readonlyKeys;
 	private final TransactionValue<MVMap<Long, byte[]>> readonlyChunks;
 
-	private volatile MVMap<Long, long[]> keys;
-	private volatile MVMap<Long, byte[]> chunks;
+	private final MVMap<Long, long[]> keys;
+	private final MVMap<Long, byte[]> chunks;
 
 	public MVDataStorage(
 		MVStoreManager store
 	)
 	{
-		this.store = store;
-		reopen();
+		keys = store.openMap("data.keys", LongFieldType.INSTANCE, VersionedType.singleVersion(new LongArrayFieldType()));
+		chunks = store.openMap("data.chunks", LongFieldType.INSTANCE, ByteArrayFieldType.INSTANCE);
 
 		readonlyChunks = version -> chunks.openVersion(version);
 		readonlyKeys = version -> keys.openVersion(version);
-	}
-
-	public void reopen()
-	{
-		keys = store.openMap("data.keys", LongFieldType.INSTANCE, VersionedType.singleVersion(new LongArrayFieldType()));
-		chunks = store.openMap("data.chunks", LongFieldType.INSTANCE, ByteArrayFieldType.INSTANCE);
 	}
 
 	@Override

@@ -134,13 +134,6 @@ public class LocalSiloImpl
 	}
 
 	@Override
-	public void installSnapshot(Snapshot snapshot)
-		throws IOException
-	{
-		storageEngine.installSnapshot(snapshot);
-	}
-
-	@Override
 	public void compact(Duration maxTime)
 	{
 		storageEngine.compact(maxTime.toMillis());

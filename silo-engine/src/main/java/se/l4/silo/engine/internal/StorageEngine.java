@@ -3,13 +3,8 @@ package se.l4.silo.engine.internal;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -28,7 +23,6 @@ import org.h2.mvstore.MVStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import reactor.core.publisher.Mono;
 import se.l4.silo.Entity;
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.EngineConfig;
@@ -76,7 +70,7 @@ public class StorageEngine
 	 * All instances of {@link Storage} that have been created by
 	 * {@link Entity entities}.
 	 */
-	private final Map<String, StorageDef> storages;
+	private final Map<String, StorageImpl<?>> storages;
 
 	/**
 	 * Instances of {@link Entity} created via configuration.
@@ -251,7 +245,14 @@ public class StorageEngine
 				{
 					stores.increase();
 					mutationLock.lock();
-					resolveStorage(entity).directStore(id, data);
+
+					StorageImpl storage = storages.get(entity);
+					if(storage == null)
+					{
+						return;
+					}
+
+					storage.directStore(id, data);
 				}
 				finally
 				{
@@ -267,7 +268,14 @@ public class StorageEngine
 				{
 					deletes.increase();
 					mutationLock.lock();
-					resolveStorage(entity).directDelete(id);
+
+					StorageImpl storage = storages.get(entity);
+					if(storage == null)
+					{
+						return;
+					}
+
+					storage.directDelete(id);
 				}
 				finally
 				{
@@ -282,7 +290,14 @@ public class StorageEngine
 				try
 				{
 					mutationLock.lock();
-					resolveStorage(entity).directIndex(index, id, data);
+
+					StorageImpl storage = storages.get(entity);
+					if(storage == null)
+					{
+						return;
+					}
+
+					storage.directIndex(index, id, data);
 				}
 				finally
 				{
@@ -299,9 +314,9 @@ public class StorageEngine
 		executor.shutdownNow();
 		log.close();
 
-		for(StorageDef def : storages.values())
+		for(StorageImpl storage : storages.values())
 		{
-			def.getImpl().close();
+			storage.close();
 		}
 
 		store.close();
@@ -329,16 +344,6 @@ public class StorageEngine
 					.build()
 			);
 		}).toMap(v -> v.getName(), v -> v).toImmutable();
-	}
-
-	private StorageImpl resolveStorage(String entity)
-	{
-		StorageDef result = storages.get(entity);
-		if(result == null)
-		{
-			throw new StorageException("The entity " + entity + " does not exist");
-		}
-		return result.getImpl();
 	}
 
 	/**
@@ -383,7 +388,6 @@ public class StorageEngine
 	{
 		String storageName = name + "::" + subName;
 		Path dataPath = resolveDataPath(name, subName);
-		StorageDef<T> def = new StorageDef<>(storageName, dataPath, codec);
 		return new Storage.Builder<T>()
 		{
 			private final MutableList<IndexDefinition<T>> indexes = Lists.mutable.empty();
@@ -405,27 +409,35 @@ public class StorageEngine
 			@Override
 			public Storage<T> build()
 			{
-				def.update(indexes);
-				storages.put(storageName, def);
-				return def.getStorage();
+				// Create a new storage instance
+				PrimaryIndex primaryIndex = new PrimaryIndex(
+					store,
+					transactionSupport,
+					storageName
+				);
+
+				StorageImpl storage = new StorageImpl(
+					StorageEngine.this,
+					sharedStorages,
+					executor,
+					transactionSupport,
+
+					store,
+					dataPath,
+					dataStorage,
+
+					storageName,
+					codec,
+
+					primaryIndex,
+					indexes
+				);
+
+				storages.put(storageName, storage);
+
+				return storage;
 			}
 		};
-	}
-
-	public Storage getStorage(String name)
-	{
-		return getStorage(name, "main");
-	}
-
-	public Storage getStorage(String name, String subName)
-	{
-		String storageName = name + "::" + subName;
-		StorageDef def = storages.get(storageName);
-		if(def == null)
-		{
-			throw new StorageException("The storage " + subName + " for entity " + name + " does not exist");
-		}
-		return def.getStorage();
 	}
 
 	private Path resolveDataPath(String name, String subName)
@@ -455,183 +467,8 @@ public class StorageEngine
 		return store.createSnapshot();
 	}
 
-	/**
-	 * Install a snapshot into this {@link StorageEngine}.
-	 *
-	 * @param snapshot
-	 * @throws IOException
-	 */
-	public void installSnapshot(Snapshot snapshot)
-		throws IOException
-	{
-		try
-		{
-			mutationLock.lock();
-
-			long t1 = System.currentTimeMillis();
-			logger.info("Installing a snapshot into the storage engine");
-
-			// First lock all of our delegating storage instances
-			for(StorageDef def : storages.values())
-			{
-				def.lock();
-			}
-
-			// Install the snapshot into the main engine
-			store.installSnapshot(snapshot);
-
-			// Reopen our data storage
-			dataStorage.reopen();
-
-			// Recreate all of the storages
-			for(StorageDef def : storages.values())
-			{
-				def.recreate();
-			}
-
-			// FIXME: How do we deal indexes here?
-
-			// Reopen our transaction adapter
-			transactionAdapter.reopen();
-
-			long t2 = System.currentTimeMillis();
-			logger.info("Fully installed snapshot. Took " + Duration.of(t2 - t1, ChronoUnit.MILLIS).toString());
-		}
-		finally
-		{
-			mutationLock.unlock();
-		}
-	}
-
 	public void compact(long timeInMillis)
 	{
 		store.compact(timeInMillis);
-	}
-
-	private class StorageDef<T>
-	{
-		private final DelegatingStorage<T> storage;
-		private final String storageName;
-		private final Path dataPath;
-
-		private final EntityCodec<T> codec;
-		private ListIterable<IndexDefinition<T>> queryEngines;
-
-		public StorageDef(
-			String name,
-			Path dataPath,
-			EntityCodec<T> codec
-		)
-		{
-			this.storageName = name;
-			this.dataPath = dataPath;
-			this.codec = codec;
-
-			storage = new DelegatingStorage<T>()
-			{
-				@Override
-				public Mono<T> get(Object id)
-				{
-					reads.increase();
-					return super.get(id);
-				}
-			};
-		}
-
-		public StorageImpl getImpl()
-		{
-			return (StorageImpl) storage.getStorage();
-		}
-
-		public DelegatingStorage getStorage()
-		{
-			return storage;
-		}
-
-		public void lock()
-			throws IOException
-		{
-			getImpl().close();
-			storage.setStorage(null);
-		}
-
-		public void recreate()
-			throws IOException
-		{
-			// First delete the entire data storage of this storage
-			if(Files.exists(dataPath))
-			{
-				Files.walkFileTree(dataPath, new SimpleFileVisitor<Path>()
-				{
-					@Override
-					public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-						throws IOException
-					{
-						Files.delete(file);
-						return FileVisitResult.CONTINUE;
-					}
-
-					@Override
-					public FileVisitResult postVisitDirectory(Path dir, IOException exc)
-						throws IOException
-					{
-						Files.delete(dir);
-						return FileVisitResult.CONTINUE;
-					}
-				});
-			}
-
-			// Recreate it as we last saw it
-			update(this.queryEngines);
-		}
-
-		public void update(
-			ListIterable<IndexDefinition<T>> queryEngines
-		)
-		{
-			if(storage.getStorage() != null)
-			{
-				try
-				{
-					// Close our existing implementation if one exists
-					StorageImpl impl = (StorageImpl) storage.getStorage();
-					impl.close();
-				}
-				catch(Throwable e)
-				{
-					throw new StorageException("Unable to close existing storage; " + e.getMessage(), e);
-				}
-			}
-
-			// Create a new storage instance
-			PrimaryIndex primaryIndex = new PrimaryIndex(
-				store,
-				transactionSupport,
-				storageName
-			);
-
-			StorageImpl impl = new StorageImpl(
-				StorageEngine.this,
-				sharedStorages,
-				executor,
-				transactionSupport,
-
-				store,
-				dataPath,
-				dataStorage,
-
-				storageName,
-				codec,
-
-				primaryIndex,
-				queryEngines
-			);
-
-			// Save the configuration for later usage
-			this.queryEngines = queryEngines;
-
-			// Set the implementation used
-			storage.setStorage(impl);
-		}
 	}
 }

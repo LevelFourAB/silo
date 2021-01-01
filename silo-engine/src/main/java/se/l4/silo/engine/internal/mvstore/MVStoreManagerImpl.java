@@ -1,11 +1,7 @@
 package se.l4.silo.engine.internal.mvstore;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -34,10 +30,10 @@ public class MVStoreManagerImpl
 	private final ScheduledExecutorService executorService;
 	private final MVStore.Builder builder;
 
-	private volatile MVStore store;
-	private AtomicLong snapshotsOpen;
+	private final MVStore store;
+	private final AtomicLong snapshotsOpen;
 
-	private Future<?> future;
+	private volatile Future<?> future;
 	private final CopyOnWriteArrayList<CommitAction> commitActions;
 
 	public MVStoreManagerImpl(
@@ -159,53 +155,6 @@ public class MVStoreManagerImpl
 				}
 			}
 		};
-	}
-
-	@Override
-	public void installSnapshot(Snapshot snapshot)
-		throws IOException
-	{
-		if(snapshotsOpen.get() > 0)
-		{
-			throw new IOException("Can not install snapshot as this store has an open snapshot");
-		}
-
-		// Get the file name we are replacing
-		String fileName = store.getFileStore().getFileName();
-		if(fileName.startsWith("nio:"))
-		{
-			fileName = fileName.substring(4);
-		}
-
-		// Close the existing store
-		store.closeImmediately();
-
-		try(InputStream in = snapshot.asStream(); OutputStream out = new FileOutputStream(fileName))
-		{
-			in.transferTo(out);
-		}
-
-		store = builder.open();
-	}
-
-	@Override
-	public void recreate() throws IOException
-	{
-		if(snapshotsOpen.get() > 0)
-		{
-			throw new IOException("Can not recreate as this store has an open snapshot");
-		}
-
-		// Get the file name we are replacing
-		String fileName = store.getFileStore().getFileName();
-
-		// Close the existing store
-		store.closeImmediately();
-
-		// Delete the data
-		Files.deleteIfExists(Paths.get(fileName));
-
-		store = builder.open();
 	}
 
 	@Override

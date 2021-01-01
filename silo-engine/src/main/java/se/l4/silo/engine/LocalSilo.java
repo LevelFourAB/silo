@@ -1,7 +1,6 @@
 package se.l4.silo.engine;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
 
@@ -28,15 +27,6 @@ public interface LocalSilo
 	 * @return
 	 */
 	Snapshot createSnapshot();
-
-	/**
-	 * Install a snapshot into this instance.
-	 *
-	 * @param snapshot
-	 * @throws IOException
-	 */
-	void installSnapshot(Snapshot snapshot)
-		throws IOException;
 
 	/**
 	 * Compact the storage.

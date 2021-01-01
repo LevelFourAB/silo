@@ -1,7 +1,6 @@
 package se.l4.silo.engine;
 
 import java.io.Closeable;
-import java.io.IOException;
 
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
@@ -62,27 +61,6 @@ public interface MVStoreManager
 	 * @return
 	 */
 	Snapshot createSnapshot();
-
-	/**
-	 * Install a snapshot into this store. This will remove all old data
-	 * and reopen the {@link MVStore} instance. This will not reopen
-	 * any {@link MVMap} instances, these need to be fetched from the manager
-	 * again.
-	 *
-	 * @param snapshot
-	 */
-	void installSnapshot(Snapshot snapshot)
-		throws IOException;
-
-	/**
-	 * Destroy all the data in this store and recreate it as an empty storage.
-	 * This will not reopen any {@link MVMap} instances, these need to be
-	 * fetched from the manager again.
-	 *
-	 * @throws IOException
-	 */
-	void recreate()
-		throws IOException;
 
 	/**
 	 * Handle to a specific version of the store. Handles are used make sure a

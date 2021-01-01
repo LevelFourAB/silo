@@ -52,7 +52,7 @@ public class TransactionAdapter
 	private final StorageApplier applier;
 	private final MVStoreManager store;
 
-	private volatile MVMap<long[], TransactionOperation> log;
+	private final MVMap<long[], TransactionOperation> log;
 
 	private final CountingProbe activeTx;
 	private final CountingProbe logEvents;
@@ -92,16 +92,6 @@ public class TransactionAdapter
 				.done();
 		}
 
-		reopen();
-
-		if(executor != null)
-		{
-			executor.scheduleAtFixedRate(this::removeStale, 1, 5, TimeUnit.MINUTES);
-		}
-	}
-
-	public void reopen()
-	{
 		log = store.openMap("tx.log", new LongArrayFieldType(), new TransactionOperationType());
 		if(! log.isEmpty())
 		{
@@ -117,7 +107,12 @@ public class TransactionAdapter
 			}
 		}
 
-		logger.info(activeTx.read() + " active transactions spread over " + log.size() + " entries in the log");
+		logger.debug(activeTx.read() + " active transactions spread over " + log.size() + " entries in the log");
+
+		if(executor != null)
+		{
+			executor.scheduleAtFixedRate(this::removeStale, 1, 5, TimeUnit.MINUTES);
+		}
 	}
 
 	@Override
