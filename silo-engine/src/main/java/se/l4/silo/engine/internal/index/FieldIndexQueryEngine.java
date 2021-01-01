@@ -35,6 +35,7 @@ import se.l4.silo.engine.types.FieldType;
 import se.l4.silo.engine.types.LongFieldType;
 import se.l4.silo.engine.types.MaxMin;
 import se.l4.silo.engine.types.MergedFieldType;
+import se.l4.silo.engine.types.StringFieldType;
 import se.l4.silo.index.FieldIndexQuery;
 import se.l4.silo.index.FieldIndexResult;
 import se.l4.silo.query.EqualsMatcher;
@@ -56,6 +57,7 @@ public class FieldIndexQueryEngine<T>
 	private final String uniqueName;
 
 	private final MVStoreManager store;
+	private final MVMap<String, Long> indexState;
 	private final MVMap<Long, Object[]> indexedData;
 	private final MVMap<Object[], Object[]> index;
 	private final TransactionValue<ReadOnlyIndex> indexMapValue;
@@ -66,6 +68,8 @@ public class FieldIndexQueryEngine<T>
 	private final MergedFieldType dataFieldType;
 	private final MergedFieldType indexKey;
 	private final MergedFieldType indexData;
+
+	private volatile long hardCommit;
 
 	public FieldIndexQueryEngine(
 		MVStoreManager store,
@@ -89,6 +93,8 @@ public class FieldIndexQueryEngine<T>
 		this.indexData = createFieldType(sortFields, false);
 		index = store.openMap("index:" + uniqueName, indexKey, indexData);
 
+		indexState = store.openMap("state", StringFieldType.INSTANCE, LongFieldType.INSTANCE);
+
 		if(logger.isDebugEnabled())
 		{
 			logger.debug(uniqueName + ": fields=" + Arrays.toString(this.fields) + ", sortFields=" + Arrays.toString(this.sortFields));
@@ -98,6 +104,31 @@ public class FieldIndexQueryEngine<T>
 			MVStoreManager.VersionHandle handle = store.acquireVersionHandle();
 			return new ReadOnlyIndex(handle, index.openVersion(handle.getVersion()));
 		};
+
+		// Load the hard commit
+		hardCommit = indexState.getOrDefault(uniqueName, 0l);
+
+		/*
+		 * Need to keep track of commits a bit, so register an action that
+		 * will keep track of the last "safe" operation that wouldn't be lost
+		 * after a crash.
+		 */
+		store.registerCommitAction(new MVStoreManager.CommitAction()
+		{
+			private long commit;
+
+			@Override
+			public void preCommit()
+			{
+				commit = indexState.getOrDefault(uniqueName, 0l);
+			}
+
+			@Override
+			public void afterCommit()
+			{
+				hardCommit = commit;
+			}
+		});
 	}
 
 	@Override
@@ -112,6 +143,12 @@ public class FieldIndexQueryEngine<T>
 	)
 	{
 		consumer.accept(indexMapValue);
+	}
+
+	@Override
+	public long getLastHardCommit()
+	{
+		return hardCommit;
 	}
 
 	/**
@@ -175,12 +212,20 @@ public class FieldIndexQueryEngine<T>
 		return new MergedFieldType(result);
 	}
 
-
 	@Override
 	public void close()
 		throws IOException
 	{
 		store.close();
+	}
+
+	@Override
+	public void clear()
+	{
+		indexedData.clear();
+		index.clear();
+		indexState.put(uniqueName, 0l);
+		hardCommit = 0;
 	}
 
 	@Override
@@ -210,7 +255,7 @@ public class FieldIndexQueryEngine<T>
 	}
 
 	@Override
-	public void apply(long id, ExtendedDataInputStream in)
+	public void apply(long op, long id, ExtendedDataInputStream in)
 		throws IOException
 	{
 		int version = in.read();
@@ -230,6 +275,9 @@ public class FieldIndexQueryEngine<T>
 
 		// Store the new key
 		store(keyData, sort, id);
+
+		// Store that we have applied this operation
+		indexState.put(uniqueName, op);
 	}
 
 	private void store(Object[] keyData, Object[] sortData, long id)
@@ -329,12 +377,15 @@ public class FieldIndexQueryEngine<T>
 	}
 
 	@Override
-	public void delete(long id)
+	public void delete(long op, long id)
 	{
 		logger.debug("{}: Delete entry for id {}", uniqueName, id);
 		Object[] previousKey = indexedData.get(id);
 		remove(previousKey, id);
 		indexedData.remove(id);
+
+		// Store that we have applied this operation
+		indexState.put(uniqueName, op);
 	}
 
 	private int findField(String name, boolean errorOnNoFind)
@@ -506,57 +557,6 @@ public class FieldIndexQueryEngine<T>
 	)
 	{
 		return fetch(encounter).flatMapMany(FetchResult::stream);
-	}
-
-	private Number convert(FieldType<?> type, Object v)
-	{
-		return (Number) type.convert(v);
-	}
-
-	private Object increase(FieldType<?> type, Object v)
-	{
-		Number n = (Number) type.convert(v);
-		if(n instanceof Double)
-		{
-			return Math.nextUp(n.doubleValue());
-		}
-		else if(n instanceof Float)
-		{
-			return Math.nextUp(n.floatValue());
-		}
-		else if(n instanceof Integer)
-		{
-			return Math.addExact(n.intValue(), 1);
-		}
-		else if(n instanceof Long)
-		{
-			return Math.addExact(n.longValue(), 1);
-		}
-
-		throw new IllegalArgumentException("Can not increase value of " + v);
-	}
-
-	private Object decrease(FieldType<?> type, Object v)
-	{
-		Number n = (Number) type.convert(v);
-		if(n instanceof Double)
-		{
-			return Math.nextDown(n.doubleValue());
-		}
-		else if(n instanceof Float)
-		{
-			return Math.nextDown(n.floatValue());
-		}
-		else if(n instanceof Integer)
-		{
-			return Math.addExact(n.intValue(), - 1);
-		}
-		else if(n instanceof Long)
-		{
-			return Math.addExact(n.longValue(), - 1);
-		}
-
-		throw new IllegalArgumentException("Can not decrease value of " + v);
 	}
 
 	public interface QueryPart
