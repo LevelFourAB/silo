@@ -30,8 +30,8 @@ import se.l4.silo.engine.QueryEngine;
 import se.l4.silo.engine.Storage;
 import se.l4.silo.engine.internal.mvstore.SharedStorages;
 import se.l4.silo.engine.internal.query.QueryEncounterImpl;
+import se.l4.silo.engine.internal.query.QueryEngineController;
 import se.l4.silo.engine.internal.query.QueryEngineCreationEncounterImpl;
-import se.l4.silo.engine.internal.query.QueryEngineUpdater;
 import se.l4.silo.engine.internal.tx.WriteableTransactionExchange;
 import se.l4.silo.engine.io.ExtendedDataOutputStream;
 import se.l4.silo.query.Query;
@@ -51,9 +51,7 @@ public class StorageImpl<T>
 
 	private final PrimaryIndex primary;
 	private final MapIterable<String, QueryEngine<T, ?>> queryEngines;
-	private final QueryEngineUpdater<T> queryEngineUpdater;
-
-	private long previousForIndex;
+	private final MapIterable<String, QueryEngineController<T>> queryControllers;
 
 	public StorageImpl(
 		StorageEngine engine,
@@ -62,7 +60,6 @@ public class StorageImpl<T>
 		TransactionSupport transactionSupport,
 
 		MVStoreManager store,
-		MVStoreManager stateStore,
 
 		Path dataDir,
 		DataStorage storage,
@@ -92,17 +89,12 @@ public class StorageImpl<T>
 			));
 		}).toImmutable();
 
-		this.queryEngineUpdater = new QueryEngineUpdater<>(
-			engine,
-
-			storage,
+		this.queryControllers = this.queryEngines.collectValues((key, e) -> new QueryEngineController<>(
 			store,
-			stateStore,
-			this,
-			executor,
-			name,
-			this.queryEngines
-		);
+			storage,
+			e,
+			name + "-" + key
+		));
 
 		// Register transactional values used by query engines
 		queryEngines
@@ -372,7 +364,6 @@ public class StorageImpl<T>
 			log.trace("[" + name + "] Direct store of " + id);
 		}
 
-		this.previousForIndex = primary.latest();
 		long previousInternalId = primary.get(null, id);
 
 		// Store the new data and associate it with the primary index
@@ -384,7 +375,8 @@ public class StorageImpl<T>
 		{
 			// Remove the old data
 			storage.delete(previousInternalId);
-			queryEngineUpdater.delete(previousInternalId);
+
+			queryControllers.each(e -> e.delete(previousInternalId));
 		}
 	}
 
@@ -406,7 +398,7 @@ public class StorageImpl<T>
 
 		if(internalId == 0) return;
 
-		queryEngineUpdater.delete(internalId);
+		queryControllers.each(e -> e.delete(internalId));
 
 		storage.delete(internalId);
 		primary.remove(id);
@@ -416,22 +408,11 @@ public class StorageImpl<T>
 		throws IOException
 	{
 		long internalId = primary.get(null, id);
-		queryEngineUpdater.store(this.previousForIndex, internalId, index, data);
-	}
 
-	public void awaitQueryEngines()
-	{
-		while(! queryEngineUpdater.isAllUpDate())
+		QueryEngineController<T> controller = queryControllers.get(index);
+		if(controller != null)
 		{
-			try
-			{
-				Thread.sleep(500);
-			}
-			catch(InterruptedException e)
-			{
-				Thread.currentThread().interrupt();
-				throw new StorageException("Interrupted while waiting for query engines to be updated");
-			}
+			controller.store(internalId, data);
 		}
 	}
 }

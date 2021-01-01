@@ -92,11 +92,14 @@ public class TransactionOperationType
 				IOUtils.writeByteArray(instance.getData(), out);
 				break;
 			case INDEX_CHUNK:
+				out.writeString(instance.getEntity());
+				IOUtils.writeId(instance.getId(), out);
+				IOUtils.writeByteArray(instance.getData(), out);
+				break;
 			case DELETE:
 				out.writeString(instance.getEntity());
 				IOUtils.writeId(instance.getId(), out);
 				break;
-
 		}
 	}
 

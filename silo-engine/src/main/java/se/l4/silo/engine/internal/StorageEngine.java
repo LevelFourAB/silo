@@ -94,11 +94,6 @@ public class StorageEngine
 	private final MVDataStorage dataStorage;
 
 	/**
-	 * Store used for state data that is derived.
-	 */
-	private final MVStoreManagerImpl stateStore;
-
-	/**
 	 * The generator used for creating identifiers for transactions and
 	 * primary key mapping.
 	 */
@@ -178,16 +173,6 @@ public class StorageEngine
 			.cacheSize(config.getCacheSizeInMb())
 			.fileName(root.resolve("storage.mv.bin").toString()));
 
-		Path derivedState = root.resolve("derived-state.mv.bin");
-		boolean hasDerivedState = Files.exists(derivedState);
-		this.stateStore = new MVStoreManagerImpl(new MVStore.Builder()
-			.cacheSize(4)
-			.backgroundExceptionHandler((thread, t) -> {
-				logger.error("Error occured in background for state store; " + t.getMessage(), t);
-			})
-			.autoCompactFillRate(20)
-			.fileName(derivedState.toString()));
-
 		ids = new SequenceLongIdGenerator();
 		storages = new ConcurrentHashMap<>();
 
@@ -230,16 +215,6 @@ public class StorageEngine
 			vibe.export(MVStoreHealth.createProbe(store))
 				.at("store", "data")
 				.done();
-
-			// Monitor our derived state
-			store = this.stateStore.getStore();
-			vibe.export(MVStoreCacheHealth.createProbe(store))
-				.at("state", "cache")
-				.done();
-
-			vibe.export(MVStoreHealth.createProbe(store))
-				.at("state", "data")
-				.done();
 		}
 
 		// Build log and start receiving log entries
@@ -249,20 +224,12 @@ public class StorageEngine
 		transactionLog = new TransactionLogImpl(log, ids);
 		transactionSupport = new LogBasedTransactionSupport(store, transactionLog);
 
-		dataStorage = new MVDataStorage(store, transactionSupport);
+		dataStorage = new MVDataStorage(store);
+		dataStorage.provideTransactionValues(transactionSupport::registerValue);
 
 		this.entities = createEntities(entities);
 
-		if(! hasDerivedState)
-		{
-			logger.warn("Blocking until query engines have been restored");
-			// We seem to have been restored from a backup, wait for all of our query engines
-			for(StorageDef def : storages.values())
-			{
-				def.awaitQueryEngines();
-			}
-			logger.info("Query engines have been restored");
-		}
+		// FIXME: Policies for waiting for query engines
 	}
 
 	/**
@@ -337,7 +304,6 @@ public class StorageEngine
 		}
 
 		store.close();
-		stateStore.close();
 
 		try
 		{
@@ -513,9 +479,6 @@ public class StorageEngine
 			// Install the snapshot into the main engine
 			store.installSnapshot(snapshot);
 
-			// Destroy our derived data
-			stateStore.recreate();
-
 			// Reopen our data storage
 			dataStorage.reopen();
 
@@ -525,11 +488,7 @@ public class StorageEngine
 				def.recreate();
 			}
 
-			// Wait for all of the query engines to become up to date
-			for(StorageDef def : storages.values())
-			{
-				def.awaitQueryEngines();
-			}
+			// FIXME: How do we deal indexes here?
 
 			// Reopen our transaction adapter
 			transactionAdapter.reopen();
@@ -625,11 +584,6 @@ public class StorageEngine
 			update(this.queryEngines);
 		}
 
-		public void awaitQueryEngines()
-		{
-			getImpl().awaitQueryEngines();
-		}
-
 		public void update(
 			ListIterable<IndexDefinition<T>> queryEngines
 		)
@@ -662,7 +616,6 @@ public class StorageEngine
 				transactionSupport,
 
 				store,
-				stateStore,
 				dataPath,
 				dataStorage,
 

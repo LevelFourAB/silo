@@ -24,19 +24,18 @@ public interface QueryEngine<T, Q extends Query<T, ?, ?>>
 	String getName();
 
 	/**
-	 * Fetch some results using this engine.
+	 * Get the last hard commit that this engine has performed.
 	 *
-	 * @param encounter
-	 */
-	Mono<? extends FetchResult<?>> fetch(QueryEncounter<? extends Q, T> encounter);
-
-	/**
-	 *
-	 * @param <R>
-	 * @param encounter
 	 * @return
 	 */
-	Flux<?> stream(QueryEncounter<? extends Q, T> encounter);
+	long getLastHardCommit();
+
+	/**
+	 * Clear the index and reset {@link #getLastHardCommit()} to {@code 0}.
+	 *
+	 * @param op
+	 */
+	void clear();
 
 	/**
 	 * Generate data for this index. This data will be applied by the index
@@ -52,10 +51,10 @@ public interface QueryEngine<T, Q extends Query<T, ?, ?>>
 	/**
 	 * Apply previously generated data.
 	 *
-	 * @param id
+	 * @param dataId
 	 * @param in
 	 */
-	void apply(long id, ExtendedDataInputStream in)
+	void apply(long opId, long dataId, ExtendedDataInputStream in)
 		throws IOException;
 
 	/**
@@ -63,5 +62,20 @@ public interface QueryEngine<T, Q extends Query<T, ?, ?>>
 	 *
 	 * @param id
 	 */
-	void delete(long id);
+	void delete(long opId, long dataId);
+
+	/**
+	 * Fetch some results using this engine.
+	 *
+	 * @param encounter
+	 */
+	Mono<? extends FetchResult<?>> fetch(QueryEncounter<? extends Q, T> encounter);
+
+	/**
+	 *
+	 * @param <R>
+	 * @param encounter
+	 * @return
+	 */
+	Flux<?> stream(QueryEncounter<? extends Q, T> encounter);
 }

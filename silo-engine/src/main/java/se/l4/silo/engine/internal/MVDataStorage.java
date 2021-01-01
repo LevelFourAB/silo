@@ -51,8 +51,7 @@ public class MVDataStorage
 	private volatile MVMap<Long, byte[]> chunks;
 
 	public MVDataStorage(
-		MVStoreManager store,
-		TransactionSupport transactionSupport
+		MVStoreManager store
 	)
 	{
 		this.store = store;
@@ -60,9 +59,6 @@ public class MVDataStorage
 
 		readonlyChunks = version -> chunks.openVersion(version);
 		readonlyKeys = version -> keys.openVersion(version);
-
-		transactionSupport.registerValue(readonlyChunks);
-		transactionSupport.registerValue(readonlyKeys);
 	}
 
 	public void reopen()
