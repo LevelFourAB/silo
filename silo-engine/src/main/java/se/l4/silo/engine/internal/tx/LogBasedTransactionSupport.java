@@ -35,6 +35,7 @@ public class LogBasedTransactionSupport
 	private final TransactionLog log;
 
 	private final Lock acquireLock;
+	private final TransactionWaiter waiter;
 
 	private final ThreadLocal<ExchangeImpl> activeExchange;
 	private final MutableList<TransactionValue<?>> values;
@@ -42,12 +43,14 @@ public class LogBasedTransactionSupport
 	public LogBasedTransactionSupport(
 		MVStoreManager storeManager,
 		TransactionLog log,
-		Lock acquireLock
+		Lock acquireLock,
+		TransactionWaiter waiter
 	)
 	{
 		this.storeManager = storeManager;
 		this.log = log;
 		this.acquireLock = acquireLock;
+		this.waiter = waiter;
 
 		activeExchange = new ThreadLocal<>();
 		values = Lists.mutable.empty();
@@ -74,6 +77,7 @@ public class LogBasedTransactionSupport
 				{
 					exchange = new ExchangeImpl(
 						log,
+						waiter,
 						storeManager.acquireVersionHandle(),
 						valuesToCapture
 					);
@@ -250,6 +254,8 @@ public class LogBasedTransactionSupport
 		implements WriteableTransactionExchange
 	{
 		private final TransactionLog log;
+		private final TransactionWaiter waiter;
+
 		private final MVStoreManager.VersionHandle versionHandle;
 		private final ReentrantLock lock;
 
@@ -263,11 +269,14 @@ public class LogBasedTransactionSupport
 
 		public ExchangeImpl(
 			TransactionLog log,
+			TransactionWaiter waiter,
 			MVStoreManager.VersionHandle versionHandle,
 			RichIterable<? extends TransactionValue<?>> values
 		)
 		{
 			this.log = log;
+			this.waiter = waiter;
+
 			this.versionHandle = versionHandle;
 			this.lock = new ReentrantLock();
 
@@ -356,18 +365,16 @@ public class LogBasedTransactionSupport
 					{
 						if(id > 0)
 						{
+							/*
+							 * An identifier indicates that this TX has writes,
+							 * log that it has been rolled back.
+							 */
 							log.rollbackTransaction(id);
+
 							id = -1;
 						}
 
-						sharedData.each(v -> {
-							if(v instanceof TransactionValue.Releasable)
-							{
-								((TransactionValue.Releasable) v).release();
-							}
-						});
-
-						versionHandle.release();
+						release();
 					}
 				}
 				finally
@@ -379,12 +386,12 @@ public class LogBasedTransactionSupport
 
 		public Mono<Void> commit()
 		{
-			return Mono.fromRunnable(() -> {
+			return Mono.defer(() -> {
+				Mono<Void> result = Mono.empty();
+
 				lock.lock();
 				try
 				{
-					if(id == 0) return;
-
 					if(id == -1)
 					{
 						throw new StorageException("Transaction has already been committed or rolled back");
@@ -394,25 +401,39 @@ public class LogBasedTransactionSupport
 					{
 						if(id > 0)
 						{
+							/*
+							 * An identifier indicates that this TX has writes,
+							 * commit it and wait for it to be applied.
+							 */
+							result = waiter.getWaiter(id);
+
 							log.commitTransaction(id);
+
 							id = -1;
 						}
 
-						sharedData.each(v -> {
-							if(v instanceof TransactionValue.Releasable)
-							{
-								((TransactionValue.Releasable) v).release();
-							}
-						});
-
-						versionHandle.release();
+						release();
 					}
 				}
 				finally
 				{
 					lock.unlock();
 				}
+
+				return result;
 			});
+		}
+
+		private void release()
+		{
+			sharedData.each(v -> {
+				if(v instanceof TransactionValue.Releasable)
+				{
+					((TransactionValue.Releasable) v).release();
+				}
+			});
+
+			versionHandle.release();
 		}
 
 		@Override

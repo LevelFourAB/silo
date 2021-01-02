@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -23,8 +24,10 @@ import org.h2.mvstore.MVStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import reactor.core.publisher.Mono;
 import se.l4.silo.Entity;
 import se.l4.silo.StorageException;
+import se.l4.silo.StorageTransactionException;
 import se.l4.silo.engine.EngineConfig;
 import se.l4.silo.engine.EntityCodec;
 import se.l4.silo.engine.EntityDefinition;
@@ -41,6 +44,7 @@ import se.l4.silo.engine.internal.mvstore.SharedStorages;
 import se.l4.silo.engine.internal.tx.LogBasedTransactionSupport;
 import se.l4.silo.engine.internal.tx.TransactionLogApplier;
 import se.l4.silo.engine.internal.tx.TransactionSupport;
+import se.l4.silo.engine.internal.tx.TransactionWaiter;
 import se.l4.silo.engine.log.Log;
 import se.l4.silo.engine.log.LogBuilder;
 import se.l4.vibe.Vibe;
@@ -111,6 +115,11 @@ public class StorageEngine
 	 * Helper for working with transactions.
 	 */
 	private final TransactionSupport transactionSupport;
+
+	/**
+	 * Helper used to wait for a transaction being applied.
+	 */
+	private final TransactionWaiterImpl transactionWaiter;
 
 	/**
 	 * Root directory for data of this engine.
@@ -218,11 +227,13 @@ public class StorageEngine
 		transactionAdapter = new TransactionLogApplier(vibe, executor, store, createApplier());
 		log = logBuilder.build(transactionAdapter);
 
+		transactionWaiter = new TransactionWaiterImpl();
 		transactionLog = new TransactionLogImpl(log, ids);
 		transactionSupport = new LogBasedTransactionSupport(
 			store,
 			transactionLog,
-			mutationLock
+			mutationLock,
+			transactionWaiter
 		);
 
 		dataStorage = new MVDataStorage(store);
@@ -297,6 +308,7 @@ public class StorageEngine
 			public void transactionComplete(long id, Throwable throwable)
 			{
 				mutationLock.unlock();
+				transactionWaiter.complete(id);
 			}
 		};
 	}
@@ -464,5 +476,63 @@ public class StorageEngine
 	public void compact(long timeInMillis)
 	{
 		store.compact(timeInMillis);
+	}
+
+	/**
+	 * Implementation of {@link TransactionWaiter} that uses latches to wait
+	 * for transactions.
+	 */
+	private static class TransactionWaiterImpl
+		implements TransactionWaiter
+	{
+		private final ConcurrentHashMap<Long, CountDownLatch> latches;
+
+		public TransactionWaiterImpl()
+		{
+			latches = new ConcurrentHashMap<>();
+		}
+
+		/**
+		 * Complete the given transaction.
+		 *
+		 * @param tx
+		 */
+		public void complete(long tx)
+		{
+			/*
+			 * Remove the latch associated with the given transaction and if
+			 * it's available count it down.
+			 */
+			CountDownLatch latch = latches.remove(tx);
+			if(latch != null)
+			{
+				latch.countDown();
+			}
+		}
+
+		@Override
+		public Mono<Void> getWaiter(long tx)
+		{
+			/*
+			 * This is called from {@link LogBasedTransactionSupport} to
+			 * retrieve a mono that will represent the end of a transaction.
+			 *
+			 * Create a latch, store it and return a mono that will await it.
+			 */
+			CountDownLatch latch = new CountDownLatch(1);
+			latches.put(tx, latch);
+
+			return Mono.fromRunnable(() -> {
+				try
+				{
+					latch.await();
+				}
+				catch(InterruptedException e)
+				{
+					Thread.currentThread().interrupt();
+					throw new StorageTransactionException("Aborted waiting for transaction, thread was interrupted", e);
+				}
+			});
+		}
 	}
 }
