@@ -219,7 +219,11 @@ public class StorageEngine
 		log = logBuilder.build(transactionAdapter);
 
 		transactionLog = new TransactionLogImpl(log, ids);
-		transactionSupport = new LogBasedTransactionSupport(store, transactionLog);
+		transactionSupport = new LogBasedTransactionSupport(
+			store,
+			transactionLog,
+			mutationLock
+		);
 
 		dataStorage = new MVDataStorage(store);
 		dataStorage.provideTransactionValues(transactionSupport::registerValue);

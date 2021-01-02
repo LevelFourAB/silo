@@ -2,6 +2,7 @@ package se.l4.silo.engine.internal.tx;
 
 import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -33,16 +34,20 @@ public class LogBasedTransactionSupport
 	private final MVStoreManager storeManager;
 	private final TransactionLog log;
 
+	private final Lock acquireLock;
+
 	private final ThreadLocal<ExchangeImpl> activeExchange;
 	private final MutableList<TransactionValue<?>> values;
 
 	public LogBasedTransactionSupport(
 		MVStoreManager storeManager,
-		TransactionLog log
+		TransactionLog log,
+		Lock acquireLock
 	)
 	{
 		this.storeManager = storeManager;
 		this.log = log;
+		this.acquireLock = acquireLock;
 
 		activeExchange = new ThreadLocal<>();
 		values = Lists.mutable.empty();
@@ -64,11 +69,19 @@ public class LogBasedTransactionSupport
 			ExchangeImpl exchange = activeExchange.get();
 			if(exchange == null)
 			{
-				exchange = new ExchangeImpl(
-					log,
-					storeManager.acquireVersionHandle(),
-					valuesToCapture
-				);
+				acquireLock.lock();
+				try
+				{
+					exchange = new ExchangeImpl(
+						log,
+						storeManager.acquireVersionHandle(),
+						valuesToCapture
+					);
+				}
+				finally
+				{
+					acquireLock.unlock();
+				}
 			}
 
 			return context.put(ExchangeImpl.class, exchange);
