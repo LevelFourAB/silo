@@ -32,6 +32,7 @@ import se.l4.silo.engine.internal.mvstore.SharedStorages;
 import se.l4.silo.engine.internal.query.QueryEncounterImpl;
 import se.l4.silo.engine.internal.query.QueryEngineController;
 import se.l4.silo.engine.internal.query.QueryEngineCreationEncounterImpl;
+import se.l4.silo.engine.internal.query.QueryEngineRebuildEncounter;
 import se.l4.silo.engine.internal.tx.TransactionSupport;
 import se.l4.silo.engine.internal.tx.WriteableTransactionExchange;
 import se.l4.silo.engine.io.ExtendedDataOutputStream;
@@ -100,6 +101,35 @@ public class StorageImpl<T>
 		// Register transactional values used by query engines
 		queryEngines
 			.each(q -> q.provideTransactionValues(transactionSupport::registerValue));
+
+		// Start each of the indexes using the executor
+		long largestId = primary.latest();
+		long size = primary.size();
+		QueryEngineRebuildEncounter<T> rebuild = new QueryEngineRebuildEncounter<T>()
+		{
+			public long getSize()
+			{
+				return size;
+			}
+
+			@Override
+			public long getLargestId()
+			{
+				return largestId;
+			}
+
+			public Iterator<LongObjectPair<T>> iterator(long minIdExclusive, long maxIdInclusive)
+			{
+				return createIterator(minIdExclusive, maxIdInclusive);
+			}
+
+			@Override
+			public void reportProgress(long dataId)
+			{
+			}
+		};
+
+		queryControllers.each(c -> executor.submit(() -> c.start(rebuild)));
 	}
 
 	@Override
@@ -261,9 +291,9 @@ public class StorageImpl<T>
 		);
 	}
 
-	public Iterator<LongObjectPair<T>> iterator()
+	public Iterator<LongObjectPair<T>> createIterator(long minIdExclusive, long maxIdInclusive)
 	{
-		long first = primary.first();
+		long first = primary.nextAfter(minIdExclusive);
 		if(first == 0)
 		{
 			return Collections.emptyIterator();
@@ -291,6 +321,11 @@ public class StorageImpl<T>
 				{
 					long toFetch = current;
 					current = primary.nextAfter(current);
+					if(current > maxIdInclusive)
+					{
+						current = 0;
+					}
+
 					try(InputStream in = storage.get(null, toFetch))
 					{
 						return PrimitiveTuples.pair(toFetch, codec.decode(in));
