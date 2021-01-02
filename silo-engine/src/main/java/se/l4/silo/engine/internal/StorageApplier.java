@@ -13,6 +13,13 @@ import java.io.InputStream;
 public interface StorageApplier
 {
 	/**
+	 * Callback called when a specific transaction has been completely applied.
+	 *
+	 * @param id
+	 */
+	void transactionStart(long id);
+
+	/**
 	 * Store some data for the given entity and identifier.
 	 *
 	 * @param entity
@@ -42,4 +49,12 @@ public interface StorageApplier
 	 */
 	void index(String entity, String index, Object id, InputStream data)
 		throws IOException;
+
+	/**
+	 * Callback called when a specific transaction has been completely applied.
+	 *
+	 * @param id
+	 * @param throwable
+	 */
+	void transactionComplete(long id, Throwable throwable);
 }

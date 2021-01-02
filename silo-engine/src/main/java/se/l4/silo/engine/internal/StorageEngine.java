@@ -39,6 +39,7 @@ import se.l4.silo.engine.internal.mvstore.MVStoreHealth;
 import se.l4.silo.engine.internal.mvstore.MVStoreManagerImpl;
 import se.l4.silo.engine.internal.mvstore.SharedStorages;
 import se.l4.silo.engine.internal.tx.LogBasedTransactionSupport;
+import se.l4.silo.engine.internal.tx.TransactionLogApplier;
 import se.l4.silo.engine.log.Log;
 import se.l4.silo.engine.log.LogBuilder;
 import se.l4.vibe.Vibe;
@@ -103,7 +104,7 @@ public class StorageEngine
 	 * The adapter that receives transaction parts and turns them into
 	 * storage operations.
 	 */
-	private final TransactionAdapter transactionAdapter;
+	private final TransactionLogApplier transactionAdapter;
 
 	/**
 	 * Helper for working with transactions.
@@ -213,7 +214,7 @@ public class StorageEngine
 		}
 
 		// Build log and start receiving log entries
-		transactionAdapter = new TransactionAdapter(vibe, executor, store, createApplier());
+		transactionAdapter = new TransactionLogApplier(vibe, executor, store, createApplier());
 		log = logBuilder.build(transactionAdapter);
 
 		transactionLog = new TransactionLogImpl(log, ids);
@@ -238,71 +239,59 @@ public class StorageEngine
 		return new StorageApplier()
 		{
 			@Override
+			public void transactionStart(long id)
+			{
+				mutationLock.lock();
+			}
+
+			@Override
 			public void store(String entity, Object id, InputStream data)
 				throws IOException
 			{
-				try
-				{
-					stores.increase();
-					mutationLock.lock();
+				stores.increase();
 
-					StorageImpl storage = storages.get(entity);
-					if(storage == null)
-					{
-						return;
-					}
-
-					storage.directStore(id, data);
-				}
-				finally
+				StorageImpl storage = storages.get(entity);
+				if(storage == null)
 				{
-					mutationLock.unlock();
+					return;
 				}
+
+				storage.directStore(id, data);
 			}
 
 			@Override
 			public void delete(String entity, Object id)
 				throws IOException
 			{
-				try
-				{
-					deletes.increase();
-					mutationLock.lock();
+				deletes.increase();
+				mutationLock.lock();
 
-					StorageImpl storage = storages.get(entity);
-					if(storage == null)
-					{
-						return;
-					}
-
-					storage.directDelete(id);
-				}
-				finally
+				StorageImpl storage = storages.get(entity);
+				if(storage == null)
 				{
-					mutationLock.unlock();
+					return;
 				}
+
+				storage.directDelete(id);
 			}
 
 			@Override
 			public void index(String entity, String index, Object id, InputStream data)
 				throws IOException
 			{
-				try
+				StorageImpl storage = storages.get(entity);
+				if(storage == null)
 				{
-					mutationLock.lock();
-
-					StorageImpl storage = storages.get(entity);
-					if(storage == null)
-					{
-						return;
-					}
-
-					storage.directIndex(index, id, data);
+					return;
 				}
-				finally
-				{
-					mutationLock.unlock();
-				}
+
+				storage.directIndex(index, id, data);
+			}
+
+			@Override
+			public void transactionComplete(long id, Throwable throwable)
+			{
+				mutationLock.unlock();
 			}
 		};
 	}

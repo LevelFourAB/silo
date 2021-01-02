@@ -1,13 +1,8 @@
 package se.l4.silo.engine.internal.tx;
 
-import se.l4.silo.engine.internal.TransactionAdapter;
-
 /**
- * Operation in a transaction. Used in {@link TransactionAdapter} to
+ * Operation in a transaction. Used in {@link TransactionLogApplier} to
  * store information about the operations a transaction wants to perform.
- *
- * @author Andreas Holstenson
- *
  */
 public class TransactionOperation
 {

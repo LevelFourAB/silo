@@ -1,4 +1,4 @@
-package se.l4.silo.engine.internal;
+package se.l4.silo.engine.internal.tx;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -21,8 +21,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import se.l4.silo.engine.MVStoreManager;
-import se.l4.silo.engine.internal.tx.TransactionOperation;
-import se.l4.silo.engine.internal.tx.TransactionOperationType;
+import se.l4.silo.engine.internal.IOUtils;
+import se.l4.silo.engine.internal.MessageConstants;
+import se.l4.silo.engine.internal.StorageApplier;
 import se.l4.silo.engine.io.ExtendedDataInput;
 import se.l4.silo.engine.io.ExtendedDataInputStream;
 import se.l4.silo.engine.log.LogEntry;
@@ -37,20 +38,16 @@ import se.l4.ylem.io.IOConsumer;
 /**
  * Adapter that handles the translation from individual transaction events
  * to events that are applied to the storage.
- *
- * @author Andreas Holstenson
- *
  */
-public class TransactionAdapter
+public class TransactionLogApplier
 	implements IOConsumer<LogEntry>
 {
 	// Timeout to use for removing stale transactions
 	private static final long TIMEOUT = TimeUnit.HOURS.toMillis(24);
 
-	private static final Logger logger = LoggerFactory.getLogger(TransactionAdapter.class);
+	private static final Logger logger = LoggerFactory.getLogger(TransactionLogApplier.class);
 
 	private final StorageApplier applier;
-	private final MVStoreManager store;
 
 	private final MVMap<long[], TransactionOperation> log;
 
@@ -61,9 +58,13 @@ public class TransactionAdapter
 	private final CountingProbe txCommits;
 	private final CountingProbe txRollbacks;
 
-	public TransactionAdapter(Vibe vibe, ScheduledExecutorService executor, MVStoreManager store, StorageApplier applier)
+	public TransactionLogApplier(
+		Vibe vibe,
+		ScheduledExecutorService executor,
+		MVStoreManager store,
+		StorageApplier applier
+	)
 	{
-		this.store = store;
 		this.applier = applier;
 
 		activeTx = new CountingProbe();
@@ -377,6 +378,8 @@ public class TransactionAdapter
 	private void applyTransaction(long tx)
 		throws IOException
 	{
+		applier.transactionStart(tx);
+
 		Iterator<long[]> it = log.keyIterator(new long[] { tx, 0l });
 		List<long[]> keys = new ArrayList<>();
 		while(it.hasNext())
@@ -431,6 +434,9 @@ public class TransactionAdapter
 		}
 
 		removeTransaction(tx);
+
+		// Indicate that the TX has been applied
+		applier.transactionComplete(tx, null);
 	}
 
 	private class InputStreamEnumeration

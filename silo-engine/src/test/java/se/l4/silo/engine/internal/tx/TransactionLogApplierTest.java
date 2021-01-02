@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.internal.OpChecker;
 import se.l4.silo.engine.internal.StorageApplier;
-import se.l4.silo.engine.internal.TransactionAdapter;
 import se.l4.silo.engine.internal.log.TransactionLogImpl;
 import se.l4.silo.engine.internal.mvstore.MVStoreManagerImpl;
 import se.l4.silo.engine.log.DirectApplyLog;
@@ -22,14 +21,14 @@ import se.l4.silo.engine.log.Log;
 import se.l4.ylem.ids.SimpleLongIdGenerator;
 
 /**
- * Tests for {@link TransactionAdapter} to check that transactions are
+ * Tests for {@link TransactionLogApplier} to check that transactions are
  * translated into a proper set of storage operations.
  *
  */
-public class TransactionAdapterTest
+public class TransactionLogApplierTest
 {
 	private MVStoreManager store;
-	private TransactionAdapter adapter;
+	private TransactionLogApplier adapter;
 	private OpChecker ops;
 	private TransactionLogImpl tx;
 
@@ -44,8 +43,14 @@ public class TransactionAdapterTest
 
 		ops = new OpChecker();
 
-		adapter = new TransactionAdapter(null, null, store, new StorageApplier()
+		adapter = new TransactionLogApplier(null, null, store, new StorageApplier()
 		{
+			@Override
+			public void transactionStart(long id)
+			{
+				ops.check("txStart");
+			}
+
 			@Override
 			public void store(String entity, Object id, InputStream data)
 				throws IOException
@@ -65,6 +70,12 @@ public class TransactionAdapterTest
 				throws IOException
 			{
 				ops.check("index", entity, index, id, data);
+			}
+
+			@Override
+			public void transactionComplete(long id, Throwable t)
+			{
+				ops.check("txComplete");
 			}
 		});
 
@@ -106,9 +117,22 @@ public class TransactionAdapterTest
 		ops.expect("index", entity, index, id, data);
 	}
 
+	private void expectTransactionStart()
+	{
+		ops.expect("txStart");
+	}
+
+	private void expectTransactionComplete()
+	{
+		ops.expect("txComplete");
+	}
+
 	@Test
 	public void testEmpty()
 	{
+		expectTransactionStart();
+		expectTransactionComplete();
+
 		long id = tx.startTransaction();
 		tx.commitTransaction(id);
 
@@ -118,7 +142,9 @@ public class TransactionAdapterTest
 	@Test
 	public void testOneEmptyStore()
 	{
+		expectTransactionStart();
 		expectStore("test", 12, new ByteArrayInputStream(new byte[0]));
+		expectTransactionComplete();
 
 		long id = tx.startTransaction();
 		tx.store(id, "test", 12, out -> {});
@@ -130,7 +156,9 @@ public class TransactionAdapterTest
 	@Test
 	public void testOneSmallStore()
 	{
+		expectTransactionStart();
 		expectStore("test", 12, generateData(1024));
+		expectTransactionComplete();
 
 		long id = tx.startTransaction();
 		tx.store(id, "test", 12, generateData(1024)::transferTo);
@@ -142,7 +170,9 @@ public class TransactionAdapterTest
 	@Test
 	public void testOneLargeStore()
 	{
+		expectTransactionStart();
 		expectStore("test", 12, generateData(1024 * 1024 * 4));
+		expectTransactionComplete();
 
 		long id = tx.startTransaction();
 		tx.store(id, "test", 12, generateData(1024 * 1024 * 4)::transferTo);
@@ -154,7 +184,9 @@ public class TransactionAdapterTest
 	@Test
 	public void testIndex()
 	{
+		expectTransactionStart();
 		expectIndex("test", "idx1", 12, generateData(1024));
+		expectTransactionComplete();
 
 		long id = tx.startTransaction();
 		tx.storeIndex(id, "test", "idx1", 12, generateData(1024)::transferTo);
@@ -177,13 +209,15 @@ public class TransactionAdapterTest
 		tx.store(id, "test", 12, generateData(1024 * 1024 * 4)::transferTo);
 		tx.rollbackTransaction(id);
 
-		ops.checkEmpty();;
+		ops.checkEmpty();
 	}
 
 	@Test
 	public void testDelete()
 	{
+		expectTransactionStart();
 		expectDelete("test", 12);
+		expectTransactionComplete();
 
 		long id = tx.startTransaction();
 		tx.delete(id, "test", 12);
@@ -195,8 +229,10 @@ public class TransactionAdapterTest
 	@Test
 	public void testMultiple()
 	{
+		expectTransactionStart();
 		expectDelete("test", 12);
 		expectStore("test", 14, generateData(1024));
+		expectTransactionComplete();
 
 		long id = tx.startTransaction();
 		tx.delete(id, "test", 12);
@@ -209,10 +245,14 @@ public class TransactionAdapterTest
 	@Test
 	public void testLargeTransaction()
 	{
+		expectTransactionStart();
+
 		for(int i=0; i<2000; i++)
 		{
 			expectStore("test", i, i % 2 == 0 ? generateData(1024) : generateData(512));
 		}
+
+		expectTransactionComplete();
 
 		long id = tx.startTransaction();
 		for(int i=0; i<2000; i++)
@@ -227,8 +267,13 @@ public class TransactionAdapterTest
 	@Test
 	public void testMultipleCommits()
 	{
+		expectTransactionStart();
 		expectStore("test", 2, generateData(0));
+		expectTransactionComplete();
+
+		expectTransactionStart();
 		expectStore("test", 1, generateData(0));
+		expectTransactionComplete();
 
 		long t1 = tx.startTransaction();
 		long t2 = tx.startTransaction();
@@ -243,7 +288,9 @@ public class TransactionAdapterTest
 	@Test
 	public void testMultipleCommitAndRollback()
 	{
+		expectTransactionStart();
 		expectStore("test", 1, generateData(0));
+		expectTransactionComplete();
 
 		long t1 = tx.startTransaction();
 		long t2 = tx.startTransaction();
@@ -258,9 +305,14 @@ public class TransactionAdapterTest
 	@Test
 	public void testMultipleCommits2()
 	{
+		expectTransactionStart();
 		expectStore("test", 2, generateData(0));
 		expectStore("test", 2, generateData(1024));
+		expectTransactionComplete();
+
+		expectTransactionStart();
 		expectStore("test", 1, generateData(512));
+		expectTransactionComplete();
 
 		long t1 = tx.startTransaction();
 		long t2 = tx.startTransaction();
