@@ -1,4 +1,4 @@
-package se.l4.silo.engine.internal;
+package se.l4.silo.engine.internal.tx;
 
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -10,7 +10,6 @@ import reactor.core.publisher.Mono;
 import se.l4.silo.Transaction;
 import se.l4.silo.engine.TransactionValue;
 import se.l4.silo.engine.TransactionValueProvider;
-import se.l4.silo.engine.internal.tx.WriteableTransactionExchange;
 
 /**
  * Transaction support as seen internally in the storage engine.

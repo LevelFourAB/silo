@@ -8,6 +8,7 @@ import org.h2.mvstore.type.ObjectDataType;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.TransactionValue;
 import se.l4.silo.engine.TransactionValueProvider;
+import se.l4.silo.engine.internal.tx.TransactionSupport;
 import se.l4.silo.engine.internal.tx.WriteableTransactionExchange;
 import se.l4.silo.engine.types.DataTypeAdapter;
 import se.l4.silo.engine.types.LongFieldType;

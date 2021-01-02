@@ -20,7 +20,6 @@ import se.l4.silo.Transaction;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.TransactionValue;
 import se.l4.silo.engine.TransactionValueProvider;
-import se.l4.silo.engine.internal.TransactionSupport;
 import se.l4.silo.engine.internal.log.TransactionLog;
 import se.l4.ylem.io.IOConsumer;
 

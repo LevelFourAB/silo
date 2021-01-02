@@ -21,6 +21,7 @@ import se.l4.silo.engine.EngineConfig;
 import se.l4.silo.engine.EntityDefinition;
 import se.l4.silo.engine.LocalSilo;
 import se.l4.silo.engine.Snapshot;
+import se.l4.silo.engine.internal.tx.TransactionSupport;
 import se.l4.silo.engine.log.LogBuilder;
 import se.l4.vibe.Vibe;
 

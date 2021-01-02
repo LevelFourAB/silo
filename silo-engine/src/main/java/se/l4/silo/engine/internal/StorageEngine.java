@@ -40,6 +40,7 @@ import se.l4.silo.engine.internal.mvstore.MVStoreManagerImpl;
 import se.l4.silo.engine.internal.mvstore.SharedStorages;
 import se.l4.silo.engine.internal.tx.LogBasedTransactionSupport;
 import se.l4.silo.engine.internal.tx.TransactionLogApplier;
+import se.l4.silo.engine.internal.tx.TransactionSupport;
 import se.l4.silo.engine.log.Log;
 import se.l4.silo.engine.log.LogBuilder;
 import se.l4.vibe.Vibe;

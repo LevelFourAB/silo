@@ -32,6 +32,7 @@ import se.l4.silo.engine.internal.mvstore.SharedStorages;
 import se.l4.silo.engine.internal.query.QueryEncounterImpl;
 import se.l4.silo.engine.internal.query.QueryEngineController;
 import se.l4.silo.engine.internal.query.QueryEngineCreationEncounterImpl;
+import se.l4.silo.engine.internal.tx.TransactionSupport;
 import se.l4.silo.engine.internal.tx.WriteableTransactionExchange;
 import se.l4.silo.engine.io.ExtendedDataOutputStream;
 import se.l4.silo.query.Query;
