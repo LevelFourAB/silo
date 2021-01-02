@@ -37,6 +37,7 @@ import se.l4.silo.engine.Storage;
 import se.l4.silo.engine.Storage.Builder;
 import se.l4.silo.engine.internal.log.TransactionLog;
 import se.l4.silo.engine.internal.log.TransactionLogImpl;
+import se.l4.silo.engine.internal.migration.Migration;
 import se.l4.silo.engine.internal.mvstore.MVStoreCacheHealth;
 import se.l4.silo.engine.internal.mvstore.MVStoreHealth;
 import se.l4.silo.engine.internal.mvstore.MVStoreManagerImpl;
@@ -191,6 +192,9 @@ public class StorageEngine
 			})
 			.cacheSize(config.getCacheSizeInMb())
 			.fileName(root.resolve("storage.mv.bin").toString()));
+
+		// Request a migration of the store
+		Migration.migrate(store.getStore());
 
 		ids = new SequenceLongIdGenerator();
 		storages = new ConcurrentHashMap<>();
@@ -373,27 +377,15 @@ public class StorageEngine
 	}
 
 	/**
-	 * Create a new main storage.
+	 * Create a new storage.
 	 *
 	 * @param name
 	 * @return
 	 */
 	public <T> Storage.Builder<T> createStorage(String name, EntityCodec<T> codec)
 	{
-		return createStorage(name, "main", codec);
-	}
-
-	/**
-	 * Create a new storage.
-	 *
-	 * @param name
-	 * @param subName
-	 * @return
-	 */
-	public <T> Storage.Builder<T> createStorage(String name, String subName, EntityCodec<T> codec)
-	{
-		String storageName = name + "::" + subName;
-		Path dataPath = resolveDataPath(name, subName);
+		String storageName = name;
+		Path dataPath =  root.resolve("index").resolve(name);
 		return new Storage.Builder<T>()
 		{
 			private final MutableList<IndexDefinition<T>> indexes = Lists.mutable.empty();
@@ -444,11 +436,6 @@ public class StorageEngine
 				return storage;
 			}
 		};
-	}
-
-	private Path resolveDataPath(String name, String subName)
-	{
-		return root.resolve("storage").resolve(name).resolve(subName);
 	}
 
 	/**
