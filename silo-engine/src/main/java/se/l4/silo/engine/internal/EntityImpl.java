@@ -9,7 +9,6 @@ import se.l4.silo.FetchResult;
 import se.l4.silo.StoreResult;
 import se.l4.silo.engine.LocalEntity;
 import se.l4.silo.engine.LocalIndex;
-import se.l4.silo.engine.Storage;
 import se.l4.silo.query.Query;
 
 public class EntityImpl<ID, T>

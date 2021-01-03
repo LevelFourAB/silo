@@ -1,4 +1,4 @@
-package se.l4.silo.engine;
+package se.l4.silo.engine.internal;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -6,6 +6,8 @@ import se.l4.silo.DeleteResult;
 import se.l4.silo.Entity;
 import se.l4.silo.FetchResult;
 import se.l4.silo.StoreResult;
+import se.l4.silo.engine.IndexDefinition;
+import se.l4.silo.engine.LocalIndex;
 import se.l4.silo.query.Query;
 
 /**

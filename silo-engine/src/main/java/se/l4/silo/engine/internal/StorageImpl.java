@@ -29,7 +29,6 @@ import se.l4.silo.engine.IndexDefinition;
 import se.l4.silo.engine.LocalIndex;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.QueryEngine;
-import se.l4.silo.engine.Storage;
 import se.l4.silo.engine.internal.mvstore.SharedStorages;
 import se.l4.silo.engine.internal.query.QueryEncounterImpl;
 import se.l4.silo.engine.internal.query.QueryEngineController;

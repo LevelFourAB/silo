@@ -468,7 +468,5 @@ public class TransactionLogApplier
 
 			return new ByteArrayInputStream(log.get(key).getData());
 		}
-
-
 	}
 }

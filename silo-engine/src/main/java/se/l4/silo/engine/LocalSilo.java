@@ -6,10 +6,11 @@ import java.time.Duration;
 
 import org.eclipse.collections.api.factory.Lists;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import se.l4.silo.EntityRef;
 import se.l4.silo.Silo;
-import se.l4.silo.engine.internal.LocalSiloBuilder;
+import se.l4.silo.engine.internal.LocalSiloImpl;
 import se.l4.silo.engine.log.DirectApplyLog;
 import se.l4.silo.engine.log.LogBuilder;
 import se.l4.vibe.Vibe;
@@ -38,6 +39,13 @@ public interface LocalSilo
 	{
 		return entity(EntityRef.create(name, idType, objectType));
 	}
+
+	/**
+	 * Get all of the entities.
+	 *
+	 * @return
+	 */
+	Flux<LocalEntity<?, ?>> entities();
 
 	/**
 	 * Close this instance.
@@ -95,7 +103,7 @@ public interface LocalSilo
 	 */
 	public static Builder open(LogBuilder logBuilder, Path path)
 	{
-		return new LocalSiloBuilder(
+		return new LocalSiloImpl.BuilderImpl(
 			logBuilder,
 			path,
 			new EngineConfig(),

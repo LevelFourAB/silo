@@ -19,7 +19,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ListIterable;
 import org.eclipse.collections.api.list.MutableList;
-import org.eclipse.collections.api.map.ImmutableMap;
 import org.h2.mvstore.MVStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,10 +31,7 @@ import se.l4.silo.engine.EngineConfig;
 import se.l4.silo.engine.EntityCodec;
 import se.l4.silo.engine.EntityDefinition;
 import se.l4.silo.engine.IndexDefinition;
-import se.l4.silo.engine.LocalEntity;
 import se.l4.silo.engine.Snapshot;
-import se.l4.silo.engine.Storage;
-import se.l4.silo.engine.Storage.Builder;
 import se.l4.silo.engine.internal.log.TransactionLog;
 import se.l4.silo.engine.internal.log.TransactionLogImpl;
 import se.l4.silo.engine.internal.migration.Migration;
@@ -79,11 +75,6 @@ public class StorageEngine
 	 * {@link Entity entities}.
 	 */
 	private final Map<String, StorageImpl<?>> storages;
-
-	/**
-	 * Instances of {@link Entity} created via configuration.
-	 */
-	private final ImmutableMap<String, LocalEntity<?, ?>> entities;
 
 	/**
 	 * The store used for storing main data.
@@ -244,8 +235,6 @@ public class StorageEngine
 		dataStorage = new MVDataStorage(store);
 		dataStorage.provideTransactionValues(transactionSupport::registerValue);
 
-		this.entities = createEntities(entities);
-
 		// FIXME: Policies for waiting for query engines
 	}
 
@@ -342,21 +331,6 @@ public class StorageEngine
 		}
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private final ImmutableMap<String, LocalEntity<?, ?>> createEntities(ListIterable<EntityDefinition> entities)
-	{
-		// TODO: Support for different entity implementations?
-		return (ImmutableMap) entities.collect(def -> {
-			return new EntityImpl(
-				def.getName(),
-				def.getIdSupplier(),
-				createStorage(def.getName(), def.getCodec())
-					.addIndexes(def.getIndexes())
-					.build()
-			);
-		}).toMap(v -> v.getName(), v -> v).toImmutable();
-	}
-
 	/**
 	 * Get the {@link TransactionSupport} this engine uses.
 	 *
@@ -392,14 +366,14 @@ public class StorageEngine
 			private final MutableList<IndexDefinition<T>> indexes = Lists.mutable.empty();
 
 			@Override
-			public Builder<T> addIndexes(Iterable<IndexDefinition<T>> indexes)
+			public Storage.Builder<T> addIndexes(Iterable<IndexDefinition<T>> indexes)
 			{
 				this.indexes.withAll(indexes);
 				return this;
 			}
 
 			@Override
-			public Builder<T> addIndex(IndexDefinition<T> index)
+			public Storage.Builder<T> addIndex(IndexDefinition<T> index)
 			{
 				this.indexes.add(index);
 				return this;
@@ -437,17 +411,6 @@ public class StorageEngine
 				return storage;
 			}
 		};
-	}
-
-	/**
-	 * Get an entity from this engine.
-	 *
-	 * @param entityName
-	 * @return
-	 */
-	public LocalEntity<?, ?> getEntity(String entityName)
-	{
-		return entities.get(entityName);
 	}
 
 	/**
