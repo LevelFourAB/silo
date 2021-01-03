@@ -47,7 +47,7 @@ public class StorageImpl<T>
 {
 	private static final Logger log = LoggerFactory.getLogger(StorageImpl.class);
 	private final TransactionSupport transactionSupport;
-	private final DataStorage storage;
+	private final DataStorage mainDataStorage;
 
 	private final String name;
 	private final EntityCodec<T> codec;
@@ -67,21 +67,24 @@ public class StorageImpl<T>
 		TransactionSupport transactionSupport,
 
 		MVStoreManager store,
-
-		Path dataDir,
-		DataStorage storage,
+		DataStorage mainDataStorage,
 
 		String name,
 		EntityCodec<T> codec,
 
-		PrimaryIndex primary,
+		DataStorage indexDataStorage,
+		Path indexDataPath,
 		RichIterable<IndexDefinition<?>> indexes
 	)
 	{
 		this.name = name;
 		this.transactionSupport = transactionSupport;
-		this.storage = storage;
-		this.primary = primary;
+		this.mainDataStorage = mainDataStorage;
+		this.primary = new PrimaryIndex(
+			store,
+			transactionSupport,
+			name
+		);
 
 		this.codec = codec;
 
@@ -94,7 +97,7 @@ public class StorageImpl<T>
 			return def.create(new QueryEngineCreationEncounterImpl(
 				storages,
 				executor,
-				dataDir,
+				indexDataPath,
 				key,
 				name + "-" + key
 			));
@@ -102,7 +105,7 @@ public class StorageImpl<T>
 
 		this.queryControllers = this.queryEngines.collectValues((key, e) -> new QueryEngineController<>(
 			store,
-			storage,
+			mainDataStorage,
 			e,
 			name + "-" + key
 		));
@@ -252,7 +255,7 @@ public class StorageImpl<T>
 			if(internalId == 0) return null;
 
 			return getInternal(tx, internalId);
-		}, storage, primary);
+		}, mainDataStorage, primary);
 	}
 
 	public T getInternal(WriteableTransactionExchange exchange, long id)
@@ -261,7 +264,7 @@ public class StorageImpl<T>
 		{
 			reads.increment();
 
-			try(InputStream in = storage.get(exchange, id);)
+			try(InputStream in = mainDataStorage.get(exchange, id);)
 			{
 				return codec.decode(in);
 			}
@@ -308,7 +311,7 @@ public class StorageImpl<T>
 
 		return transactionSupport.monoWithExchange(tx ->
 			controller.fetch(createQueryEncounter(tx, query)),
-			storage, primary, controller.getEngine()
+			mainDataStorage, primary, controller.getEngine()
 		);
 	}
 
@@ -323,7 +326,7 @@ public class StorageImpl<T>
 
 		return transactionSupport.fluxWithExchange(tx ->
 			controller.stream(createQueryEncounter(tx, query)),
-			storage, primary, controller.getEngine()
+			mainDataStorage, primary, controller.getEngine()
 		);
 	}
 
@@ -362,7 +365,7 @@ public class StorageImpl<T>
 						current = 0;
 					}
 
-					try(InputStream in = storage.get(null, toFetch))
+					try(InputStream in = mainDataStorage.get(null, toFetch))
 					{
 						return PrimitiveTuples.pair(toFetch, codec.decode(in));
 					}
@@ -407,7 +410,7 @@ public class StorageImpl<T>
 					{
 						long toFetch = current;
 						current = primary.nextAfter(current);
-						try(InputStream in = storage.get(null, toFetch))
+						try(InputStream in = mainDataStorage.get(null, toFetch))
 						{
 							return codec.decode(in);
 						}
@@ -439,14 +442,14 @@ public class StorageImpl<T>
 		long previousInternalId = primary.get(null, id);
 
 		// Store the new data and associate it with the primary index
-		long internalId = storage.store(in::transferTo);
+		long internalId = mainDataStorage.store(in::transferTo);
 		primary.store(id, internalId);
 
 		// TODO: Replacement for indexes?
 		if(previousInternalId != 0)
 		{
 			// Remove the old data
-			storage.delete(previousInternalId);
+			mainDataStorage.delete(previousInternalId);
 
 			queryControllers.each(e -> e.delete(previousInternalId));
 		}
@@ -474,7 +477,7 @@ public class StorageImpl<T>
 
 		queryControllers.each(e -> e.delete(internalId));
 
-		storage.delete(internalId);
+		mainDataStorage.delete(internalId);
 		primary.remove(id);
 
 		deletes.increment();

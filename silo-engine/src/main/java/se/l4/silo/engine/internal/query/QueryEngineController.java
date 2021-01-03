@@ -65,7 +65,7 @@ public class QueryEngineController<T, Q extends Query<T, ?, ?>>
 		this.engine = engine;
 
 		this.engineLog = new QueryEngineLog(manager, "index.log." + uniqueName);
-		data = manager.openMap("index.data." + uniqueName, LongFieldType.INSTANCE, LongFieldType.INSTANCE);
+		data = manager.openMap("index.dataMapping." + uniqueName, LongFieldType.INSTANCE, LongFieldType.INSTANCE);
 
 		events = Sinks.many().multicast().directBestEffort();
 		upToDate = Sinks.one();

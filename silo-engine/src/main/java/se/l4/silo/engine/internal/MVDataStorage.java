@@ -49,11 +49,12 @@ public class MVDataStorage
 	private final MVMap<Long, byte[]> chunks;
 
 	public MVDataStorage(
+		String prefix,
 		MVStoreManager store
 	)
 	{
-		keys = store.openMap("data.keys", LongFieldType.INSTANCE, VersionedType.singleVersion(new LongArrayFieldType()));
-		chunks = store.openMap("data.chunks", LongFieldType.INSTANCE, ByteArrayFieldType.INSTANCE);
+		keys = store.openMap(prefix + ".keys", LongFieldType.INSTANCE, VersionedType.singleVersion(new LongArrayFieldType()));
+		chunks = store.openMap(prefix + ".chunks", LongFieldType.INSTANCE, ByteArrayFieldType.INSTANCE);
 
 		readonlyChunks = version -> chunks.openVersion(version);
 		readonlyKeys = version -> keys.openVersion(version);

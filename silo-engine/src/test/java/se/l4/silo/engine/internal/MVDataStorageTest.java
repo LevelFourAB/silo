@@ -34,7 +34,7 @@ public class MVDataStorageTest
 				.fileStore(new OffHeapStore())
 		);
 
-		storage = new MVDataStorage(storeManager);
+		storage = new MVDataStorage("data", storeManager);
 	}
 
 	@AfterEach

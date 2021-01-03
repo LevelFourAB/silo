@@ -76,7 +76,7 @@ public class QueryEngineControllerTest
 				.fileName(tmp.resolve("storage.mv.bin").toString())
 		);
 
-		DataStorage storage = new MVDataStorage(manager);
+		DataStorage storage = new MVDataStorage("data", manager);
 
 		controller = new QueryEngineController<>(
 			manager,

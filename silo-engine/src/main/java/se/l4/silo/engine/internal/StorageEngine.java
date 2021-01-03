@@ -82,13 +82,17 @@ public class StorageEngine
 	private final MVStoreManagerImpl store;
 
 	/**
-	 * Abstraction over {@link MVStore} to make data storage simpler.
+	 * {@link DataStorage} used for main entity data.
 	 */
 	private final MVDataStorage dataStorage;
 
 	/**
-	 * The generator used for creating identifiers for transactions and
-	 * primary key mapping.
+	 * {@link DataStorage} used for index data.
+	 */
+	private final MVDataStorage indexDataStorage;
+
+	/**
+	 * The generator used for creating identifiers for transactions.
 	 */
 	private final LongIdGenerator ids;
 
@@ -232,8 +236,10 @@ public class StorageEngine
 			transactionWaiter
 		);
 
-		dataStorage = new MVDataStorage(store);
+		dataStorage = new MVDataStorage("data", store);
 		dataStorage.provideTransactionValues(transactionSupport::registerValue);
+
+		indexDataStorage = new MVDataStorage("index.data", store);
 
 		// FIXME: Policies for waiting for query engines
 	}
@@ -360,7 +366,6 @@ public class StorageEngine
 	public <T> Storage.Builder<T> createStorage(String name, EntityCodec<T> codec)
 	{
 		String storageName = name;
-		Path dataPath =  root.resolve("index").resolve(name);
 		return new Storage.Builder<T>()
 		{
 			private final MutableList<IndexDefinition<T>> indexes = Lists.mutable.empty();
@@ -383,12 +388,6 @@ public class StorageEngine
 			public Storage<T> build()
 			{
 				// Create a new storage instance
-				PrimaryIndex primaryIndex = new PrimaryIndex(
-					store,
-					transactionSupport,
-					storageName
-				);
-
 				StorageImpl storage = new StorageImpl(
 					StorageEngine.this,
 					sharedStorages,
@@ -396,13 +395,13 @@ public class StorageEngine
 					transactionSupport,
 
 					store,
-					dataPath,
 					dataStorage,
 
 					storageName,
 					codec,
 
-					primaryIndex,
+					indexDataStorage,
+					root.resolve("index").resolve(name),
 					indexes
 				);
 
