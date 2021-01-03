@@ -40,7 +40,7 @@ public class MVDataStorage
 {
 	private static final Logger log = LoggerFactory.getLogger(MVDataStorage.class);
 
-	private static final int CHUNK_SIZE = 8192;
+	private static final int CHUNK_SIZE = 256 * 1024;
 
 	private final TransactionValue<MVMap<Long, long[]>> readonlyKeys;
 	private final TransactionValue<MVMap<Long, byte[]>> readonlyChunks;
