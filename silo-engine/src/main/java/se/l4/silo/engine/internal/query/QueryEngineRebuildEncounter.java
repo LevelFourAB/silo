@@ -28,38 +28,4 @@ public interface QueryEngineRebuildEncounter<T>
 	 * @return
 	 */
 	Iterator<LongObjectPair<T>> iterator(long minIdExclusive, long maxIdInclusive);
-
-	/**
-	 * Report some progress in the rebuild.
-	 *
-	 * @param dataId
-	 *   the maximum data id being rebuilt
-	 */
-	void reportProgress(long dataId);
-
-
-	class State
-	{
-		private final long size;
-		private final long maximumData;
-
-		public State(
-			long size,
-			long maximumData
-		)
-		{
-			this.size = size;
-			this.maximumData = maximumData;
-		}
-
-		public long getSize()
-		{
-			return size;
-		}
-
-		public long getMaximumData()
-		{
-			return maximumData;
-		}
-	}
 }

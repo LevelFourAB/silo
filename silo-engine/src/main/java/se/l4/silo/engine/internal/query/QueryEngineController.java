@@ -4,39 +4,58 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Iterator;
+import java.util.Objects;
+import java.util.concurrent.atomic.LongAdder;
 
 import org.eclipse.collections.api.tuple.primitive.LongObjectPair;
 import org.h2.mvstore.MVMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
+import se.l4.silo.FetchResult;
 import se.l4.silo.StorageException;
+import se.l4.silo.engine.IndexEvent;
+import se.l4.silo.engine.LocalIndex;
 import se.l4.silo.engine.MVStoreManager;
+import se.l4.silo.engine.QueryEncounter;
 import se.l4.silo.engine.QueryEngine;
 import se.l4.silo.engine.internal.DataStorage;
 import se.l4.silo.engine.io.ExtendedDataInputStream;
 import se.l4.silo.engine.io.ExtendedDataOutputStream;
 import se.l4.silo.engine.types.LongFieldType;
+import se.l4.silo.query.Query;
 
 /**
  * Controller for instances of {@link QueryEngine} that keeps these up to date
  * with the stored data.
  */
-public class QueryEngineController<T>
+public class QueryEngineController<T, Q extends Query<T, ?, ?>>
+	implements LocalIndex
 {
+	private static final long PROGRESS_EVENT_INTERVAL = 10 * 1000;
+
 	private final Logger logger;
 	private final DataStorage dataStorage;
 
-	private final QueryEngine<T, ?> engine;
+	private final QueryEngine<T, Q> engine;
 	private final QueryEngineLog engineLog;
 	private final MVMap<Long, Long> data;
 
+	private final Sinks.One<Void> upToDate;
+	private final LongAdder queryCount;
+
+	private final Sinks.Many<IndexEvent> events;
+
 	private long softCursor;
+	private long lastProgressEvent;
 
 	public QueryEngineController(
 		MVStoreManager manager,
 		DataStorage dataStorage,
-		QueryEngine<T, ?> engine,
+		QueryEngine<T, Q> engine,
 		String uniqueName
 	)
 	{
@@ -47,6 +66,57 @@ public class QueryEngineController<T>
 
 		this.engineLog = new QueryEngineLog(manager, "index.log." + uniqueName);
 		data = manager.openMap("index.data." + uniqueName, LongFieldType.INSTANCE, LongFieldType.INSTANCE);
+
+		events = Sinks.many().multicast().directBestEffort();
+		upToDate = Sinks.one();
+		queryCount = new LongAdder();
+	}
+
+	@Override
+	public String getName()
+	{
+		return engine.getName();
+	}
+
+	@Override
+	public long getQueryCount()
+	{
+		return queryCount.sum();
+	}
+
+	@Override
+	public boolean isQueryable()
+	{
+		return isUpToDate();
+	}
+
+	@Override
+	public Mono<Void> whenQueryable()
+	{
+		return whenUpToDate();
+	}
+
+	@Override
+	public boolean isUpToDate()
+	{
+		return isCurrent();
+	}
+
+	@Override
+	public Mono<Void> whenUpToDate()
+	{
+		return upToDate.asMono();
+	}
+
+	@Override
+	public Flux<IndexEvent> events()
+	{
+		return events.asFlux();
+	}
+
+	public QueryEngine<T, Q> getEngine()
+	{
+		return engine;
 	}
 
 	/**
@@ -152,6 +222,19 @@ public class QueryEngineController<T>
 
 			// Replay the rest of the log
 			replayLog(Long.MAX_VALUE);
+
+			// Emit the last rebuild progress event
+			if(lastProgressEvent > 0)
+			{
+				long last = engineLog.getLatestOp();
+				events.tryEmitNext(new RebuildProgressImpl(isQueryable(), last, last));
+			}
+
+			events.tryEmitNext(new QueryableImpl());
+			events.tryEmitNext(new UpToDateImpl());
+
+			// Emit the up to date event
+			upToDate.tryEmitEmpty();
 		}
 		catch(IOException e)
 		{
@@ -196,8 +279,8 @@ public class QueryEngineController<T>
 				// Update the where we are in the log
 				softCursor = opId;
 
-				// Report that we have done some progress
-				encounter.reportProgress(dataId);
+				// Report our progress
+				maybeEmitProgress(opId);
 			}
 			catch(IOException e)
 			{
@@ -233,8 +316,8 @@ public class QueryEngineController<T>
 			// Update the where we are in the log
 			softCursor = opId;
 
-			// Report that we have done some progress
-			encounter.reportProgress(dataId);
+			// Report our progress
+			maybeEmitProgress(opId);
 		}
 	}
 
@@ -283,6 +366,27 @@ public class QueryEngineController<T>
 
 			// Keep track of where we are up to
 			softCursor = opId;
+
+			// Report our progress
+			maybeEmitProgress(opId);
+		}
+	}
+
+	/**
+	 * Check the current time and maybe emit an rebuild event.
+	 *
+	 * @param current
+	 */
+	private void maybeEmitProgress(long current)
+	{
+		long time = lastProgressEvent;
+		long now = System.currentTimeMillis();
+		if(now - time > PROGRESS_EVENT_INTERVAL)
+		{
+			long total = engineLog.getLatestOp();
+			events.tryEmitNext(new RebuildProgressImpl(isQueryable(), current, total));
+
+			lastProgressEvent = now;
 		}
 	}
 
@@ -354,6 +458,145 @@ public class QueryEngineController<T>
 			engine.delete(opId, id);
 
 			softCursor = opId;
+		}
+	}
+
+	/**
+	 * Perform a fetch on the index.
+	 *
+	 * @param <R>
+	 * @param <FR>
+	 * @param encounter
+	 * @return
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public <R, FR extends FetchResult<R>> Mono<FR> fetch(
+		QueryEncounter encounter
+	)
+	{
+		return Mono.fromRunnable(queryCount::increment)
+			.then(engine.fetch(encounter));
+	}
+
+	/**
+	 * Perform a stream on the index.
+	 *
+	 * @param <R>
+	 * @param encounter
+	 * @return
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public <R> Flux<R> stream(
+		QueryEncounter encounter
+	)
+	{
+		return Mono.fromRunnable(queryCount::increment)
+			.thenMany(engine.stream(encounter));
+	}
+
+	private static class RebuildProgressImpl
+		implements IndexEvent.RebuildProgress
+	{
+		private final boolean queryable;
+		private final long progress;
+		private final long total;
+
+		public RebuildProgressImpl(
+			boolean queryable,
+			long progress,
+			long total
+		)
+		{
+			this.queryable = queryable;
+			this.progress = progress;
+			this.total = total;
+		}
+
+		@Override
+		public boolean isQueryable()
+		{
+			return queryable;
+		}
+
+		@Override
+		public long getProgress()
+		{
+			return progress;
+		}
+
+		@Override
+		public long getTotal()
+		{
+			return total;
+		}
+
+		@Override
+		public int hashCode()
+		{
+			return Objects.hash(progress, queryable, total);
+		}
+
+		@Override
+		public boolean equals(Object obj)
+		{
+			if(this == obj) return true;
+			if(obj == null) return false;
+			if(getClass() != obj.getClass()) return false;
+			RebuildProgressImpl other = (RebuildProgressImpl) obj;
+			return progress == other.progress
+				&& queryable == other.queryable
+				&& total == other.total;
+		}
+
+		@Override
+		public String toString()
+		{
+			return "RebuildProgress{progress=" + progress + ", total=" + total
+				+ ", queryable=" + queryable + "}";
+		}
+	}
+
+	private static class QueryableImpl
+		implements IndexEvent.Queryable
+	{
+		@Override
+		public boolean equals(Object obj)
+		{
+			return obj instanceof QueryableImpl;
+		}
+
+		@Override
+		public int hashCode()
+		{
+			return getClass().hashCode();
+		}
+
+		@Override
+		public String toString()
+		{
+			return "Queryable{}";
+		}
+	}
+
+	private static class UpToDateImpl
+		implements IndexEvent.UpToDate
+	{
+		@Override
+		public boolean equals(Object obj)
+		{
+			return obj instanceof UpToDateImpl;
+		}
+
+		@Override
+		public int hashCode()
+		{
+			return getClass().hashCode();
+		}
+
+		@Override
+		public String toString()
+		{
+			return "UpToDate{}";
 		}
 	}
 }

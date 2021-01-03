@@ -40,7 +40,7 @@ public class QueryEngineControllerTest
 {
 	private MVStoreManager manager;
 	private Engine engine;
-	private QueryEngineController<String> controller;
+	private QueryEngineController<String, ?> controller;
 
 	@BeforeEach
 	public void beforeEach()
@@ -397,11 +397,6 @@ public class QueryEngineControllerTest
 				result.add(PrimitiveTuples.pair(i, "v" + i));
 			}
 			return result.iterator();
-		}
-
-		@Override
-		public void reportProgress(long dataId)
-		{
 		}
 	}
 }

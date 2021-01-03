@@ -53,7 +53,7 @@ public class StorageImpl<T>
 
 	private final PrimaryIndex primary;
 	private final MapIterable<String, QueryEngine<T, ?>> queryEngines;
-	private final MapIterable<String, QueryEngineController<T>> queryControllers;
+	private final MapIterable<String, QueryEngineController<T, ?>> queryControllers;
 
 	public StorageImpl(
 		StorageEngine engine,
@@ -121,11 +121,6 @@ public class StorageImpl<T>
 			public Iterator<LongObjectPair<T>> iterator(long minIdExclusive, long maxIdInclusive)
 			{
 				return createIterator(minIdExclusive, maxIdInclusive);
-			}
-
-			@Override
-			public void reportProgress(long dataId)
-			{
 			}
 		};
 
@@ -264,30 +259,30 @@ public class StorageImpl<T>
 		Query<T, R, FR> query
 	)
 	{
-		QueryEngine<?, ?> qe = queryEngines.get(query.getIndex());
-		if(qe == null)
+		QueryEngineController<?, ?> controller = queryControllers.get(query.getIndex());
+		if(controller == null)
 		{
 			throw new StorageException("Unknown query engine `" + query.getIndex() + "`");
 		}
 
 		return transactionSupport.monoWithExchange(tx ->
-			(Mono<FR>) qe.fetch(createQueryEncounter(tx, query)),
-			storage, primary, qe
+			controller.fetch(createQueryEncounter(tx, query)),
+			storage, primary, controller.getEngine()
 		);
 	}
 
 	@Override
 	public <R> Flux<R> stream(Query<T, R, ?> query)
 	{
-		QueryEngine<?, ?> qe = queryEngines.get(query.getIndex());
-		if(qe == null)
+		QueryEngineController<?, ?> controller = queryControllers.get(query.getIndex());
+		if(controller == null)
 		{
 			throw new StorageException("Unknown query engine `" + query.getIndex() + "`");
 		}
 
 		return transactionSupport.fluxWithExchange(tx ->
-			(Flux<R>) qe.stream(createQueryEncounter(tx, query)),
-			storage, primary, qe
+			controller.stream(createQueryEncounter(tx, query)),
+			storage, primary, controller.getEngine()
 		);
 	}
 
@@ -445,7 +440,7 @@ public class StorageImpl<T>
 	{
 		long internalId = primary.get(null, id);
 
-		QueryEngineController<T> controller = queryControllers.get(index);
+		QueryEngineController<T, ?> controller = queryControllers.get(index);
 		if(controller != null)
 		{
 			controller.store(internalId, data);
