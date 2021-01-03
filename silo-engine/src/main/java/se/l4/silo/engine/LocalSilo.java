@@ -7,15 +7,38 @@ import java.time.Duration;
 import org.eclipse.collections.api.factory.Lists;
 
 import reactor.core.publisher.Mono;
+import se.l4.silo.EntityRef;
 import se.l4.silo.Silo;
 import se.l4.silo.engine.internal.LocalSiloBuilder;
 import se.l4.silo.engine.log.DirectApplyLog;
 import se.l4.silo.engine.log.LogBuilder;
 import se.l4.vibe.Vibe;
 
+/**
+ * Local instance of {@link Silo}.
+ */
 public interface LocalSilo
 	extends Silo
 {
+	/**
+	 * Get an entity.
+	 *
+	 * @param entityName
+	 * @param ref
+	 */
+	<ID, T> LocalEntity<ID, T> entity(EntityRef<ID, T> ref);
+
+	/**
+	 * Get an entity.
+	 *
+	 * @param entityName
+	 * @param type
+	 */
+	default <ID, T> LocalEntity<ID, T> entity(String name, Class<ID> idType, Class<T> objectType)
+	{
+		return entity(EntityRef.create(name, idType, objectType));
+	}
+
 	/**
 	 * Close this instance.
 	 */

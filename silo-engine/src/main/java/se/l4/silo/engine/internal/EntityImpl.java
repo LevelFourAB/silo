@@ -5,14 +5,15 @@ import java.util.function.Function;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import se.l4.silo.DeleteResult;
-import se.l4.silo.Entity;
 import se.l4.silo.FetchResult;
 import se.l4.silo.StoreResult;
+import se.l4.silo.engine.LocalEntity;
+import se.l4.silo.engine.LocalIndex;
 import se.l4.silo.engine.Storage;
 import se.l4.silo.query.Query;
 
 public class EntityImpl<ID, T>
-	implements Entity<ID, T>
+	implements LocalEntity<ID, T>
 {
 	private final String name;
 	private final Function<T, ID> idSupplier;
@@ -33,6 +34,24 @@ public class EntityImpl<ID, T>
 	public String getName()
 	{
 		return name;
+	}
+
+	@Override
+	public long getReads()
+	{
+		return storage.getReads();
+	}
+
+	@Override
+	public long getStores()
+	{
+		return storage.getStores();
+	}
+
+	@Override
+	public long getDeletes()
+	{
+		return storage.getDeletes();
 	}
 
 	@Override
@@ -66,5 +85,17 @@ public class EntityImpl<ID, T>
 	public <R> Flux<R> stream(Query<T, R, ?> query)
 	{
 		return storage.stream(query);
+	}
+
+	@Override
+	public Mono<LocalIndex> index(String name)
+	{
+		return storage.getIndex(name);
+	}
+
+	@Override
+	public Flux<LocalIndex> indexes()
+	{
+		return storage.indexes();
 	}
 }

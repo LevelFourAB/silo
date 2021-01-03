@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.LongAdder;
 
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.map.ImmutableMap;
@@ -25,6 +26,7 @@ import se.l4.silo.StorageException;
 import se.l4.silo.StoreResult;
 import se.l4.silo.engine.EntityCodec;
 import se.l4.silo.engine.IndexDefinition;
+import se.l4.silo.engine.LocalIndex;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.QueryEngine;
 import se.l4.silo.engine.Storage;
@@ -55,6 +57,10 @@ public class StorageImpl<T>
 	private final MapIterable<String, QueryEngine<T, ?>> queryEngines;
 	private final MapIterable<String, QueryEngineController<T, ?>> queryControllers;
 
+	private final LongAdder reads;
+	private final LongAdder stores;
+	private final LongAdder deletes;
+
 	public StorageImpl(
 		StorageEngine engine,
 		SharedStorages storages,
@@ -79,6 +85,10 @@ public class StorageImpl<T>
 		this.primary = primary;
 
 		this.codec = codec;
+
+		reads = new LongAdder();
+		stores = new LongAdder();
+		deletes = new LongAdder();
 
 		this.queryEngines = (ImmutableMap) indexes.toMap(IndexDefinition::getName, def -> {
 			String key = def.getName();
@@ -125,6 +135,36 @@ public class StorageImpl<T>
 		};
 
 		queryControllers.each(c -> executor.submit(() -> c.start(rebuild)));
+	}
+
+	@Override
+	public long getReads()
+	{
+		return reads.sum();
+	}
+
+	@Override
+	public long getStores()
+	{
+		return stores.sum();
+	}
+
+	@Override
+	public long getDeletes()
+	{
+		return deletes.sum();
+	}
+
+	@Override
+	public Mono<LocalIndex> getIndex(String name)
+	{
+		return Mono.justOrEmpty(queryControllers.get(name));
+	}
+
+	@Override
+	public Flux<LocalIndex> indexes()
+	{
+		return Flux.fromIterable(queryControllers);
 	}
 
 	@Override
@@ -220,6 +260,8 @@ public class StorageImpl<T>
 	{
 		try
 		{
+			reads.increment();
+
 			try(InputStream in = storage.get(exchange, id);)
 			{
 				return codec.decode(in);
@@ -409,6 +451,8 @@ public class StorageImpl<T>
 
 			queryControllers.each(e -> e.delete(previousInternalId));
 		}
+
+		stores.increment();
 	}
 
 	/**
@@ -433,6 +477,8 @@ public class StorageImpl<T>
 
 		storage.delete(internalId);
 		primary.remove(id);
+
+		deletes.increment();
 	}
 
 	public void directIndex(String index, Object id, InputStream data)

@@ -14,6 +14,44 @@ import se.l4.silo.query.Query;
 public interface Storage<T>
 {
 	/**
+	 * Get the number of reads that have occurred in this storage.
+	 *
+	 * @return
+	 */
+	long getReads();
+
+	/**
+	 * Get the number of stores that have occurred in this storage.
+	 *
+	 * @return
+	 */
+	long getStores();
+
+	/**
+	 * Get the number of deletes that have occurred in this storage.
+	 *
+	 * @return
+	 */
+	long getDeletes();
+
+	/**
+	 * Get information about a specific index.
+	 *
+	 * @param name
+	 *   the name of the index
+	 * @return
+	 *   {@link Mono} that will resolve to the index
+	 */
+	Mono<LocalIndex> getIndex(String name);
+
+	/**
+	 * Get a {@link Flux} with all of the indexes in this entity.
+	 *
+	 * @return
+	 */
+	Flux<LocalIndex> indexes();
+
+	/**
 	 * Store some data in this storage.
 	 *
 	 * @param id

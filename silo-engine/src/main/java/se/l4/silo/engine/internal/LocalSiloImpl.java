@@ -12,13 +12,13 @@ import org.reactivestreams.Publisher;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import se.l4.silo.Entity;
 import se.l4.silo.EntityRef;
 import se.l4.silo.Silo;
 import se.l4.silo.StorageException;
 import se.l4.silo.Transaction;
 import se.l4.silo.engine.EngineConfig;
 import se.l4.silo.engine.EntityDefinition;
+import se.l4.silo.engine.LocalEntity;
 import se.l4.silo.engine.LocalSilo;
 import se.l4.silo.engine.Snapshot;
 import se.l4.silo.engine.internal.tx.TransactionSupport;
@@ -71,18 +71,18 @@ public class LocalSiloImpl
 	}
 
 	@Override
-	public <ID, T> Entity<ID, T> entity(EntityRef<ID, T> ref)
+	public <ID, T> LocalEntity<ID, T> entity(EntityRef<ID, T> ref)
 	{
 		Objects.requireNonNull(ref);
 
-		Entity<?, ?> entity = storageEngine.getEntity(ref.getName());
+		LocalEntity<?, ?> entity = storageEngine.getEntity(ref.getName());
 		if(entity == null)
 		{
 			throw new StorageException("The entity `" + ref.getName() + "` does not exist");
 		}
 
 		// TODO: Validate the type before returning
-		return (Entity<ID, T>) entity;
+		return (LocalEntity<ID, T>) entity;
 	}
 
 	@Override

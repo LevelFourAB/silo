@@ -32,6 +32,7 @@ import se.l4.silo.engine.EngineConfig;
 import se.l4.silo.engine.EntityCodec;
 import se.l4.silo.engine.EntityDefinition;
 import se.l4.silo.engine.IndexDefinition;
+import se.l4.silo.engine.LocalEntity;
 import se.l4.silo.engine.Snapshot;
 import se.l4.silo.engine.Storage;
 import se.l4.silo.engine.Storage.Builder;
@@ -82,7 +83,7 @@ public class StorageEngine
 	/**
 	 * Instances of {@link Entity} created via configuration.
 	 */
-	private final ImmutableMap<String, Entity<?, ?>> entities;
+	private final ImmutableMap<String, LocalEntity<?, ?>> entities;
 
 	/**
 	 * The store used for storing main data.
@@ -342,7 +343,7 @@ public class StorageEngine
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private final ImmutableMap<String, Entity<?, ?>> createEntities(ListIterable<EntityDefinition> entities)
+	private final ImmutableMap<String, LocalEntity<?, ?>> createEntities(ListIterable<EntityDefinition> entities)
 	{
 		// TODO: Support for different entity implementations?
 		return (ImmutableMap) entities.collect(def -> {
@@ -444,7 +445,7 @@ public class StorageEngine
 	 * @param entityName
 	 * @return
 	 */
-	public Entity<?, ?> getEntity(String entityName)
+	public LocalEntity<?, ?> getEntity(String entityName)
 	{
 		return entities.get(entityName);
 	}
