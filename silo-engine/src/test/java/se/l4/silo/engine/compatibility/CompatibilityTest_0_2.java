@@ -93,6 +93,24 @@ public class CompatibilityTest_0_2
 	}
 
 	@Test
+	public void testStoreNewObject()
+	{
+		Entity<Long, DataObject> entity = silo.entity("object", Long.class, DataObject.class);
+
+		DataObject o = new DataObject(1001, "Test", 31, false);
+		entity.store(o).block();
+
+		// Test that all of the values are still available
+		for(int i=1; i<=1000; i++)
+		{
+			DataObject l = entity.get((long) i).block();
+			assertThat(l, is(new DataObject(i, "U" + i, i % 30, i % 2 == 0)));
+		}
+
+		assertThat(entity.get(1001l).block(), is(o));
+	}
+
+	@Test
 	public void testBinary()
 		throws IOException
 	{
