@@ -2,18 +2,14 @@ package se.l4.silo.engine.search.types;
 
 import java.io.IOException;
 
-import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.NumericDocValuesField;
-import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SortField;
 
 import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.exobytes.streaming.Token;
-import se.l4.silo.engine.search.LocaleSupport;
-import se.l4.silo.engine.search.SearchFieldType;
 import se.l4.silo.query.EqualsMatcher;
 import se.l4.silo.query.Matcher;
 import se.l4.silo.query.RangeMatcher;
@@ -41,26 +37,31 @@ public class IntFieldType
 	}
 
 	@Override
-	public IndexableField create(
-		String field,
-		FieldType type,
-		LocaleSupport lang,
-		Integer object
-	)
+	public void create(FieldCreationEncounter<Integer> encounter)
 	{
-		return new IntPoint(field, object);
-	}
+		if(encounter.isIndexed())
+		{
+			encounter.emit(new IntPoint(
+				encounter.name(),
+				encounter.getValue()
+			));
+		}
 
-	@Override
-	public IndexableField createValuesField(String field, LocaleSupport lang, Integer object)
-	{
-		return new NumericDocValuesField(field, object);
-	}
+		if(encounter.isSorted())
+		{
+			encounter.emit(new NumericDocValuesField(
+				encounter.sortValuesName(),
+				encounter.getValue()
+			));
+		}
 
-	@Override
-	public IndexableField createSortingField(String field, LocaleSupport lang, Integer object)
-	{
-		return new NumericDocValuesField(field, object);
+		if(encounter.isStoreDocValues())
+		{
+			encounter.emit(new NumericDocValuesField(
+				encounter.docValuesName(),
+				encounter.getValue()
+			));
+		}
 	}
 
 	@Override
@@ -75,7 +76,7 @@ public class IntFieldType
 		if(matcher instanceof EqualsMatcher)
 		{
 			Object value = ((EqualsMatcher) matcher).getValue();
-			return IntPoint.newExactQuery(field, SearchFieldTypeHelper.toNumber(value).intValue());
+			return IntPoint.newExactQuery(field, toNumber(value).intValue());
 		}
 		else if(matcher instanceof RangeMatcher)
 		{
@@ -88,7 +89,7 @@ public class IntFieldType
 			int lower = Integer.MIN_VALUE;
 			if(range.getLower().isPresent())
 			{
-				lower = SearchFieldTypeHelper.toNumber(range.getLower().get()).intValue();
+				lower = toNumber(range.getLower().get()).intValue();
 
 				if(! range.isLowerInclusive())
 				{
@@ -99,7 +100,7 @@ public class IntFieldType
 			int upper = Integer.MAX_VALUE;
 			if(range.getUpper().isPresent())
 			{
-				upper = SearchFieldTypeHelper.toNumber(range.getUpper().get()).intValue();
+				upper = toNumber(range.getUpper().get()).intValue();
 
 				if(! range.isUpperInclusive())
 				{

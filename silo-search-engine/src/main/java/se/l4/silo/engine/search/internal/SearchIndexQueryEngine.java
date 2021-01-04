@@ -20,7 +20,6 @@ import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -67,13 +66,13 @@ import se.l4.silo.engine.io.ExtendedDataOutputStream;
 import se.l4.silo.engine.search.LocaleSupport;
 import se.l4.silo.engine.search.Locales;
 import se.l4.silo.engine.search.SearchFieldDefinition;
-import se.l4.silo.engine.search.SearchFieldType;
 import se.l4.silo.engine.search.SearchIndexEncounter;
 import se.l4.silo.engine.search.config.IndexCacheConfig;
 import se.l4.silo.engine.search.config.IndexCommitConfig;
 import se.l4.silo.engine.search.config.IndexReloadConfig;
 import se.l4.silo.engine.search.query.QueryBuilder;
 import se.l4.silo.engine.search.query.QueryBuilders;
+import se.l4.silo.engine.search.types.SearchFieldType;
 import se.l4.silo.search.QueryClause;
 import se.l4.silo.search.SearchHit;
 import se.l4.silo.search.SearchIndexException;
@@ -249,15 +248,27 @@ public class SearchIndexQueryEngine<T>
 				out.writeString(field.getName());
 
 				// Get and write the value
-				Object value = field.getSupplier().apply(data);
-				if(value == null)
+				SearchFieldType type = field.getType();
+				if(field instanceof SearchFieldDefinition.Single)
 				{
-					out.writeNull();
+					Object value = ((SearchFieldDefinition.Single) field).getSupplier().apply(data);
+					if(value == null)
+					{
+						out.writeNull();
+					}
+					else
+					{
+						type.write(value, out);
+					}
 				}
-				else
+				else if(field instanceof SearchFieldDefinition.Collection)
 				{
-					SearchFieldType type = field.getType();
-					if(value instanceof RichIterable)
+					Object value = ((SearchFieldDefinition.Collection) field).getSupplier().apply(data);
+					if(value == null)
+					{
+						out.writeNull();
+					}
+					else if(value instanceof RichIterable)
 					{
 						RichIterable<?> iterable = (RichIterable<?>) value;
 						out.writeListStart(iterable.size());
@@ -294,8 +305,12 @@ public class SearchIndexQueryEngine<T>
 					}
 					else
 					{
-						type.write(value, out);
+						throw new SearchIndexException("Expected instance of Iterable but received " + value);
 					}
+				}
+				else
+				{
+					throw new SearchIndexException("Unknown type of field definition");
 				}
 
 				out.writeListEnd();
@@ -404,7 +419,7 @@ public class SearchIndexQueryEngine<T>
 		Document document,
 		LocaleSupport fallback,
 		LocaleSupport current,
-		SearchFieldDefinition<V> field,
+		SearchFieldDefinition<?> field,
 		V object
 	)
 	{
@@ -422,31 +437,25 @@ public class SearchIndexQueryEngine<T>
 
 		boolean needValues = encounter.getValueFields().contains(field.getName());
 
-		if(field.isLanguageSpecific() && fallback != current)
+		SearchFieldType type = ((SearchFieldType) field.getType());
+		if(type.isLocaleSupported() && field.isLanguageSpecific() && fallback != current)
 		{
-			// This field is locale specific and the provided locales are different
-			IndexableField f1 = encounter.createIndexableField(current, field, object);
-			document.add(f1);
-
-			if(needValues)
-			{
-				document.add(encounter.createValuesField(current, field, object));
-			}
+			type.create(new FieldCreationEncounterImpl<V>(
+				encounter,
+				document::add,
+				field,
+				current,
+				object
+			));
 		}
 
-		// Create field on the fallback value
-		IndexableField f2 = encounter.createIndexableField(fallback, field, object);
-		document.add(f2);
-
-		if(needValues)
-		{
-			document.add(encounter.createValuesField(fallback, field, object));
-		}
-
-		if(field.isSorted())
-		{
-			document.add(encounter.createSortingField(fallback, field, object));
-		}
+		type.create(new FieldCreationEncounterImpl<V>(
+			encounter,
+			document::add,
+			field,
+			fallback,
+			object
+		));
 	}
 
 	@Override

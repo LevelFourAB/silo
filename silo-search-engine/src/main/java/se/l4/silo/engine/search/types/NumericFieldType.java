@@ -5,8 +5,7 @@ import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexOptions;
 
-import se.l4.silo.engine.search.LocaleSupport;
-import se.l4.silo.engine.search.SearchFieldType;
+import se.l4.silo.search.SearchIndexException;
 
 /**
  * Abstract base for field types for numeric values.
@@ -31,20 +30,35 @@ public abstract class NumericFieldType<T extends Number>
 	}
 
 	@Override
-	public boolean isLanguageSpecific()
+	public boolean isLocaleSupported()
 	{
 		return false;
 	}
 
 	@Override
-	public FieldType getDefaultFieldType()
+	public boolean isDocValuesSupported()
 	{
-		return type;
+		return true;
 	}
 
 	@Override
-	public Analyzer getAnalyzer(LocaleSupport lang)
+	public boolean isSortingSupported()
 	{
-		return ANALYZER;
+		return true;
+	}
+
+	public static Number toNumber(Object o)
+	{
+		return toNumber(o, "Can not convert to number, got: %s");
+	}
+
+	public static Number toNumber(Object o, String errorMessage)
+	{
+		if(o instanceof Number)
+		{
+			return (Number) o;
+		}
+
+		throw new SearchIndexException(String.format(errorMessage, o));
 	}
 }

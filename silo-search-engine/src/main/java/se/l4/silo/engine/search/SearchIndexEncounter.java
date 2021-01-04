@@ -1,8 +1,9 @@
 package se.l4.silo.engine.search;
 
-import org.apache.lucene.index.IndexableField;
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.set.SetIterable;
+
+import se.l4.silo.engine.search.types.SearchFieldType;
 
 /**
  * Encounter used to expose access to information about fields, names and
@@ -82,33 +83,4 @@ public interface SearchIndexEncounter
 	 * @return
 	 */
 	String nullName(SearchFieldDefinition<?> def);
-
-	/**
-	 * Create a {@link IndexableField} that will index the type of data
-	 * specified.
-	 *
-	 * @param <T>
-	 * @param type
-	 * @param name
-	 * @param localeSupport
-	 * @param data
-	 * @return
-	 */
-	IndexableField createIndexableField(
-		LocaleSupport localeSupport,
-		SearchFieldDefinition<?> field,
-		Object data
-	);
-
-	IndexableField createValuesField(
-		LocaleSupport localeSupport,
-		SearchFieldDefinition<?> field,
-		Object data
-	);
-
-	IndexableField createSortingField(
-		LocaleSupport localeSupport,
-		SearchFieldDefinition<?> field,
-		Object data
-	);
 }

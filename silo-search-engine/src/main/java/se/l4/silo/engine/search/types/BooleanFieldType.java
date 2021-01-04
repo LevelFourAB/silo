@@ -2,11 +2,9 @@ package se.l4.silo.engine.search.types;
 
 import java.io.IOException;
 
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexOptions;
-import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
@@ -15,9 +13,6 @@ import org.apache.lucene.util.BytesRefBuilder;
 import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.exobytes.streaming.Token;
-import se.l4.silo.engine.search.LocaleSupport;
-import se.l4.silo.engine.search.SearchFieldType;
-import se.l4.silo.engine.search.SearchFields;
 import se.l4.silo.query.EqualsMatcher;
 import se.l4.silo.query.Matcher;
 import se.l4.silo.search.SearchIndexException;
@@ -25,14 +20,14 @@ import se.l4.silo.search.SearchIndexException;
 public class BooleanFieldType
 	implements SearchFieldType<Boolean>
 {
-	private final FieldType type = createFieldType();
+	private static final FieldType INDEX_TYPE = createFieldType();
 
 	protected static FieldType createFieldType()
 	{
 		FieldType ft = new FieldType();
-		ft.setStored(true);
-		ft.setIndexOptions(IndexOptions.NONE);
+		ft.setIndexOptions(IndexOptions.DOCS);
 		ft.setTokenized(false);
+		ft.setOmitNorms(true);
 		ft.freeze();
 		return ft;
 	}
@@ -53,33 +48,35 @@ public class BooleanFieldType
 	}
 
 	@Override
-	public boolean isLanguageSpecific()
+	public boolean isLocaleSupported()
 	{
 		return false;
 	}
 
 	@Override
-	public FieldType getDefaultFieldType()
+	public boolean isDocValuesSupported()
 	{
-		return type;
+		return false;
 	}
 
 	@Override
-	public Analyzer getAnalyzer(LocaleSupport lang)
+	public boolean isSortingSupported()
 	{
-		return SearchFields.DEFAULT_ANALYZER;
+		return false;
 	}
 
 	@Override
-	public IndexableField create(
-		String field,
-		FieldType type,
-		LocaleSupport lang,
-		Boolean object
-	)
+	public void create(FieldCreationEncounter<Boolean> encounter)
 	{
-		byte[] data =  new byte[] { (byte) (((Boolean) object).booleanValue() ? 1 : 0) };
-		return new Field(field, data, type);
+		if(encounter.isIndexed())
+		{
+			byte[] data =  new byte[] { (byte) (encounter.getValue() ? 1 : 0) };
+			encounter.emit(new Field(
+				encounter.name(),
+				data,
+				INDEX_TYPE
+			));
+		}
 	}
 
 	@Override

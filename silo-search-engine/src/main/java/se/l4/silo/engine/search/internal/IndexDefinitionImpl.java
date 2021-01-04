@@ -1,11 +1,7 @@
 package se.l4.silo.engine.search.internal;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.DelegatingAnalyzerWrapper;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.document.FieldType;
-import org.apache.lucene.index.IndexOptions;
-import org.apache.lucene.index.IndexableField;
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.map.MapIterable;
@@ -15,7 +11,6 @@ import org.eclipse.collections.api.set.SetIterable;
 import se.l4.silo.engine.search.LocaleSupport;
 import se.l4.silo.engine.search.Locales;
 import se.l4.silo.engine.search.SearchFieldDefinition;
-import se.l4.silo.engine.search.SearchFieldType;
 import se.l4.silo.engine.search.SearchIndexEncounter;
 
 public class IndexDefinitionImpl
@@ -34,40 +29,7 @@ public class IndexDefinitionImpl
 
 		this.valueFields = Sets.immutable.empty();
 
-		this.analyzer = new DelegatingAnalyzerWrapper(Analyzer.PER_FIELD_REUSE_STRATEGY)
-		{
-			private final Analyzer standard = new StandardAnalyzer();
-
-			@Override
-			protected Analyzer getWrappedAnalyzer(String fieldName)
-			{
-				if(fieldName.startsWith("f:"))
-				{
-					int last = fieldName.lastIndexOf(':');
-					String locale = fieldName.substring(last + 1);
-
-					if(locale.equals("_"))
-					{
-						return locales.getDefault().getTextAnalyzer();
-					}
-					else
-					{
-						LocaleSupport localeSupport = locales.getOrDefault(locale);
-						SearchFieldDefinition<?> def = fields.get(fieldName.substring(2, last));
-						if(def == null)
-						{
-							return localeSupport.getTextAnalyzer();
-						}
-						else
-						{
-							return def.getType().getAnalyzer(localeSupport);
-						}
-					}
-				}
-
-				return standard;
-			}
-		};
+		this.analyzer = new StandardAnalyzer();
 	}
 
 	public Analyzer getAnalyzer()
@@ -148,71 +110,5 @@ public class IndexDefinitionImpl
 	public String nullName(SearchFieldDefinition<?> field)
 	{
 		return name(field, null, 'n');
-	}
-
-	@Override
-	public IndexableField createIndexableField(
-		LocaleSupport localeSupport,
-		SearchFieldDefinition<?> field,
-		Object data
-	)
-	{
-		FieldType ft = createFieldType(field.getType());
-
-		//ft.setStored(field.isStored());
-
-		if(! field.isIndexed())
-		{
-			ft.setIndexOptions(IndexOptions.NONE);
-		}
-		else
-		{
-			ft.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
-		}
-
-		if(field.isHighlighted())
-		{
-			ft.setStored(true);
-			ft.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
-		}
-
-		// TODO: Set stored/indexed values
-		String fieldName = name(field, localeSupport);
-		return ((SearchFieldType) field.getType()).create(fieldName, ft, localeSupport, data);
-	}
-
-	@Override
-	public IndexableField createValuesField(
-		LocaleSupport localeSupport,
-		SearchFieldDefinition<?> field,
-		Object data
-	)
-	{
-		String fieldName = docValuesName(field, localeSupport);
-		return ((SearchFieldType) field.getType()).createValuesField(fieldName, localeSupport, data);
-	}
-
-	@Override
-	public IndexableField createSortingField(
-		LocaleSupport localeSupport,
-		SearchFieldDefinition<?> field,
-		Object data
-	)
-	{
-		String fieldName = sortValuesName(field, localeSupport);
-		return ((SearchFieldType) field.getType()).createSortingField(fieldName, localeSupport, data);
-	}
-
-	private FieldType createFieldType(SearchFieldType<?> fieldType)
-	{
-		FieldType ft = new FieldType();
-		FieldType defaults = fieldType.getDefaultFieldType();
-		ft.setIndexOptions(defaults.indexOptions());
-		ft.setOmitNorms(defaults.omitNorms());
-		ft.setStoreTermVectorOffsets(false);
-		ft.setStoreTermVectorPositions(false);
-		ft.setStoreTermVectors(false);
-		ft.setTokenized(defaults.tokenized());
-		return ft;
 	}
 }

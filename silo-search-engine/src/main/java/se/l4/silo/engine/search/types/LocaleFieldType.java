@@ -3,13 +3,11 @@ package se.l4.silo.engine.search.types;
 import java.io.IOException;
 import java.util.Locale;
 
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.SortedDocValuesField;
 import org.apache.lucene.document.SortedSetDocValuesField;
 import org.apache.lucene.index.IndexOptions;
-import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
@@ -23,8 +21,6 @@ import org.apache.lucene.util.BytesRef;
 import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.exobytes.streaming.Token;
-import se.l4.silo.engine.search.LocaleSupport;
-import se.l4.silo.engine.search.SearchFieldType;
 import se.l4.silo.engine.search.internal.LocaleAnalyzer;
 import se.l4.silo.query.EqualsMatcher;
 import se.l4.silo.query.Matcher;
@@ -37,14 +33,14 @@ public class LocaleFieldType
 	implements SearchFieldType<Locale>
 {
 	private static final LocaleAnalyzer ANALYZER = new LocaleAnalyzer();
-	private static final FieldType TYPE = new FieldType();
+	private static final FieldType INDEX_TYPE = new FieldType();
 
 	static
 	{
-		TYPE.setOmitNorms(true);
-		TYPE.setIndexOptions(IndexOptions.DOCS);
-		TYPE.setTokenized(true);
-		TYPE.freeze();
+		INDEX_TYPE.setOmitNorms(true);
+		INDEX_TYPE.setIndexOptions(IndexOptions.DOCS);
+		INDEX_TYPE.setTokenized(true);
+		INDEX_TYPE.freeze();
 	}
 
 	@Override
@@ -63,44 +59,51 @@ public class LocaleFieldType
 	}
 
 	@Override
-	public boolean isLanguageSpecific()
+	public boolean isLocaleSupported()
 	{
 		return false;
 	}
 
 	@Override
-	public FieldType getDefaultFieldType()
+	public boolean isDocValuesSupported()
 	{
-		return TYPE;
+		return true;
 	}
 
 	@Override
-	public Analyzer getAnalyzer(LocaleSupport lang)
+	public boolean isSortingSupported()
 	{
-		return ANALYZER;
+		return true;
 	}
 
 	@Override
-	public IndexableField create(
-		String field,
-		FieldType type,
-		LocaleSupport lang,
-		Locale object
-	)
+	public void create(FieldCreationEncounter<Locale> encounter)
 	{
-		return new Field(field, object.toLanguageTag(), type);
-	}
+		if(encounter.isIndexed())
+		{
+			encounter.emit(new AnalyzingTextField(
+				encounter.name(),
+				encounter.getValue().toLanguageTag(),
+				Field.Store.NO,
+				ANALYZER
+			));
+		}
 
-	@Override
-	public IndexableField createValuesField(String field, LocaleSupport lang, Locale object)
-	{
-		return new SortedSetDocValuesField(field, new BytesRef(object.toLanguageTag()));
-	}
+		if(encounter.isSorted())
+		{
+			encounter.emit(new SortedDocValuesField(
+				encounter.sortValuesName(),
+				new BytesRef(encounter.getValue().toLanguageTag())
+			));
+		}
 
-	@Override
-	public IndexableField createSortingField(String field, LocaleSupport lang, Locale object)
-	{
-		return new SortedDocValuesField(field, new BytesRef(object.toLanguageTag()));
+		if(encounter.isStoreDocValues())
+		{
+			encounter.emit(new SortedSetDocValuesField(
+				encounter.docValuesName(),
+				new BytesRef(encounter.getValue().toLanguageTag())
+			));
+		}
 	}
 
 	@Override

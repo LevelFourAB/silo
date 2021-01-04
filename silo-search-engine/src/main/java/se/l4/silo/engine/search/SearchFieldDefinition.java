@@ -3,6 +3,7 @@ package se.l4.silo.engine.search;
 import java.util.function.Function;
 
 import se.l4.silo.engine.search.internal.FieldDefinitionImpl;
+import se.l4.silo.engine.search.types.SearchFieldType;
 
 /**
  * Definition of a field that can be used in a {@link SearchIndexDefinition search index}.
@@ -15,14 +16,6 @@ public interface SearchFieldDefinition<T>
 	 * @return
 	 */
 	String getName();
-
-	/**
-	 * Get a function that can be used to read this field from a certain
-	 * object.
-	 *
-	 * @return
-	 */
-	Function<T, Object> getSupplier();
 
 	/**
 	 * Get if the field is localized.
@@ -46,25 +39,66 @@ public interface SearchFieldDefinition<T>
 	boolean isHighlighted();
 
 	/**
-	 * Get if this field is sorted.
-	 *
-	 * @return
-	 */
-	boolean isSorted();
-
-	/**
 	 * Get information about the type of the field.
 	 *
 	 * @return
 	 */
 	SearchFieldType<?> getType();
 
+	/**
+	 * Field representing a single value that may be queried.
+	 */
+	interface Single<T, V>
+		extends SearchFieldDefinition<T>
+	{
+		/**
+		 * Get a function that can be used to read this field from a certain
+		 * object.
+		 *
+		 * @return
+		 */
+		Function<T, V> getSupplier();
+
+		/**
+		 * Get if this field is sorted.
+		 *
+		 * @return
+		 */
+		boolean isSorted();
+	}
+
+	/**
+	 * Field containing multiple values that may be queried.
+	 */
+	interface Collection<T, V>
+		extends SearchFieldDefinition<T>
+	{
+		/**
+		 * Get a function that can be used to read this field from a certain
+		 * object.
+		 *
+		 * @return
+		 */
+		Function<T, Iterable<V>> getSupplier();
+	}
+
+	/**
+	 * Start building a new field definition.
+	 *
+	 * @param <T>
+	 * @param name
+	 *   the name of the field
+	 * @param type
+	 *   the base type of the field
+	 * @return
+	 */
 	static <T> Builder<T, Void> create(String name, Class<T> type)
 	{
 		return FieldDefinitionImpl.create(name, type);
 	}
 
 	interface Builder<T, F>
+		extends BaseBuilder<Builder<T, F>>
 	{
 		/**
 		 * Set the type of data this field contains.
@@ -80,28 +114,44 @@ public interface SearchFieldDefinition<T>
 		 * @param supplier
 		 * @return
 		 */
-		Builder<T, F> withSupplier(Function<T, F> supplier);
+		SingleBuilder<T, F> withSupplier(Function<T, F> supplier);
 
 		/**
 		 * Indicate that this field can support multiple values.
 		 *
 		 * @return
 		 */
-		Builder<T, Iterable<F>> collection();
+		CollectionBuilder<T, F> collection();
+	}
+
+	interface BaseBuilder<Self extends BaseBuilder<Self>>
+	{
+		/**
+		 * Set that this field should be indexed in a language specific way.
+		 *
+		 * @return
+		 */
+		default Self withLanguageSpecific()
+		{
+			return withLanguageSpecific(true);
+		}
 
 		/**
 		 * Set that this field should be indexed in a language specific way.
 		 *
 		 * @return
 		 */
-		Builder<T, F> withLanguageSpecific(boolean languageSpecific);
+		Self withLanguageSpecific(boolean languageSpecific);
 
 		/**
 		 * Indicate that the field can be highlighted.
 		 *
 		 * @return
 		 */
-		Builder<T, F> withHighlighting();
+		default Self withHighlighting()
+		{
+			return withHighlighting(true);
+		}
 
 		/**
 		 * Indicate if the field should be able to highlight content.
@@ -109,14 +159,29 @@ public interface SearchFieldDefinition<T>
 		 * @param highlighted
 		 * @return
 		 */
-		Builder<T, F> withHighlighting(boolean highlighted);
+		Self withHighlighting(boolean highlighted);
+	}
+
+	interface SingleBuilder<T, F>
+		extends BaseBuilder<SingleBuilder<T, F>>
+	{
+		/**
+		 * Set the function used to extract the value for the field.
+		 *
+		 * @param supplier
+		 * @return
+		 */
+		SingleBuilder<T, F> withSupplier(Function<T, F> supplier);
 
 		/**
 		 * Mark this field as being sortable.
 		 *
 		 * @return
 		 */
-		Builder<T, F> sortable();
+		default SingleBuilder<T, F> sortable()
+		{
+			return withSortable(true);
+		}
 
 		/**
 		 * Set if this field is sortable or not.
@@ -124,8 +189,32 @@ public interface SearchFieldDefinition<T>
 		 * @param sorted
 		 * @return
 		 */
-		Builder<T, F> withSortable(boolean sorted);
+		SingleBuilder<T, F> withSortable(boolean sorted);
 
-		SearchFieldDefinition<T> build();
+		/**
+		 * Build the definition.
+		 *
+		 * @return
+		 */
+		SearchFieldDefinition.Single<T, F> build();
+	}
+
+	interface CollectionBuilder<T, F>
+		extends BaseBuilder<CollectionBuilder<T, F>>
+	{
+		/**
+		 * Set the function used to extract the value for the field.
+		 *
+		 * @param supplier
+		 * @return
+		 */
+		CollectionBuilder<T, F> withSupplier(Function<T, Iterable<F>> supplier);
+
+		/**
+		 * Build the definition.
+		 *
+		 * @return
+		 */
+		SearchFieldDefinition.Collection<T, F> build();
 	}
 }

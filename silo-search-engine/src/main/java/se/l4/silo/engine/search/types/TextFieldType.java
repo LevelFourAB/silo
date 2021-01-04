@@ -2,11 +2,9 @@ package se.l4.silo.engine.search.types;
 
 import java.io.IOException;
 
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.SortedDocValuesField;
-import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.document.SortedSetDocValuesField;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.util.BytesRef;
@@ -14,8 +12,6 @@ import org.apache.lucene.util.BytesRef;
 import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.exobytes.streaming.Token;
-import se.l4.silo.engine.search.LocaleSupport;
-import se.l4.silo.engine.search.SearchFieldType;
 import se.l4.silo.query.Matcher;
 import se.l4.silo.search.SearchIndexException;
 import se.l4.silo.search.query.UserQuery;
@@ -25,7 +21,9 @@ public class TextFieldType
 {
 	private final boolean suggest;
 
-	public TextFieldType(boolean suggest)
+	public TextFieldType(
+		boolean suggest
+	)
 	{
 		this.suggest = suggest;
 	}
@@ -46,38 +44,51 @@ public class TextFieldType
 	}
 
 	@Override
-	public boolean isLanguageSpecific()
+	public boolean isLocaleSupported()
 	{
 		return true;
 	}
 
 	@Override
-	public FieldType getDefaultFieldType()
+	public boolean isSortingSupported()
 	{
-		return org.apache.lucene.document.TextField.TYPE_NOT_STORED;
+		return true;
 	}
 
 	@Override
-	public Analyzer getAnalyzer(LocaleSupport lang)
+	public boolean isDocValuesSupported()
 	{
-		return suggest ? lang.getSuggestAnalyzer() : lang.getTextAnalyzer();
+		return true;
 	}
 
 	@Override
-	public IndexableField create(
-		String field,
-		FieldType type,
-		LocaleSupport lang,
-		String object
-	)
+	public void create(FieldCreationEncounter<String> encounter)
 	{
-		return new Field(field, (String) object, type);
-	}
+		if(encounter.isIndexed())
+		{
+			encounter.emit(new AnalyzingTextField(
+				encounter.name(),
+				encounter.getValue(),
+				encounter.isHighlighted() ? Field.Store.YES : Field.Store.NO,
+				encounter.getLocale().getTextAnalyzer()
+			));
+		}
 
-	@Override
-	public IndexableField createSortingField(String field, LocaleSupport lang, String object)
-	{
-		return new SortedDocValuesField(field, new BytesRef(object));
+		if(encounter.isSorted())
+		{
+			encounter.emit(new SortedDocValuesField(
+				encounter.sortValuesName(),
+				new BytesRef(encounter.getValue())
+			));
+		}
+
+		if(encounter.isStoreDocValues())
+		{
+			encounter.emit(new SortedSetDocValuesField(
+				encounter.docValuesName(),
+				new BytesRef(encounter.getValue())
+			));
+		}
 	}
 
 	@Override
