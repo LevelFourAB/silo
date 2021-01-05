@@ -6,9 +6,9 @@ import se.l4.silo.DeleteResult;
 import se.l4.silo.Entity;
 import se.l4.silo.FetchResult;
 import se.l4.silo.StoreResult;
-import se.l4.silo.engine.IndexDefinition;
-import se.l4.silo.engine.LocalIndex;
-import se.l4.silo.query.Query;
+import se.l4.silo.engine.index.IndexDefinition;
+import se.l4.silo.engine.index.LocalIndex;
+import se.l4.silo.index.Query;
 
 /**
  * Storage that can be used by {@link Entity entities}.

@@ -3,6 +3,7 @@ package se.l4.silo.engine;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import se.l4.silo.Entity;
+import se.l4.silo.engine.index.LocalIndex;
 
 /**
  * Extension to {@link Entity} to represent extra things available on entities

@@ -1,6 +1,7 @@
 package se.l4.silo.engine;
 
 import se.l4.silo.Blob;
+import se.l4.silo.engine.index.IndexDefinition;
 import se.l4.silo.engine.internal.BinaryEntityDefinitionImpl;
 
 public interface BinaryEntityDefinition<ID>

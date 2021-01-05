@@ -3,7 +3,7 @@ package se.l4.silo.internal;
 import java.util.Objects;
 import java.util.Optional;
 
-import se.l4.silo.query.RangeMatcher;
+import se.l4.silo.index.RangeMatcher;
 
 /**
  * Implementation of {@link RangeMatcher}.

@@ -1,7 +1,7 @@
 package se.l4.silo.results;
 
 import se.l4.silo.FetchResult;
-import se.l4.silo.query.LimitableQuery;
+import se.l4.silo.index.LimitableQuery;
 
 /**
  * Result of a fetch that also includes information about the offset and limit

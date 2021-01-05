@@ -9,7 +9,7 @@ import org.eclipse.collections.api.list.ListIterable;
 
 import se.l4.silo.engine.EntityCodec;
 import se.l4.silo.engine.EntityDefinition;
-import se.l4.silo.engine.IndexDefinition;
+import se.l4.silo.engine.index.IndexDefinition;
 import se.l4.ylem.types.reflect.TypeRef;
 import se.l4.ylem.types.reflect.Types;
 

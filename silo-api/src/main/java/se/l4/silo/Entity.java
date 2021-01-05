@@ -2,7 +2,7 @@ package se.l4.silo;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import se.l4.silo.query.Query;
+import se.l4.silo.index.Query;
 
 /**
  * Base for entities in {@link Silo}.

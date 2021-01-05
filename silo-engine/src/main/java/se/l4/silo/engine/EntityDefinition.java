@@ -5,6 +5,7 @@ import java.util.function.Function;
 import org.eclipse.collections.api.list.ListIterable;
 
 import se.l4.silo.EntityRef;
+import se.l4.silo.engine.index.IndexDefinition;
 import se.l4.silo.engine.internal.EntityDefinitionImpl;
 
 public interface EntityDefinition<ID, T>

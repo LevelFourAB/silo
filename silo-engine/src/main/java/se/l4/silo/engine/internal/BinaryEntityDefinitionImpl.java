@@ -11,7 +11,7 @@ import se.l4.silo.Blob;
 import se.l4.silo.engine.BinaryEntityDefinition;
 import se.l4.silo.engine.BlobCodec;
 import se.l4.silo.engine.EntityCodec;
-import se.l4.silo.engine.IndexDefinition;
+import se.l4.silo.engine.index.IndexDefinition;
 import se.l4.ylem.types.reflect.TypeRef;
 import se.l4.ylem.types.reflect.Types;
 

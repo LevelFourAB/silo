@@ -25,19 +25,19 @@ import se.l4.silo.FetchResult;
 import se.l4.silo.StorageException;
 import se.l4.silo.StoreResult;
 import se.l4.silo.engine.EntityCodec;
-import se.l4.silo.engine.IndexDefinition;
-import se.l4.silo.engine.LocalIndex;
 import se.l4.silo.engine.MVStoreManager;
-import se.l4.silo.engine.QueryEngine;
+import se.l4.silo.engine.index.IndexDefinition;
+import se.l4.silo.engine.index.IndexEngine;
+import se.l4.silo.engine.index.LocalIndex;
+import se.l4.silo.engine.internal.index.IndexEngineController;
+import se.l4.silo.engine.internal.index.IndexEngineCreationEncounterImpl;
+import se.l4.silo.engine.internal.index.IndexEngineRebuildEncounter;
+import se.l4.silo.engine.internal.index.IndexQueryEncounterImpl;
 import se.l4.silo.engine.internal.mvstore.SharedStorages;
-import se.l4.silo.engine.internal.query.QueryEncounterImpl;
-import se.l4.silo.engine.internal.query.QueryEngineController;
-import se.l4.silo.engine.internal.query.QueryEngineCreationEncounterImpl;
-import se.l4.silo.engine.internal.query.QueryEngineRebuildEncounter;
 import se.l4.silo.engine.internal.tx.TransactionSupport;
 import se.l4.silo.engine.internal.tx.WriteableTransactionExchange;
 import se.l4.silo.engine.io.ExtendedDataOutputStream;
-import se.l4.silo.query.Query;
+import se.l4.silo.index.Query;
 
 /**
  * Implementation of {@link Storage}.
@@ -53,8 +53,8 @@ public class StorageImpl<T>
 	private final EntityCodec<T> codec;
 
 	private final PrimaryIndex primary;
-	private final MapIterable<String, QueryEngine<T, ?>> queryEngines;
-	private final MapIterable<String, QueryEngineController<T, ?>> queryControllers;
+	private final MapIterable<String, IndexEngine<T, ?>> queryEngines;
+	private final MapIterable<String, IndexEngineController<T, ?>> queryControllers;
 
 	private final LongAdder reads;
 	private final LongAdder stores;
@@ -94,7 +94,7 @@ public class StorageImpl<T>
 
 		this.queryEngines = (ImmutableMap) indexes.toMap(IndexDefinition::getName, def -> {
 			String key = def.getName();
-			return def.create(new QueryEngineCreationEncounterImpl(
+			return def.create(new IndexEngineCreationEncounterImpl(
 				storages,
 				executor,
 				indexDataPath,
@@ -103,7 +103,7 @@ public class StorageImpl<T>
 			));
 		}).toImmutable();
 
-		this.queryControllers = this.queryEngines.collectValues((key, e) -> new QueryEngineController<>(
+		this.queryControllers = this.queryEngines.collectValues((key, e) -> new IndexEngineController<>(
 			store,
 			mainDataStorage,
 			e,
@@ -117,7 +117,7 @@ public class StorageImpl<T>
 		// Start each of the indexes using the executor
 		long largestId = primary.latest();
 		long size = primary.size();
-		QueryEngineRebuildEncounter<T> rebuild = new QueryEngineRebuildEncounter<T>()
+		IndexEngineRebuildEncounter<T> rebuild = new IndexEngineRebuildEncounter<T>()
 		{
 			public long getSize()
 			{
@@ -174,7 +174,7 @@ public class StorageImpl<T>
 		throws IOException
 	{
 		// Close all of our query engines
-		for(QueryEngine<?, ?> engine : this.queryEngines)
+		for(IndexEngine<?, ?> engine : this.queryEngines)
 		{
 			engine.close();
 		}
@@ -195,7 +195,7 @@ public class StorageImpl<T>
 				tx.store(name, id, out -> codec.encode(instance, out));
 
 				// Generate index data for the object
-				for(QueryEngine<T, ?> engine : queryEngines)
+				for(IndexEngine<T, ?> engine : queryEngines)
 				{
 					tx.index(name, engine.getName(), id, out0 -> {
 						try(ExtendedDataOutputStream out = new ExtendedDataOutputStream(out0))
@@ -290,12 +290,12 @@ public class StorageImpl<T>
 		return primary.size();
 	}
 
-	private QueryEncounterImpl createQueryEncounter(
+	private IndexQueryEncounterImpl createQueryEncounter(
 		WriteableTransactionExchange tx,
 		Query query
 	)
 	{
-		return new QueryEncounterImpl<Query<T,?,?>, T>(tx, query, id -> this.getInternal(tx, id));
+		return new IndexQueryEncounterImpl<Query<T,?,?>, T>(tx, query, id -> this.getInternal(tx, id));
 	}
 
 	@Override
@@ -303,7 +303,7 @@ public class StorageImpl<T>
 		Query<T, R, FR> query
 	)
 	{
-		QueryEngineController<?, ?> controller = queryControllers.get(query.getIndex());
+		IndexEngineController<?, ?> controller = queryControllers.get(query.getIndex());
 		if(controller == null)
 		{
 			throw new StorageException("Unknown query engine `" + query.getIndex() + "`");
@@ -318,7 +318,7 @@ public class StorageImpl<T>
 	@Override
 	public <R> Flux<R> stream(Query<T, R, ?> query)
 	{
-		QueryEngineController<?, ?> controller = queryControllers.get(query.getIndex());
+		IndexEngineController<?, ?> controller = queryControllers.get(query.getIndex());
 		if(controller == null)
 		{
 			throw new StorageException("Unknown query engine `" + query.getIndex() + "`");
@@ -488,7 +488,7 @@ public class StorageImpl<T>
 	{
 		long internalId = primary.get(null, id);
 
-		QueryEngineController<T, ?> controller = queryControllers.get(index);
+		IndexEngineController<T, ?> controller = queryControllers.get(index);
 		if(controller != null)
 		{
 			controller.store(internalId, data);

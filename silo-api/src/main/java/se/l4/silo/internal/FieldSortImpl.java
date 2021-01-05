@@ -2,7 +2,7 @@ package se.l4.silo.internal;
 
 import java.util.Objects;
 
-import se.l4.silo.query.FieldSort;
+import se.l4.silo.index.FieldSort;
 
 /**
  * Implementation of {@link FieldSort}.

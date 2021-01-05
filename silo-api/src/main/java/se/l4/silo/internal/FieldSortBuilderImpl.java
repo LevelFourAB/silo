@@ -2,8 +2,8 @@ package se.l4.silo.internal;
 
 import java.util.function.Function;
 
-import se.l4.silo.query.FieldSort;
-import se.l4.silo.query.FieldSortBuilder;
+import se.l4.silo.index.FieldSort;
+import se.l4.silo.index.FieldSortBuilder;
 
 /**
  * Implementation of {@link FieldSortBuilder}.

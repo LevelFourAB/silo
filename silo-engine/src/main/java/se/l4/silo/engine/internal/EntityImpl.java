@@ -8,8 +8,8 @@ import se.l4.silo.DeleteResult;
 import se.l4.silo.FetchResult;
 import se.l4.silo.StoreResult;
 import se.l4.silo.engine.LocalEntity;
-import se.l4.silo.engine.LocalIndex;
-import se.l4.silo.query.Query;
+import se.l4.silo.engine.index.LocalIndex;
+import se.l4.silo.index.Query;
 
 public class EntityImpl<ID, T>
 	implements LocalEntity<ID, T>

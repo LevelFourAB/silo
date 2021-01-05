@@ -2,6 +2,7 @@ package se.l4.silo.engine;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 
 import org.eclipse.collections.api.factory.Lists;
@@ -92,6 +93,21 @@ public interface LocalSilo
 	public static Builder open(File path)
 	{
 		return open(path.toPath());
+	}
+
+	/**
+	 * Start creating a local instance of Silo. See {@link #open(Path)} for
+	 * details about how the instance will behave.
+	 *
+	 * @param first
+	 *   the directory where data will be stored
+	 * @param more
+	 *
+	 * @return
+	 */
+	public static Builder open(String first, String... more)
+	{
+		return open(Paths.get(first, more));
 	}
 
 	/**

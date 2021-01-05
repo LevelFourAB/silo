@@ -2,8 +2,8 @@ package se.l4.silo.internal;
 
 import java.util.Objects;
 
-import se.l4.silo.query.FieldLimit;
-import se.l4.silo.query.Matcher;
+import se.l4.silo.index.FieldLimit;
+import se.l4.silo.index.Matcher;
 
 /**
  * Implementation of {@link FieldLimit}.
