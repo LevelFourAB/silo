@@ -130,7 +130,15 @@ public class IndexSearcherManager
 	 */
 	public void changesCommitted()
 	{
-		hasDeletions = false;
+		searcherLock.lock();
+		try
+		{
+			hasDeletions = false;
+		}
+		finally
+		{
+			searcherLock.unlock();
+		}
 	}
 
 	/**
@@ -205,9 +213,17 @@ public class IndexSearcherManager
 	public void close()
 		throws IOException
 	{
-		for(SearcherRef ref : searcherRefs)
+		searcherLock.lock();
+		try
 		{
-			ref.close();
+			for(SearcherRef ref : searcherRefs)
+			{
+				ref.close();
+			}
+		}
+		finally
+		{
+			searcherLock.unlock();
 		}
 	}
 
