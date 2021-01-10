@@ -3,7 +3,6 @@ package se.l4.silo.engine;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
 
 import org.eclipse.collections.api.factory.Lists;
 
@@ -54,19 +53,11 @@ public interface LocalSilo
 	void close();
 
 	/**
-	 * Create a snapshot of this instance.
+	 * Access maintenance utilities for this instance.
 	 *
 	 * @return
 	 */
-	Snapshot createSnapshot();
-
-	/**
-	 * Compact the storage.
-	 *
-	 * @param maxTime
-	 *   the maximum time to spend compacting
-	 */
-	void compact(Duration maxTime);
+	Maintenance maintenance();
 
 	/**
 	 * Start creating a local instance of Silo. The built instance will use a

@@ -2,7 +2,6 @@ package se.l4.silo.engine.internal;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -20,7 +19,7 @@ import se.l4.silo.engine.EngineConfig;
 import se.l4.silo.engine.EntityDefinition;
 import se.l4.silo.engine.LocalEntity;
 import se.l4.silo.engine.LocalSilo;
-import se.l4.silo.engine.Snapshot;
+import se.l4.silo.engine.Maintenance;
 import se.l4.silo.engine.internal.tx.TransactionSupport;
 import se.l4.silo.engine.log.LogBuilder;
 import se.l4.vibe.Vibe;
@@ -37,7 +36,8 @@ public class LocalSiloImpl
 	private final TransactionSupport transactionSupport;
 	private final ImmutableMap<String, LocalEntity<?, ?>> entities;
 
-	@SuppressWarnings("rawtypes")
+	private final MaintenanceImpl maintenance;
+
 	LocalSiloImpl(
 		StorageEngine storageEngine,
 		ImmutableMap<String, LocalEntity<?, ?>> entities
@@ -47,6 +47,7 @@ public class LocalSiloImpl
 		this.entities = entities;
 
 		this.transactionSupport = storageEngine.getTransactionSupport();
+		this.maintenance = new MaintenanceImpl(storageEngine);
 	}
 
 	@Override
@@ -128,21 +129,10 @@ public class LocalSiloImpl
 		return transactionSupport.withTransaction(scopeFunction);
 	}
 
-	/**
-	 * Create a snapshot of this instance.
-	 *
-	 * @return
-	 */
 	@Override
-	public Snapshot createSnapshot()
+	public Maintenance maintenance()
 	{
-		return storageEngine.createSnapshot();
-	}
-
-	@Override
-	public void compact(Duration maxTime)
-	{
-		storageEngine.compact(maxTime.toMillis());
+		return maintenance;
 	}
 
 	public static class BuilderImpl
