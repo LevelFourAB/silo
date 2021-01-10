@@ -107,7 +107,7 @@ public class SearchObjectEntityTest
 
 		assertThat(result.getSize(), is(1l));
 
-		tx.commit();
+		tx.commit().block();
 
 		result = entity.fetch(
 			SearchIndexQuery.create("index", TestUserData.class)
