@@ -32,9 +32,9 @@
 		</dependency>
 
 		<dependency>
-			<groupId>se.l4.exobytes</groupId>
-			<artifactId>exobytes</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
+			<groupId>se.l4.ylem.types</groupId>
+			<artifactId>ylem-types-reflect</artifactId>
+			<version>1.0.0</version>
 		</dependency>
 
 		<dependency>
