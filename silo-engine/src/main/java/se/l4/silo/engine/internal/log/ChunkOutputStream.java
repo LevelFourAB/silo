@@ -13,12 +13,12 @@ public class ChunkOutputStream
 	private int bufferIndex;
 
 	public ChunkOutputStream(
-		int bufferSize,
+		byte[] buffer,
 		Control out
 	)
 	{
+		this.buffer = buffer;
 		this.consumer = Objects.requireNonNull(out);
-		buffer = new byte[bufferSize];
 	}
 
 	@Override

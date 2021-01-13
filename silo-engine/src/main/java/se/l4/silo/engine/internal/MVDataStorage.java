@@ -8,6 +8,8 @@ import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Enumeration;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 import com.carrotsearch.hppc.LongArrayList;
@@ -48,6 +50,16 @@ public class MVDataStorage
 	private final MVMap<Long, long[]> keys;
 	private final MVMap<Long, byte[]> chunks;
 
+	/**
+	 * Buffer used for all stores.
+	 */
+	private final byte[] buffer;
+	/**
+	 * Lock used to protect stores. Ensures that only a single thread can
+	 * store something in this storage at once.
+	 */
+	private final Lock storeLock;
+
 	public MVDataStorage(
 		String prefix,
 		MVStoreManager store
@@ -58,6 +70,9 @@ public class MVDataStorage
 
 		readonlyChunks = version -> chunks.openVersion(version);
 		readonlyKeys = version -> keys.openVersion(version);
+
+		storeLock = new ReentrantLock();
+		buffer = new byte[CHUNK_SIZE];
 	}
 
 	@Override
@@ -73,37 +88,47 @@ public class MVDataStorage
 	public long store(IOConsumer<OutputStream> generator)
 		throws IOException
 	{
-		Long lastId = keys.lastKey();
-		long id = lastId == null ? 1 : lastId + 1;
+		storeLock.lock();
+		try
+		{
+			Long lastId = keys.lastKey();
+			long id = lastId == null ? 1 : lastId + 1;
 
-		LongArrayList ids = new LongArrayList();
+			LongArrayList ids = new LongArrayList();
 
-		try(OutputStream chunkOutput = new ChunkOutputStream(CHUNK_SIZE, (data, offset, length) -> {
-			long nextId = nextInternalId();
-			ids.add(nextId);
+			ChunkOutputStream.Control control = (data, offset, length) -> {
+				long nextId = nextInternalId();
+				ids.add(nextId);
 
-			byte[] buf = Arrays.copyOfRange(data, offset, offset + length);
-			chunks.put(nextId, buf);
+				byte[] buf = Arrays.copyOfRange(data, offset, offset + length);
+				chunks.put(nextId, buf);
+
+				if(log.isTraceEnabled())
+				{
+					log.trace("Store: Wrote " + nextId + " with data " + Base64.getEncoder().encodeToString(buf));
+				}
+			};
+
+			try(OutputStream chunkOutput = new ChunkOutputStream(buffer, control))
+			{
+				// Ask the generator to write output
+				generator.accept(chunkOutput);
+			}
 
 			if(log.isTraceEnabled())
 			{
-				log.trace("Store: Wrote " + nextId + " with data " + Base64.getEncoder().encodeToString(buf));
+				log.trace("Store: Mapped " + id + " to " + Arrays.toString(ids.toArray()));
 			}
-		}))
-		{
-			// Ask the generator to write output
-			generator.accept(chunkOutput);
+
+			// Store the new ids
+			keys.put(id, ids.toArray());
+
+			return id;
 		}
-
-		if(log.isTraceEnabled())
+		finally
 		{
-			log.trace("Store: Mapped " + id + " to " + Arrays.toString(ids.toArray()));
+			storeLock.unlock();
 		}
-
-		// Store the new ids
-		keys.put(id, ids.toArray());
-
-		return id;
 	}
 
 	@Override

@@ -78,7 +78,7 @@ public class TransactionLogImpl
 	{
 		try
 		{
-			OutputStream chunkOutput = new ChunkOutputStream(CHUNK_SIZE, (data, offset, length) -> {
+			ChunkOutputStream.Control control = (data, offset, length) -> {
 				if(logger.isTraceEnabled())
 				{
 					logger.trace("[" + tx + "] Wrote chunk for " + entity + "[" + id + "]: " + Base64.getEncoder().encodeToString(data));
@@ -92,7 +92,9 @@ public class TransactionLogImpl
 					IOUtils.writeId(id, out);
 					IOUtils.writeByteArray(data, offset, length, out);
 				}));
-			});
+			};
+
+			OutputStream chunkOutput = new ChunkOutputStream(new byte[CHUNK_SIZE], control);
 
 			// Ask the generator to write data
 			generator.accept(chunkOutput);
@@ -156,7 +158,7 @@ public class TransactionLogImpl
 	{
 		try
 		{
-			OutputStream chunkOutput = new ChunkOutputStream(CHUNK_SIZE, (data, offset, length) -> {
+			ChunkOutputStream.Control control = (data, offset, length) -> {
 				if(logger.isTraceEnabled())
 				{
 					logger.trace("[" + tx + "] Wrote index chunk for " + entity + "[" + id + "]: " + Base64.getEncoder().encodeToString(data));
@@ -171,7 +173,9 @@ public class TransactionLogImpl
 					IOUtils.writeId(id, out);
 					IOUtils.writeByteArray(data, offset, length, out);
 				}));
-			});
+			};
+
+			OutputStream chunkOutput = new ChunkOutputStream(new byte[CHUNK_SIZE], control);
 
 			// Ask the generator to write output
 			generator.accept(chunkOutput);
