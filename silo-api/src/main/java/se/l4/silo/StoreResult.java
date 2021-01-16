@@ -8,4 +8,11 @@ public interface StoreResult<ID, T>
 	 * @return
 	 */
 	ID getId();
+
+	/**
+	 * Get the data that was stored.
+	 *
+	 * @return
+	 */
+	T getData();
 }

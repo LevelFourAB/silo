@@ -205,7 +205,10 @@ public class StorageImpl<T>
 					});
 				}
 
-				return new StoreResultImpl<>(id);
+				return new StoreResultImpl<>(
+					id,
+					instance
+				);
 			}
 			catch(Throwable e)
 			{
