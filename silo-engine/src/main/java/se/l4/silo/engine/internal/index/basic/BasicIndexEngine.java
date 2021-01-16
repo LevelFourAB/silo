@@ -1,6 +1,8 @@
 package se.l4.silo.engine.internal.index.basic;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -28,8 +30,8 @@ import se.l4.silo.engine.TransactionValue;
 import se.l4.silo.engine.index.IndexEngine;
 import se.l4.silo.engine.index.IndexQueryEncounter;
 import se.l4.silo.engine.index.basic.BasicFieldDefinition;
-import se.l4.silo.engine.io.ExtendedDataInputStream;
-import se.l4.silo.engine.io.ExtendedDataOutputStream;
+import se.l4.silo.engine.io.BinaryDataInput;
+import se.l4.silo.engine.io.BinaryDataOutput;
 import se.l4.silo.engine.types.ArrayFieldType;
 import se.l4.silo.engine.types.FieldType;
 import se.l4.silo.engine.types.LongFieldType;
@@ -229,9 +231,11 @@ public class BasicIndexEngine<T>
 	}
 
 	@Override
-	public void generate(T data, ExtendedDataOutputStream out)
+	public void generate(T data, OutputStream stream)
 		throws IOException
 	{
+		BinaryDataOutput out = BinaryDataOutput.forStream(stream);
+
 		// Write a version tag
 		out.write(0);
 
@@ -255,9 +259,11 @@ public class BasicIndexEngine<T>
 	}
 
 	@Override
-	public void apply(long op, long id, ExtendedDataInputStream in)
+	public void apply(long op, long id, InputStream stream)
 		throws IOException
 	{
+		BinaryDataInput in = BinaryDataInput.forStream(stream);
+
 		int version = in.read();
 		if(version != 0)
 		{

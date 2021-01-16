@@ -1,10 +1,9 @@
 package se.l4.silo.engine.types;
 
 import java.io.IOException;
-import java.util.Arrays;
 
-import se.l4.silo.engine.io.ExtendedDataInput;
-import se.l4.silo.engine.io.ExtendedDataOutput;
+import se.l4.silo.engine.io.BinaryDataInput;
+import se.l4.silo.engine.io.BinaryDataOutput;
 
 public class MergedFieldType
 	implements FieldType<Object[]>
@@ -94,7 +93,7 @@ public class MergedFieldType
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void write(Object[] instance, ExtendedDataOutput out)
+	public void write(Object[] instance, BinaryDataOutput out)
 		throws IOException
 	{
 		out.write(types.length);
@@ -113,14 +112,14 @@ public class MergedFieldType
 	}
 
 	@Override
-	public Object[] read(ExtendedDataInput in)
+	public Object[] read(BinaryDataInput in)
 		throws IOException
 	{
 		Object[] result = new Object[types.length];
-		int n = in.readUnsignedByte();
+		int n = in.read();
 		for(int i=0; i<n; i++)
 		{
-			int tag = in.readUnsignedByte();
+			int tag = in.read();
 			if(tag == NULL)
 			{
 				result[i] = null;

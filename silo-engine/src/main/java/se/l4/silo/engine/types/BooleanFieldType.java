@@ -2,8 +2,8 @@ package se.l4.silo.engine.types;
 
 import java.io.IOException;
 
-import se.l4.silo.engine.io.ExtendedDataInput;
-import se.l4.silo.engine.io.ExtendedDataOutput;
+import se.l4.silo.engine.io.BinaryDataInput;
+import se.l4.silo.engine.io.BinaryDataOutput;
 
 public class BooleanFieldType
 	implements FieldType<Boolean>
@@ -35,14 +35,14 @@ public class BooleanFieldType
 	}
 
 	@Override
-	public void write(Boolean instance, ExtendedDataOutput out)
+	public void write(Boolean instance, BinaryDataOutput out)
 		throws IOException
 	{
 		out.writeBoolean(instance);
 	}
 
 	@Override
-	public Boolean read(ExtendedDataInput in)
+	public Boolean read(BinaryDataInput in)
 		throws IOException
 	{
 		return in.readBoolean();

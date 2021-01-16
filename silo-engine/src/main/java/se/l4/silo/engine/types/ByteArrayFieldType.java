@@ -2,8 +2,8 @@ package se.l4.silo.engine.types;
 
 import java.io.IOException;
 
-import se.l4.silo.engine.io.ExtendedDataInput;
-import se.l4.silo.engine.io.ExtendedDataOutput;
+import se.l4.silo.engine.io.BinaryDataInput;
+import se.l4.silo.engine.io.BinaryDataOutput;
 
 public class ByteArrayFieldType
 	implements FieldType<byte[]>
@@ -67,21 +67,17 @@ public class ByteArrayFieldType
 	}
 
 	@Override
-	public void write(byte[] instance, ExtendedDataOutput out)
+	public void write(byte[] instance, BinaryDataOutput out)
 		throws IOException
 	{
-		out.writeVInt(instance.length);
-		out.write(instance);
+		out.writeByteArray(instance);
 	}
 
 	@Override
-	public byte[] read(ExtendedDataInput in)
+	public byte[] read(BinaryDataInput in)
 		throws IOException
 	{
-		int length = in.readVInt();
-		byte[] result = new byte[length];
-		in.readFully(result);
-		return result;
+		return in.readByteArray();
 	}
 
 	@Override

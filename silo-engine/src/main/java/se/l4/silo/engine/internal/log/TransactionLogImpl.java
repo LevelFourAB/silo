@@ -8,10 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import se.l4.silo.StorageException;
-import se.l4.silo.engine.internal.IOUtils;
 import se.l4.silo.engine.internal.MessageConstants;
-import se.l4.silo.engine.io.ExtendedDataOutput;
-import se.l4.silo.engine.io.ExtendedDataOutputStream;
+import se.l4.silo.engine.io.BinaryDataOutput;
 import se.l4.silo.engine.log.Log;
 import se.l4.ylem.ids.LongIdGenerator;
 import se.l4.ylem.io.Bytes;
@@ -55,7 +53,7 @@ public class TransactionLogImpl
 			}
 
 			log.append(Bytes.capture(stream -> {
-				ExtendedDataOutput out = new ExtendedDataOutputStream(stream);
+				BinaryDataOutput out = BinaryDataOutput.forStream(stream);
 				out.write(MessageConstants.START_TRANSACTION);
 				out.writeVLong(tx);
 			}));
@@ -85,12 +83,12 @@ public class TransactionLogImpl
 				}
 
 				log.append(Bytes.capture(stream -> {
-					ExtendedDataOutput out = new ExtendedDataOutputStream(stream);
+					BinaryDataOutput out = BinaryDataOutput.forStream(stream);
 					out.write(MessageConstants.STORE_CHUNK);
 					out.writeVLong(tx);
 					out.writeString(entity);
-					IOUtils.writeId(id, out);
-					IOUtils.writeByteArray(data, offset, length, out);
+					out.writeId(id);
+					out.writeByteArray(data, offset, length);
 				}));
 			};
 
@@ -109,11 +107,11 @@ public class TransactionLogImpl
 			}
 
 			log.append(Bytes.capture(stream -> {
-				ExtendedDataOutput out = new ExtendedDataOutputStream(stream);
+				BinaryDataOutput out = BinaryDataOutput.forStream(stream);
 				out.write(MessageConstants.STORE_CHUNK);
 				out.writeVLong(tx);
 				out.writeString(entity);
-				IOUtils.writeId(id, out);
+				out.writeId(id);
 				out.writeVInt(0);
 			}));
 		}
@@ -134,11 +132,11 @@ public class TransactionLogImpl
 			}
 
 			log.append(Bytes.capture(stream -> {
-				ExtendedDataOutput out = new ExtendedDataOutputStream(stream);
+				BinaryDataOutput out = BinaryDataOutput.forStream(stream);
 				out.write(MessageConstants.DELETE);
 				out.writeVLong(tx);
 				out.writeString(entity);
-				IOUtils.writeId(id, out);
+				out.writeId(id);
 			}));
 		}
 		catch(IOException e)
@@ -165,13 +163,13 @@ public class TransactionLogImpl
 				}
 
 				log.append(Bytes.capture(stream -> {
-					ExtendedDataOutput out = new ExtendedDataOutputStream(stream);
+					BinaryDataOutput out = BinaryDataOutput.forStream(stream);
 					out.write(MessageConstants.INDEX_CHUNK);
 					out.writeVLong(tx);
 					out.writeString(entity);
 					out.writeString(index);
-					IOUtils.writeId(id, out);
-					IOUtils.writeByteArray(data, offset, length, out);
+					out.writeId(out);
+					out.writeByteArray(data, offset, length);
 				}));
 			};
 
@@ -191,12 +189,12 @@ public class TransactionLogImpl
 			}
 
 			log.append(Bytes.capture(stream -> {
-				ExtendedDataOutput out = new ExtendedDataOutputStream(stream);
+				BinaryDataOutput out = BinaryDataOutput.forStream(stream);
 				out.write(MessageConstants.INDEX_CHUNK);
 				out.writeVLong(tx);
 				out.writeString(entity);
 				out.writeString(index);
-				IOUtils.writeId(id, out);
+				out.writeId(out);
 				out.writeVInt(0);
 			}));
 		}
@@ -218,7 +216,7 @@ public class TransactionLogImpl
 			}
 
 			log.append(Bytes.capture(stream -> {
-				ExtendedDataOutput out = new ExtendedDataOutputStream(stream);
+				BinaryDataOutput out = BinaryDataOutput.forStream(stream);
 				out.write(MessageConstants.COMMIT_TRANSACTION);
 				out.writeVLong(tx);
 			}));
@@ -240,7 +238,7 @@ public class TransactionLogImpl
 			}
 
 			log.append(Bytes.capture(stream -> {
-				ExtendedDataOutput out = new ExtendedDataOutputStream(stream);
+				BinaryDataOutput out = BinaryDataOutput.forStream(stream);
 				out.write(MessageConstants.ROLLBACK_TRANSACTION);
 				out.writeVLong(tx);
 			}));

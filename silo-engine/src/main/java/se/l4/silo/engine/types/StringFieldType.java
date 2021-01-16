@@ -2,8 +2,8 @@ package se.l4.silo.engine.types;
 
 import java.io.IOException;
 
-import se.l4.silo.engine.io.ExtendedDataInput;
-import se.l4.silo.engine.io.ExtendedDataOutput;
+import se.l4.silo.engine.io.BinaryDataInput;
+import se.l4.silo.engine.io.BinaryDataOutput;
 
 public class StringFieldType
 	implements FieldType<String>
@@ -33,14 +33,14 @@ public class StringFieldType
 	}
 
 	@Override
-	public String read(ExtendedDataInput in)
+	public String read(BinaryDataInput in)
 		throws IOException
 	{
 		return in.readString();
 	}
 
 	@Override
-	public void write(String instance, ExtendedDataOutput out)
+	public void write(String instance, BinaryDataOutput out)
 		throws IOException
 	{
 		out.writeString(instance);

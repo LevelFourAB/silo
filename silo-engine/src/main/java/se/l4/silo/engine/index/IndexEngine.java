@@ -2,13 +2,13 @@ package se.l4.silo.engine.index;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import se.l4.silo.FetchResult;
 import se.l4.silo.engine.TransactionValueProvider;
-import se.l4.silo.engine.io.ExtendedDataInputStream;
-import se.l4.silo.engine.io.ExtendedDataOutputStream;
 import se.l4.silo.index.Query;
 
 /**
@@ -46,7 +46,7 @@ public interface IndexEngine<T, Q extends Query<T, ?, ?>>
 	 * @param out
 	 * @return
 	 */
-	void generate(T data, ExtendedDataOutputStream out)
+	void generate(T data, OutputStream out)
 		throws IOException;
 
 	/**
@@ -55,7 +55,7 @@ public interface IndexEngine<T, Q extends Query<T, ?, ?>>
 	 * @param dataId
 	 * @param in
 	 */
-	void apply(long opId, long dataId, ExtendedDataInputStream in)
+	void apply(long opId, long dataId, InputStream in)
 		throws IOException;
 
 	/**

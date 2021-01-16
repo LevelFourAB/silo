@@ -2,8 +2,8 @@ package se.l4.silo.engine.types;
 
 import java.io.IOException;
 
-import se.l4.silo.engine.io.ExtendedDataInput;
-import se.l4.silo.engine.io.ExtendedDataOutput;
+import se.l4.silo.engine.io.BinaryDataInput;
+import se.l4.silo.engine.io.BinaryDataOutput;
 
 public class LongFieldType
 	implements FieldType<Long>
@@ -36,14 +36,14 @@ public class LongFieldType
 	}
 
 	@Override
-	public Long read(ExtendedDataInput in)
+	public Long read(BinaryDataInput in)
 		throws IOException
 	{
 		return in.readLong();
 	}
 
 	@Override
-	public void write(Long instance, ExtendedDataOutput out)
+	public void write(Long instance, BinaryDataOutput out)
 		throws IOException
 	{
 		out.writeLong(instance);

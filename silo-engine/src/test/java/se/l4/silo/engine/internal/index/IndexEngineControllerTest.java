@@ -5,6 +5,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.function.Consumer;
 
@@ -30,8 +31,8 @@ import se.l4.silo.engine.internal.DataStorage;
 import se.l4.silo.engine.internal.MVDataStorage;
 import se.l4.silo.engine.internal.SiloTest;
 import se.l4.silo.engine.internal.mvstore.MVStoreManagerImpl;
-import se.l4.silo.engine.io.ExtendedDataInputStream;
-import se.l4.silo.engine.io.ExtendedDataOutputStream;
+import se.l4.silo.engine.io.BinaryDataInput;
+import se.l4.silo.engine.io.BinaryDataOutput;
 import se.l4.silo.index.Query;
 import se.l4.ylem.io.Bytes;
 
@@ -272,17 +273,17 @@ public class IndexEngineControllerTest
 		}
 
 		@Override
-		public void generate(String data, ExtendedDataOutputStream out)
+		public void generate(String data, OutputStream out)
 			throws IOException
 		{
-			out.writeString(data);
+			BinaryDataOutput.forStream(out).writeString(data);
 		}
 
 		@Override
-		public void apply(long opId, long dataId, ExtendedDataInputStream in)
+		public void apply(long opId, long dataId, InputStream in)
 			throws IOException
 		{
-			String value = in.readString();
+			String value = BinaryDataInput.forStream(in).readString();
 			data.put(dataId, value);
 			lastOpId = opId;
 		}

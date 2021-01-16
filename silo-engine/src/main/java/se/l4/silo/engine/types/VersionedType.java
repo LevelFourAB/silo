@@ -5,8 +5,8 @@ import java.io.IOException;
 import org.eclipse.collections.api.map.primitive.IntObjectMap;
 import org.eclipse.collections.impl.map.mutable.primitive.IntObjectHashMap;
 
-import se.l4.silo.engine.io.ExtendedDataInput;
-import se.l4.silo.engine.io.ExtendedDataOutput;
+import se.l4.silo.engine.io.BinaryDataInput;
+import se.l4.silo.engine.io.BinaryDataOutput;
 
 public class VersionedType<T>
 	implements FieldType<T>
@@ -50,14 +50,14 @@ public class VersionedType<T>
 	}
 
 	@Override
-	public void write(T instance, ExtendedDataOutput out) throws IOException
+	public void write(T instance, BinaryDataOutput out) throws IOException
 	{
 		out.writeVInt(latest);
 		latestType.write(instance, out);
 	}
 
 	@Override
-	public T read(ExtendedDataInput in) throws IOException
+	public T read(BinaryDataInput in) throws IOException
 	{
 		int version = in.readVInt();
 		FieldType<T> ft = versions.get(version);

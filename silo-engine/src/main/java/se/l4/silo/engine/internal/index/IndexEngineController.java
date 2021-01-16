@@ -23,8 +23,6 @@ import se.l4.silo.engine.index.IndexEvent;
 import se.l4.silo.engine.index.IndexQueryEncounter;
 import se.l4.silo.engine.index.LocalIndex;
 import se.l4.silo.engine.internal.DataStorage;
-import se.l4.silo.engine.io.ExtendedDataInputStream;
-import se.l4.silo.engine.io.ExtendedDataOutputStream;
 import se.l4.silo.engine.types.LongFieldType;
 import se.l4.silo.index.Query;
 
@@ -273,7 +271,7 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 				long opId = engineLog.appendRebuild(dataId, storedId);
 				try(InputStream storedStream = dataStorage.get(null, storedId))
 				{
-					engine.apply(opId, dataId, new ExtendedDataInputStream(storedStream));
+					engine.apply(opId, dataId, storedStream);
 				}
 
 				// Update the where we are in the log
@@ -310,7 +308,7 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 				// Protect against the data having been removed
 				if(storedStream == null) continue;
 
-				engine.apply(opId, dataId, new ExtendedDataInputStream(storedStream));
+				engine.apply(opId, dataId, storedStream);
 			}
 
 			// Update the where we are in the log
@@ -353,7 +351,7 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 						}
 						else
 						{
-							engine.apply(opId, entry.getId(),  new ExtendedDataInputStream(in));
+							engine.apply(opId, entry.getId(), in);
 						}
 					}
 					break;
@@ -398,13 +396,10 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 	 * @param out0
 	 * @throws IOException
 	 */
-	public void generate(T data, OutputStream out0)
+	public void generate(T data, OutputStream out)
 		throws IOException
 	{
-		try(ExtendedDataOutputStream out = new ExtendedDataOutputStream(out0))
-		{
-			engine.generate(data, out);
-		}
+		engine.generate(data, out);
 	}
 
 	/**
@@ -428,7 +423,7 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 			{
 				try(InputStream storedStream = dataStorage.get(null, storedId))
 				{
-					engine.apply(opId, id, new ExtendedDataInputStream(storedStream));
+					engine.apply(opId, id, storedStream);
 				}
 
 				softCursor = opId;

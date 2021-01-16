@@ -19,11 +19,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import se.l4.silo.engine.MVStoreManager;
-import se.l4.silo.engine.internal.IOUtils;
 import se.l4.silo.engine.internal.MessageConstants;
 import se.l4.silo.engine.internal.StorageApplier;
-import se.l4.silo.engine.io.ExtendedDataInput;
-import se.l4.silo.engine.io.ExtendedDataInputStream;
+import se.l4.silo.engine.io.BinaryDataInput;
 import se.l4.silo.engine.log.LogEntry;
 import se.l4.silo.engine.types.LongArrayFieldType;
 import se.l4.vibe.Vibe;
@@ -120,8 +118,9 @@ public class TransactionLogApplier
 	{
 		logEvents.increase();
 
-		try(ExtendedDataInput in = new ExtendedDataInputStream(item.getData().asInputStream()))
+		try(InputStream stream = item.getData().asInputStream())
 		{
+			BinaryDataInput in = BinaryDataInput.forStream(stream);
 			int msgType = in.readVInt();
 			long tx = in.readVLong();
 			switch(msgType)
@@ -135,15 +134,15 @@ public class TransactionLogApplier
 					// Store data
 					{
 						String entity = in.readString();
-						Object id = IOUtils.readId(in);
-						byte[] data = IOUtils.readByteArray(in);
+						Object id = in.readId();
+						byte[] data = in.readByteArray();
 						storeChunk(tx, entity, id, data);
 					}
 					break;
 				case MessageConstants.DELETE:
 					{
 						String entity = in.readString();
-						Object id = IOUtils.readId(in);
+						Object id = in.readId();
 						delete(tx, entity, id);
 					}
 					break;
@@ -152,8 +151,8 @@ public class TransactionLogApplier
 					{
 						String entity = in.readString();
 						String index = in.readString();
-						Object id = IOUtils.readId(in);
-						byte[] data = IOUtils.readByteArray(in);
+						Object id = in.readId();
+						byte[] data = in.readByteArray();
 						indexChunk(tx, entity, index, id, data);
 					}
 					break;

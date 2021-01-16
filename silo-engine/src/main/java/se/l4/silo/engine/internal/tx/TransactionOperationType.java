@@ -2,10 +2,9 @@ package se.l4.silo.engine.internal.tx;
 
 import java.io.IOException;
 
-import se.l4.silo.engine.internal.IOUtils;
 import se.l4.silo.engine.internal.tx.TransactionOperation.Type;
-import se.l4.silo.engine.io.ExtendedDataInput;
-import se.l4.silo.engine.io.ExtendedDataOutput;
+import se.l4.silo.engine.io.BinaryDataInput;
+import se.l4.silo.engine.io.BinaryDataOutput;
 import se.l4.silo.engine.types.FieldType;
 
 public class TransactionOperationType
@@ -76,7 +75,7 @@ public class TransactionOperationType
 	}
 
 	@Override
-	public void write(TransactionOperation instance, ExtendedDataOutput out)
+	public void write(TransactionOperation instance, BinaryDataOutput out)
 		throws IOException
 	{
 		out.writeVInt(instance.getType().ordinal());
@@ -88,23 +87,23 @@ public class TransactionOperationType
 				break;
 			case STORE_CHUNK:
 				out.writeString(instance.getEntity());
-				IOUtils.writeId(instance.getId(), out);
-				IOUtils.writeByteArray(instance.getData(), out);
+				out.writeId(instance.getId());
+				out.writeByteArray(instance.getData());
 				break;
 			case INDEX_CHUNK:
 				out.writeString(instance.getEntity());
-				IOUtils.writeId(instance.getId(), out);
-				IOUtils.writeByteArray(instance.getData(), out);
+				out.writeId(instance.getId());
+				out.writeByteArray(instance.getData());
 				break;
 			case DELETE:
 				out.writeString(instance.getEntity());
-				IOUtils.writeId(instance.getId(), out);
+				out.writeId(instance.getId());
 				break;
 		}
 	}
 
 	@Override
-	public TransactionOperation read(ExtendedDataInput in)
+	public TransactionOperation read(BinaryDataInput in)
 		throws IOException
 	{
 		int t = in.readVInt();
@@ -118,13 +117,13 @@ public class TransactionOperationType
 			case DELETE:
 				return TransactionOperation.delete(
 					in.readString(),
-					IOUtils.readId(in)
+					in.readId()
 				);
 			case STORE_CHUNK:
 				return TransactionOperation.store(
 					in.readString(),
-					IOUtils.readId(in),
-					IOUtils.readByteArray(in)
+					in.readId(),
+					in.readByteArray()
 				);
 			case INDEX_CHUNK:
 				String rawEntity = in.readString();
@@ -132,8 +131,8 @@ public class TransactionOperationType
 				return TransactionOperation.indexChunk(
 					rawEntity.substring(0, idx),
 					rawEntity.substring(idx + 2),
-					IOUtils.readId(in),
-					IOUtils.readByteArray(in)
+					in.readId(),
+					in.readByteArray()
 				);
 			case START:
 				long timestamp = in.readVLong();

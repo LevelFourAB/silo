@@ -1,14 +1,13 @@
 package se.l4.silo.engine.types;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.h2.mvstore.WriteBuffer;
 import org.h2.mvstore.type.DataType;
 
-import se.l4.silo.engine.io.AbstractExtendedDataInput;
-import se.l4.silo.engine.io.AbstractExtendedDataOutput;
+import se.l4.silo.engine.io.AbstractBinaryDataInput;
+import se.l4.silo.engine.io.AbstractBinaryDataOutput;
 
 public class DataTypeAdapter
 	implements DataType
@@ -105,7 +104,7 @@ public class DataTypeAdapter
 	{
 		try
 		{
-			int tag = in.readByte();
+			int tag = in.read();
 			if(tag == NULL)
 			{
 				return null;
@@ -139,7 +138,7 @@ public class DataTypeAdapter
 	}
 
 	private static class ExtendedDataOutputImpl
-		extends AbstractExtendedDataOutput
+		extends AbstractBinaryDataOutput
 	{
 
 		private final WriteBuffer buf;
@@ -162,16 +161,10 @@ public class DataTypeAdapter
 		{
 			buf.put((byte) b);
 		}
-
-		@Override
-		public void close()
-			throws IOException
-		{
-		}
 	}
 
 	private static class ExtendedDataInputImpl
-		extends AbstractExtendedDataInput
+		extends AbstractBinaryDataInput
 	{
 		private ByteBuffer buf;
 
@@ -181,42 +174,20 @@ public class DataTypeAdapter
 		}
 
 		@Override
-		public int read() throws IOException
+		public int read()
+			throws IOException
 		{
 			if(! buf.hasRemaining()) return -1;
 			return buf.get() & 0xFF;
 		}
 
 		@Override
-		public byte readByte()
+		public int read(byte[] buffer, int offset, int length)
 			throws IOException
 		{
-			return buf.get();
-		}
-
-		@Override
-		public void readFully(byte[] buffer, int offset, int length)
-			throws IOException
-		{
-			if(length > buf.remaining())
-			{
-				throw new EOFException("Can not read " + length + " bytes, only have " + buf.remaining() + " left");
-			}
-
-			buf.get(buffer, offset, length);
-		}
-
-		@Override
-		public int skipBytes(int n) throws IOException
-		{
-			buf.position(buf.position() + n);
-			return n;
-		}
-
-		@Override
-		public void close()
-			throws IOException
-		{
+			int len = Math.min(buf.remaining(), length);
+			buf.get(buffer, offset, len);
+			return len;
 		}
 	}
 }

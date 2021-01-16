@@ -2,8 +2,8 @@ package se.l4.silo.engine.types;
 
 import java.io.IOException;
 
-import se.l4.silo.engine.io.ExtendedDataInput;
-import se.l4.silo.engine.io.ExtendedDataOutput;
+import se.l4.silo.engine.io.BinaryDataInput;
+import se.l4.silo.engine.io.BinaryDataOutput;
 
 public class IntFieldType
 	implements FieldType<Integer>
@@ -42,14 +42,14 @@ public class IntFieldType
 	}
 
 	@Override
-	public void write(Integer instance, ExtendedDataOutput out)
+	public void write(Integer instance, BinaryDataOutput out)
 		throws IOException
 	{
 		out.writeInt(instance);
 	}
 
 	@Override
-	public Integer read(ExtendedDataInput in)
+	public Integer read(BinaryDataInput in)
 		throws IOException
 	{
 		return in.readInt();

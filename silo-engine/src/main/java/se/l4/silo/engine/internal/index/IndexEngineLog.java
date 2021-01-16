@@ -13,8 +13,8 @@ import se.l4.silo.StorageException;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.index.IndexEngine;
 import se.l4.silo.engine.internal.DataStorage;
-import se.l4.silo.engine.io.ExtendedDataInput;
-import se.l4.silo.engine.io.ExtendedDataOutput;
+import se.l4.silo.engine.io.BinaryDataInput;
+import se.l4.silo.engine.io.BinaryDataOutput;
 import se.l4.silo.engine.types.FieldType;
 import se.l4.silo.engine.types.LongFieldType;
 
@@ -499,7 +499,7 @@ public class IndexEngineLog
 		}
 
 		@Override
-		public Entry read(ExtendedDataInput in)
+		public Entry read(BinaryDataInput in)
 			throws IOException
 		{
 			EntryType type;
@@ -531,7 +531,7 @@ public class IndexEngineLog
 		}
 
 		@Override
-		public void write(Entry instance, ExtendedDataOutput out)
+		public void write(Entry instance, BinaryDataOutput out)
 			throws IOException
 		{
 			switch(instance.type)

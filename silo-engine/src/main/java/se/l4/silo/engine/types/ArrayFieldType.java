@@ -5,8 +5,8 @@ import java.util.Collection;
 
 import org.eclipse.collections.api.factory.Lists;
 
-import se.l4.silo.engine.io.ExtendedDataInput;
-import se.l4.silo.engine.io.ExtendedDataOutput;
+import se.l4.silo.engine.io.BinaryDataInput;
+import se.l4.silo.engine.io.BinaryDataOutput;
 
 public class ArrayFieldType
 	implements FieldType<Object[]>
@@ -110,7 +110,7 @@ public class ArrayFieldType
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void write(Object[] instance, ExtendedDataOutput out)
+	public void write(Object[] instance, BinaryDataOutput out)
 		throws IOException
 	{
 		out.writeVInt(instance.length);
@@ -129,14 +129,14 @@ public class ArrayFieldType
 	}
 
 	@Override
-	public Object[] read(ExtendedDataInput in)
+	public Object[] read(BinaryDataInput in)
 		throws IOException
 	{
 		int n = in.readVInt();
 		Object[] result = new Object[n];
 		for(int i=0; i<n; i++)
 		{
-			int tag = in.readByte();
+			int tag = in.read();
 			if(tag == NULL)
 			{
 				result[i] = null;

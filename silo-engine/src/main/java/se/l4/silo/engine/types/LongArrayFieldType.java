@@ -4,8 +4,8 @@ import java.io.IOException;
 
 import org.eclipse.collections.impl.factory.primitive.LongLists;
 
-import se.l4.silo.engine.io.ExtendedDataInput;
-import se.l4.silo.engine.io.ExtendedDataOutput;
+import se.l4.silo.engine.io.BinaryDataInput;
+import se.l4.silo.engine.io.BinaryDataOutput;
 
 public class LongArrayFieldType
 	implements FieldType<long[]>
@@ -76,7 +76,7 @@ public class LongArrayFieldType
 	}
 
 	@Override
-	public void write(long[] instance, ExtendedDataOutput out)
+	public void write(long[] instance, BinaryDataOutput out)
 		throws IOException
 	{
 		out.writeVInt(instance.length);
@@ -87,7 +87,7 @@ public class LongArrayFieldType
 	}
 
 	@Override
-	public long[] read(ExtendedDataInput in)
+	public long[] read(BinaryDataInput in)
 		throws IOException
 	{
 		int n = in.readVInt();

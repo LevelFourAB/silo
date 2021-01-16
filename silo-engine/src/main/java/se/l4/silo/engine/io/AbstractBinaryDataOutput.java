@@ -2,23 +2,16 @@ package se.l4.silo.engine.io;
 
 import java.io.IOException;
 
-import se.l4.ylem.io.Bytes;
+import se.l4.silo.StorageException;
 
-public abstract class AbstractExtendedDataOutput
-	implements ExtendedDataOutput
+public abstract class AbstractBinaryDataOutput
+	implements BinaryDataOutput
 {
-	@Override
-	public void write(byte[] buffer)
-		throws IOException
-	{
-		write(buffer, 0, buffer.length);
-	}
-
 	@Override
 	public void writeBoolean(boolean value)
 		throws IOException
 	{
-		write(value ? 1 : 0);
+		write(value ? BinaryDataConstants.TAG_BOOL_TRUE : BinaryDataConstants.TAG_BOOL_FALSE);
 	}
 
 	@Override
@@ -51,19 +44,13 @@ public abstract class AbstractExtendedDataOutput
 	public void writeVInt(int value)
 		throws IOException
 	{
-		while(true)
+		while((value & ~0x7f) != 0)
 		{
-			if((value & ~0x7F) == 0)
-			{
-				write(value);
-				break;
-			}
-			else
-			{
-				write((value & 0x7f) | 0x80);
-				value >>>= 7;
-			}
+			write((byte) (value | 0x80));
+			value >>>= 7;
 		}
+
+		write(value);
 	}
 
 	@Override
@@ -72,16 +59,16 @@ public abstract class AbstractExtendedDataOutput
 	{
 		if(value == 0)
 		{
-			write(0);
+			write(BinaryDataConstants.TAG_ZERO);
 		}
 		else if(value > 0)
 		{
-			write(1);
+			write(BinaryDataConstants.TAG_POSITIVE);
 			writeVInt(value);
 		}
-		else if(value < 0)
+		else
 		{
-			write(2);
+			write(BinaryDataConstants.TAG_NEGATIVE);
 			writeVInt(-value);
 		}
 	}
@@ -90,19 +77,13 @@ public abstract class AbstractExtendedDataOutput
 	public void writeVLong(long value)
 		throws IOException
 	{
-		while(true)
+		while((value & ~0x7f) != 0)
 		{
-			if((value & ~0x7FL) == 0)
-			{
-				write((int) value);
-				break;
-			}
-			else
-			{
-				write(((int) value & 0x7f) | 0x80);
-				value >>>= 7;
-			}
+			write((byte) (value | 0x80));
+			value >>>= 7;
 		}
+
+		write((byte) value);
 	}
 
 	@Override
@@ -111,16 +92,16 @@ public abstract class AbstractExtendedDataOutput
 	{
 		if(value == 0)
 		{
-			write(0);
+			write(BinaryDataConstants.TAG_ZERO);
 		}
 		else if(value > 0)
 		{
-			write(1);
+			write(BinaryDataConstants.TAG_POSITIVE);
 			writeVLong(value);
 		}
-		else if(value < 0)
+		else
 		{
-			write(2);
+			write(BinaryDataConstants.TAG_NEGATIVE);
 			writeVLong(-value);
 		}
 	}
@@ -152,52 +133,51 @@ public abstract class AbstractExtendedDataOutput
 	}
 
 	@Override
-	public void writeBytes(Bytes bytes)
+	public void writeId(Object object)
 		throws IOException
 	{
-		bytes.asChunks(8192, (data, offset, len) -> {
-			writeVInt(len);
-			write(data, offset, len);
-		});
-		writeVInt(0);
+		if(object instanceof Long)
+		{
+			write(BinaryDataConstants.TAG_ID_LONG);
+			writeLong((long) object);
+		}
+		else if(object instanceof Integer)
+		{
+			write(BinaryDataConstants.TAG_ID_INT);
+			writeInt((int) object);
+		}
+		else if(object instanceof String)
+		{
+			write(BinaryDataConstants.TAG_ID_STRING);
+			writeString(object.toString());
+		}
+		else if(object instanceof byte[])
+		{
+			write(BinaryDataConstants.TAG_ID_BYTE_ARRAY);
+			writeByteArray((byte[]) object);
+		}
+		else if(object == null)
+		{
+			write(BinaryDataConstants.TAG_ID_NULL);
+		}
+		else
+		{
+			throw new StorageException("Unsupported identifier of type " + object.getClass().getName() + ", value is " + object);
+		}
 	}
 
 	@Override
-	public void writeByte(int v)
+	public void writeByteArray(byte[] data)
 		throws IOException
 	{
-		write(v);
+		writeByteArray(data, 0, data.length);
 	}
 
 	@Override
-	public void writeShort(int v)
+	public void writeByteArray(byte[] data, int offset, int length)
 		throws IOException
 	{
-		writeInt(v);
-	}
-
-	@Override
-	public void writeChar(int v)
-		throws IOException
-	{
-		writeInt(v);
-	}
-
-	@Override
-	public void writeBytes(String s) throws IOException
-	{
-		writeString(s);
-	}
-
-	@Override
-	public void writeChars(String s) throws IOException
-	{
-		writeString(s);
-	}
-
-	@Override
-	public void writeUTF(String s) throws IOException
-	{
-		writeString(s);
+		writeVInt(length);
+		write(data, offset, length);
 	}
 }

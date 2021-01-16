@@ -2,8 +2,8 @@ package se.l4.silo.engine.types;
 
 import java.io.IOException;
 
-import se.l4.silo.engine.io.ExtendedDataInput;
-import se.l4.silo.engine.io.ExtendedDataOutput;
+import se.l4.silo.engine.io.BinaryDataInput;
+import se.l4.silo.engine.io.BinaryDataOutput;
 
 /**
  * Field type abstraction, used to support custom field types.
@@ -46,7 +46,7 @@ public interface FieldType<T>
 	 * @param out
 	 * @throws IOException
 	 */
-	void write(T instance, ExtendedDataOutput out)
+	void write(T instance, BinaryDataOutput out)
 		throws IOException;
 
 	/**
@@ -57,7 +57,7 @@ public interface FieldType<T>
 	 * @return
 	 * @throws IOException
 	 */
-	T read(ExtendedDataInput in)
+	T read(BinaryDataInput in)
 		throws IOException;
 
 	/**

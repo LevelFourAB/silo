@@ -1,6 +1,8 @@
 package se.l4.silo.engine.index.search.internal;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
@@ -71,8 +73,6 @@ import se.l4.silo.engine.index.search.config.IndexReloadConfig;
 import se.l4.silo.engine.index.search.query.QueryBuilder;
 import se.l4.silo.engine.index.search.query.QueryBuilders;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
-import se.l4.silo.engine.io.ExtendedDataInputStream;
-import se.l4.silo.engine.io.ExtendedDataOutputStream;
 import se.l4.silo.index.search.QueryClause;
 import se.l4.silo.index.search.SearchHit;
 import se.l4.silo.index.search.SearchIndexException;
@@ -220,7 +220,7 @@ public class SearchIndexEngine<T>
 	}
 
 	@Override
-	public void generate(T data, ExtendedDataOutputStream rawOut)
+	public void generate(T data, OutputStream rawOut)
 		throws IOException
 	{
 		// Write a version tag
@@ -321,7 +321,7 @@ public class SearchIndexEngine<T>
 	}
 
 	@Override
-	public void apply(long op, long id, ExtendedDataInputStream rawIn)
+	public void apply(long op, long id, InputStream rawIn)
 		throws IOException
 	{
 		int version = rawIn.read();

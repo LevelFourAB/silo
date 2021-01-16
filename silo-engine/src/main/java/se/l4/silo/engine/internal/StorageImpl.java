@@ -36,7 +36,6 @@ import se.l4.silo.engine.internal.index.IndexQueryEncounterImpl;
 import se.l4.silo.engine.internal.mvstore.SharedStorages;
 import se.l4.silo.engine.internal.tx.TransactionSupport;
 import se.l4.silo.engine.internal.tx.WriteableTransactionExchange;
-import se.l4.silo.engine.io.ExtendedDataOutputStream;
 import se.l4.silo.index.Query;
 
 /**
@@ -197,11 +196,8 @@ public class StorageImpl<T>
 				// Generate index data for the object
 				for(IndexEngine<T, ?> engine : queryEngines)
 				{
-					tx.index(name, engine.getName(), id, out0 -> {
-						try(ExtendedDataOutputStream out = new ExtendedDataOutputStream(out0))
-						{
-							engine.generate(instance, out);
-						}
+					tx.index(name, engine.getName(), id, out -> {
+						engine.generate(instance, out);
 					});
 				}
 
