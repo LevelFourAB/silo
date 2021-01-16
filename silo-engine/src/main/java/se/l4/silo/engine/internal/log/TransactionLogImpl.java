@@ -9,6 +9,10 @@ import org.slf4j.LoggerFactory;
 
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.internal.MessageConstants;
+import se.l4.silo.engine.internal.tx.operations.DeleteOperation;
+import se.l4.silo.engine.internal.tx.operations.IndexChunkOperation;
+import se.l4.silo.engine.internal.tx.operations.StartOperation;
+import se.l4.silo.engine.internal.tx.operations.StoreChunkOperation;
 import se.l4.silo.engine.io.BinaryDataOutput;
 import se.l4.silo.engine.log.Log;
 import se.l4.ylem.ids.LongIdGenerator;
@@ -54,8 +58,11 @@ public class TransactionLogImpl
 
 			log.append(Bytes.capture(stream -> {
 				BinaryDataOutput out = BinaryDataOutput.forStream(stream);
+
 				out.write(MessageConstants.START_TRANSACTION);
 				out.writeVLong(tx);
+
+				StartOperation.write(out, System.currentTimeMillis());
 			}));
 		}
 		catch(IOException e)
@@ -84,11 +91,11 @@ public class TransactionLogImpl
 
 				log.append(Bytes.capture(stream -> {
 					BinaryDataOutput out = BinaryDataOutput.forStream(stream);
+
 					out.write(MessageConstants.STORE_CHUNK);
 					out.writeVLong(tx);
-					out.writeString(entity);
-					out.writeId(id);
-					out.writeByteArray(data, offset, length);
+
+					StoreChunkOperation.write(out, entity, id, data, offset, length);
 				}));
 			};
 
@@ -110,9 +117,8 @@ public class TransactionLogImpl
 				BinaryDataOutput out = BinaryDataOutput.forStream(stream);
 				out.write(MessageConstants.STORE_CHUNK);
 				out.writeVLong(tx);
-				out.writeString(entity);
-				out.writeId(id);
-				out.writeVInt(0);
+
+				StoreChunkOperation.writeEnd(out, entity, id);
 			}));
 		}
 		catch(IOException e)
@@ -133,10 +139,11 @@ public class TransactionLogImpl
 
 			log.append(Bytes.capture(stream -> {
 				BinaryDataOutput out = BinaryDataOutput.forStream(stream);
+
 				out.write(MessageConstants.DELETE);
 				out.writeVLong(tx);
-				out.writeString(entity);
-				out.writeId(id);
+
+				DeleteOperation.write(out, entity, id);
 			}));
 		}
 		catch(IOException e)
@@ -164,12 +171,19 @@ public class TransactionLogImpl
 
 				log.append(Bytes.capture(stream -> {
 					BinaryDataOutput out = BinaryDataOutput.forStream(stream);
+
 					out.write(MessageConstants.INDEX_CHUNK);
 					out.writeVLong(tx);
-					out.writeString(entity);
-					out.writeString(index);
-					out.writeId(out);
-					out.writeByteArray(data, offset, length);
+
+					IndexChunkOperation.write(
+						out,
+						entity,
+						index,
+						id,
+						data,
+						offset,
+						length
+					);
 				}));
 			};
 
@@ -192,15 +206,18 @@ public class TransactionLogImpl
 				BinaryDataOutput out = BinaryDataOutput.forStream(stream);
 				out.write(MessageConstants.INDEX_CHUNK);
 				out.writeVLong(tx);
-				out.writeString(entity);
-				out.writeString(index);
-				out.writeId(out);
-				out.writeVInt(0);
+
+				IndexChunkOperation.writeEnd(
+					out,
+					entity,
+					index,
+					id
+				);
 			}));
 		}
 		catch(IOException e)
 		{
-			throw new StorageException("Could not store index " + entity + "::" + index + " with id " + id + " in transaction" + tx + "; " + e.getMessage(), e);
+			throw new StorageException("Could not store index " + index + " in " + entity + " with id " + id + " in transaction" + tx + "; " + e.getMessage(), e);
 		}
 	}
 

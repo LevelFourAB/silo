@@ -2,7 +2,14 @@ package se.l4.silo.engine.internal.tx;
 
 import java.io.IOException;
 
-import se.l4.silo.engine.internal.tx.TransactionOperation.Type;
+import se.l4.silo.engine.internal.MessageConstants;
+import se.l4.silo.engine.internal.tx.operations.CommitOperation;
+import se.l4.silo.engine.internal.tx.operations.DeleteOperation;
+import se.l4.silo.engine.internal.tx.operations.IndexChunkOperation;
+import se.l4.silo.engine.internal.tx.operations.RollbackOperation;
+import se.l4.silo.engine.internal.tx.operations.StartOperation;
+import se.l4.silo.engine.internal.tx.operations.StoreChunkOperation;
+import se.l4.silo.engine.internal.tx.operations.TransactionOperation;
 import se.l4.silo.engine.io.BinaryDataInput;
 import se.l4.silo.engine.io.BinaryDataOutput;
 import se.l4.silo.engine.types.FieldType;
@@ -13,59 +20,13 @@ public class TransactionOperationType
 	@Override
 	public int compare(TransactionOperation o1, TransactionOperation o2)
 	{
-		int c = o1.getType().compareTo(o2.getType());
-		if(c != 0) return c;
-
-		return o1.getEntity().compareTo(o2.getEntity());
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public int estimateMemory(TransactionOperation instance)
 	{
-		int result = 16;
-
-		// Enum
-		result += 24;
-
-		// Entity
-		if(instance.getEntity() != null)
-		{
-			result += 24 + 2 * instance.getEntity().length();
-		}
-		else
-		{
-			result += 8;
-		}
-
-		// Id
-		if(instance.getId() instanceof Long)
-		{
-			result += 30;
-		}
-		else if(instance.getId() instanceof Integer)
-		{
-			result += 24;
-		}
-		else if(instance.getId() instanceof String)
-		{
-			result += 24 + 2 * instance.getId().toString().length();
-		}
-		else
-		{
-			result += 8;
-		}
-
-		// Data
-		if(instance.getData() != null)
-		{
-			result += 64 + instance.getData().length * 4;
-		}
-		else
-		{
-			result += 8;
-		}
-
-		return result;
+		return instance.estimateMemory();
 	}
 
 	@Override
@@ -75,30 +36,40 @@ public class TransactionOperationType
 	}
 
 	@Override
-	public void write(TransactionOperation instance, BinaryDataOutput out)
+	public void write(TransactionOperation object, BinaryDataOutput out)
 		throws IOException
 	{
-		out.writeVInt(instance.getType().ordinal());
-
-		switch(instance.getType())
+		if(object instanceof StartOperation)
 		{
-			case START:
-				out.writeVLong(instance.getTimestamp());
-				break;
-			case STORE_CHUNK:
-				out.writeString(instance.getEntity());
-				out.writeId(instance.getId());
-				out.writeByteArray(instance.getData());
-				break;
-			case INDEX_CHUNK:
-				out.writeString(instance.getEntity());
-				out.writeId(instance.getId());
-				out.writeByteArray(instance.getData());
-				break;
-			case DELETE:
-				out.writeString(instance.getEntity());
-				out.writeId(instance.getId());
-				break;
+			out.write(MessageConstants.START_TRANSACTION);
+
+			StartOperation.write(out, (StartOperation) object);
+		}
+		else if(object instanceof CommitOperation)
+		{
+			out.write(MessageConstants.COMMIT_TRANSACTION);
+		}
+		else if(object instanceof RollbackOperation)
+		{
+			out.write(MessageConstants.ROLLBACK_TRANSACTION);
+		}
+		else if(object instanceof DeleteOperation)
+		{
+			out.write(MessageConstants.DELETE);
+
+			DeleteOperation.write(out, (DeleteOperation) object);
+		}
+		else if(object instanceof StoreChunkOperation)
+		{
+			out.write(MessageConstants.STORE_CHUNK);
+
+			StoreChunkOperation.write(out, (StoreChunkOperation) object);
+		}
+		else if(object instanceof IndexChunkOperation)
+		{
+			out.write(MessageConstants.INDEX_CHUNK);
+
+			IndexChunkOperation.write(out, (IndexChunkOperation) object);
 		}
 	}
 
@@ -106,40 +77,24 @@ public class TransactionOperationType
 	public TransactionOperation read(BinaryDataInput in)
 		throws IOException
 	{
-		int t = in.readVInt();
-		Type type = TransactionOperation.Type.values()[t];
+		int type = in.read();
 		switch(type)
 		{
-			case COMMIT:
-				return TransactionOperation.commit();
-			case ROLLBACK:
-				return TransactionOperation.rollback();
-			case DELETE:
-				return TransactionOperation.delete(
-					in.readString(),
-					in.readId()
-				);
-			case STORE_CHUNK:
-				return TransactionOperation.store(
-					in.readString(),
-					in.readId(),
-					in.readByteArray()
-				);
-			case INDEX_CHUNK:
-				String rawEntity = in.readString();
-				int idx = rawEntity.lastIndexOf("::");
-				return TransactionOperation.indexChunk(
-					rawEntity.substring(0, idx),
-					rawEntity.substring(idx + 2),
-					in.readId(),
-					in.readByteArray()
-				);
-			case START:
-				long timestamp = in.readVLong();
-				return TransactionOperation.start(timestamp);
+			case MessageConstants.START_TRANSACTION:
+				return StartOperation.read(in);
+			case MessageConstants.COMMIT_TRANSACTION:
+				return CommitOperation.read(in);
+			case MessageConstants.ROLLBACK_TRANSACTION:
+				return RollbackOperation.read(in);
+			case MessageConstants.DELETE:
+				return DeleteOperation.read(in);
+			case MessageConstants.STORE_CHUNK:
+				return StoreChunkOperation.read(in);
+			case MessageConstants.INDEX_CHUNK:
+				return IndexChunkOperation.read(in);
+			default:
+				throw new IOException("Unknown type of operation");
 		}
-
-		return null;
 	}
 
 	@Override

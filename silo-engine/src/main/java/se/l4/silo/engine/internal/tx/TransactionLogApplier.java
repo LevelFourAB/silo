@@ -21,6 +21,12 @@ import org.slf4j.LoggerFactory;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.internal.MessageConstants;
 import se.l4.silo.engine.internal.StorageApplier;
+import se.l4.silo.engine.internal.tx.operations.ChunkOperation;
+import se.l4.silo.engine.internal.tx.operations.DeleteOperation;
+import se.l4.silo.engine.internal.tx.operations.IndexChunkOperation;
+import se.l4.silo.engine.internal.tx.operations.StartOperation;
+import se.l4.silo.engine.internal.tx.operations.StoreChunkOperation;
+import se.l4.silo.engine.internal.tx.operations.TransactionOperation;
 import se.l4.silo.engine.io.BinaryDataInput;
 import se.l4.silo.engine.log.LogEntry;
 import se.l4.silo.engine.types.LongArrayFieldType;
@@ -97,7 +103,7 @@ public class TransactionLogApplier
 			{
 				long[] key = it.next();
 				TransactionOperation op = log.get(key);
-				if(op.getType() == TransactionOperation.Type.START)
+				if(op instanceof StartOperation)
 				{
 					activeTx.increase();
 				}
@@ -121,40 +127,34 @@ public class TransactionLogApplier
 		try(InputStream stream = item.getData().asInputStream())
 		{
 			BinaryDataInput in = BinaryDataInput.forStream(stream);
-			int msgType = in.readVInt();
+			int msgType = in.read();
+
 			long tx = in.readVLong();
+			long[] key = new long[] { tx, findNextId(tx) };
+
 			switch(msgType)
 			{
 				case MessageConstants.START_TRANSACTION:
 					// TODO: This should start an automatic transaction rollback timer
-					start(tx, item.getTimestamp());
+					log.put(key, StartOperation.read(in));
+
+					activeTx.increase();
 					txStarts.increase();
+
+					if(logger.isTraceEnabled())
+					{
+						logger.trace("[" + tx + "] Starting transaction");
+					}
+
 					break;
 				case MessageConstants.STORE_CHUNK:
-					// Store data
-					{
-						String entity = in.readString();
-						Object id = in.readId();
-						byte[] data = in.readByteArray();
-						storeChunk(tx, entity, id, data);
-					}
-					break;
-				case MessageConstants.DELETE:
-					{
-						String entity = in.readString();
-						Object id = in.readId();
-						delete(tx, entity, id);
-					}
+					log.put(key, StoreChunkOperation.read(in));
 					break;
 				case MessageConstants.INDEX_CHUNK:
-					// Store data
-					{
-						String entity = in.readString();
-						String index = in.readString();
-						Object id = in.readId();
-						byte[] data = in.readByteArray();
-						indexChunk(tx, entity, index, id, data);
-					}
+					log.put(key, IndexChunkOperation.read(in));
+					break;
+				case MessageConstants.DELETE:
+					log.put(key, DeleteOperation.read(in));
 					break;
 				case MessageConstants.COMMIT_TRANSACTION:
 					txCommits.increase();
@@ -179,10 +179,10 @@ public class TransactionLogApplier
 			{
 				long[] key = it.next();
 				TransactionOperation op = log.get(key);
-				if(op.getType() == TransactionOperation.Type.START)
+				if(op instanceof StartOperation)
 				{
 					long time = System.currentTimeMillis();
-					if(time - op.getTimestamp() >= TIMEOUT)
+					if(time - ((StartOperation) op).getTimestamp() >= TIMEOUT)
 					{
 						toRemove.add(key[0]);
 					}
@@ -200,137 +200,16 @@ public class TransactionLogApplier
 		}
 	}
 
-	/**
-	 * Start of transaction.
-	 *
-	 * @param tx
-	 * @param entity
-	 * @param id
-	 * @param data
-	 * @throws IOException
-	 */
-	private void start(long tx, long timestamp)
-		throws IOException
+	private long findNextId(long tx)
 	{
-		// Locate the next local id for this transaction
-		Iterator<long[]> it = log.keyIterator(new long[] { tx, 0l });
-		long nextId = 0;
-		while(it.hasNext())
-		{
-			long[] key = it.next();
-			if(key[0] != tx) break;
-
-			nextId = (key[1]) + 1;
-		}
-
-		// Store the data
-		long[] key = new long[] { tx, nextId };
-		log.put(key, TransactionOperation.start(timestamp));
-
-		activeTx.increase();
-
-		if(logger.isTraceEnabled())
-		{
-			logger.trace("[" + tx + "] Starting transaction");
-		}
-	}
-
-	/**
-	 * Store information about a store operation for a given entity. This
-	 * method will take chunked data and store it in the internal log.
-	 *
-	 * @param tx
-	 * @param entity
-	 * @param id
-	 * @param data
-	 * @throws IOException
-	 */
-	private void storeChunk(long tx, String entity, Object id, byte[] data)
-		throws IOException
-	{
-		// Locate the next local id for this transaction
 		long[] ceil = log.floorKey(new long[] { tx, Integer.MAX_VALUE });
-		long nextId;
 		if(ceil == null || ceil[0] != tx)
 		{
-			nextId = 0;
+			return 0;
 		}
 		else
 		{
-			nextId = ceil[1] + 1;
-		}
-
-		// Store the data
-		long[] key = new long[] { tx, nextId };
-		log.put(key, TransactionOperation.store(entity, id, data));
-
-		if(logger.isTraceEnabled())
-		{
-			logger.trace("[" + tx + "] Wrote " + nextId + " for " + entity + "[" + id + "] with data " + Base64.getEncoder().encodeToString(data));
-		}
-	}
-
-	/**
-	 * Indicate that something has been deleted in a transaction.
-	 *
-	 * @param tx
-	 * @param entity
-	 * @param id
-	 */
-	private void delete(long tx, String entity, Object id)
-	{
-		// Locate the next local id for this transaction
-		Iterator<long[]> it = log.keyIterator(new long[] { tx, 0l });
-		long nextId = 0;
-		while(it.hasNext())
-		{
-			long[] key = it.next();
-			if(key[0] != tx) break;
-
-			nextId = (key[1]) + 1;
-		}
-
-		long[] key = new long[] { tx, nextId };
-		log.put(key, TransactionOperation.delete(entity, id));
-
-		if(logger.isTraceEnabled())
-		{
-			logger.trace("[" + tx + "] Wrote " + nextId + " as delete of " + entity + "[" + id + "]");
-		}
-	}
-
-		/**
-	 * Store information about a store operation for a given entity. This
-	 * method will take chunked data and store it in the internal log.
-	 *
-	 * @param tx
-	 * @param entity
-	 * @param id
-	 * @param data
-	 * @throws IOException
-	 */
-	private void indexChunk(long tx, String entity, String index, Object id, byte[] data)
-		throws IOException
-	{
-		// Locate the next local id for this transaction
-		long[] ceil = log.floorKey(new long[] { tx, Integer.MAX_VALUE });
-		long nextId;
-		if(ceil == null || ceil[0] != tx)
-		{
-			nextId = 0;
-		}
-		else
-		{
-			nextId = ceil[1] + 1;
-		}
-
-		// Store the data
-		long[] key = new long[] { tx, nextId };
-		log.put(key, TransactionOperation.indexChunk(entity, index, id, data));
-
-		if(logger.isTraceEnabled())
-		{
-			logger.trace("[" + tx + "] Wrote " + nextId + " for " + entity + "::" + index + "[" + id + "] with data " + Base64.getEncoder().encodeToString(data));
+			return ceil[1] + 1;
 		}
 	}
 
@@ -382,48 +261,49 @@ public class TransactionLogApplier
 			if(key[0] != tx) break;
 
 			TransactionOperation op = log.get(key);
-			switch(op.getType())
+			if(op instanceof DeleteOperation)
 			{
-				case DELETE:
-					applier.delete(op.getEntity(), op.getId());
-					break;
-				case STORE_CHUNK:
-					if(op.getData().length == 0)
-					{
-						// Zero length chunk means end of data
-						applier.store(
-							op.getEntity(),
-							op.getId(),
-							new SequenceInputStream(new InputStreamEnumeration(keys))
-						);
-						keys.clear();
-					}
-					else
-					{
-						keys.add(key);
-					}
-					break;
-				case INDEX_CHUNK:
-					if(op.getData().length == 0)
-					{
-						// Zero length chunk means end of data
-						String rawEntity = op.getEntity();
-						int idx = rawEntity.lastIndexOf("::");
-						applier.index(
-							rawEntity.substring(0, idx),
-							rawEntity.substring(idx + 2),
-							op.getId(),
-							new SequenceInputStream(new InputStreamEnumeration(keys))
-						);
-						keys.clear();
-					}
-					else
-					{
-						keys.add(key);
-					}
-					break;
-				default:
-					// Do nothing for other types
+				DeleteOperation delete = (DeleteOperation) op;
+				applier.delete(delete.getEntity(), delete.getId());
+			}
+			else if(op instanceof StoreChunkOperation)
+			{
+				StoreChunkOperation store = (StoreChunkOperation) op;
+				if(store.getData().length == 0)
+				{
+					// Zero length chunk means end of data
+					applier.store(
+						store.getEntity(),
+						store.getId(),
+						new SequenceInputStream(new InputStreamEnumeration(keys))
+					);
+
+					keys.clear();
+				}
+				else
+				{
+					keys.add(key);
+				}
+			}
+			else if(op instanceof IndexChunkOperation)
+			{
+				IndexChunkOperation indexChunk = (IndexChunkOperation) op;
+				if(indexChunk.getData().length == 0)
+				{
+					// Zero length chunk means end of data
+					applier.index(
+						indexChunk.getEntity(),
+						indexChunk.getIndex(),
+						indexChunk.getId(),
+						new SequenceInputStream(new InputStreamEnumeration(keys))
+					);
+
+					keys.clear();
+				}
+				else
+				{
+					keys.add(key);
+				}
 			}
 		}
 
@@ -454,13 +334,14 @@ public class TransactionLogApplier
 		public InputStream nextElement()
 		{
 			long[] key = it.next();
+			byte[] data = ((ChunkOperation) log.get(key)).getData();
 
 			if(logger.isTraceEnabled())
 			{
-				logger.trace("[" + key[0] + "] Reading id " + key[1] + " with data " + Base64.getEncoder().encodeToString(log.get(key).getData()));
+				logger.trace("[" + key[0] + "] Reading id " + key[1] + " with data " + Base64.getEncoder().encodeToString(data));
 			}
 
-			return new ByteArrayInputStream(log.get(key).getData());
+			return new ByteArrayInputStream(data);
 		}
 	}
 }
