@@ -12,8 +12,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
-import com.carrotsearch.hppc.LongArrayList;
-
+import org.eclipse.collections.api.list.primitive.MutableLongList;
+import org.eclipse.collections.impl.list.mutable.primitive.LongArrayList;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.slf4j.Logger;
@@ -94,7 +94,7 @@ public class MVDataStorage
 			Long lastId = keys.lastKey();
 			long id = lastId == null ? 1 : lastId + 1;
 
-			LongArrayList ids = new LongArrayList();
+			MutableLongList ids = new LongArrayList();
 
 			ChunkOutputStream.Control control = (data, offset, length) -> {
 				long nextId = nextInternalId();

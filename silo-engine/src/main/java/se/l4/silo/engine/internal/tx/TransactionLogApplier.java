@@ -12,10 +12,8 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import com.carrotsearch.hppc.LongHashSet;
-import com.carrotsearch.hppc.LongSet;
-import com.carrotsearch.hppc.cursors.LongCursor;
-
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
+import org.eclipse.collections.impl.set.mutable.primitive.LongHashSet;
 import org.h2.mvstore.MVMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -176,7 +174,7 @@ public class TransactionLogApplier
 		logger.trace("Looking for stale transactions");
 		if(! log.isEmpty())
 		{
-			LongSet toRemove = new LongHashSet();
+			MutableLongSet toRemove = new LongHashSet();
 			Iterator<long[]> it = log.keyIterator(log.firstKey());
 			while(it.hasNext())
 			{
@@ -196,10 +194,7 @@ public class TransactionLogApplier
 			{
 				logger.info("Removing " + toRemove.size() + " stale transactions");
 
-				for(LongCursor c : toRemove)
-				{
-					removeTransaction(c.value);
-				}
+				toRemove.each(this::removeTransaction);
 
 				logger.info("Reduced to " + activeTx.read() + " active transactions");
 			}

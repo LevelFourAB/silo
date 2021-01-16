@@ -2,9 +2,8 @@ package se.l4.silo.engine.types;
 
 import java.io.IOException;
 
-import com.carrotsearch.hppc.IntObjectHashMap;
-import com.carrotsearch.hppc.IntObjectMap;
-import com.carrotsearch.hppc.cursors.IntCursor;
+import org.eclipse.collections.api.map.primitive.IntObjectMap;
+import org.eclipse.collections.impl.map.mutable.primitive.IntObjectHashMap;
 
 import se.l4.silo.engine.io.ExtendedDataInput;
 import se.l4.silo.engine.io.ExtendedDataOutput;
@@ -19,11 +18,7 @@ public class VersionedType<T>
 	private VersionedType(IntObjectMap<FieldType<T>> versions)
 	{
 		this.versions = versions;
-		int max = 0;
-		for(IntCursor c : versions.keys())
-		{
-			if(c.value > max) max = c.value;
-		}
+		int max = (int) versions.keysView().reduce((curr, v) -> v > curr ? v : curr);
 
 		this.latest = max;
 		this.latestType = versions.get(latest);
