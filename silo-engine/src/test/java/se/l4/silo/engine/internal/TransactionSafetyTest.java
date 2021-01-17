@@ -45,6 +45,7 @@ public class TransactionSafetyTest
 		TestUserData o = new TestUserData(1, "V1", 20, true);
 
 		instance()
+			.transactions()
 			.transactional(entity().store(o))
 			.block();
 
@@ -62,6 +63,7 @@ public class TransactionSafetyTest
 		try
 		{
 			instance()
+				.transactions()
 				.transactional(
 					entity().store(o)
 						.then(Mono.error(new IllegalArgumentException("Error")))
@@ -89,6 +91,7 @@ public class TransactionSafetyTest
 		};
 
 		instance()
+			.transactions()
 			.transactional(
 				Flux.fromArray(data)
 					.flatMap(entity()::store)
@@ -113,6 +116,7 @@ public class TransactionSafetyTest
 		try
 		{
 			instance()
+				.transactions()
 				.transactional(
 					Flux.fromArray(data)
 						.flatMap(o -> {
@@ -139,7 +143,7 @@ public class TransactionSafetyTest
 	{
 		TestUserData o = new TestUserData(1, "V1", 20, true);
 
-		Transaction tx = instance().newTransaction().block();
+		Transaction tx = instance().transactions().newTransaction().block();
 
 		tx.wrap(entity().store(o)).block();
 
@@ -156,7 +160,7 @@ public class TransactionSafetyTest
 	{
 		TestUserData o = new TestUserData(1, "V1", 20, true);
 
-		Transaction tx = instance().newTransaction().block();
+		Transaction tx = instance().transactions().newTransaction().block();
 
 		tx.wrap(entity().store(o)).block();
 
@@ -177,7 +181,7 @@ public class TransactionSafetyTest
 			new TestUserData(3, "V3", 20, true)
 		};
 
-		Transaction tx = instance().newTransaction().block();
+		Transaction tx = instance().transactions().newTransaction().block();
 
 		tx.wrap(
 			Flux.fromArray(data)
@@ -207,7 +211,7 @@ public class TransactionSafetyTest
 			new TestUserData(3, "V3", 20, true)
 		};
 
-		Transaction tx = instance().newTransaction().block();
+		Transaction tx = instance().transactions().newTransaction().block();
 
 		tx.wrap(
 			Flux.fromArray(data)
@@ -231,7 +235,7 @@ public class TransactionSafetyTest
 			new TestUserData(3, "V3", 20, true)
 		};
 
-		Transaction tx = instance().newTransaction().block();
+		Transaction tx = instance().transactions().newTransaction().block();
 
 		tx.execute(tx0 ->
 			Flux.fromArray(data)
@@ -261,7 +265,7 @@ public class TransactionSafetyTest
 			new TestUserData(3, "V3", 20, true)
 		};
 
-		Transaction tx = instance().newTransaction().block();
+		Transaction tx = instance().transactions().newTransaction().block();
 
 		tx.execute(tx0 ->
 			Flux.fromArray(data)
@@ -285,7 +289,7 @@ public class TransactionSafetyTest
 			new TestUserData(3, "V3", 20, true)
 		};
 
-		instance().withTransaction(tx ->
+		instance().transactions().withTransaction(tx ->
 			Flux.fromArray(data)
 				.flatMap(entity()::store)
 		).blockLast();
@@ -308,6 +312,7 @@ public class TransactionSafetyTest
 		try
 		{
 			instance()
+				.transactions()
 				.transactional(
 					Flux.fromArray(data)
 						.flatMap(o -> {
@@ -334,7 +339,7 @@ public class TransactionSafetyTest
 	{
 		TestUserData o = new TestUserData(1, "V1", 20, true);
 
-		instance().inTransaction(() -> {
+		instance().transactions().inTransaction(() -> {
 			entity().store(o).block();
 		}).block();
 
@@ -351,7 +356,7 @@ public class TransactionSafetyTest
 
 		try
 		{
-			instance().inTransaction((Runnable) () -> {
+			instance().transactions().inTransaction((Runnable) () -> {
 				entity().store(o).block();
 
 				throw new IllegalArgumentException();
@@ -373,7 +378,7 @@ public class TransactionSafetyTest
 	{
 		TestUserData o = new TestUserData(1, "V1", 20, true);
 
-		String value = instance().inTransaction(() -> {
+		String value = instance().transactions().inTransaction(() -> {
 			entity().store(o).block();
 
 			return "test";
@@ -394,7 +399,7 @@ public class TransactionSafetyTest
 
 		try
 		{
-			instance().inTransaction((Supplier<String>) () -> {
+			instance().transactions().inTransaction((Supplier<String>) () -> {
 				entity().store(o).block();
 
 				throw new IllegalArgumentException();
@@ -421,7 +426,7 @@ public class TransactionSafetyTest
 		entity().store(original).block();
 
 		// This transaction should keep old data
-		Transaction tx = instance().newTransaction().block();
+		Transaction tx = instance().transactions().newTransaction().block();
 
 		// Update the original data, auto-committing it
 		entity().store(updated).block();
@@ -451,7 +456,7 @@ public class TransactionSafetyTest
 		entity().store(o).block();
 
 		// This transaction should keep old data
-		Transaction tx = instance().newTransaction().block();
+		Transaction tx = instance().transactions().newTransaction().block();
 
 		// Update the original data, auto-committing it
 		entity().delete(1).block();

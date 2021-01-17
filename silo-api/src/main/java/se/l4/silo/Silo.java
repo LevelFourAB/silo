@@ -85,64 +85,9 @@ public interface Silo
 	}
 
 	/**
-	 * Create a new transaction that can be used for full control over a
-	 * transaction.
+	 * Access support for transactions.
 	 *
 	 * @return
 	 */
-	Mono<Transaction> newTransaction();
-
-	/**
-	 * Wrap the given {@link Mono} making it transactional.
-	 *
-	 * @param <V>
-	 * @param mono
-	 * @return
-	 */
-	<V> Mono<V> transactional(Mono<V> mono);
-
-	/**
-	 * Wrap the given {@link Flux} making it transactional.
-	 *
-	 * @param <V>
-	 * @param flux
-	 * @return
-	 */
-	<V> Flux<V> transactional(Flux<V> flux);
-
-	/**
-	 * Perform an operation within a transaction.
-	 *
-	 * <pre>
-	 * silo.withTransaction(tx -> {
-	 *   // This runs within a transaction
-	 *   return entity.store(new TestData());
-	 * })
-	 *   // Everything else is outside the transaction
-	 *   .map(result -> ...);
-	 * </pre>
-	 *
-	 * @param <V>
-	 * @param scopeFunction
-	 * @return
-	 */
-	<V> Flux<V> withTransaction(Function<Transaction, Publisher<V>> scopeFunction);
-
-	/**
-	 * Run the given {@link Supplier} in a transaction.
-	 *
-	 *
-	 * @param supplier
-	 * @return
-	 */
-	<T> Mono<T> inTransaction(Supplier<T> supplier);
-
-	/**
-	 * Run the given {@link Runnable} in a transaction.
-	 *
-	 * @param runnable
-	 * @return
-	 */
-	Mono<Void> inTransaction(Runnable runnable);
-
+	Transactions transactions();
 }

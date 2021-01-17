@@ -3,18 +3,15 @@ package se.l4.silo.engine.internal;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.map.ImmutableMap;
-import org.reactivestreams.Publisher;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import se.l4.silo.EntityRef;
 import se.l4.silo.StorageException;
-import se.l4.silo.Transaction;
+import se.l4.silo.Transactions;
 import se.l4.silo.engine.EngineConfig;
 import se.l4.silo.engine.EntityDefinition;
 import se.l4.silo.engine.LocalEntity;
@@ -92,41 +89,9 @@ public class LocalSiloImpl
 	}
 
 	@Override
-	public Mono<Transaction> newTransaction()
+	public Transactions transactions()
 	{
-		return transactionSupport.newTransaction();
-	}
-
-	@Override
-	public <V> Flux<V> transactional(Flux<V> flux)
-	{
-		return transactionSupport.transactional(flux);
-	}
-
-	@Override
-	public <V> Mono<V> transactional(Mono<V> mono)
-	{
-		return transactionSupport.transactional(mono);
-	}
-
-	@Override
-	public Mono<Void> inTransaction(Runnable runnable)
-	{
-		return transactionSupport.inTransaction(runnable);
-	}
-
-	@Override
-	public <T> Mono<T> inTransaction(Supplier<T> supplier)
-	{
-		return transactionSupport.inTransaction(supplier);
-	}
-
-	@Override
-	public <V> Flux<V> withTransaction(
-		Function<Transaction, Publisher<V>> scopeFunction
-	)
-	{
-		return transactionSupport.withTransaction(scopeFunction);
+		return transactionSupport;
 	}
 
 	@Override

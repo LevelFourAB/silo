@@ -51,7 +51,7 @@ public class EntityTest
 	{
 		TestUserData o = new TestUserData(1, "V1", 20, true);
 
-		Transaction tx = instance().newTransaction().block();
+		Transaction tx = instance().transactions().newTransaction().block();
 
 		// This should store the object but not commit the TX
 		tx.execute(ignore -> entity().store(o)).subscribe();
@@ -78,6 +78,7 @@ public class EntityTest
 		TestUserData o = new TestUserData(1, "V1", 20, true);
 
 		instance()
+			.transactions()
 			.transactional(entity().store(o))
 			.block();
 
@@ -129,7 +130,7 @@ public class EntityTest
 		TestUserData o1 = new TestUserData(1, "V1", 20, true);
 		TestUserData o2 = new TestUserData(1, "V2", 20, true);
 
-		instance().inTransaction(() -> {
+		instance().transactions().inTransaction(() -> {
 			entity().store(o1).block();
 			entity().store(o2).block();
 		}).block();
@@ -160,7 +161,7 @@ public class EntityTest
 	@Test
 	public void storeFluxTransactional()
 	{
-		instance().transactional(
+		instance().transactions().transactional(
 			Flux.range(1, 1000)
 				.map(i -> new TestUserData(i, "V" + i, i % 40, i % 2 == 0))
 				.flatMap(entity()::store)

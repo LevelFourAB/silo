@@ -92,7 +92,7 @@ public class SearchObjectEntityTest
 		entity.store(new TestUserData(1, "Donna", 30, true))
 			.block();
 
-		Transaction tx = instance().newTransaction().block();
+		Transaction tx = instance().transactions().newTransaction().block();
 
 		entity.store(new TestUserData(2, "Steve", 30, true))
 			.block();

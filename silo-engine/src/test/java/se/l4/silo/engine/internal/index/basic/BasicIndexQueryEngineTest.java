@@ -175,7 +175,7 @@ public class BasicIndexQueryEngineTest
 	{
 		Entity<Long, TestData> entity = entity();
 
-		instance().inTransaction(() -> {
+		instance().transactions().inTransaction(() -> {
 			TestData obj1 = new TestData(1, "value2", false, Collections.emptyList());
 			entity.store(obj1).block();
 			TestData obj2 = new TestData(2, "value2", true, Collections.emptyList());
