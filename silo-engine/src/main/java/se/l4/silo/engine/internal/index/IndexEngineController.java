@@ -23,7 +23,7 @@ import se.l4.silo.engine.index.IndexEvent;
 import se.l4.silo.engine.index.IndexQueryEncounter;
 import se.l4.silo.engine.index.LocalIndex;
 import se.l4.silo.engine.internal.DataStorage;
-import se.l4.silo.engine.types.LongFieldType;
+import se.l4.silo.engine.internal.types.PositiveLongType;
 import se.l4.silo.index.Query;
 
 /**
@@ -63,7 +63,10 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 		this.engine = engine;
 
 		this.engineLog = new IndexEngineLog(manager, "index.log." + uniqueName);
-		data = manager.openMap("index.dataMapping." + uniqueName, LongFieldType.INSTANCE, LongFieldType.INSTANCE);
+		data = manager.openMap("index.dataMapping." + uniqueName, new MVMap.Builder<Long, Long>()
+			.keyType(PositiveLongType.INSTANCE)
+			.valueType(PositiveLongType.INSTANCE)
+		);
 
 		events = Sinks.many().multicast().directBestEffort();
 		upToDate = Sinks.one();

@@ -3,6 +3,7 @@ package se.l4.silo.engine.io;
 import java.io.DataInput;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 
 /**
  * {@link DataInput} with extended methods for reading some more specific
@@ -136,6 +137,29 @@ public interface BinaryDataInput
 				throws IOException
 			{
 				return in.read(buffer, offset, length);
+			}
+		};
+	}
+
+	static BinaryDataInput forBuffer(ByteBuffer buf)
+	{
+		return new AbstractBinaryDataInput()
+		{
+			@Override
+			public int read()
+				throws IOException
+			{
+				if(! buf.hasRemaining()) return -1;
+				return buf.get() & 0xFF;
+			}
+
+			@Override
+			public int read(byte[] buffer, int offset, int length)
+				throws IOException
+			{
+				int len = Math.min(buf.remaining(), length);
+				buf.get(buffer, offset, len);
+				return len;
 			}
 		};
 	}

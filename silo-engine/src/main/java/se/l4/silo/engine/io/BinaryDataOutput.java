@@ -4,6 +4,8 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import org.h2.mvstore.WriteBuffer;
+
 /**
  * Extension to {@link DataOutput} for allowing the writing of some extra
  * types.
@@ -144,6 +146,26 @@ public interface BinaryDataOutput
 				throws IOException
 			{
 				out.write(data, offset, length);
+			}
+		};
+	}
+
+	static BinaryDataOutput forBuffer(WriteBuffer buf)
+	{
+		return new AbstractBinaryDataOutput()
+		{
+			@Override
+			public void write(byte[] buffer, int offset, int length)
+				throws IOException
+			{
+				buf.put(buffer, offset, length);
+			}
+
+			@Override
+			public void write(int b)
+				throws IOException
+			{
+				buf.put((byte) b);
 			}
 		};
 	}

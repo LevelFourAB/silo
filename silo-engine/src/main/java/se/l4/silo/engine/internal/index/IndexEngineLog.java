@@ -1,21 +1,22 @@
 package se.l4.silo.engine.internal.index;
 
-import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import org.eclipse.collections.api.tuple.primitive.LongObjectPair;
 import org.eclipse.collections.impl.EmptyIterator;
 import org.eclipse.collections.impl.tuple.primitive.PrimitiveTuples;
+import org.h2.mvstore.DataUtils;
 import org.h2.mvstore.MVMap;
+import org.h2.mvstore.WriteBuffer;
+import org.h2.mvstore.type.DataType;
 
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.index.IndexEngine;
 import se.l4.silo.engine.internal.DataStorage;
-import se.l4.silo.engine.io.BinaryDataInput;
-import se.l4.silo.engine.io.BinaryDataOutput;
-import se.l4.silo.engine.types.FieldType;
+import se.l4.silo.engine.internal.types.PositiveLongType;
 import se.l4.silo.engine.types.LongFieldType;
 
 /**
@@ -49,7 +50,11 @@ public class IndexEngineLog
 		String name
 	)
 	{
-		data = manager.openMap(name, LongFieldType.INSTANCE, EntryFieldType.INSTANCE);
+		data = manager.openMap(name, new MVMap.Builder<Long, Entry>()
+			.keyType(PositiveLongType.INSTANCE)
+			.valueType(EntryFieldType.INSTANCE)
+		);
+
 		if(data.isEmpty())
 		{
 			data.put(0l, new Entry(EntryType.HARD_COMMIT, 0, 0));
@@ -477,12 +482,12 @@ public class IndexEngineLog
 	}
 
 	private static class EntryFieldType
-		implements FieldType<Entry>
+		implements DataType
 	{
-		public static final FieldType<Entry> INSTANCE = new EntryFieldType();
+		public static final DataType INSTANCE = new EntryFieldType();
 
 		@Override
-		public int estimateMemory(Entry instance)
+		public int getMemory(Object obj)
 		{
 			int result = 16;
 
@@ -499,11 +504,10 @@ public class IndexEngineLog
 		}
 
 		@Override
-		public Entry read(BinaryDataInput in)
-			throws IOException
+		public Entry read(ByteBuffer in)
 		{
 			EntryType type;
-			switch(in.read())
+			switch(in.get())
 			{
 				case 0:
 					type = EntryType.HARD_COMMIT;
@@ -521,70 +525,73 @@ public class IndexEngineLog
 					type = EntryType.GENERATION_POINTER;
 					break;
 				default:
-					throw new IOException("Corrupted, unknown type");
+					throw new StorageException("Corrupted, unknown type");
 			}
 
-			long id = in.readVLong();
-			long dataId = in.readVLong();
+			long id = DataUtils.readVarLong(in);
+			long dataId = DataUtils.readVarLong(in);
 
 			return new Entry(type, id, dataId);
 		}
 
 		@Override
-		public void write(Entry instance, BinaryDataOutput out)
-			throws IOException
+		public void read(ByteBuffer buff, Object[] obj, int len, boolean key)
 		{
-			switch(instance.type)
+			for(int i=0; i<len; i++)
+			{
+				obj[i] = read(buff);
+			}
+		}
+
+		@Override
+		public void write(WriteBuffer out, Object obj)
+		{
+			Entry entry = (Entry) obj;
+			switch(entry.type)
 			{
 				case HARD_COMMIT:
-					out.write(0);
+					out.put((byte) 0);
 					break;
 				case DELETION:
-					out.write(1);
+					out.put((byte) 1);
 					break;
 				case STORE:
-					out.write(2);
+					out.put((byte) 2);
 					break;
 				case REBUILD_MAX:
-					out.write(3);
+					out.put((byte) 3);
 					break;
 				case GENERATION_POINTER:
-					out.write(4);
+					out.put((byte) 4);
 					break;
 			}
 
-			out.writeVLong(instance.dataId);
-			out.writeVLong(instance.indexDataId);
+			out.putVarLong(entry.dataId);
+			out.putVarLong(entry.indexDataId);
 		}
 
 		@Override
-		public int compare(Entry o1, Entry o2)
+		public void write(WriteBuffer buff, Object[] obj, int len, boolean key)
 		{
-			int c = Integer.compare(o1.type.ordinal(), o2.type.ordinal());
+			for(int i=0; i<len; i++)
+			{
+				write(buff, obj[i]);
+			}
+		}
+
+		@Override
+		public int compare(Object o1, Object o2)
+		{
+			Entry e1 = (Entry) o1;
+			Entry e2 = (Entry) o2;
+
+			int c = Integer.compare(e1.type.ordinal(), e2.type.ordinal());
 			if(c != 0) return c;
 
-			c = Long.compare(o1.dataId, o2.dataId);
+			c = Long.compare(e1.dataId, e2.dataId);
 			if(c != 0) return c;
 
-			return Long.compare(o1.indexDataId, o2.indexDataId);
-		}
-
-		@Override
-		public Entry convert(Object in)
-		{
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Entry nextDown(Entry in)
-		{
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Entry nextUp(Entry in)
-		{
-			throw new UnsupportedOperationException();
+			return Long.compare(e1.indexDataId, e2.indexDataId);
 		}
 	}
 }

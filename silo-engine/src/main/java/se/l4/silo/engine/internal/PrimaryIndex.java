@@ -10,8 +10,7 @@ import se.l4.silo.engine.TransactionValue;
 import se.l4.silo.engine.TransactionValueProvider;
 import se.l4.silo.engine.internal.tx.TransactionSupport;
 import se.l4.silo.engine.internal.tx.WriteableTransactionExchange;
-import se.l4.silo.engine.types.DataTypeAdapter;
-import se.l4.silo.engine.types.LongFieldType;
+import se.l4.silo.engine.internal.types.KeyLongType;
 
 /**
  * Index that helps map objects to internal long identifiers.
@@ -32,11 +31,11 @@ public class PrimaryIndex
 	{
 		map = storeManager.openMap("primary.toExternal." + name, new MVMap.Builder<Object, Long>()
 			.keyType(new ObjectDataType())
-			.valueType(new DataTypeAdapter(LongFieldType.INSTANCE))
+			.valueType(KeyLongType.INSTANCE)
 		);
 
 		reverse = storeManager.openMap("primary.fromExternal." + name, new MVMap.Builder<Long, Object>()
-			.keyType(new DataTypeAdapter(LongFieldType.INSTANCE))
+			.keyType(KeyLongType.INSTANCE)
 			.valueType(new ObjectDataType())
 		);
 

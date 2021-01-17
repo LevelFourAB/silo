@@ -5,11 +5,15 @@ import java.io.IOException;
 import se.l4.silo.engine.io.BinaryDataInput;
 import se.l4.silo.engine.io.BinaryDataOutput;
 
+/**
+ * Type that merges several other {@link FieldType}s together. Intended for use
+ * by things such as new index implementations.
+ */
 public class MergedFieldType
 	implements FieldType<Object[]>
 {
-	private static final byte NULL = 0;
-	private static final byte VALUE = 1;
+	private static final int NULL = 0;
+	private static final int VALUE = 1;
 
 	@SuppressWarnings("rawtypes")
 	private final FieldType[] types;

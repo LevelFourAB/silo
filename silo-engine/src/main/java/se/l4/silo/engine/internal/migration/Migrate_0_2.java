@@ -4,8 +4,7 @@ import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.h2.mvstore.type.ObjectDataType;
 
-import se.l4.silo.engine.types.DataTypeAdapter;
-import se.l4.silo.engine.types.LongFieldType;
+import se.l4.silo.engine.internal.types.KeyLongType;
 
 /**
  * Class used to migrate a {@link MVStore} from the 0.2 series. Will rename
@@ -23,7 +22,7 @@ public class Migrate_0_2
 			{
 				MVMap<?, ?> map = store.openMap(name, new MVMap.Builder<Object, Long>()
 					.keyType(new ObjectDataType())
-					.valueType(new DataTypeAdapter(LongFieldType.INSTANCE))
+					.valueType(KeyLongType.INSTANCE)
 				);
 
 				store.renameMap(map, trimStorageName(name));
@@ -31,13 +30,16 @@ public class Migrate_0_2
 			else if(name.startsWith("primary.fromExternal."))
 			{
 				MVMap<?, ?> map = store.openMap(name, new MVMap.Builder<Object, Long>()
-					.keyType(new DataTypeAdapter(LongFieldType.INSTANCE))
+					.keyType(KeyLongType.INSTANCE)
 					.valueType(new ObjectDataType())
 				);
 
 				store.renameMap(map, trimStorageName(name));
 			}
 		}
+
+		// Remove the transaction log so it can be recreated
+		store.removeMap("tx.log");
 	}
 
 	private static String trimStorageName(String name)

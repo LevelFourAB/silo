@@ -12,8 +12,8 @@ import se.l4.silo.engine.io.AbstractBinaryDataOutput;
 public class DataTypeAdapter
 	implements DataType
 {
-	private static final byte NULL = 0;
-	private static final byte VALUE = 1;
+	private static final int NULL = 0;
+	private static final int VALUE = 1;
 
 	@SuppressWarnings("rawtypes")
 	private final FieldType type;

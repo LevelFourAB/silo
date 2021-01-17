@@ -23,10 +23,9 @@ import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.TransactionValue;
 import se.l4.silo.engine.internal.log.ChunkOutputStream;
 import se.l4.silo.engine.internal.tx.WriteableTransactionExchange;
-import se.l4.silo.engine.types.ByteArrayFieldType;
-import se.l4.silo.engine.types.LongArrayFieldType;
-import se.l4.silo.engine.types.LongFieldType;
-import se.l4.silo.engine.types.VersionedType;
+import se.l4.silo.engine.internal.types.ByteChunkFieldType;
+import se.l4.silo.engine.internal.types.KeyLongType;
+import se.l4.silo.engine.internal.types.LongArrayFieldType;
 import se.l4.ylem.io.IOConsumer;
 
 /**
@@ -65,8 +64,15 @@ public class MVDataStorage
 		MVStoreManager store
 	)
 	{
-		keys = store.openMap(prefix + ".keys", LongFieldType.INSTANCE, VersionedType.singleVersion(new LongArrayFieldType()));
-		chunks = store.openMap(prefix + ".chunks", LongFieldType.INSTANCE, ByteArrayFieldType.INSTANCE);
+		keys = store.openMap(prefix + ".keys", new MVMap.Builder<Long, long[]>()
+			.keyType(KeyLongType.INSTANCE)
+			.valueType(LongArrayFieldType.INSTANCE)
+		);
+
+		chunks = store.openMap(prefix + ".chunks", new MVMap.Builder<Long, byte[]>()
+			.keyType(KeyLongType.INSTANCE)
+			.valueType(ByteChunkFieldType.INSTANCE)
+		);
 
 		readonlyChunks = version -> chunks.openVersion(version);
 		readonlyKeys = version -> keys.openVersion(version);

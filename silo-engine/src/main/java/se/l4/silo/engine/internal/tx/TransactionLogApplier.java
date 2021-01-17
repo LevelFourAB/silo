@@ -27,9 +27,9 @@ import se.l4.silo.engine.internal.tx.operations.IndexChunkOperation;
 import se.l4.silo.engine.internal.tx.operations.StartOperation;
 import se.l4.silo.engine.internal.tx.operations.StoreChunkOperation;
 import se.l4.silo.engine.internal.tx.operations.TransactionOperation;
+import se.l4.silo.engine.internal.types.LongArrayFieldType;
 import se.l4.silo.engine.io.BinaryDataInput;
 import se.l4.silo.engine.log.LogEntry;
-import se.l4.silo.engine.types.LongArrayFieldType;
 import se.l4.vibe.Vibe;
 import se.l4.vibe.operations.Change;
 import se.l4.vibe.probes.CountingProbe;
@@ -95,7 +95,11 @@ public class TransactionLogApplier
 				.done();
 		}
 
-		log = store.openMap("tx.log", new LongArrayFieldType(), new TransactionOperationType());
+		log = store.openMap("tx.log", new MVMap.Builder<long[], TransactionOperation>()
+			.keyType(LongArrayFieldType.INSTANCE)
+			.valueType(new TransactionOperationType())
+		);
+
 		if(! log.isEmpty())
 		{
 			Iterator<long[]> it = log.keyIterator(log.firstKey());
