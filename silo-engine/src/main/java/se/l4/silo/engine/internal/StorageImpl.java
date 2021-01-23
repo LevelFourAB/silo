@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.LongAdder;
 
 import org.eclipse.collections.api.RichIterable;
@@ -20,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.FetchResult;
 import se.l4.silo.StorageException;
@@ -62,7 +62,8 @@ public class StorageImpl<T>
 	public StorageImpl(
 		StorageEngine engine,
 		SharedStorages storages,
-		ScheduledExecutorService executor,
+
+		Scheduler scheduler,
 		TransactionSupport transactionSupport,
 
 		MVStoreManager store,
@@ -95,7 +96,7 @@ public class StorageImpl<T>
 			String key = def.getName();
 			return def.create(new IndexEngineCreationEncounterImpl(
 				storages,
-				executor,
+				scheduler,
 				indexDataPath,
 				key,
 				name + "-" + key
@@ -135,7 +136,12 @@ public class StorageImpl<T>
 			}
 		};
 
-		queryControllers.each(c -> executor.submit(() -> c.start(rebuild)));
+		Flux.fromIterable(queryControllers)
+			.parallel()
+			.runOn(scheduler)
+			.map(c -> c.start(rebuild))
+			.sequential()
+			.blockLast();
 	}
 
 	@Override

@@ -3,8 +3,6 @@ package se.l4.silo.engine.internal.mvstore;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -13,6 +11,8 @@ import org.h2.mvstore.MVMap.Builder;
 import org.h2.mvstore.MVStore;
 import org.h2.store.fs.FileChannelInputStream;
 
+import reactor.core.Disposable;
+import reactor.core.scheduler.Scheduler;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.Snapshot;
 import se.l4.silo.engine.types.DataTypeAdapter;
@@ -27,21 +27,21 @@ import se.l4.silo.engine.types.FieldType;
 public class MVStoreManagerImpl
 	implements MVStoreManager
 {
-	private final ScheduledExecutorService executorService;
+	private final Scheduler scheduler;
 	private final MVStore.Builder builder;
 
 	private final MVStore store;
 	private final AtomicLong snapshotsOpen;
 
-	private volatile Future<?> future;
+	private volatile Disposable future;
 	private final CopyOnWriteArrayList<CommitAction> commitActions;
 
 	public MVStoreManagerImpl(
-		ScheduledExecutorService executorService,
+		Scheduler scheduler,
 		MVStore.Builder builder
 	)
 	{
-		this.executorService = executorService;
+		this.scheduler = scheduler;
 		this.builder = builder;
 		store = builder.open();
 
@@ -59,7 +59,7 @@ public class MVStoreManagerImpl
 	{
 		if(future == null)
 		{
-			future = executorService.scheduleAtFixedRate(this::runCommitActions, 30, 30, TimeUnit.SECONDS);
+			future = scheduler.schedulePeriodically(this::runCommitActions, 30, 30, TimeUnit.SECONDS);
 		}
 	}
 
@@ -163,7 +163,7 @@ public class MVStoreManagerImpl
 	{
 		if(future != null)
 		{
-			future.cancel(false);
+			future.dispose();
 		}
 
 		store.close();

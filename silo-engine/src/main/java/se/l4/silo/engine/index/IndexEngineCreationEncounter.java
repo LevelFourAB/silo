@@ -1,10 +1,10 @@
 package se.l4.silo.engine.index;
 
 import java.nio.file.Path;
-import java.util.concurrent.ScheduledExecutorService;
 
 import org.h2.mvstore.MVStore;
 
+import reactor.core.scheduler.Scheduler;
 import se.l4.silo.engine.MVStoreManager;
 
 /**
@@ -78,13 +78,10 @@ public interface IndexEngineCreationEncounter
 	MVStoreManager openStorageWideMVStore(String name);
 
 	/**
-	 * Get an executor that can be used for background tasks.
-	 *
-	 * <p>
-	 * When a query engine is closed it must stop any background tasks that
-	 * are queued or running.
+	 * Get a {@link Scheduler} that can be used to schedule background tasks.
+	 * Any background tasks should be stopped when the index closes.
 	 *
 	 * @return
 	 */
-	ScheduledExecutorService getExecutor();
+	Scheduler getScheduler();
 }

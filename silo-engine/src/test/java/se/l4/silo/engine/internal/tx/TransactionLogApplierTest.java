@@ -3,7 +3,6 @@ package se.l4.silo.engine.internal.tx;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.concurrent.Executors;
 
 import org.h2.mvstore.MVStore;
 import org.h2.mvstore.OffHeapStore;
@@ -11,6 +10,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import reactor.core.scheduler.Schedulers;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.internal.OpChecker;
 import se.l4.silo.engine.internal.StorageApplier;
@@ -36,7 +36,7 @@ public class TransactionLogApplierTest
 	public void before()
 	{
 		store = new MVStoreManagerImpl(
-			Executors.newScheduledThreadPool(1),
+			Schedulers.newBoundedElastic(1, 100, "test"),
 			new MVStore.Builder()
 				.fileStore(new OffHeapStore())
 		);

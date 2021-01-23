@@ -3,7 +3,6 @@ package se.l4.silo.engine.index.search.internal;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Locale;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
 
 import org.apache.lucene.analysis.core.SimpleAnalyzer;
@@ -17,6 +16,7 @@ import org.eclipse.collections.api.map.MapIterable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import reactor.core.scheduler.Scheduler;
 import se.l4.silo.engine.index.Index;
 import se.l4.silo.engine.index.IndexDataGenerator;
 import se.l4.silo.engine.index.IndexDataUpdater;
@@ -49,7 +49,7 @@ public class SearchIndex<T>
 	private final SearchIndexQueryRunner<T> queryRunner;
 
 	public SearchIndex(
-		ScheduledExecutorService executor,
+		Scheduler scheduler,
 		String name,
 		String uniqueName,
 		Path directory,
@@ -83,7 +83,7 @@ public class SearchIndex<T>
 		commitManager = new CommitManager(
 			log,
 			uniqueName,
-			executor,
+			scheduler,
 			writer,
 			commitConfig.getMaxUpdates(),
 			commitConfig.getMaxTime(),

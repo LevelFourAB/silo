@@ -8,11 +8,6 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -24,6 +19,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 import se.l4.silo.Entity;
 import se.l4.silo.StorageException;
 import se.l4.silo.StorageTransactionException;
@@ -129,9 +126,9 @@ public class StorageEngine
 	private final Lock mutationLock;
 
 	/**
-	 * Executor for performing asynchronous tasks for this engine.
+	 * Scheduler for performing asynchronous tasks for this engine.
 	 */
-	private final ScheduledExecutorService executor;
+	private final Scheduler scheduler;
 
 	/**
 	 * Instance of {@link SharedStorages} for use by things such as indexes.
@@ -155,20 +152,13 @@ public class StorageEngine
 
 		this.root = root;
 
-		executor = Executors.newScheduledThreadPool(
+		scheduler = Schedulers.newBoundedElastic(
 			Runtime.getRuntime().availableProcessors() + 2,
-			new ThreadFactory()
-			{
-				private final AtomicInteger count = new AtomicInteger(0);
-
-				public Thread newThread(Runnable runnable)
-				{
-					return new Thread(runnable, "Silo Background " + count.incrementAndGet());
-				}
-			}
+			Schedulers.DEFAULT_BOUNDED_ELASTIC_QUEUESIZE,
+			"silo"
 		);
 
-		this.sharedStorages = new SharedStorages(executor, root, vibe);
+		this.sharedStorages = new SharedStorages(scheduler, root, vibe);
 
 		mutationLock = new ReentrantLock();
 
@@ -181,7 +171,7 @@ public class StorageEngine
 			throw new StorageException("Could not create initial directory; " + e.getMessage(), e);
 		}
 
-		this.store = new MVStoreManagerImpl(executor, new MVStore.Builder()
+		this.store = new MVStoreManagerImpl(scheduler, new MVStore.Builder()
 			.compress()
 			.backgroundExceptionHandler((thread, t) -> {
 				logger.error("Error occured in background for data store; " + t.getMessage(), t);
@@ -224,7 +214,7 @@ public class StorageEngine
 		}
 
 		// Build log and start receiving log entries
-		transactionAdapter = new TransactionLogApplier(vibe, executor, store, createApplier());
+		transactionAdapter = new TransactionLogApplier(vibe, scheduler, store, createApplier());
 		log = logBuilder.build(transactionAdapter);
 
 		transactionWaiter = new TransactionWaiterImpl();
@@ -317,7 +307,7 @@ public class StorageEngine
 	public void close()
 			throws IOException
 	{
-		executor.shutdownNow();
+		scheduler.dispose();
 		log.close();
 
 		for(StorageImpl storage : storages.values())
@@ -326,15 +316,6 @@ public class StorageEngine
 		}
 
 		store.close();
-
-		try
-		{
-			executor.awaitTermination(10, TimeUnit.SECONDS);
-		}
-		catch(InterruptedException e)
-		{
-			// Ignore the interruption
-		}
 	}
 
 	/**
@@ -391,7 +372,7 @@ public class StorageEngine
 				StorageImpl storage = new StorageImpl(
 					StorageEngine.this,
 					sharedStorages,
-					executor,
+					scheduler,
 					transactionSupport,
 
 					store,

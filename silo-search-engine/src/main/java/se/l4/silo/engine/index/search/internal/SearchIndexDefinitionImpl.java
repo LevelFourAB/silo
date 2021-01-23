@@ -68,7 +68,7 @@ public class SearchIndexDefinitionImpl<T>
 		try
 		{
 			return new SearchIndex<>(
-				encounter.getExecutor(),
+				encounter.getScheduler(),
 				encounter.getName(),
 				encounter.getUniqueName(),
 				path,

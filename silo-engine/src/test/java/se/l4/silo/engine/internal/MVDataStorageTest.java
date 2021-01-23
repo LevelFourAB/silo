@@ -6,7 +6,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.concurrent.Executors;
 
 import org.h2.mvstore.MVStore;
 import org.h2.mvstore.OffHeapStore;
@@ -14,6 +13,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import reactor.core.scheduler.Schedulers;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.internal.mvstore.MVStoreManagerImpl;
 
@@ -29,7 +29,7 @@ public class MVDataStorageTest
 	public void before()
 	{
 		storeManager = new MVStoreManagerImpl(
-			Executors.newScheduledThreadPool(1),
+			Schedulers.newBoundedElastic(1, 100, "test"),
 			new MVStore.Builder()
 				.fileStore(new OffHeapStore())
 		);

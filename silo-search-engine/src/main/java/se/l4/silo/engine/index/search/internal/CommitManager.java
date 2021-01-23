@@ -1,8 +1,6 @@
 package se.l4.silo.engine.index.search.internal;
 
 import java.io.IOException;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -16,6 +14,11 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.slf4j.Logger;
+
+import reactor.core.Disposable;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
+import reactor.core.scheduler.Scheduler;
 
 /**
  * Helper that handles committing a {@link IndexWriter} based on a preset
@@ -31,10 +34,10 @@ public class CommitManager
 	private final long maxTime;
 
 	private final AtomicLong count;
-	private final ScheduledExecutorService executor;
+	private final Scheduler scheduler;
 	private final Runnable onCommit;
 
-	private volatile Future<?> future;
+	private volatile Disposable scheduled;
 
 	private volatile long latestOp;
 	private volatile long hardCommitOp;
@@ -42,7 +45,7 @@ public class CommitManager
 	public CommitManager(
 		Logger logger,
 		String name,
-		ScheduledExecutorService executor,
+		Scheduler scheduler,
 		IndexWriter writer,
 		int maxDocumentChanges,
 		long maxTimeBetweenCommits,
@@ -52,7 +55,7 @@ public class CommitManager
 	{
 		this.logger = logger;
 		this.name = name;
-		this.executor = executor;
+		this.scheduler = scheduler;
 		this.writer = writer;
 		this.maxDocuments = maxDocumentChanges;
 		this.maxTime = maxTimeBetweenCommits;
@@ -161,10 +164,10 @@ public class CommitManager
 
 		synchronized(this)
 		{
-			if(! fromThread && future != null)
+			if(! fromThread && scheduled != null)
 			{
-				future.cancel(false);
-				future = null;
+				scheduled.dispose();
+				scheduled = null;
 			}
 		}
 	}
@@ -189,23 +192,17 @@ public class CommitManager
 	{
 		synchronized(this)
 		{
-			if(future == null)
+			if(scheduled == null)
 			{
-				future = executor.schedule(new Runnable()
-				{
-					@Override
-					public void run()
+				scheduled = scheduler.schedule(() -> {
+					try
 					{
-						try
-						{
-							commit(true);
-							future = null;
-						}
-						catch(IOException e)
-						{
-							logger.error("Unable to commit; " + e.getMessage(), e);
-						}
-
+						commit(true);
+						scheduled = null;
+					}
+					catch(IOException e)
+					{
+						logger.error("Unable to commit; " + e.getMessage(), e);
 					}
 				}, maxTime, TimeUnit.SECONDS);
 			}
@@ -214,10 +211,10 @@ public class CommitManager
 
 	public void close()
 	{
-		if(future != null)
+		if(scheduled != null)
 		{
-			future.cancel(false);
-			future = null;
+			scheduled.dispose();
+			scheduled = null;
 		}
 	}
 }

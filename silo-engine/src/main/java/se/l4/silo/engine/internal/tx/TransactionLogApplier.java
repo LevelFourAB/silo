@@ -9,7 +9,6 @@ import java.util.Base64;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.collections.api.set.primitive.MutableLongSet;
@@ -18,6 +17,7 @@ import org.h2.mvstore.MVMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import reactor.core.scheduler.Scheduler;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.internal.MessageConstants;
 import se.l4.silo.engine.internal.StorageApplier;
@@ -62,7 +62,7 @@ public class TransactionLogApplier
 
 	public TransactionLogApplier(
 		Vibe vibe,
-		ScheduledExecutorService executor,
+		Scheduler scheduler,
 		MVStoreManager store,
 		StorageApplier applier
 	)
@@ -116,9 +116,9 @@ public class TransactionLogApplier
 
 		logger.debug(activeTx.read() + " active transactions spread over " + log.size() + " entries in the log");
 
-		if(executor != null)
+		if(scheduler != null)
 		{
-			executor.scheduleAtFixedRate(this::removeStale, 1, 5, TimeUnit.MINUTES);
+			scheduler.schedulePeriodically(this::removeStale, 1, 5, TimeUnit.MINUTES);
 		}
 	}
 
