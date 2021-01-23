@@ -1,8 +1,5 @@
 package se.l4.silo.engine.internal.index.basic;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -14,12 +11,10 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import org.eclipse.collections.api.factory.Lists;
-import org.eclipse.collections.api.list.ListIterable;
 import org.eclipse.collections.api.list.MutableList;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.type.DataType;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -27,17 +22,11 @@ import se.l4.silo.FetchResult;
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.TransactionValue;
-import se.l4.silo.engine.index.IndexEngine;
 import se.l4.silo.engine.index.IndexQueryEncounter;
+import se.l4.silo.engine.index.IndexQueryRunner;
 import se.l4.silo.engine.index.basic.BasicFieldDefinition;
-import se.l4.silo.engine.io.BinaryDataInput;
-import se.l4.silo.engine.io.BinaryDataOutput;
-import se.l4.silo.engine.types.ArrayFieldType;
 import se.l4.silo.engine.types.FieldType;
-import se.l4.silo.engine.types.LongFieldType;
 import se.l4.silo.engine.types.MaxMin;
-import se.l4.silo.engine.types.MergedFieldType;
-import se.l4.silo.engine.types.StringFieldType;
 import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.FieldLimit;
 import se.l4.silo.index.FieldSort;
@@ -46,97 +35,36 @@ import se.l4.silo.index.RangeMatcher;
 import se.l4.silo.index.basic.BasicIndexQuery;
 import se.l4.silo.index.basic.BasicIndexResult;
 
-/**
- * {@link IndexEngine} that creates a queryable index similar in functionality
- * to traditional databases.
- */
-public class BasicIndexEngine<T>
-	implements IndexEngine<T, BasicIndexQuery<T>>
+public class BasicIndexQueryRunner<T>
+	implements IndexQueryRunner<T, BasicIndexQuery<T>>
 {
-	private static final Logger logger = LoggerFactory.getLogger(BasicIndexEngine.class);
-
-	private final String name;
-	private final String uniqueName;
-
-	private final MVStoreManager store;
-	private final MVMap<String, Long> indexState;
-	private final MVMap<Long, Object[]> indexedData;
-	private final MVMap<Object[], Object[]> index;
-	private final TransactionValue<ReadOnlyIndex> indexMapValue;
+	private final Logger logger;
 
 	private final BasicFieldDefinition<T>[] fields;
 	private final BasicFieldDefinition<T>[] sortFields;
 
-	private final MergedFieldType dataFieldType;
-	private final MergedFieldType indexKey;
-	private final MergedFieldType indexData;
+	private final TransactionValue<ReadOnlyIndex> indexMapValue;
 
-	private volatile long hardCommit;
+	public BasicIndexQueryRunner(
+		Logger logger,
 
-	public BasicIndexEngine(
 		MVStoreManager store,
-		String name,
-		String uniqueName,
-		ListIterable<BasicFieldDefinition<T>> fields,
-		ListIterable<BasicFieldDefinition<T>> sortFields
+
+		BasicFieldDefinition<T>[] fields,
+		BasicFieldDefinition<T>[] sortFields,
+
+		MVMap<Object[], Object[]> index
 	)
 	{
-		this.name = name;
-		this.uniqueName = uniqueName;
-		this.store = store;
+		this.logger = logger;
 
-		this.fields = fields.toArray(new BasicFieldDefinition[fields.size()]);
-		this.sortFields = sortFields.toArray(new BasicFieldDefinition[sortFields.size()]);
-
-		this.dataFieldType = createMultiFieldType(fields, false);
-		indexedData = store.openMap("data:" + uniqueName, LongFieldType.INSTANCE, dataFieldType);
-
-		this.indexKey = createFieldType(fields, true);
-		this.indexData = createFieldType(sortFields, false);
-		index = store.openMap("index:" + uniqueName, indexKey, indexData);
-
-		indexState = store.openMap("state", StringFieldType.INSTANCE, LongFieldType.INSTANCE);
-
-		if(logger.isDebugEnabled())
-		{
-			logger.debug(uniqueName + ": fields=" + Arrays.toString(this.fields) + ", sortFields=" + Arrays.toString(this.sortFields));
-		}
+		this.fields = fields;
+		this.sortFields = sortFields;
 
 		indexMapValue = v -> {
 			MVStoreManager.VersionHandle handle = store.acquireVersionHandle();
 			return new ReadOnlyIndex(handle, index.openVersion(handle.getVersion()));
 		};
-
-		// Load the hard commit
-		hardCommit = indexState.getOrDefault(uniqueName, 0l);
-
-		/*
-		 * Need to keep track of commits a bit, so register an action that
-		 * will keep track of the last "safe" operation that wouldn't be lost
-		 * after a crash.
-		 */
-		store.registerCommitAction(new MVStoreManager.CommitAction()
-		{
-			private long commit;
-
-			@Override
-			public void preCommit()
-			{
-				commit = indexState.getOrDefault(uniqueName, 0l);
-			}
-
-			@Override
-			public void afterCommit()
-			{
-				hardCommit = commit;
-			}
-		});
-	}
-
-	@Override
-	public String getName()
-	{
-		return name;
 	}
 
 	@Override
@@ -148,287 +76,25 @@ public class BasicIndexEngine<T>
 	}
 
 	@Override
-	public long getLastHardCommit()
-	{
-		return hardCommit;
-	}
-
-	/**
-	 * Create a {@link MergedFieldType} for the given fields.
-	 *
-	 * @param uniqueName
-	 * @param fields
-	 * @param fieldNames
-	 * @param appendId
-	 * @return
-	 */
-	@SuppressWarnings("rawtypes")
-	private static <T> MergedFieldType createFieldType(
-		ListIterable<BasicFieldDefinition<T>> fields,
-		boolean appendId
+	public Mono<? extends FetchResult<?>> fetch(
+		IndexQueryEncounter<? extends BasicIndexQuery<T>, T> encounter
 	)
 	{
-		FieldType[] result = new FieldType[fields.size() + (appendId ? 1 : 0)];
-		for(int i=0, n=fields.size(); i<n; i++)
-		{
-			BasicFieldDefinition field = fields.get(i);
-			result[i] = field.getType();
-		}
-
-		if(appendId)
-		{
-			result[fields.size()] = LongFieldType.INSTANCE;
-		}
-
-		return new MergedFieldType(result);
+		return Mono.fromSupplier(() -> runQuery(encounter));
 	}
 
-	/**
-	 * Create a {@link MergedFieldType} that allows multiple values for
-	 * every field.
-	 *
-	 * @param uniqueName
-	 * @param fields
-	 * @param fieldNames
-	 * @param appendId
-	 * @return
-	 */
-	@SuppressWarnings("rawtypes")
-	private static <T> MergedFieldType createMultiFieldType(
-		ListIterable<BasicFieldDefinition<T>> fields,
-		boolean appendId
+	@Override
+	public Flux<?> stream(
+		IndexQueryEncounter<? extends BasicIndexQuery<T>, T> encounter
 	)
 	{
-		FieldType[] result = new FieldType[fields.size() + (appendId ? 1 : 0)];
-		for(int i=0, n=fields.size(); i<n; i++)
-		{
-			BasicFieldDefinition field = fields.get(i);
-			result[i] = new ArrayFieldType(field.getType());
-		}
-
-		if(appendId)
-		{
-			result[fields.size()] = LongFieldType.INSTANCE;
-		}
-
-		return new MergedFieldType(result);
-	}
-
-	@Override
-	public void close()
-		throws IOException
-	{
-		store.close();
-	}
-
-	@Override
-	public void clear()
-	{
-		indexedData.clear();
-		index.clear();
-		indexState.put(uniqueName, 0l);
-		hardCommit = 0;
-	}
-
-	@Override
-	public void generate(T data, OutputStream stream)
-		throws IOException
-	{
-		BinaryDataOutput out = BinaryDataOutput.forStream(stream);
-
-		// Write a version tag
-		out.write(0);
-
-		Object[][] key = new Object[fields.length][];
-		for(int i=0, n=key.length; i<n; i++)
-		{
-			Object o = fields[i].getSupplier().apply(data);
-			key[i] = o instanceof Iterable
-				? Lists.immutable.ofAll((Iterable) o).toArray()
-				: new Object[] { o };
-		}
-
-		Object[] sort = new Object[sortFields.length];
-		for(int i=0, n=sortFields.length; i<n; i++)
-		{
-			sort[i] = sortFields[i].getSupplier().apply(data);
-		}
-
-		dataFieldType.write(key, out);
-		indexData.write(sort, out);
-	}
-
-	@Override
-	public void apply(long op, long id, InputStream stream)
-		throws IOException
-	{
-		BinaryDataInput in = BinaryDataInput.forStream(stream);
-
-		int version = in.read();
-		if(version != 0)
-		{
-			throw new StorageException("Unknown field index version encountered: " + version);
-		}
-
-		logger.debug("{}: Update entry for id {}", uniqueName, id);
-
-		Object[] keyData = dataFieldType.read(in);
-		Object[] sort = indexData.read(in);
-
-		// Look up our previously indexed key to see if we need to delete it
-		Object[] previousKey = indexedData.get(id);
-		remove(previousKey, id);
-
-		// Store the new key
-		store(keyData, sort, id);
-
-		// Store that we have applied this operation
-		indexState.put(uniqueName, op);
-	}
-
-	private void store(Object[] keyData, Object[] sortData, long id)
-	{
-		Object[] generatedKey = new Object[fields.length + 1];
-		generatedKey[fields.length] = id;
-
-		if(fields.length == 0)
-		{
-			// Special case for only sort data
-			if(logger.isTraceEnabled())
-			{
-				logger.trace("  storing key=" + Arrays.toString(generatedKey) + ", sort=" + Arrays.toString(sortData));
-			}
-			index.put(generatedKey, sortData);
-		}
-		else
-		{
-			recursiveStore(keyData, sortData, generatedKey, 0);
-		}
-
-		// Store a combined key for indexedData
-		indexedData.put(id, keyData);
-	}
-
-	private void recursiveStore(
-		Object[] keyData,
-		Object[] sortData,
-		Object[] generatedKey,
-		int i
-	)
-	{
-		if(i == fields.length - 1)
-		{
-			for(Object o : (Object[]) keyData[i])
-			{
-				generatedKey[i] = o;
-				if(logger.isTraceEnabled())
-				{
-					logger.trace("  storing key=" + Arrays.toString(generatedKey) + ", sort=" + Arrays.toString(sortData));
-				}
-				Object[] keyCopy = Arrays.copyOf(generatedKey, generatedKey.length);
-				index.put(keyCopy, sortData);
-			}
-		}
-		else
-		{
-			for(Object o : (Object[]) keyData[i])
-			{
-				generatedKey[i] = o;
-				recursiveStore(keyData, sortData, generatedKey, i + 1);
-			}
-		}
-	}
-
-	private void remove(Object[] data, long id)
-	{
-		if(data == null) return;
-
-		Object[] generatedKey = new Object[data.length + 1];
-		generatedKey[data.length] = id;
-
-		if(fields.length == 0)
-		{
-			index.remove(generatedKey);
-		}
-		else
-		{
-			recursiveRemove(data, generatedKey, 0);
-		}
-	}
-
-	private void recursiveRemove(Object[] data, Object[] generatedKey, int i)
-	{
-		Object[] values = (Object[]) data[i];
-		if(i == data.length - 1)
-		{
-			// Last item, perform actual remove
-			for(Object o : values)
-			{
-				generatedKey[i] = o;
-				if(logger.isTraceEnabled())
-				{
-					logger.trace("  removing " + Arrays.toString(generatedKey));
-				}
-				index.remove(generatedKey);
-			}
-		}
-		else
-		{
-			for(Object o : values)
-			{
-				generatedKey[i] = o;
-				recursiveRemove(data, generatedKey, i + 1);
-			}
-		}
-	}
-
-	@Override
-	public void delete(long op, long id)
-	{
-		logger.debug("{}: Delete entry for id {}", uniqueName, id);
-		Object[] previousKey = indexedData.get(id);
-		remove(previousKey, id);
-		indexedData.remove(id);
-
-		// Store that we have applied this operation
-		indexState.put(uniqueName, op);
-	}
-
-	private int findField(String name, boolean errorOnNoFind)
-	{
-		for(int i=0, n=fields.length; i<n; i++)
-		{
-			if(fields[i].getName().equals(name))
-			{
-				return i;
-			}
-		}
-
-		if(errorOnNoFind)
-		{
-			throw new StorageException("The field `" + name + "` does not exist in this index");
-		}
-
-		return -1;
-	}
-
-	private int findSortField(String name)
-	{
-		for(int i=0, n=sortFields.length; i<n; i++)
-		{
-			if(sortFields[i].equals(name))
-			{
-				return i;
-			}
-		}
-
-		throw new StorageException("The field `" + name + "` does not exist in this index");
+		return fetch(encounter).flatMapMany(FetchResult::stream);
 	}
 
 	private BasicIndexResult<T> runQuery(IndexQueryEncounter<? extends BasicIndexQuery<T>, T> encounter)
 	{
 		BasicIndexQuery<T> query = encounter.getQuery();
-		logger.debug("{}: Perform query {}", uniqueName, query);
+		logger.debug("Query {}", query);
 
 		QueryPart[] parts = new QueryPart[fields.length + 1];
 		for(FieldLimit c : query.getLimits())
@@ -549,20 +215,35 @@ public class BasicIndexEngine<T>
 		return new BasicIndexResultImpl<>(items, total.sum(), offset, limit);
 	}
 
-	@Override
-	public Mono<? extends FetchResult<?>> fetch(
-		IndexQueryEncounter<? extends BasicIndexQuery<T>, T> encounter
-	)
+	private int findField(String name, boolean errorOnNoFind)
 	{
-		return Mono.fromSupplier(() -> runQuery(encounter));
+		for(int i=0, n=fields.length; i<n; i++)
+		{
+			if(fields[i].getName().equals(name))
+			{
+				return i;
+			}
+		}
+
+		if(errorOnNoFind)
+		{
+			throw new StorageException("The field `" + name + "` does not exist in this index");
+		}
+
+		return -1;
 	}
 
-	@Override
-	public Flux<?> stream(
-		IndexQueryEncounter<? extends BasicIndexQuery<T>, T> encounter
-	)
+	private int findSortField(String name)
 	{
-		return fetch(encounter).flatMapMany(FetchResult::stream);
+		for(int i=0, n=sortFields.length; i<n; i++)
+		{
+			if(sortFields[i].equals(name))
+			{
+				return i;
+			}
+		}
+
+		throw new StorageException("The field `" + name + "` does not exist in this index");
 	}
 
 	public interface QueryPart
@@ -690,7 +371,7 @@ public class BasicIndexEngine<T>
 		return result;
 	}
 
-	public static abstract class ResultCollector
+	public abstract class ResultCollector
 		implements QueryPart
 	{
 		private final MVMap<Object[], Object[]> map;

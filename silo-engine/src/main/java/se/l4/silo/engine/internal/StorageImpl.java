@@ -26,8 +26,8 @@ import se.l4.silo.StorageException;
 import se.l4.silo.StoreResult;
 import se.l4.silo.engine.EntityCodec;
 import se.l4.silo.engine.MVStoreManager;
+import se.l4.silo.engine.index.Index;
 import se.l4.silo.engine.index.IndexDefinition;
-import se.l4.silo.engine.index.IndexEngine;
 import se.l4.silo.engine.index.LocalIndex;
 import se.l4.silo.engine.internal.index.IndexEngineController;
 import se.l4.silo.engine.internal.index.IndexEngineCreationEncounterImpl;
@@ -52,7 +52,7 @@ public class StorageImpl<T>
 	private final EntityCodec<T> codec;
 
 	private final PrimaryIndex primary;
-	private final MapIterable<String, IndexEngine<T, ?>> queryEngines;
+	private final MapIterable<String, Index<T, ?>> queryEngines;
 	private final MapIterable<String, IndexEngineController<T, ?>> queryControllers;
 
 	private final LongAdder reads;
@@ -110,7 +110,7 @@ public class StorageImpl<T>
 		));
 
 		// Register transactional values used by query engines
-		queryEngines
+		queryControllers
 			.each(q -> q.provideTransactionValues(transactionSupport::registerValue));
 
 		// Start each of the indexes using the executor
@@ -173,7 +173,7 @@ public class StorageImpl<T>
 		throws IOException
 	{
 		// Close all of our query engines
-		for(IndexEngine<?, ?> engine : this.queryEngines)
+		for(Index<?, ?> engine : this.queryEngines)
 		{
 			engine.close();
 		}
@@ -194,10 +194,10 @@ public class StorageImpl<T>
 				tx.store(name, id, out -> codec.encode(instance, out));
 
 				// Generate index data for the object
-				for(IndexEngine<T, ?> engine : queryEngines)
+				for(IndexEngineController<T, ?> controller : queryControllers)
 				{
-					tx.index(name, engine.getName(), id, out -> {
-						engine.generate(instance, out);
+					tx.index(name, controller.getName(), id, out -> {
+						controller.generate(instance, out);
 					});
 				}
 
@@ -310,7 +310,7 @@ public class StorageImpl<T>
 
 		return transactionSupport.monoWithExchange(tx ->
 			controller.fetch(createQueryEncounter(tx, query)),
-			mainDataStorage, primary, controller.getEngine()
+			mainDataStorage, primary, controller
 		);
 	}
 
@@ -325,7 +325,7 @@ public class StorageImpl<T>
 
 		return transactionSupport.fluxWithExchange(tx ->
 			controller.stream(createQueryEncounter(tx, query)),
-			mainDataStorage, primary, controller.getEngine()
+			mainDataStorage, primary, controller
 		);
 	}
 

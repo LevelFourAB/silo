@@ -5,7 +5,7 @@ import java.util.Locale;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 
-import se.l4.silo.engine.index.search.internal.SearchIndexEngine;
+import se.l4.silo.engine.index.search.internal.SearchIndex;
 import se.l4.silo.engine.index.search.types.BinaryFieldType;
 import se.l4.silo.engine.index.search.types.BooleanFieldType;
 import se.l4.silo.engine.index.search.types.IntFieldType;
@@ -17,7 +17,7 @@ import se.l4.silo.engine.index.search.types.TokenFieldType;
 
 /**
  * {@link SearchFieldType types} that can be used within a
- * {@link SearchIndexEngine}.
+ * {@link SearchIndex}.
  *
  * @author Andreas Holstenson
  *

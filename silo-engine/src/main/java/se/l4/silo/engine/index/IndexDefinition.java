@@ -13,5 +13,5 @@ public interface IndexDefinition<T>
 	 * @param config
 	 * @return
 	 */
-	IndexEngine<?, ?> create(IndexEngineCreationEncounter encounter);
+	Index<?, ?> create(IndexEngineCreationEncounter encounter);
 }

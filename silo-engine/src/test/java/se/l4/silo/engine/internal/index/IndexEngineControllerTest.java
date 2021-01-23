@@ -5,7 +5,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.function.Consumer;
 
@@ -25,8 +24,11 @@ import reactor.core.publisher.Mono;
 import se.l4.silo.FetchResult;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.TransactionValue;
-import se.l4.silo.engine.index.IndexEngine;
+import se.l4.silo.engine.index.Index;
+import se.l4.silo.engine.index.IndexDataGenerator;
+import se.l4.silo.engine.index.IndexDataUpdater;
 import se.l4.silo.engine.index.IndexQueryEncounter;
+import se.l4.silo.engine.index.IndexQueryRunner;
 import se.l4.silo.engine.internal.DataStorage;
 import se.l4.silo.engine.internal.MVDataStorage;
 import se.l4.silo.engine.internal.SiloTest;
@@ -252,7 +254,7 @@ public class IndexEngineControllerTest
 	}
 
 	private static class Engine
-		implements IndexEngine<String, FakeQuery>
+		implements Index<String, FakeQuery>
 	{
 		private final MutableLongObjectMap<String> data;
 
@@ -265,40 +267,82 @@ public class IndexEngineControllerTest
 		}
 
 		@Override
-		public void clear()
-		{
-			commitOpId = 0;
-			lastOpId = 0;
-			data.clear();
-		}
-
-		@Override
-		public void generate(String data, OutputStream out)
+		public void close()
 			throws IOException
 		{
-			BinaryDataOutput.forStream(out).writeString(data);
 		}
 
 		@Override
-		public void apply(long opId, long dataId, InputStream in)
-			throws IOException
+		public IndexDataGenerator<String> getDataGenerator()
 		{
-			String value = BinaryDataInput.forStream(in).readString();
-			data.put(dataId, value);
-			lastOpId = opId;
+			return (data, out) -> BinaryDataOutput.forStream(out).writeString(data);
 		}
 
 		@Override
-		public void delete(long opId, long dataId)
+		public IndexDataUpdater getDataUpdater()
 		{
-			data.remove(dataId);
-			lastOpId = opId;
+			return new IndexDataUpdater()
+			{
+				@Override
+				public void clear()
+				{
+					commitOpId = 0;
+					lastOpId = 0;
+					data.clear();
+				}
+
+				@Override
+				public void apply(long opId, long dataId, InputStream in)
+					throws IOException
+				{
+					String value = BinaryDataInput.forStream(in).readString();
+					data.put(dataId, value);
+					lastOpId = opId;
+				}
+
+				@Override
+				public void delete(long opId, long dataId)
+				{
+					data.remove(dataId);
+					lastOpId = opId;
+				}
+
+				@Override
+				public long getLastHardCommit()
+				{
+					return commitOpId;
+				}
+			};
 		}
 
 		@Override
-		public long getLastHardCommit()
+		public IndexQueryRunner<String, FakeQuery> getQueryRunner()
 		{
-			return commitOpId;
+			return new IndexQueryRunner<String, FakeQuery>()
+			{
+				@Override
+				public void provideTransactionValues(
+					Consumer<? super TransactionValue<?>> consumer
+				)
+				{
+				}
+
+				@Override
+				public Mono<? extends FetchResult<?>> fetch(
+					IndexQueryEncounter<? extends FakeQuery, String> encounter
+				)
+				{
+					throw new UnsupportedOperationException();
+				}
+
+				@Override
+				public Flux<?> stream(
+					IndexQueryEncounter<? extends FakeQuery, String> encounter
+				)
+				{
+					throw new UnsupportedOperationException();
+				}
+			};
 		}
 
 		public void markCommitted()
@@ -320,35 +364,6 @@ public class IndexEngineControllerTest
 		public String getName()
 		{
 			return "test";
-		}
-
-		@Override
-		public void provideTransactionValues(
-			Consumer<? super TransactionValue<?>> consumer
-		)
-		{
-		}
-
-		@Override
-		public void close()
-			throws IOException
-		{
-		}
-
-		@Override
-		public Mono<? extends FetchResult<?>> fetch(
-			IndexQueryEncounter<? extends FakeQuery, String> encounter
-		)
-		{
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Flux<?> stream(
-			IndexQueryEncounter<? extends FakeQuery, String> encounter
-		)
-		{
-			throw new UnsupportedOperationException();
 		}
 	}
 

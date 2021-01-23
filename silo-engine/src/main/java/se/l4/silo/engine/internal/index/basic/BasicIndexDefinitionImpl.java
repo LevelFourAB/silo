@@ -46,10 +46,10 @@ public class BasicIndexDefinitionImpl<T>
 	}
 
 	@Override
-	public BasicIndexEngine<T> create(IndexEngineCreationEncounter encounter)
+	public BasicIndex<T> create(IndexEngineCreationEncounter encounter)
 	{
 		MVStoreManager store = encounter.openStorageWideMVStore("index");
-		return new BasicIndexEngine<>(
+		return new BasicIndex<>(
 			store,
 			encounter.getName(),
 			encounter.getUniqueName(),

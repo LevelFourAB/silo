@@ -14,13 +14,12 @@ import org.h2.mvstore.type.DataType;
 
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.MVStoreManager;
-import se.l4.silo.engine.index.IndexEngine;
+import se.l4.silo.engine.index.Index;
 import se.l4.silo.engine.internal.DataStorage;
 import se.l4.silo.engine.internal.types.PositiveLongType;
-import se.l4.silo.engine.types.LongFieldType;
 
 /**
- * Log for keeping track of actions for a {@link IndexEngine}. This is used to
+ * Log for keeping track of actions for a {@link Index}. This is used to
  * replay actions if a query engine stops before a hard commit of all data
  * occurs.
  *

@@ -10,7 +10,7 @@ import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.map.ImmutableMap;
 
 import se.l4.silo.StorageException;
-import se.l4.silo.engine.index.IndexEngine;
+import se.l4.silo.engine.index.Index;
 import se.l4.silo.engine.index.IndexEngineCreationEncounter;
 import se.l4.silo.engine.index.search.Locales;
 import se.l4.silo.engine.index.search.SearchFieldDefinition;
@@ -60,14 +60,14 @@ public class SearchIndexDefinitionImpl<T>
 	}
 
 	@Override
-	public IndexEngine<?, ?> create(
+	public Index<?, ?> create(
 		IndexEngineCreationEncounter encounter
 	)
 	{
 		Path path = encounter.resolveDataFile(encounter.getUniqueName());
 		try
 		{
-			return new SearchIndexEngine<>(
+			return new SearchIndex<>(
 				encounter.getExecutor(),
 				encounter.getName(),
 				encounter.getUniqueName(),

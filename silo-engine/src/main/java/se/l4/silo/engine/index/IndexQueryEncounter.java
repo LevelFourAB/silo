@@ -5,7 +5,7 @@ import se.l4.silo.index.Query;
 
 /**
  * Encounter with a query, contains information that can be used by a
- * {@link IndexEngine} to return results.
+ * {@link Index} to return results.
  */
 public interface IndexQueryEncounter<D extends Query<T, ?, ?>, T>
 {

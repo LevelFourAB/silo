@@ -6,6 +6,9 @@ import java.util.Objects;
 import se.l4.silo.engine.io.BinaryDataInput;
 import se.l4.silo.engine.io.BinaryDataOutput;
 
+/**
+ * Operation representing the deletion of a certain id in an entity.
+ */
 public class DeleteOperation
 	implements TransactionOperation
 {

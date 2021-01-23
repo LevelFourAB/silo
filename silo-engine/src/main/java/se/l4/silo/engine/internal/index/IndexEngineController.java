@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
 
 import org.eclipse.collections.api.tuple.primitive.LongObjectPair;
 import org.h2.mvstore.MVMap;
@@ -18,27 +19,36 @@ import reactor.core.publisher.Sinks;
 import se.l4.silo.FetchResult;
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.MVStoreManager;
-import se.l4.silo.engine.index.IndexEngine;
+import se.l4.silo.engine.TransactionValue;
+import se.l4.silo.engine.TransactionValueProvider;
+import se.l4.silo.engine.index.Index;
+import se.l4.silo.engine.index.IndexDataGenerator;
+import se.l4.silo.engine.index.IndexDataUpdater;
 import se.l4.silo.engine.index.IndexEvent;
 import se.l4.silo.engine.index.IndexQueryEncounter;
+import se.l4.silo.engine.index.IndexQueryRunner;
 import se.l4.silo.engine.index.LocalIndex;
 import se.l4.silo.engine.internal.DataStorage;
 import se.l4.silo.engine.internal.types.PositiveLongType;
 import se.l4.silo.index.Query;
 
 /**
- * Controller for instances of {@link IndexEngine} that keeps these up to date
+ * Controller for instances of {@link Index} that keeps these up to date
  * with the stored data.
  */
 public class IndexEngineController<T, Q extends Query<T, ?, ?>>
-	implements LocalIndex
+	implements LocalIndex, TransactionValueProvider
 {
 	private static final long PROGRESS_EVENT_INTERVAL = 10 * 1000;
 
 	private final Logger logger;
 	private final DataStorage dataStorage;
 
-	private final IndexEngine<T, Q> engine;
+	private final Index<T, Q> engine;
+	private final IndexDataGenerator<T> dataGenerator;
+	private final IndexDataUpdater dataUpdater;
+	private final IndexQueryRunner<T, Q> queryRunner;
+
 	private final IndexEngineLog engineLog;
 	private final MVMap<Long, Long> data;
 
@@ -53,14 +63,18 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 	public IndexEngineController(
 		MVStoreManager manager,
 		DataStorage dataStorage,
-		IndexEngine<T, Q> engine,
+		Index<T, Q> engine,
 		String uniqueName
 	)
 	{
-		logger = LoggerFactory.getLogger(IndexEngine.class.getName() + "." + uniqueName);
+		logger = LoggerFactory.getLogger(Index.class.getName() + "." + uniqueName);
 
 		this.dataStorage = dataStorage;
 		this.engine = engine;
+
+		dataGenerator = engine.getDataGenerator();
+		dataUpdater = engine.getDataUpdater();
+		queryRunner = engine.getQueryRunner();
 
 		this.engineLog = new IndexEngineLog(manager, "index.log." + uniqueName);
 		data = manager.openMap("index.dataMapping." + uniqueName, new MVMap.Builder<Long, Long>()
@@ -115,7 +129,7 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 		return events.asFlux();
 	}
 
-	public IndexEngine<T, Q> getEngine()
+	public Index<T, Q> getEngine()
 	{
 		return engine;
 	}
@@ -151,7 +165,7 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 	{
 		try
 		{
-			softCursor = engine.getLastHardCommit();
+			softCursor = dataUpdater.getLastHardCommit();
 
 			if(softCursor > engineLog.getLatestOp())
 			{
@@ -165,8 +179,8 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 				* storage, causing those items to not be queryable in the index,
 				* we have to clear the index at this point and do a rebuild.
 				*/
-				engine.clear();
-				softCursor = engine.getLastHardCommit();
+				dataUpdater.clear();
+				softCursor = dataUpdater.getLastHardCommit();
 			}
 
 			if(softCursor == 0)
@@ -274,7 +288,7 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 				long opId = engineLog.appendRebuild(dataId, storedId);
 				try(InputStream storedStream = dataStorage.get(null, storedId))
 				{
-					engine.apply(opId, dataId, storedStream);
+					dataUpdater.apply(opId, dataId, storedStream);
 				}
 
 				// Update the where we are in the log
@@ -311,7 +325,7 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 				// Protect against the data having been removed
 				if(storedStream == null) continue;
 
-				engine.apply(opId, dataId, storedStream);
+				dataUpdater.apply(opId, dataId, storedStream);
 			}
 
 			// Update the where we are in the log
@@ -354,12 +368,12 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 						}
 						else
 						{
-							engine.apply(opId, entry.getId(), in);
+							dataUpdater.apply(opId, entry.getId(), in);
 						}
 					}
 					break;
 				case DELETION:
-					engine.delete(opId, entry.getId());
+				dataUpdater.delete(opId, entry.getId());
 					break;
 				default:
 					throw new StorageException("Unexpected type of data in log");
@@ -402,7 +416,7 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 	public void generate(T data, OutputStream out)
 		throws IOException
 	{
-		engine.generate(data, out);
+		dataGenerator.generate(data, out);
 	}
 
 	/**
@@ -426,7 +440,7 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 			{
 				try(InputStream storedStream = dataStorage.get(null, storedId))
 				{
-					engine.apply(opId, id, storedStream);
+					dataUpdater.apply(opId, id, storedStream);
 				}
 
 				softCursor = opId;
@@ -453,10 +467,18 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 
 		if(softCursor == opId - 1)
 		{
-			engine.delete(opId, id);
+			dataUpdater.delete(opId, id);
 
 			softCursor = opId;
 		}
+	}
+
+	@Override
+	public void provideTransactionValues(
+		Consumer<? super TransactionValue<?>> consumer
+	)
+	{
+		queryRunner.provideTransactionValues(consumer);
 	}
 
 	/**
@@ -473,7 +495,7 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 	)
 	{
 		return Mono.fromRunnable(queryCount::increment)
-			.then(engine.fetch(encounter));
+			.then(queryRunner.fetch(encounter));
 	}
 
 	/**
@@ -489,7 +511,7 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 	)
 	{
 		return Mono.fromRunnable(queryCount::increment)
-			.thenMany(engine.stream(encounter));
+			.thenMany(queryRunner.stream(encounter));
 	}
 
 	private static class RebuildProgressImpl
