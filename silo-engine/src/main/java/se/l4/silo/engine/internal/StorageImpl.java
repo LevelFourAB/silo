@@ -324,10 +324,10 @@ public class StorageImpl<T>
 			throw new StorageException("Unknown query engine `" + query.getIndex() + "`");
 		}
 
-		return transactionSupport.monoWithExchange(tx ->
+		return controller.whenQueryable().then(transactionSupport.monoWithExchange(tx ->
 			controller.fetch(createQueryEncounter(tx, query)),
 			mainDataStorage, primary, controller
-		);
+		));
 	}
 
 	@Override
@@ -339,10 +339,10 @@ public class StorageImpl<T>
 			throw new StorageException("Unknown query engine `" + query.getIndex() + "`");
 		}
 
-		return transactionSupport.fluxWithExchange(tx ->
+		return controller.whenQueryable().thenMany(transactionSupport.fluxWithExchange(tx ->
 			controller.stream(createQueryEncounter(tx, query)),
 			mainDataStorage, primary, controller
-		);
+		));
 	}
 
 	public Iterator<LongObjectPair<T>> createIterator(long minIdExclusive, long maxIdInclusive)
