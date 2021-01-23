@@ -41,6 +41,7 @@ public class CommitManager
 
 	private volatile long latestOp;
 	private volatile long hardCommitOp;
+	private final Sinks.Many<Long> hardCommits;
 
 	public CommitManager(
 		Logger logger,
@@ -61,7 +62,12 @@ public class CommitManager
 		this.maxTime = maxTimeBetweenCommits;
 		this.onCommit = searcherManager::changesCommitted;
 
+		hardCommits = Sinks.many()
+			.unicast()
+			.onBackpressureBuffer();
+
 		count = new AtomicLong();
+
 		if(writer.getDocStats().numDocs == 0)
 		{
 			// This is a fresh index, add our commit tracker
@@ -97,12 +103,18 @@ public class CommitManager
 		}
 	}
 
+	public Flux<Long> getHardCommits()
+	{
+		return hardCommits.asFlux();
+	}
+
 	public void reinitialize()
 		throws IOException
 	{
 		latestOp = 0;
 		hardCommitOp = 0;
 		writer.addDocument(getOpDoc(0));
+		hardCommits.tryEmitNext(0l);
 	}
 
 	private Document getOpDoc(long op)

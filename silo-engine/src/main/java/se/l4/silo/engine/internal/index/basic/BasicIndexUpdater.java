@@ -7,6 +7,8 @@ import java.util.Arrays;
 import org.h2.mvstore.MVMap;
 import org.slf4j.Logger;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.index.IndexDataUpdater;
@@ -32,6 +34,7 @@ public class BasicIndexUpdater
 	private final MergedFieldType dataFieldType;
 	private final MergedFieldType indexData;
 
+	private final Sinks.Many<Long> hardCommits;
 	private volatile long hardCommit;
 
 	public BasicIndexUpdater(
@@ -60,6 +63,9 @@ public class BasicIndexUpdater
 
 		// Load the hard commit
 		hardCommit = indexState.getOrDefault(uniqueName, 0l);
+		hardCommits = Sinks.many()
+			.unicast()
+			.onBackpressureBuffer();
 
 		/*
 		 * Need to keep track of commits a bit, so register an action that
@@ -80,8 +86,21 @@ public class BasicIndexUpdater
 			public void afterCommit()
 			{
 				hardCommit = commit;
+				hardCommits.tryEmitNext(commit);
 			}
 		});
+	}
+
+	@Override
+	public long getLastHardCommit()
+	{
+		return hardCommit;
+	}
+
+	@Override
+	public Flux<Long> hardCommits()
+	{
+		return hardCommits.asFlux();
 	}
 
 	@Override
@@ -91,12 +110,7 @@ public class BasicIndexUpdater
 		indexMap.clear();
 		indexState.put(uniqueName, 0l);
 		hardCommit = 0;
-	}
-
-	@Override
-	public long getLastHardCommit()
-	{
-		return hardCommit;
+		hardCommits.tryEmitNext(0l);
 	}
 
 	@Override

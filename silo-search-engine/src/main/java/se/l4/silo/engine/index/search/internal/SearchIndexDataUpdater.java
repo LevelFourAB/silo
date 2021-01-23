@@ -13,6 +13,7 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.util.BytesRef;
 
+import reactor.core.publisher.Flux;
 import se.l4.exobytes.streaming.StreamingFormat;
 import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.Token;
@@ -57,6 +58,12 @@ public class SearchIndexDataUpdater
 	public long getLastHardCommit()
 	{
 		return commitManager.getHardCommit();
+	}
+
+	@Override
+	public Flux<Long> hardCommits()
+	{
+		return commitManager.getHardCommits();
 	}
 
 	@Override

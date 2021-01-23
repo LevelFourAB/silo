@@ -13,6 +13,7 @@ import org.h2.mvstore.MVMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
@@ -159,102 +160,110 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 	 *
 	 * @throws IOException
 	 */
-	public void start(
+	public Mono<Disposable> start(
 		IndexEngineRebuildEncounter<T> encounter
 	)
 	{
-		try
-		{
-			softCursor = dataUpdater.getLastHardCommit();
-
-			if(softCursor > engineLog.getLatestOp())
+		return Mono.fromSupplier(() -> {
+			try
 			{
-				/*
-				* Index has ended up in a state where it has data that does not
-				* exist in the main storage. The common cause here is that a
-				* crash occurred or a backup was restored without removing the
-				* indexes.
-				*
-				* As deletes may have happened in the index but not the main
-				* storage, causing those items to not be queryable in the index,
-				* we have to clear the index at this point and do a rebuild.
-				*/
-				dataUpdater.clear();
 				softCursor = dataUpdater.getLastHardCommit();
-			}
 
-			if(softCursor == 0)
-			{
-				/*
-				* Index has nothing committed so about to attempt a full rebuild
-				* of the index. In this case we can't rely on the log so we need
-				* to rebuild from the stored data.
-				*
-				* The biggest challenge here is if we're in the middle of building
-				* up the data map and a restart occurs where the index has not
-				* committed anything.
-				*
-				* To solve this we keep a generation pointer around and rebuild
-				* up to where we have generated.
-				*/
-				long generationPointer = getGenerationPointer(engineLog.getRebuildMax());
-				engineLog.clear();
-
-				// No maximum rebuild set
-				long size = encounter.getSize();
-				long largestKey = encounter.getLargestId();
-				if(size > 0)
+				if(softCursor > engineLog.getLatestOp())
 				{
-					engineLog.setRebuildMax(size, largestKey);
+					/*
+					* Index has ended up in a state where it has data that does not
+					* exist in the main storage. The common cause here is that a
+					* crash occurred or a backup was restored without removing the
+					* indexes.
+					*
+					* As deletes may have happened in the index but not the main
+					* storage, causing those items to not be queryable in the index,
+					* we have to clear the index at this point and do a rebuild.
+					*/
+					dataUpdater.clear();
+					softCursor = dataUpdater.getLastHardCommit();
 				}
 
-				if(generationPointer > 0)
+				if(softCursor == 0)
 				{
-					// Replay the data up to where we have generated
-					replayDataLog(encounter, 0, generationPointer);
+					/*
+					* Index has nothing committed so about to attempt a full rebuild
+					* of the index. In this case we can't rely on the log so we need
+					* to rebuild from the stored data.
+					*
+					* The biggest challenge here is if we're in the middle of building
+					* up the data map and a restart occurs where the index has not
+					* committed anything.
+					*
+					* To solve this we keep a generation pointer around and rebuild
+					* up to where we have generated.
+					*/
+					long generationPointer = getGenerationPointer(engineLog.getRebuildMax());
+					engineLog.clear();
+
+					// No maximum rebuild set
+					long size = encounter.getSize();
+					long largestKey = encounter.getLargestId();
+					if(size > 0)
+					{
+						engineLog.setRebuildMax(size, largestKey);
+					}
+
+					if(generationPointer > 0)
+					{
+						// Replay the data up to where we have generated
+						replayDataLog(encounter, 0, generationPointer);
+					}
 				}
+
+				// Update the hard commit
+				engineLog.setLastHardCommit(softCursor);
+
+				// First step is to rebuild via the log
+				long lastOp = engineLog.getLastRebuildOp();
+				replayLog(lastOp);
+
+				if(data.size() < engineLog.getRebuildMax())
+				{
+					// Data is being generated or needs to be generated
+					generateData(encounter);
+				}
+				else
+				{
+					// Rebuild the remaining stored data
+					long lastStored = engineLog.getLastStoredId(softCursor);
+					long largestDataToRebuild = engineLog.getRebuildMaxDataId();
+					replayDataLog(encounter, lastStored, largestDataToRebuild);
+				}
+
+				// Replay the rest of the log
+				replayLog(Long.MAX_VALUE);
+
+				// Emit the last rebuild progress event
+				if(lastProgressEvent > 0)
+				{
+					long last = engineLog.getLatestOp();
+					events.tryEmitNext(new RebuildProgressImpl(isQueryable(), last, last));
+				}
+
+				events.tryEmitNext(new QueryableImpl());
+
+				Disposable hardCommitDisposable = dataUpdater.hardCommits()
+					.subscribe(op -> engineLog.setLastHardCommit(op));
+
+				events.tryEmitNext(new UpToDateImpl());
+
+				// Emit the up to date event
+				upToDate.tryEmitEmpty();
+
+				return hardCommitDisposable;
 			}
-
-			// Update the hard commit
-			engineLog.setLastHardCommit(softCursor);
-
-			// First step is to rebuild via the log
-			long lastOp = engineLog.getLastRebuildOp();
-			replayLog(lastOp);
-
-			if(data.size() < engineLog.getRebuildMax())
+			catch(IOException e)
 			{
-				// Data is being generated or needs to be generated
-				generateData(encounter);
+				throw new StorageException("Could not update index " + engine.getName() + "; " + e.getMessage(), e);
 			}
-			else
-			{
-				// Rebuild the remaining stored data
-				long lastStored = engineLog.getLastStoredId(softCursor);
-				long largestDataToRebuild = engineLog.getRebuildMaxDataId();
-				replayDataLog(encounter, lastStored, largestDataToRebuild);
-			}
-
-			// Replay the rest of the log
-			replayLog(Long.MAX_VALUE);
-
-			// Emit the last rebuild progress event
-			if(lastProgressEvent > 0)
-			{
-				long last = engineLog.getLatestOp();
-				events.tryEmitNext(new RebuildProgressImpl(isQueryable(), last, last));
-			}
-
-			events.tryEmitNext(new QueryableImpl());
-			events.tryEmitNext(new UpToDateImpl());
-
-			// Emit the up to date event
-			upToDate.tryEmitEmpty();
-		}
-		catch(IOException e)
-		{
-			throw new StorageException("Could not update index " + engine.getName() + "; " + e.getMessage(), e);
-		}
+		});
 	}
 
 	private long getGenerationPointer(long maxId)
@@ -373,7 +382,7 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 					}
 					break;
 				case DELETION:
-				dataUpdater.delete(opId, entry.getId());
+					dataUpdater.delete(opId, entry.getId());
 					break;
 				default:
 					throw new StorageException("Unexpected type of data in log");

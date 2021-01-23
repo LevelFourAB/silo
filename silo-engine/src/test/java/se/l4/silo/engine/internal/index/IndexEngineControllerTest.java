@@ -19,8 +19,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 import se.l4.silo.FetchResult;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.TransactionValue;
@@ -137,7 +139,7 @@ public class IndexEngineControllerTest
 	public void testStartEmpty()
 	{
 		Encounter encounter = new Encounter(0);
-		controller.start(encounter);
+		controller.start(encounter).block();
 
 		assertThat(engine.size(), is(0));
 	}
@@ -146,7 +148,7 @@ public class IndexEngineControllerTest
 	public void testDataUpdate()
 	{
 		Encounter encounter = new Encounter(2);
-		controller.start(encounter);
+		controller.start(encounter).block();
 
 		assertThat(engine.size(), is(2));
 		assertThat(engine.get(1), is("v1"));
@@ -158,7 +160,7 @@ public class IndexEngineControllerTest
 		throws IOException
 	{
 		Encounter encounter = new Encounter(1);
-		controller.start(encounter);
+		controller.start(encounter).block();
 		controller.store(2, stream("v2"));
 
 		assertThat(engine.size(), is(2));
@@ -171,7 +173,7 @@ public class IndexEngineControllerTest
 		throws IOException
 	{
 		Encounter encounter = new Encounter(2);
-		controller.start(encounter);
+		controller.start(encounter).block();
 		controller.delete(2);
 
 		assertThat(engine.size(), is(1));
@@ -183,16 +185,18 @@ public class IndexEngineControllerTest
 		throws IOException
 	{
 		Encounter encounter = new Encounter(2);
-		controller.start(encounter);
+		Disposable d = controller.start(encounter).block();
 
 		assertThat(engine.size(), is(2));
 
 		// Mark as committed and reopen
 		engine.markCommitted();
+
+		d.dispose();
 		reopen();
 
 		// Start things up again
-		controller.start(encounter);
+		controller.start(encounter).block();
 
 		assertThat(engine.size(), is(2));
 		assertThat(engine.lastOpId, is(2l));
@@ -203,7 +207,7 @@ public class IndexEngineControllerTest
 		throws IOException
 	{
 		Encounter encounter = new Encounter(2);
-		controller.start(encounter);
+		controller.start(encounter).block();
 
 		assertThat(engine.size(), is(2));
 
@@ -215,7 +219,7 @@ public class IndexEngineControllerTest
 		assertThat(engine.size(), is(0));
 
 		// Start again
-		controller.start(encounter);
+		controller.start(encounter).block();
 
 		assertThat(engine.size(), is(2));
 	}
@@ -261,9 +265,15 @@ public class IndexEngineControllerTest
 		private long lastOpId;
 		private long commitOpId;
 
+		private Sinks.Many<Long> hardCommits;
+
 		public Engine()
 		{
 			data = LongObjectMaps.mutable.empty();
+
+			hardCommits = Sinks.many()
+				.multicast()
+				.directBestEffort();
 		}
 
 		@Override
@@ -312,6 +322,12 @@ public class IndexEngineControllerTest
 				{
 					return commitOpId;
 				}
+
+				@Override
+				public Flux<Long> hardCommits()
+				{
+					return hardCommits.asFlux();
+				}
 			};
 		}
 
@@ -348,6 +364,7 @@ public class IndexEngineControllerTest
 		public void markCommitted()
 		{
 			commitOpId = lastOpId;
+			hardCommits.tryEmitNext(commitOpId);
 		}
 
 		public int size()

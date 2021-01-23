@@ -17,6 +17,7 @@ import org.eclipse.collections.impl.tuple.primitive.PrimitiveTuples;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
@@ -54,6 +55,8 @@ public class StorageImpl<T>
 	private final PrimaryIndex primary;
 	private final MapIterable<String, Index<T, ?>> queryEngines;
 	private final MapIterable<String, IndexEngineController<T, ?>> queryControllers;
+
+	private final Iterable<Disposable> disposables;
 
 	private final LongAdder reads;
 	private final LongAdder stores;
@@ -136,12 +139,13 @@ public class StorageImpl<T>
 			}
 		};
 
-		Flux.fromIterable(queryControllers)
+		disposables = Flux.fromIterable(queryControllers)
 			.parallel()
 			.runOn(scheduler)
-			.map(c -> c.start(rebuild))
+			.flatMap(c -> c.start(rebuild))
 			.sequential()
-			.blockLast();
+			.collectList()
+			.block();
 	}
 
 	@Override
@@ -178,6 +182,12 @@ public class StorageImpl<T>
 	public void close()
 		throws IOException
 	{
+		// Close the controllers
+		for(Disposable d : disposables)
+		{
+			d.dispose();
+		}
+
 		// Close all of our query engines
 		for(Index<?, ?> engine : this.queryEngines)
 		{

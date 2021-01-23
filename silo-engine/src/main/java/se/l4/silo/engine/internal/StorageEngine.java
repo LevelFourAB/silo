@@ -307,7 +307,6 @@ public class StorageEngine
 	public void close()
 			throws IOException
 	{
-		scheduler.dispose();
 		log.close();
 
 		for(StorageImpl storage : storages.values())
@@ -315,6 +314,7 @@ public class StorageEngine
 			storage.close();
 		}
 
+		scheduler.dispose();
 		store.close();
 	}
 
