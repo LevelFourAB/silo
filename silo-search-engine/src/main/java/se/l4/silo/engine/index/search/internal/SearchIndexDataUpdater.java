@@ -19,9 +19,9 @@ import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.Token;
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.index.IndexDataUpdater;
-import se.l4.silo.engine.index.search.LocaleSupport;
-import se.l4.silo.engine.index.search.Locales;
 import se.l4.silo.engine.index.search.SearchFieldDefinition;
+import se.l4.silo.engine.index.search.locales.LocaleSupport;
+import se.l4.silo.engine.index.search.locales.Locales;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
 import se.l4.silo.index.search.SearchIndexException;
 

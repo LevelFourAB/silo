@@ -4,8 +4,8 @@ import java.io.IOException;
 
 import org.apache.lucene.search.Query;
 
-import se.l4.silo.engine.index.search.LocaleSupport;
 import se.l4.silo.engine.index.search.SearchIndexEncounter;
+import se.l4.silo.engine.index.search.locales.LocaleSupport;
 import se.l4.silo.index.search.QueryClause;
 
 public interface QueryEncounter<T extends QueryClause>

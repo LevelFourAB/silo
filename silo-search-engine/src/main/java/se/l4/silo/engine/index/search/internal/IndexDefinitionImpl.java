@@ -8,10 +8,10 @@ import org.eclipse.collections.api.map.MapIterable;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.SetIterable;
 
-import se.l4.silo.engine.index.search.LocaleSupport;
-import se.l4.silo.engine.index.search.Locales;
 import se.l4.silo.engine.index.search.SearchFieldDefinition;
 import se.l4.silo.engine.index.search.SearchIndexEncounter;
+import se.l4.silo.engine.index.search.locales.LocaleSupport;
+import se.l4.silo.engine.index.search.locales.Locales;
 
 public class IndexDefinitionImpl
 	implements SearchIndexEncounter

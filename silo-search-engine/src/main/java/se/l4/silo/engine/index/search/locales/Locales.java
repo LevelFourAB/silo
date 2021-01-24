@@ -1,4 +1,4 @@
-package se.l4.silo.engine.index.search;
+package se.l4.silo.engine.index.search.locales;
 
 import java.util.Optional;
 

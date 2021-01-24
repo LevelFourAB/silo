@@ -12,13 +12,13 @@ import org.eclipse.collections.api.map.ImmutableMap;
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.index.Index;
 import se.l4.silo.engine.index.IndexEngineCreationEncounter;
-import se.l4.silo.engine.index.search.Locales;
 import se.l4.silo.engine.index.search.SearchFieldDefinition;
 import se.l4.silo.engine.index.search.SearchIndexDefinition;
 import se.l4.silo.engine.index.search.config.IndexCacheConfig;
 import se.l4.silo.engine.index.search.config.IndexCommitConfig;
 import se.l4.silo.engine.index.search.config.IndexFreshnessConfig;
 import se.l4.silo.engine.index.search.config.IndexReloadConfig;
+import se.l4.silo.engine.index.search.locales.Locales;
 
 public class SearchIndexDefinitionImpl<T>
 	implements SearchIndexDefinition<T>

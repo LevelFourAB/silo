@@ -4,9 +4,9 @@ import java.util.function.Consumer;
 
 import org.apache.lucene.index.IndexableField;
 
-import se.l4.silo.engine.index.search.LocaleSupport;
 import se.l4.silo.engine.index.search.SearchFieldDefinition;
 import se.l4.silo.engine.index.search.SearchIndexEncounter;
+import se.l4.silo.engine.index.search.locales.LocaleSupport;
 import se.l4.silo.engine.index.search.types.FieldCreationEncounter;
 
 public class FieldCreationEncounterImpl<T>

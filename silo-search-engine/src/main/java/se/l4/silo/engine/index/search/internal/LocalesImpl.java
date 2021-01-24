@@ -5,17 +5,17 @@ import java.util.Optional;
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.map.ImmutableMap;
 
-import se.l4.silo.engine.index.search.LocaleSupport;
-import se.l4.silo.engine.index.search.Locales;
-import se.l4.silo.engine.index.search.lang.EnglishLanguage;
+import se.l4.silo.engine.index.search.locales.EnglishLocaleSupport;
+import se.l4.silo.engine.index.search.locales.LocaleSupport;
+import se.l4.silo.engine.index.search.locales.Locales;
 
 public class LocalesImpl
 	implements Locales
 {
 	public static final LocalesImpl DEFAULT = new LocalesImpl(
-		EnglishLanguage.INSTANCE,
+		EnglishLocaleSupport.INSTANCE,
 		Maps.immutable.of(
-			"en", EnglishLanguage.INSTANCE
+			"en", EnglishLocaleSupport.INSTANCE
 		)
 	);
 

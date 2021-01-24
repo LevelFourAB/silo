@@ -7,6 +7,7 @@ import org.eclipse.collections.api.RichIterable;
 
 import se.l4.silo.engine.index.IndexDefinition;
 import se.l4.silo.engine.index.search.internal.SearchIndexDefinitionImpl;
+import se.l4.silo.engine.index.search.locales.Locales;
 
 /**
  * Definition that activates support for creating indexes that support

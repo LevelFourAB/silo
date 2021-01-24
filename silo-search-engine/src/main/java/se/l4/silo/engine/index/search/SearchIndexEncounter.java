@@ -3,6 +3,7 @@ package se.l4.silo.engine.index.search;
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.set.SetIterable;
 
+import se.l4.silo.engine.index.search.locales.LocaleSupport;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
 
 /**

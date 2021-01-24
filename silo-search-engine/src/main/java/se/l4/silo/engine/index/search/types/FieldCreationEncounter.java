@@ -2,7 +2,7 @@ package se.l4.silo.engine.index.search.types;
 
 import org.apache.lucene.index.IndexableField;
 
-import se.l4.silo.engine.index.search.LocaleSupport;
+import se.l4.silo.engine.index.search.locales.LocaleSupport;
 
 public interface FieldCreationEncounter<T>
 {

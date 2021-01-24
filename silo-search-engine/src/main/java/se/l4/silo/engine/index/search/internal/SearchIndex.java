@@ -21,11 +21,11 @@ import se.l4.silo.engine.index.Index;
 import se.l4.silo.engine.index.IndexDataGenerator;
 import se.l4.silo.engine.index.IndexDataUpdater;
 import se.l4.silo.engine.index.IndexQueryRunner;
-import se.l4.silo.engine.index.search.Locales;
 import se.l4.silo.engine.index.search.SearchFieldDefinition;
 import se.l4.silo.engine.index.search.config.IndexCacheConfig;
 import se.l4.silo.engine.index.search.config.IndexCommitConfig;
 import se.l4.silo.engine.index.search.config.IndexReloadConfig;
+import se.l4.silo.engine.index.search.locales.Locales;
 import se.l4.silo.engine.index.search.query.QueryBuilders;
 import se.l4.silo.index.search.SearchIndexQuery;
 
