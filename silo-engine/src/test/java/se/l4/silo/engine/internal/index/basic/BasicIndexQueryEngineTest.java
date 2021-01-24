@@ -28,17 +28,17 @@ public class BasicIndexQueryEngineTest
 	@Override
 	protected LocalSilo.Builder setup(LocalSilo.Builder builder)
 	{
-		BasicFieldDefinition<TestData> field1 = BasicFieldDefinition.create("field1", TestData.class)
+		BasicFieldDefinition<TestData, String> field1 = BasicFieldDefinition.create("field1", TestData.class)
 			.withType(String.class)
 			.withSupplier(TestData::getField1)
 			.build();
 
-		BasicFieldDefinition<TestData> field2 = BasicFieldDefinition.create("field2", TestData.class)
+		BasicFieldDefinition<TestData, Boolean> field2 = BasicFieldDefinition.create("field2", TestData.class)
 			.withType(boolean.class)
 			.withSupplier(TestData::isField2)
 			.build();
 
-		BasicFieldDefinition<TestData> field3 = BasicFieldDefinition.create("field3", TestData.class)
+		BasicFieldDefinition<TestData, String> field3 = BasicFieldDefinition.create("field3", TestData.class)
 			.withType(String.class)
 			.collection()
 			.withSupplier(TestData::getField3)

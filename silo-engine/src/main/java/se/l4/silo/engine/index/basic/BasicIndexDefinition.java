@@ -13,14 +13,14 @@ public interface BasicIndexDefinition<T>
 	 *
 	 * @return
 	 */
-	ListIterable<BasicFieldDefinition<T>> getFields();
+	ListIterable<BasicFieldDefinition<T, ?>> getFields();
 
 	/**
 	 * Get the fields that can be sorted on.
 	 *
 	 * @return
 	 */
-	ListIterable<BasicFieldDefinition<T>> getSortFields();
+	ListIterable<BasicFieldDefinition.Single<T, ?>> getSortFields();
 
 	/**
 	 * Start building a {@link BasicFieldDefinition}.
@@ -43,7 +43,7 @@ public interface BasicIndexDefinition<T>
 		 * @param field
 		 * @return
 		 */
-		Builder<T> addField(BasicFieldDefinition<T> field);
+		Builder<T> addField(BasicFieldDefinition<T, ?> field);
 
 		/**
 		 * Add a field that can be sorted on.
@@ -51,7 +51,7 @@ public interface BasicIndexDefinition<T>
 		 * @param field
 		 * @return
 		 */
-		Builder<T> addSort(BasicFieldDefinition<T> field);
+		Builder<T> addSort(BasicFieldDefinition.Single<T, ?> field);
 
 		/**
 		 * Create the definition.

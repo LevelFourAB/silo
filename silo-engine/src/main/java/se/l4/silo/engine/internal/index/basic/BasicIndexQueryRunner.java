@@ -40,8 +40,8 @@ public class BasicIndexQueryRunner<T>
 {
 	private final Logger logger;
 
-	private final BasicFieldDefinition<T>[] fields;
-	private final BasicFieldDefinition<T>[] sortFields;
+	private final BasicFieldDefinition<T, ?>[] fields;
+	private final BasicFieldDefinition.Single<T, ?>[] sortFields;
 
 	private final TransactionValue<ReadOnlyIndex> indexMapValue;
 
@@ -50,8 +50,8 @@ public class BasicIndexQueryRunner<T>
 
 		MVStoreManager store,
 
-		BasicFieldDefinition<T>[] fields,
-		BasicFieldDefinition<T>[] sortFields,
+		BasicFieldDefinition<T, ?>[] fields,
+		BasicFieldDefinition.Single<T, ?>[] sortFields,
 
 		MVMap<Object[], Object[]> index
 	)

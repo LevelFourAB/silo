@@ -5,6 +5,7 @@ import java.io.OutputStream;
 
 import org.eclipse.collections.api.factory.Lists;
 
+import se.l4.silo.StorageException;
 import se.l4.silo.engine.index.IndexDataGenerator;
 import se.l4.silo.engine.index.basic.BasicFieldDefinition;
 import se.l4.silo.engine.io.BinaryDataOutput;
@@ -13,15 +14,15 @@ import se.l4.silo.engine.types.MergedFieldType;
 public class BasicIndexDataGenerator<T>
 	implements IndexDataGenerator<T>
 {
-	private final BasicFieldDefinition<T>[] fields;
-	private final BasicFieldDefinition<T>[] sortFields;
+	private final BasicFieldDefinition<T, ?>[] fields;
+	private final BasicFieldDefinition.Single<T, ?>[] sortFields;
 
 	private final MergedFieldType keyType;
 	private final MergedFieldType sortType;
 
 	public BasicIndexDataGenerator(
-		BasicFieldDefinition<T>[] fields,
-		BasicFieldDefinition<T>[] sortFields,
+		BasicFieldDefinition<T, ?>[] fields,
+		BasicFieldDefinition.Single<T, ?>[] sortFields,
 
 		MergedFieldType dataFieldType,
 		MergedFieldType indexData
@@ -46,10 +47,23 @@ public class BasicIndexDataGenerator<T>
 		Object[][] key = new Object[fields.length][];
 		for(int i=0, n=key.length; i<n; i++)
 		{
-			Object o = fields[i].getSupplier().apply(data);
-			key[i] = o instanceof Iterable
-				? Lists.immutable.ofAll((Iterable) o).toArray()
-				: new Object[] { o };
+			BasicFieldDefinition<T, ?> field = fields[i];
+			if(field instanceof BasicFieldDefinition.Single)
+			{
+				key[i] = new Object[] {
+					((BasicFieldDefinition.Single) field).getSupplier().apply(data)
+				};
+			}
+			else if(field instanceof BasicFieldDefinition.Collection)
+			{
+				key[i] = Lists.immutable.ofAll(
+					((BasicFieldDefinition.Collection<T, ?>) field).getSupplier().apply(data)
+				).toArray();
+			}
+			else
+			{
+				throw new StorageException("Unknown type of field " + field);
+			}
 		}
 
 		Object[] sort = new Object[sortFields.length];

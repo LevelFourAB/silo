@@ -13,13 +13,13 @@ public class BasicIndexDefinitionImpl<T>
 	implements BasicIndexDefinition<T>
 {
 	private final String name;
-	private final ImmutableList<BasicFieldDefinition<T>> fields;
-	private final ImmutableList<BasicFieldDefinition<T>> sortFields;
+	private final ImmutableList<BasicFieldDefinition<T, ?>> fields;
+	private final ImmutableList<BasicFieldDefinition.Single<T, ?>> sortFields;
 
 	public BasicIndexDefinitionImpl(
 		String name,
-		ImmutableList<BasicFieldDefinition<T>> fields,
-		ImmutableList<BasicFieldDefinition<T>> sortFields
+		ImmutableList<BasicFieldDefinition<T, ?>> fields,
+		ImmutableList<BasicFieldDefinition.Single<T, ?>> sortFields
 	)
 	{
 		this.name = name;
@@ -34,13 +34,13 @@ public class BasicIndexDefinitionImpl<T>
 	}
 
 	@Override
-	public ListIterable<BasicFieldDefinition<T>> getFields()
+	public ListIterable<BasicFieldDefinition<T, ?>> getFields()
 	{
 		return fields;
 	}
 
 	@Override
-	public ListIterable<BasicFieldDefinition<T>> getSortFields()
+	public ListIterable<BasicFieldDefinition.Single<T, ?>> getSortFields()
 	{
 		return sortFields;
 	}
@@ -60,20 +60,24 @@ public class BasicIndexDefinitionImpl<T>
 
 	public static <T> Builder<T> create(String name)
 	{
-		return new BuilderImpl<>(name, Lists.immutable.empty(), Lists.immutable.empty());
+		return new BuilderImpl<>(
+			name,
+			Lists.immutable.empty(),
+			Lists.immutable.empty()
+		);
 	}
 
 	public static class BuilderImpl<T>
 		implements Builder<T>
 	{
 		private final String name;
-		private final ImmutableList<BasicFieldDefinition<T>> fields;
-		private final ImmutableList<BasicFieldDefinition<T>> sortFields;
+		private final ImmutableList<BasicFieldDefinition<T, ?>> fields;
+		private final ImmutableList<BasicFieldDefinition.Single<T, ?>> sortFields;
 
 		public BuilderImpl(
 			String name,
-			ImmutableList<BasicFieldDefinition<T>> fields,
-			ImmutableList<BasicFieldDefinition<T>> sortFields
+			ImmutableList<BasicFieldDefinition<T, ?>> fields,
+			ImmutableList<BasicFieldDefinition.Single<T, ?>> sortFields
 		)
 		{
 			this.name = name;
@@ -82,7 +86,7 @@ public class BasicIndexDefinitionImpl<T>
 		}
 
 		@Override
-		public Builder<T> addField(BasicFieldDefinition<T> field)
+		public Builder<T> addField(BasicFieldDefinition<T, ?> field)
 		{
 			return new BuilderImpl<>(
 				name,
@@ -92,7 +96,7 @@ public class BasicIndexDefinitionImpl<T>
 		}
 
 		@Override
-		public Builder<T> addSort(BasicFieldDefinition<T> field)
+		public Builder<T> addSort(BasicFieldDefinition.Single<T, ?> field)
 		{
 			return new BuilderImpl<>(
 				name,

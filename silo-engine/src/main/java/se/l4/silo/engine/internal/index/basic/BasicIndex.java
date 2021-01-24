@@ -39,8 +39,8 @@ public class BasicIndex<T>
 		MVStoreManager store,
 		String name,
 		String uniqueName,
-		ListIterable<BasicFieldDefinition<T>> fields,
-		ListIterable<BasicFieldDefinition<T>> sortFields
+		ListIterable<BasicFieldDefinition<T, ?>> fields,
+		ListIterable<BasicFieldDefinition.Single<T, ?>> sortFields
 	)
 	{
 		this.name = name;
@@ -48,8 +48,8 @@ public class BasicIndex<T>
 
 		Logger logger = LoggerFactory.getLogger(BasicIndex.class.getName() + "[" + uniqueName + "]");
 
-		BasicFieldDefinition<T>[] fieldArray = fields.toArray(new BasicFieldDefinition[fields.size()]);
-		BasicFieldDefinition<T>[] sortFieldArray = sortFields.toArray(new BasicFieldDefinition[sortFields.size()]);
+		BasicFieldDefinition<T, ?>[] fieldArray = fields.toArray(new BasicFieldDefinition[fields.size()]);
+		BasicFieldDefinition.Single<T, ?>[] sortFieldArray = sortFields.toArray(new BasicFieldDefinition.Single[sortFields.size()]);
 
 		MergedFieldType dataFieldType = createMultiFieldType(fields, false);
 		MVMap<Long, Object[]> indexedData = store.openMap("data:" + uniqueName, LongFieldType.INSTANCE, dataFieldType);
@@ -108,7 +108,7 @@ public class BasicIndex<T>
 	 */
 	@SuppressWarnings("rawtypes")
 	private static <T> MergedFieldType createFieldType(
-		ListIterable<BasicFieldDefinition<T>> fields,
+		ListIterable<? extends BasicFieldDefinition<T, ?>> fields,
 		boolean appendId
 	)
 	{
@@ -139,7 +139,7 @@ public class BasicIndex<T>
 	 */
 	@SuppressWarnings("rawtypes")
 	private static <T> MergedFieldType createMultiFieldType(
-		ListIterable<BasicFieldDefinition<T>> fields,
+		ListIterable<BasicFieldDefinition<T, ?>> fields,
 		boolean appendId
 	)
 	{

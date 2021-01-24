@@ -9,7 +9,7 @@ import se.l4.silo.engine.types.FieldType;
  * Definition of a field that can be queried in an index defined via
  * {@link BasicIndexDefinition}.
  */
-public interface BasicFieldDefinition<T>
+public interface BasicFieldDefinition<T, V>
 {
 	/**
 	 * Get the name of the field.
@@ -17,26 +17,41 @@ public interface BasicFieldDefinition<T>
 	String getName();
 
 	/**
-	 * Get a function that can be used to read this field from a certain
-	 * object.
-	 *
-	 * @return
-	 */
-	Function<T, Object> getSupplier();
-
-	/**
-	 * Get if multiple values can exist of this field.
-	 *
-	 * @return
-	 */
-	boolean isCollection();
-
-	/**
 	 * Get the type of the field.
 	 *
 	 * @return
 	 */
-	FieldType<?> getType();
+	FieldType<V> getType();
+
+	/**
+	 * Field representing a single value that may be queried.
+	 */
+	interface Single<T, V>
+		extends BasicFieldDefinition<T, V>
+	{
+		/**
+		 * Get a function that can be used to read this field from a certain
+		 * object.
+		 *
+		 * @return
+		 */
+		Function<T, V> getSupplier();
+	}
+
+	/**
+	 * Field containing multiple values that may be queried.
+	 */
+	interface Collection<T, V>
+		extends BasicFieldDefinition<T, V>
+	{
+		/**
+		 * Get a function that can be used to read this field from a certain
+		 * object.
+		 *
+		 * @return
+		 */
+		Function<T, Iterable<V>> getSupplier();
+	}
 
 	/**
 	 * Start creating a new definition.
@@ -76,20 +91,49 @@ public interface BasicFieldDefinition<T>
 		 * @param supplier
 		 * @return
 		 */
-		Builder<T, F> withSupplier(Function<T, F> supplier);
+		SingleBuilder<T, F> withSupplier(Function<T, F> supplier);
 
 		/**
 		 * Indicate that this field can support multiple values.
 		 *
 		 * @return
 		 */
-		Builder<T, Iterable<F>> collection();
+		CollectionBuilder<T, F> collection();
+	}
+
+	interface SingleBuilder<T, F>
+	{
+		/**
+		 * Set the function used to extract the value for the field.
+		 *
+		 * @param supplier
+		 * @return
+		 */
+		SingleBuilder<T, F> withSupplier(Function<T, F> supplier);
 
 		/**
 		 * Build the definition.
 		 *
 		 * @return
 		 */
-		BasicFieldDefinition<T> build();
+		BasicFieldDefinition.Single<T, F> build();
+	}
+
+	interface CollectionBuilder<T, F>
+	{
+		/**
+		 * Set the function used to extract the value for the field.
+		 *
+		 * @param supplier
+		 * @return
+		 */
+		CollectionBuilder<T, F> withSupplier(Function<T, Iterable<F>> supplier);
+
+		/**
+		 * Build the definition.
+		 *
+		 * @return
+		 */
+		BasicFieldDefinition.Collection<T, F> build();
 	}
 }

@@ -11,24 +11,18 @@ import se.l4.silo.engine.types.IntFieldType;
 import se.l4.silo.engine.types.LongFieldType;
 import se.l4.silo.engine.types.StringFieldType;
 
-public class BasicFieldDefinitionImpl<T>
-	implements BasicFieldDefinition<T>
+public abstract class BasicFieldDefinitionImpl<T, V>
+	implements BasicFieldDefinition<T, V>
 {
 	private final String name;
-	private final Function<T, Object> supplier;
-	private final boolean collection;
-	private final FieldType<?> type;
+	private final FieldType<V> type;
 
 	public BasicFieldDefinitionImpl(
 		String name,
-		Function<T, Object> supplier,
-		boolean collection,
-		FieldType<?> type
+		FieldType<V> type
 	)
 	{
 		this.name = name;
-		this.supplier = supplier;
-		this.collection = collection;
 		this.type = type;
 	}
 
@@ -39,46 +33,76 @@ public class BasicFieldDefinitionImpl<T>
 	}
 
 	@Override
-	public Function<T, Object> getSupplier()
-	{
-		return supplier;
-	}
-
-	@Override
-	public boolean isCollection()
-	{
-		return collection;
-	}
-
-	@Override
-	public FieldType<?> getType()
+	public FieldType<V> getType()
 	{
 		return type;
 	}
 
 	public static <T> Builder<T, Void> create(String name)
 	{
-		return new BuilderImpl<>(name, null, false, null);
+		return new BuilderImpl<>(name, null);
+	}
+
+	public static class SingleImpl<T, V>
+		extends BasicFieldDefinitionImpl<T, V>
+		implements Single<T, V>
+	{
+		private final Function<T, V> supplier;
+
+		public SingleImpl(
+			String name,
+			FieldType<V> type,
+			Function<T, V> supplier
+		)
+		{
+			super(name, type);
+
+			this.supplier = supplier;
+		}
+
+		@Override
+		public Function<T, V> getSupplier()
+		{
+			return supplier;
+		}
+	}
+
+	public static class CollectionImpl<T, V>
+		extends BasicFieldDefinitionImpl<T, V>
+		implements Collection<T, V>
+	{
+		private final Function<T, Iterable<V>> supplier;
+
+		public CollectionImpl(
+			String name,
+			FieldType<V> type,
+			Function<T, Iterable<V>> supplier
+		)
+		{
+			super(name, type);
+
+			this.supplier = supplier;
+		}
+
+		@Override
+		public Function<T, Iterable<V>> getSupplier()
+		{
+			return supplier;
+		}
 	}
 
 	private static class BuilderImpl<T, F>
 		implements Builder<T, F>
 	{
 		private final String name;
-		private final Function<T, Object> supplier;
-		private final boolean collection;
-		private final FieldType<?> type;
+		private final FieldType<F> type;
 
 		public BuilderImpl(
 			String name,
-			Function<T, Object> supplier,
-			boolean collection,
-			FieldType<?> type
+			FieldType<F> type
 		)
 		{
 			this.name = name;
-			this.supplier = supplier;
-			this.collection = collection;
 			this.type = type;
 		}
 
@@ -112,38 +136,100 @@ public class BasicFieldDefinitionImpl<T>
 		@Override
 		public <NF> Builder<T, NF> withType(FieldType<NF> type)
 		{
-			if(supplier != null)
-			{
-				throw new StorageException("Supplier provided before type was set");
-			}
-
-			return new BuilderImpl<>(name, supplier, collection, type);
+			return new BuilderImpl<>(name, type);
 		}
 
 		@Override
-		public Builder<T, Iterable<F>> collection()
+		public CollectionBuilder<T, F> collection()
 		{
-			if(supplier != null)
-			{
-				throw new StorageException("Supplier provided before type was set");
-			}
-
-			return new BuilderImpl<>(name, supplier, true, type);
+			return new CollectionBuilderImpl<>(name, type, null);
 		}
 
 		@Override
 		@SuppressWarnings("unchecked")
-		public Builder<T, F> withSupplier(Function<T, F> supplier)
+		public SingleBuilder<T, F> withSupplier(Function<T, F> supplier)
 		{
-			return new BuilderImpl<>(name, (Function<T, Object>) supplier, collection, type);
+			Objects.requireNonNull(supplier);
+
+			return new SingleBuilderImpl<>(name, type, supplier);
+		}
+	}
+
+	private static class SingleBuilderImpl<T, F>
+		implements SingleBuilder<T, F>
+	{
+		private final String name;
+		private final FieldType<F> type;
+		private final Function<T, F> supplier;
+
+		public SingleBuilderImpl(
+			String name,
+			FieldType<F> type,
+			Function<T, F> supplier
+		)
+		{
+			this.name = name;
+			this.type = type;
+			this.supplier = supplier;
 		}
 
 		@Override
-		public BasicFieldDefinition<T> build()
+		public SingleBuilder<T, F> withSupplier(Function<T, F> supplier)
 		{
-			Objects.requireNonNull(supplier, "a supplier must be present");
-			Objects.requireNonNull(type, "a type must be be specified");
-			return new BasicFieldDefinitionImpl<>(name, supplier, collection, type);
+			Objects.requireNonNull(supplier);
+
+			return new SingleBuilderImpl<>(
+				name,
+				type,
+				supplier
+			);
+		}
+
+		@Override
+		public Single<T, F> build()
+		{
+			Objects.requireNonNull(supplier, "supplier required");
+
+			return new SingleImpl<>(name, type, supplier);
+		}
+	}
+
+	private static class CollectionBuilderImpl<T, F>
+		implements CollectionBuilder<T, F>
+	{
+		private final String name;
+		private final FieldType<F> type;
+		private final Function<T, Iterable<F>> supplier;
+
+		public CollectionBuilderImpl(
+			String name,
+			FieldType<F> type,
+			Function<T, Iterable<F>> supplier
+		)
+		{
+			this.name = name;
+			this.type = type;
+			this.supplier = supplier;
+		}
+
+		@Override
+		public CollectionBuilder<T, F> withSupplier(Function<T, Iterable<F>> supplier)
+		{
+			Objects.requireNonNull(supplier);
+
+			return new CollectionBuilderImpl<>(
+				name,
+				type,
+				supplier
+			);
+		}
+
+		@Override
+		public Collection<T, F> build()
+		{
+			Objects.requireNonNull(supplier, "supplier required");
+
+			return new CollectionImpl<>(name, type, supplier);
 		}
 	}
 }
