@@ -8,6 +8,9 @@ import se.l4.silo.EntityRef;
 import se.l4.silo.engine.index.IndexDefinition;
 import se.l4.silo.engine.internal.EntityDefinitionImpl;
 
+/**
+ * Definition of an {@link se.l4.silo.Entity}.
+ */
 public interface EntityDefinition<ID, T>
 	extends EntityRef<ID, T>
 {
@@ -50,7 +53,11 @@ public interface EntityDefinition<ID, T>
 		return EntityDefinitionImpl.create(name, type);
 	}
 
+	/**
+	 * Builder for creating instances of {@link EntityDefinition}.
+	 */
 	interface Builder<ID, T>
+		extends Buildable<EntityDefinition<ID, T>>
 	{
 		/**
 		 * Set the codec that should be used for this entity.
@@ -76,6 +83,14 @@ public interface EntityDefinition<ID, T>
 		 * @return
 		 */
 		Builder<ID, T> addIndex(IndexDefinition<T> definition);
+
+		/**
+		 * Add an index to this entity.
+		 *
+		 * @param buildable
+		 * @return
+		 */
+		Builder<ID, T> addIndex(Buildable<? extends IndexDefinition<T>> buildable);
 
 		/**
 		 * Build the definition.

@@ -2,6 +2,7 @@ package se.l4.silo.engine.index.basic;
 
 import java.util.function.Function;
 
+import se.l4.silo.engine.Buildable;
 import se.l4.silo.engine.internal.index.basic.BasicFieldDefinitionImpl;
 import se.l4.silo.engine.types.FieldType;
 
@@ -102,6 +103,7 @@ public interface BasicFieldDefinition<T, V>
 	}
 
 	interface SingleBuilder<T, F>
+		extends Buildable<BasicFieldDefinition.Single<T, F>>
 	{
 		/**
 		 * Set the function used to extract the value for the field.
@@ -120,6 +122,7 @@ public interface BasicFieldDefinition<T, V>
 	}
 
 	interface CollectionBuilder<T, F>
+		extends Buildable<BasicFieldDefinition.Collection<T, F>>
 	{
 		/**
 		 * Set the function used to extract the value for the field.

@@ -7,6 +7,7 @@ import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.ListIterable;
 
+import se.l4.silo.engine.Buildable;
 import se.l4.silo.engine.EntityCodec;
 import se.l4.silo.engine.EntityDefinition;
 import se.l4.silo.engine.index.IndexDefinition;
@@ -126,7 +127,14 @@ public class EntityDefinitionImpl<ID, T>
 		@Override
 		public <NewID> Builder<NewID, T> withId(Class<NewID> type, Function<T, NewID> idFunction)
 		{
-			// TODO: Validate type of id
+			Class<?> unwrapped = Types.unwrap(type);
+			if(unwrapped != int.class
+				&& unwrapped != long.class
+				&& unwrapped != String.class
+				&& unwrapped != byte[].class)
+			{
+				throw new IllegalArgumentException("Invalid id type, only int, long, string or byte[] is supported, got: " + type);
+			}
 
 			return new BuilderImpl<>(
 				name,
@@ -141,6 +149,8 @@ public class EntityDefinitionImpl<ID, T>
 		@Override
 		public Builder<ID, T> addIndex(IndexDefinition<T> definition)
 		{
+			Objects.requireNonNull(definition);
+
 			return new BuilderImpl<>(
 				name,
 				idType,
@@ -149,6 +159,12 @@ public class EntityDefinitionImpl<ID, T>
 				idSupplier,
 				indexes.newWith(definition)
 			);
+		}
+
+		@Override
+		public Builder<ID, T> addIndex(Buildable<? extends IndexDefinition<T>> buildable)
+		{
+			return addIndex(buildable.build());
 		}
 
 		@Override

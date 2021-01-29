@@ -3,6 +3,7 @@ package se.l4.silo.engine.index.search.internal;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.function.Function;
 
 import org.eclipse.collections.api.RichIterable;
@@ -10,6 +11,7 @@ import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.map.ImmutableMap;
 
 import se.l4.silo.StorageException;
+import se.l4.silo.engine.Buildable;
 import se.l4.silo.engine.index.Index;
 import se.l4.silo.engine.index.IndexEngineCreationEncounter;
 import se.l4.silo.engine.index.search.SearchFieldDefinition;
@@ -91,6 +93,9 @@ public class SearchIndexDefinitionImpl<T>
 
 	public static <T> Builder<T> create(String name, Class<T> type)
 	{
+		Objects.requireNonNull(name);
+		Objects.requireNonNull(type);
+
 		return new BuilderImpl<>(
 			name,
 			LocalesImpl.DEFAULT,
@@ -123,12 +128,16 @@ public class SearchIndexDefinitionImpl<T>
 		@Override
 		public Builder<T> withLocale(Locale locale)
 		{
+			Objects.requireNonNull(locale);
+
 			return withLocaleSupplier(o -> locale);
 		}
 
 		@Override
 		public Builder<T> withLocaleSupplier(Function<T, Locale> supplier)
 		{
+			Objects.requireNonNull(supplier);
+
 			return new BuilderImpl<>(
 				name,
 				locales,
@@ -140,6 +149,8 @@ public class SearchIndexDefinitionImpl<T>
 		@Override
 		public Builder<T> withLocales(Locales locales)
 		{
+			Objects.requireNonNull(locales);
+
 			return new BuilderImpl<>(
 				name,
 				locales,
@@ -151,12 +162,22 @@ public class SearchIndexDefinitionImpl<T>
 		@Override
 		public Builder<T> addField(SearchFieldDefinition<T> field)
 		{
+			Objects.requireNonNull(field);
+
 			return new BuilderImpl<>(
 				name,
 				locales,
 				localeSupplier,
 				fields.newWithKeyValue(field.getName(), field)
 			);
+		}
+
+		@Override
+		public Builder<T> addField(
+			Buildable<? extends SearchFieldDefinition<T>> buildable
+		)
+		{
+			return addField(buildable.build());
 		}
 
 		@Override

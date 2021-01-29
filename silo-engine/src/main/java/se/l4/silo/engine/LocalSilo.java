@@ -152,6 +152,14 @@ public interface LocalSilo
 		Builder addEntity(EntityDefinition<?, ?> definition);
 
 		/**
+		 * Add an entity.
+		 *
+		 * @param buildable
+		 * @return
+		 */
+		Builder addEntity(Buildable<? extends EntityDefinition<?, ?>> buildable);
+
+		/**
 		 * Add multiple definitions to this instance.
 		 *
 		 * @param definitions

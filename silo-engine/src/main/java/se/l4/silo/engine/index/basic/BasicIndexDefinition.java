@@ -2,6 +2,7 @@ package se.l4.silo.engine.index.basic;
 
 import org.eclipse.collections.api.list.ListIterable;
 
+import se.l4.silo.engine.Buildable;
 import se.l4.silo.engine.index.IndexDefinition;
 import se.l4.silo.engine.internal.index.basic.BasicIndexDefinitionImpl;
 
@@ -46,12 +47,28 @@ public interface BasicIndexDefinition<T>
 		Builder<T> addField(BasicFieldDefinition<T, ?> field);
 
 		/**
+		 * Add a new field that can be quired.
+		 *
+		 * @param buildable
+		 * @return
+		 */
+		Builder<T> addField(Buildable<? extends BasicFieldDefinition<T, ?>> buildable);
+
+		/**
 		 * Add a field that can be sorted on.
 		 *
 		 * @param field
 		 * @return
 		 */
 		Builder<T> addSort(BasicFieldDefinition.Single<T, ?> field);
+
+		/**
+		 * Add a field that can be sorted on.
+		 *
+		 * @param buildable
+		 * @return
+		 */
+		Builder<T> addSort(Buildable<? extends BasicFieldDefinition.Single<T, ?>> buildable);
 
 		/**
 		 * Create the definition.

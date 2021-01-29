@@ -2,6 +2,7 @@ package se.l4.silo.engine.index.search;
 
 import java.util.function.Function;
 
+import se.l4.silo.engine.Buildable;
 import se.l4.silo.engine.index.search.internal.FieldDefinitionImpl;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
 
@@ -163,7 +164,7 @@ public interface SearchFieldDefinition<T>
 	}
 
 	interface SingleBuilder<T, F>
-		extends BaseBuilder<SingleBuilder<T, F>>
+		extends BaseBuilder<SingleBuilder<T, F>>, Buildable<SearchFieldDefinition.Single<T, F>>
 	{
 		/**
 		 * Set the function used to extract the value for the field.
@@ -200,7 +201,7 @@ public interface SearchFieldDefinition<T>
 	}
 
 	interface CollectionBuilder<T, F>
-		extends BaseBuilder<CollectionBuilder<T, F>>
+		extends BaseBuilder<CollectionBuilder<T, F>>, Buildable<SearchFieldDefinition.Collection<T, F>>
 	{
 		/**
 		 * Set the function used to extract the value for the field.

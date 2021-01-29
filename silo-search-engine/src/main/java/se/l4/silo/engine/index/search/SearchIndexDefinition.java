@@ -5,6 +5,7 @@ import java.util.function.Function;
 
 import org.eclipse.collections.api.RichIterable;
 
+import se.l4.silo.engine.Buildable;
 import se.l4.silo.engine.index.IndexDefinition;
 import se.l4.silo.engine.index.search.internal.SearchIndexDefinitionImpl;
 import se.l4.silo.engine.index.search.locales.Locales;
@@ -69,6 +70,14 @@ public interface SearchIndexDefinition<T>
 		 * @return
 		 */
 		Builder<T> addField(SearchFieldDefinition<T> field);
+
+		/**
+		 * Add a field to this configuration.
+		 *
+		 * @param buildable
+		 * @return
+		 */
+		Builder<T> addField(Buildable<? extends SearchFieldDefinition<T>> buildable);
 
 		/**
 		 * Build the index definition.

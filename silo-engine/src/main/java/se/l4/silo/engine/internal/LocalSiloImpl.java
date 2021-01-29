@@ -12,6 +12,7 @@ import reactor.core.publisher.Mono;
 import se.l4.silo.EntityRef;
 import se.l4.silo.StorageException;
 import se.l4.silo.Transactions;
+import se.l4.silo.engine.Buildable;
 import se.l4.silo.engine.EngineConfig;
 import se.l4.silo.engine.EntityDefinition;
 import se.l4.silo.engine.LocalEntity;
@@ -145,6 +146,8 @@ public class LocalSiloImpl
 		@Override
 		public Builder addEntity(EntityDefinition<?, ?> definition)
 		{
+			Objects.requireNonNull(definition);
+
 			return new BuilderImpl(
 				logBuilder,
 				dataPath,
@@ -155,10 +158,18 @@ public class LocalSiloImpl
 		}
 
 		@Override
+		public Builder addEntity(Buildable<? extends EntityDefinition<?, ?>> buildable)
+		{
+			return addEntity(buildable.build());
+		}
+
+		@Override
 		public Builder addEntities(
 			Iterable<? extends EntityDefinition<?, ?>> definitions
 		)
 		{
+			Objects.requireNonNull(definitions);
+
 			return new BuilderImpl(
 				logBuilder,
 				dataPath,

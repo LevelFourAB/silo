@@ -1,12 +1,16 @@
 package se.l4.silo.engine.internal.index.basic;
 
+import java.util.Objects;
+
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.ListIterable;
 
+import se.l4.silo.engine.Buildable;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.index.IndexEngineCreationEncounter;
 import se.l4.silo.engine.index.basic.BasicFieldDefinition;
+import se.l4.silo.engine.index.basic.BasicFieldDefinition.Single;
 import se.l4.silo.engine.index.basic.BasicIndexDefinition;
 
 public class BasicIndexDefinitionImpl<T>
@@ -88,11 +92,21 @@ public class BasicIndexDefinitionImpl<T>
 		@Override
 		public Builder<T> addField(BasicFieldDefinition<T, ?> field)
 		{
+			Objects.requireNonNull(field);
+
 			return new BuilderImpl<>(
 				name,
 				fields.newWith(field),
 				sortFields
 			);
+		}
+
+		@Override
+		public Builder<T> addField(
+			Buildable<? extends BasicFieldDefinition<T, ?>> buildable
+		)
+		{
+			return addField(buildable.build());
 		}
 
 		@Override
@@ -103,6 +117,12 @@ public class BasicIndexDefinitionImpl<T>
 				fields,
 				sortFields.newWith(field)
 			);
+		}
+
+		@Override
+		public Builder<T> addSort(Buildable<? extends Single<T, ?>> buildable)
+		{
+			return addSort(buildable.build());
 		}
 
 		@Override
