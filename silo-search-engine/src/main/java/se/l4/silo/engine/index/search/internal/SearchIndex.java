@@ -24,7 +24,6 @@ import se.l4.silo.engine.index.IndexQueryRunner;
 import se.l4.silo.engine.index.search.SearchFieldDefinition;
 import se.l4.silo.engine.index.search.config.IndexCacheConfig;
 import se.l4.silo.engine.index.search.config.IndexCommitConfig;
-import se.l4.silo.engine.index.search.config.IndexReloadConfig;
 import se.l4.silo.engine.index.search.locales.Locales;
 import se.l4.silo.engine.index.search.query.QueryBuilders;
 import se.l4.silo.index.search.SearchIndexQuery;
@@ -56,7 +55,7 @@ public class SearchIndex<T>
 		Locales locales,
 		QueryBuilders queryBuilders,
 		IndexCommitConfig commitConfig,
-		IndexReloadConfig reloadConfig,
+		IndexCacheConfig cacheConfig,
 		Function<T, Locale> localeSupplier,
 		ImmutableMap<String, SearchFieldDefinition<T>> fields
 	)
@@ -70,7 +69,7 @@ public class SearchIndex<T>
 		);
 
 		// Create the directory implementation to use
-		this.directory = createDirectory(FSDirectory.open(directory), reloadConfig.getCache());
+		this.directory = createDirectory(FSDirectory.open(directory), cacheConfig);
 
 		// Setup a basic configuration for the index writer
 		IndexWriterConfig conf = new IndexWriterConfig(new SimpleAnalyzer());
@@ -86,7 +85,7 @@ public class SearchIndex<T>
 			scheduler,
 			writer,
 			commitConfig.getMaxUpdates(),
-			commitConfig.getMaxTime(),
+			commitConfig.getMaxTime().toMillis(),
 			searcherManager
 		);
 

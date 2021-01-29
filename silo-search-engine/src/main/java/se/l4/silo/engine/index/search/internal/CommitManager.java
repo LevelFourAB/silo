@@ -216,7 +216,7 @@ public class CommitManager
 					{
 						logger.error("Unable to commit; " + e.getMessage(), e);
 					}
-				}, maxTime, TimeUnit.SECONDS);
+				}, maxTime, TimeUnit.MILLISECONDS);
 			}
 		}
 	}
