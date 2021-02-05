@@ -21,28 +21,28 @@ public class SearchObjectEntityTest
 	@Override
 	protected LocalSilo.Builder setup(LocalSilo.Builder builder)
 	{
-		SearchIndexDefinition<TestUserData> index = SearchIndexDefinition.create("index", TestUserData.class)
+		SearchIndexDefinition<TestUserData> index = SearchIndexDefinition.create(TestUserData.class, "index")
 			.addField(
-				SearchFieldDefinition.create("name", TestUserData.class)
+				SearchFieldDefinition.create(TestUserData.class, "name")
 					.withType(SearchFields.TEXT)
 					.withSupplier(TestUserData::getName)
 					.build()
 			)
 			.addField(
-				SearchFieldDefinition.create("age", TestUserData.class)
+				SearchFieldDefinition.create(TestUserData.class, "age")
 					.withType(SearchFields.INTEGER)
 					.withSupplier(TestUserData::getAge)
 					.build()
 			)
 			.addField(
-				SearchFieldDefinition.create("active", TestUserData.class)
+				SearchFieldDefinition.create(TestUserData.class, "active")
 					.withType(SearchFields.BOOLEAN)
 					.withSupplier(TestUserData::isActive)
 					.build()
 			)
 			.build();
 
-		return builder.addEntity(EntityDefinition.create("test", TestUserData.class)
+		return builder.addEntity(EntityDefinition.create(TestUserData.class, "test")
 			.withCodec(EntityCodec.serialized(serializers, TestUserData.class))
 			.withId(Integer.class, TestUserData::getId)
 			.addIndex(index)

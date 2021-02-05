@@ -86,7 +86,7 @@ public class SearchIndexDefinitionImpl<T>
 		}
 	}
 
-	public static <T> Builder<T> create(String name, Class<T> type)
+	public static <T> Builder<T> create(Class<T> type, String name)
 	{
 		Objects.requireNonNull(name);
 		Objects.requireNonNull(type);

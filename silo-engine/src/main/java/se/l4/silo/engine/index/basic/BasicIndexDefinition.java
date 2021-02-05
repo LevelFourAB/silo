@@ -27,11 +27,11 @@ public interface BasicIndexDefinition<T>
 	 * Start building a {@link BasicFieldDefinition}.
 	 *
 	 * @param <T>
-	 * @param name
 	 * @param type
+	 * @param name
 	 * @return
 	 */
-	public static <T> Builder<T> create(String name, Class<T> type)
+	public static <T> Builder<T> create(Class<T> type, String name)
 	{
 		return BasicIndexDefinitionImpl.create(name);
 	}

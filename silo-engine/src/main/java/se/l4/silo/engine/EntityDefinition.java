@@ -48,7 +48,7 @@ public interface EntityDefinition<ID, T>
 	 * @param type
 	 * @return
 	 */
-	public static <T> Builder<Void, T> create(String name, Class<T> type)
+	public static <T> Builder<Void, T> create(Class<T> type, String name)
 	{
 		return EntityDefinitionImpl.create(name, type);
 	}

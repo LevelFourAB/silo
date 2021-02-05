@@ -21,11 +21,11 @@ public class BasicFieldTypesTest
 	@Test
 	public void testLong()
 	{
-		LocalSilo silo = instance(builder -> builder.addEntity(EntityDefinition.create("test", Long.class)
+		LocalSilo silo = instance(builder -> builder.addEntity(EntityDefinition.create(Long.class, "test")
 			.withCodec(EntityCodec.serialized(serializers, Long.class))
 			.withId(Long.class, s -> s)
-			.addIndex(BasicIndexDefinition.create("idx", Long.class)
-				.addField(BasicFieldDefinition.create("v", long.class)
+			.addIndex(BasicIndexDefinition.create(Long.class, "idx")
+				.addField(BasicFieldDefinition.create(Long.class, "v")
 					.withType(long.class)
 					.withSupplier(s -> s)
 					.build()
@@ -82,11 +82,11 @@ public class BasicFieldTypesTest
 	@Test
 	public void testLongLowerLimit()
 	{
-		LocalSilo silo = instance(builder -> builder.addEntity(EntityDefinition.create("test", Long.class)
+		LocalSilo silo = instance(builder -> builder.addEntity(EntityDefinition.create(Long.class, "test")
 			.withCodec(EntityCodec.serialized(serializers, Long.class))
 			.withId(Long.class, s -> s)
-			.addIndex(BasicIndexDefinition.create("idx", Long.class)
-				.addField(BasicFieldDefinition.create("v", long.class)
+			.addIndex(BasicIndexDefinition.create(Long.class, "idx")
+				.addField(BasicFieldDefinition.create(Long.class, "v")
 					.withType(long.class)
 					.withSupplier(s -> s)
 					.build()

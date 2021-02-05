@@ -31,9 +31,21 @@ public interface SearchIndexDefinition<T>
 	 */
 	RichIterable<SearchFieldDefinition<T>> getFields();
 
-	static <T> Builder<T> create(String name, Class<T> type)
+
+	/**
+	 * Create an index for the given type.
+	 *
+	 * @param <T>
+	 *   type
+	 * @param type
+	 *   type the index is for
+	 * @param name
+	 *   the name of the index
+	 * @return
+	 */
+	static <T> Builder<T> create(Class<T> type, String name)
 	{
-		return SearchIndexDefinitionImpl.create(name, type);
+		return SearchIndexDefinitionImpl.create(type, name);
 	}
 
 	interface Builder<T>

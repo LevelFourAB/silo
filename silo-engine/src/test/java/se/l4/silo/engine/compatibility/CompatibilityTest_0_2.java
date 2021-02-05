@@ -56,13 +56,13 @@ public class CompatibilityTest_0_2
 		// Open the Silo instance
 		silo = LocalSilo.open(tmp)
 			.addEntity(
-				EntityDefinition.create("object", DataObject.class)
+				EntityDefinition.create(DataObject.class, "object")
 					.withCodec(EntityCodec.serialized(Serializers.create().build(), DataObject.class))
 					.withId(Long.class, DataObject::getId)
 					.build()
 			)
 			.addEntity(
-				EntityDefinition.create("binary", InMemoryBlob.class)
+				EntityDefinition.create(InMemoryBlob.class, "binary")
 					.withCodec(new InMemoryBlobCodec())
 					.withId(Integer.class, o -> { throw new UnsupportedOperationException(); })
 					.build()

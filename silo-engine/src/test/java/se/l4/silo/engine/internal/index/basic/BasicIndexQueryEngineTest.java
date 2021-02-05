@@ -28,38 +28,38 @@ public class BasicIndexQueryEngineTest
 	@Override
 	protected LocalSilo.Builder setup(LocalSilo.Builder builder)
 	{
-		BasicFieldDefinition<TestData, String> field1 = BasicFieldDefinition.create("field1", TestData.class)
+		BasicFieldDefinition<TestData, String> field1 = BasicFieldDefinition.create(TestData.class, "field1")
 			.withType(String.class)
 			.withSupplier(TestData::getField1)
 			.build();
 
-		BasicFieldDefinition<TestData, Boolean> field2 = BasicFieldDefinition.create("field2", TestData.class)
+		BasicFieldDefinition<TestData, Boolean> field2 = BasicFieldDefinition.create(TestData.class, "field2")
 			.withType(boolean.class)
 			.withSupplier(TestData::isField2)
 			.build();
 
-		BasicFieldDefinition<TestData, String> field3 = BasicFieldDefinition.create("field3", TestData.class)
+		BasicFieldDefinition<TestData, String> field3 = BasicFieldDefinition.create(TestData.class, "field3")
 			.withType(String.class)
 			.collection()
 			.withSupplier(TestData::getField3)
 			.build();
 
-		EntityDefinition<Long, TestData> test = EntityDefinition.create("test", TestData.class)
+		EntityDefinition<Long, TestData> test = EntityDefinition.create(TestData.class, "test")
 			.withCodec(EntityCodec.serialized(serializers, TestData.class))
 			.withId(Long.class, TestData::getId)
-			.addIndex(BasicIndexDefinition.create("byField1", TestData.class)
+			.addIndex(BasicIndexDefinition.create(TestData.class, "byField1")
 				.addField(field1)
 				.build()
 			)
-			.addIndex(BasicIndexDefinition.create("byField2", TestData.class)
+			.addIndex(BasicIndexDefinition.create(TestData.class, "byField2")
 				.addField(field2)
 				.build()
 			)
-			.addIndex(BasicIndexDefinition.create("byField3", TestData.class)
+			.addIndex(BasicIndexDefinition.create(TestData.class, "byField3")
 				.addField(field3)
 				.build()
 			)
-			.addIndex(BasicIndexDefinition.create("multiple", TestData.class)
+			.addIndex(BasicIndexDefinition.create(TestData.class, "multiple")
 				.addField(field2)
 				.addField(field1)
 				.build()

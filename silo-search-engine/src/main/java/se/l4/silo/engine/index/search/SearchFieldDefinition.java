@@ -87,13 +87,13 @@ public interface SearchFieldDefinition<T>
 	 * Start building a new field definition.
 	 *
 	 * @param <T>
+	 * @param type
+	 *   the type that this field belongs to
 	 * @param name
 	 *   the name of the field
-	 * @param type
-	 *   the base type of the field
 	 * @return
 	 */
-	static <T> Builder<T, Void> create(String name, Class<T> type)
+	static <T> Builder<T, Void> create(Class<T> type, String name)
 	{
 		return FieldDefinitionImpl.create(name, type);
 	}

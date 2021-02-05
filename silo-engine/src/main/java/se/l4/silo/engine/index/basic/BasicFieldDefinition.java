@@ -58,10 +58,11 @@ public interface BasicFieldDefinition<T, V>
 	 * Start creating a new definition.
 	 *
 	 * @param <T>
+	 * @param type
 	 * @param name
 	 * @return
 	 */
-	public static <T> Builder<T, Void> create(String name, Class<T> type)
+	public static <T> Builder<T, Void> create(Class<T> type, String name)
 	{
 		return BasicFieldDefinitionImpl.create(name);
 	}

@@ -23,10 +23,9 @@ public class EntityTest
 	protected LocalSilo.Builder setup(LocalSilo.Builder builder)
 	{
 		return builder.addEntity(
-			EntityDefinition.create("test", TestUserData.class)
+			EntityDefinition.create(TestUserData.class, "test")
 				.withId(Integer.class, TestUserData::getId)
 				.withCodec(EntityCodec.serialized(Serializers.create().build(), TestUserData.class))
-				.build()
 		);
 	}
 
