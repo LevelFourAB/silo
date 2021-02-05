@@ -46,9 +46,4 @@ public interface EntityRef<ID, T>
 	{
 		return new EntityRefImpl<>(name, idType, objectType);
 	}
-
-	static <ID> EntityRef<ID, Blob<ID>> forBlob(String name, Class<ID> idType)
-	{
-		return new EntityRefImpl<>(name, Types.reference(idType), Types.reference(Blob.class, idType));
-	}
 }

@@ -6,9 +6,11 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.util.Objects;
 
@@ -19,10 +21,7 @@ import org.junit.jupiter.api.Test;
 import se.l4.exobytes.AnnotationSerialization;
 import se.l4.exobytes.Expose;
 import se.l4.exobytes.Serializers;
-import se.l4.silo.Blob;
 import se.l4.silo.Entity;
-import se.l4.silo.EntityRef;
-import se.l4.silo.engine.BinaryEntityDefinition;
 import se.l4.silo.engine.EntityCodec;
 import se.l4.silo.engine.EntityDefinition;
 import se.l4.silo.engine.LocalSilo;
@@ -63,7 +62,9 @@ public class CompatibilityTest_0_2
 					.build()
 			)
 			.addEntity(
-				BinaryEntityDefinition.create("binary", Integer.class)
+				EntityDefinition.create("binary", InMemoryBlob.class)
+					.withCodec(new InMemoryBlobCodec())
+					.withId(Integer.class, o -> { throw new UnsupportedOperationException(); })
 					.build()
 			)
 			.start()
@@ -114,14 +115,14 @@ public class CompatibilityTest_0_2
 	public void testBinary()
 		throws IOException
 	{
-		Entity<Integer, Blob<Integer>> entity = silo.entity(EntityRef.forBlob("binary", Integer.class));
+		Entity<Integer, InMemoryBlob> entity = silo.entity("binary", Integer.class, InMemoryBlob.class);
 
 		for(int i=1; i<=100; i++)
 		{
-			Blob<Integer> o = entity.get(i).block();
+			InMemoryBlob o = entity.get(i).block();
 			assertThat("object " + i + " is null", o, notNullValue());
 
-			try(InputStream in = o.openStream())
+			try(InputStream in = o.asStream())
 			{
 				DataUtils.assertBytesEquals(in, generate(i * 512));
 			}
@@ -201,6 +202,41 @@ public class CompatibilityTest_0_2
 		{
 			return "DataObject{active=" + active + ", age=" + age + ", id=" + id
 				+ ", name=" + name + "}";
+		}
+	}
+
+	private static class InMemoryBlob
+	{
+		private final byte[] data;
+
+		public InMemoryBlob(byte[] data)
+		{
+			this.data = data;
+		}
+
+		public InputStream asStream()
+		{
+			return new ByteArrayInputStream(data);
+		}
+	}
+
+	private static class InMemoryBlobCodec
+		implements EntityCodec<InMemoryBlob>
+	{
+		@Override
+		public InMemoryBlob decode(InputStream in)
+			throws IOException
+		{
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			in.transferTo(out);
+			return new InMemoryBlob(out.toByteArray());
+		}
+
+		@Override
+		public void encode(InMemoryBlob instance, OutputStream out)
+			throws IOException
+		{
+			throw new UnsupportedEncodingException();
 		}
 	}
 }
