@@ -7,6 +7,7 @@ import org.eclipse.collections.api.RichIterable;
 
 import se.l4.silo.engine.Buildable;
 import se.l4.silo.engine.index.IndexDefinition;
+import se.l4.silo.engine.index.search.facets.FacetDef;
 import se.l4.silo.engine.index.search.internal.SearchIndexDefinitionImpl;
 import se.l4.silo.engine.index.search.locales.Locales;
 
@@ -31,6 +32,12 @@ public interface SearchIndexDefinition<T>
 	 */
 	RichIterable<SearchFieldDefinition<T>> getFields();
 
+	/**
+	 * Get the facets of this index.
+	 *
+	 * @return
+	 */
+	RichIterable<FacetDef<T, ?, ?>> getFacets();
 
 	/**
 	 * Create an index for the given type.
@@ -90,6 +97,14 @@ public interface SearchIndexDefinition<T>
 		 * @return
 		 */
 		Builder<T> addField(Buildable<? extends SearchFieldDefinition<T>> buildable);
+
+		/**
+		 * Add a facet to this definition.
+		 *
+		 * @param facet
+		 * @return
+		 */
+		Builder<T> addFacet(FacetDef<T, ?, ?> facet);
 
 		/**
 		 * Build the index definition.

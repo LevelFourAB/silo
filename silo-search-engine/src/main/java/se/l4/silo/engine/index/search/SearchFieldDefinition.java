@@ -26,13 +26,6 @@ public interface SearchFieldDefinition<T>
 	boolean isLanguageSpecific();
 
 	/**
-	 * Get if the field is indexed.
-	 *
-	 * @return
-	 */
-	boolean isIndexed();
-
-	/**
 	 * Get if this field should be highlighted.
 	 *
 	 * @return

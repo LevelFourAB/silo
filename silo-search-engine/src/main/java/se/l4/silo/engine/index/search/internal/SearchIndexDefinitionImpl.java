@@ -18,7 +18,9 @@ import se.l4.silo.engine.index.search.SearchFieldDefinition;
 import se.l4.silo.engine.index.search.SearchIndexDefinition;
 import se.l4.silo.engine.index.search.config.IndexCacheConfig;
 import se.l4.silo.engine.index.search.config.IndexCommitConfig;
+import se.l4.silo.engine.index.search.facets.FacetDef;
 import se.l4.silo.engine.index.search.locales.Locales;
+import se.l4.silo.index.search.SearchIndexException;
 
 public class SearchIndexDefinitionImpl<T>
 	implements SearchIndexDefinition<T>
@@ -27,18 +29,21 @@ public class SearchIndexDefinitionImpl<T>
 	private final Locales locales;
 	private final Function<T, Locale> localeSupplier;
 	private final ImmutableMap<String, SearchFieldDefinition<T>> fields;
+	private final ImmutableMap<String, FacetDef<T, ?, ?>> facets;
 
 	public SearchIndexDefinitionImpl(
 		String name,
 		Locales locales,
 		Function<T, Locale> localeSupplier,
-		ImmutableMap<String, SearchFieldDefinition<T>> fields
+		ImmutableMap<String, SearchFieldDefinition<T>> fields,
+		ImmutableMap<String, FacetDef<T, ?, ?>> facets
 	)
 	{
 		this.name = name;
 		this.locales = locales;
 		this.localeSupplier = localeSupplier;
 		this.fields = fields;
+		this.facets = facets;
 	}
 
 	@Override
@@ -60,6 +65,12 @@ public class SearchIndexDefinitionImpl<T>
 	}
 
 	@Override
+	public RichIterable<FacetDef<T, ?, ?>> getFacets()
+	{
+		return facets;
+	}
+
+	@Override
 	public Index<?, ?> create(
 		IndexEngineCreationEncounter encounter
 	)
@@ -77,7 +88,8 @@ public class SearchIndexDefinitionImpl<T>
 				IndexCommitConfig.create().build(),
 				IndexCacheConfig.create().build(),
 				localeSupplier,
-				fields
+				fields,
+				facets
 			);
 		}
 		catch(IOException e)
@@ -95,6 +107,7 @@ public class SearchIndexDefinitionImpl<T>
 			name,
 			LocalesImpl.DEFAULT,
 			o -> Locale.ENGLISH,
+			Maps.immutable.empty(),
 			Maps.immutable.empty()
 		);
 	}
@@ -106,18 +119,21 @@ public class SearchIndexDefinitionImpl<T>
 		private final Locales locales;
 		private final Function<T, Locale> localeSupplier;
 		private final ImmutableMap<String, SearchFieldDefinition<T>> fields;
+		private final ImmutableMap<String, FacetDef<T, ?, ?>> facets;
 
 		public BuilderImpl(
 			String name,
 			Locales locales,
 			Function<T, Locale> localeSupplier,
-			ImmutableMap<String, SearchFieldDefinition<T>> fields
+			ImmutableMap<String, SearchFieldDefinition<T>> fields,
+			ImmutableMap<String, FacetDef<T, ?, ?>> facets
 		)
 		{
 			this.name = name;
 			this.locales = locales;
 			this.localeSupplier = localeSupplier;
 			this.fields = fields;
+			this.facets = facets;
 		}
 
 		@Override
@@ -137,7 +153,8 @@ public class SearchIndexDefinitionImpl<T>
 				name,
 				locales,
 				supplier,
-				fields
+				fields,
+				facets
 			);
 		}
 
@@ -150,7 +167,8 @@ public class SearchIndexDefinitionImpl<T>
 				name,
 				locales,
 				localeSupplier,
-				fields
+				fields,
+				facets
 			);
 		}
 
@@ -159,11 +177,17 @@ public class SearchIndexDefinitionImpl<T>
 		{
 			Objects.requireNonNull(field);
 
+			if(fields.containsKey(field.getName()))
+			{
+				throw new SearchIndexException("Field with id `" + field.getName() + "` already exists in index");
+			}
+
 			return new BuilderImpl<>(
 				name,
 				locales,
 				localeSupplier,
-				fields.newWithKeyValue(field.getName(), field)
+				fields.newWithKeyValue(field.getName(), field),
+				facets
 			);
 		}
 
@@ -176,13 +200,33 @@ public class SearchIndexDefinitionImpl<T>
 		}
 
 		@Override
+		public Builder<T> addFacet(FacetDef<T, ?, ?> facet)
+		{
+			Objects.requireNonNull(facet);
+
+			if(facets.containsKey(facet.getId()))
+			{
+				throw new SearchIndexException("Facet with id `" + facet.getId() + "` already exists in index");
+			}
+
+			return new BuilderImpl<>(
+				name,
+				locales,
+				localeSupplier,
+				fields,
+				facets.newWithKeyValue(facet.getId(), facet)
+			);
+		}
+
+		@Override
 		public SearchIndexDefinition<T> build()
 		{
 			return new SearchIndexDefinitionImpl<>(
 				name,
 				locales,
 				localeSupplier,
-				fields
+				fields,
+				facets
 			);
 		}
 	}

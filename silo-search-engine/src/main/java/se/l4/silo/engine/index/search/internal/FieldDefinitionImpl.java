@@ -4,8 +4,6 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import se.l4.silo.engine.index.search.SearchFieldDefinition;
-import se.l4.silo.engine.index.search.SearchFieldDefinition.CollectionBuilder;
-import se.l4.silo.engine.index.search.SearchFieldDefinition.SingleBuilder;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
 
 public class FieldDefinitionImpl<T>
@@ -13,7 +11,6 @@ public class FieldDefinitionImpl<T>
 {
 	private final String name;
 	private final boolean isLanguageSpecific;
-	private final boolean isIndexed;
 	private final boolean isHighlighted;
 	private final SearchFieldType<?> type;
 
@@ -21,14 +18,12 @@ public class FieldDefinitionImpl<T>
 		String name,
 		SearchFieldType<?> type,
 		boolean isLanguageSpecific,
-		boolean isIndexed,
 		boolean isHighlighted
 	)
 	{
 		this.name = name;
 		this.type = type;
 		this.isLanguageSpecific = isLanguageSpecific;
-		this.isIndexed = isIndexed;
 		this.isHighlighted = isHighlighted;
 	}
 
@@ -43,13 +38,6 @@ public class FieldDefinitionImpl<T>
 	{
 		return isLanguageSpecific;
 	}
-
-	@Override
-	public boolean isIndexed()
-	{
-		return isIndexed;
-	}
-
 
 	@Override
 	public boolean isHighlighted()
@@ -74,13 +62,12 @@ public class FieldDefinitionImpl<T>
 			String name,
 			SearchFieldType<?> type,
 			boolean isLanguageSpecific,
-			boolean isIndexed,
 			boolean isHighlighted,
 			Function<T, F> supplier,
 			boolean isSorted
 		)
 		{
-			super(name, type, isLanguageSpecific, isIndexed, isHighlighted);
+			super(name, type, isLanguageSpecific, isHighlighted);
 
 			this.supplier = supplier;
 			this.isSorted = isSorted;
@@ -109,12 +96,11 @@ public class FieldDefinitionImpl<T>
 			String name,
 			SearchFieldType<?> type,
 			boolean isLanguageSpecific,
-			boolean isIndexed,
 			boolean isHighlighted,
 			Function<T, Iterable<F>> supplier
 		)
 		{
-			super(name, type, isLanguageSpecific, isIndexed, isHighlighted);
+			super(name, type, isLanguageSpecific, isHighlighted);
 
 			this.supplier = supplier;
 		}
@@ -128,7 +114,7 @@ public class FieldDefinitionImpl<T>
 
 	public static <T> Builder<T, Void> create(String name, Class<T> type)
 	{
-		return new BuilderImpl<>(name, null, false, true, false);
+		return new BuilderImpl<>(name, null, false, false);
 	}
 
 	private static class BuilderImpl<T, F>
@@ -137,21 +123,18 @@ public class FieldDefinitionImpl<T>
 		private final String name;
 		private final SearchFieldType<F> type;
 		private final boolean languageSpecific;
-		private final boolean indexed;
 		private final boolean highlighted;
 
 		public BuilderImpl(
 			String name,
 			SearchFieldType<F> type,
 			boolean languageSpecific,
-			boolean indexed,
 			boolean highlighted
 		)
 		{
 			this.name = name;
 			this.type = type;
 			this.languageSpecific = languageSpecific;
-			this.indexed = indexed;
 			this.highlighted = highlighted;
 		}
 
@@ -163,20 +146,17 @@ public class FieldDefinitionImpl<T>
 				name,
 				type,
 				type.isLocaleSupported(),
-				indexed,
 				highlighted
 			);
 		}
 
 		@Override
-		@SuppressWarnings("unchecked")
 		public SingleBuilder<T, F> withSupplier(Function<T, F> supplier)
 		{
 			return new SingleBuilderImpl<>(
 				name,
 				type,
 				languageSpecific,
-				indexed,
 				highlighted,
 
 				supplier,
@@ -191,7 +171,6 @@ public class FieldDefinitionImpl<T>
 				name,
 				type,
 				languageSpecific,
-				indexed,
 				highlighted,
 
 				null
@@ -211,7 +190,6 @@ public class FieldDefinitionImpl<T>
 				name,
 				type,
 				languageSpecific,
-				indexed,
 				highlighted
 			);
 		}
@@ -223,7 +201,6 @@ public class FieldDefinitionImpl<T>
 				name,
 				type,
 				languageSpecific,
-				indexed,
 				highlighted
 			);
 		}
@@ -235,7 +212,6 @@ public class FieldDefinitionImpl<T>
 		private final String name;
 		private final SearchFieldType<F> type;
 		private final boolean languageSpecific;
-		private final boolean indexed;
 		private final boolean highlighted;
 
 		private final Function<T, F> supplier;
@@ -245,7 +221,6 @@ public class FieldDefinitionImpl<T>
 			String name,
 			SearchFieldType<F> type,
 			boolean languageSpecific,
-			boolean indexed,
 			boolean highlighted,
 
 			Function<T, F> supplier,
@@ -256,20 +231,17 @@ public class FieldDefinitionImpl<T>
 			this.type = type;
 			this.supplier = supplier;
 			this.languageSpecific = languageSpecific;
-			this.indexed = indexed;
 			this.highlighted = highlighted;
 			this.sorted = sorted;
 		}
 
 		@Override
-		@SuppressWarnings("unchecked")
 		public SingleBuilder<T, F> withSupplier(Function<T, F> supplier)
 		{
 			return new SingleBuilderImpl<>(
 				name,
 				type,
 				languageSpecific,
-				indexed,
 				highlighted,
 
 				supplier,
@@ -284,7 +256,6 @@ public class FieldDefinitionImpl<T>
 				name,
 				type,
 				languageSpecific,
-				indexed,
 				highlighted,
 
 				supplier,
@@ -299,7 +270,6 @@ public class FieldDefinitionImpl<T>
 				name,
 				type,
 				languageSpecific,
-				indexed,
 				highlighted,
 
 				supplier,
@@ -314,7 +284,6 @@ public class FieldDefinitionImpl<T>
 				name,
 				type,
 				languageSpecific,
-				indexed,
 				highlighted,
 
 				supplier,
@@ -332,7 +301,6 @@ public class FieldDefinitionImpl<T>
 				name,
 				type,
 				languageSpecific,
-				indexed,
 				highlighted,
 
 				supplier,
@@ -347,7 +315,6 @@ public class FieldDefinitionImpl<T>
 		private final String name;
 		private final SearchFieldType<F> type;
 		private final boolean languageSpecific;
-		private final boolean indexed;
 		private final boolean highlighted;
 
 		private final Function<T, Iterable<F>> supplier;
@@ -356,7 +323,6 @@ public class FieldDefinitionImpl<T>
 			String name,
 			SearchFieldType<F> type,
 			boolean languageSpecific,
-			boolean indexed,
 			boolean highlighted,
 
 			Function<T, Iterable<F>> supplier
@@ -366,19 +332,16 @@ public class FieldDefinitionImpl<T>
 			this.type = type;
 			this.supplier = supplier;
 			this.languageSpecific = languageSpecific;
-			this.indexed = indexed;
 			this.highlighted = highlighted;
 		}
 
 		@Override
-		@SuppressWarnings("unchecked")
 		public CollectionBuilder<T, F> withSupplier(Function<T, Iterable<F>> supplier)
 		{
 			return new CollectionBuilderImpl<>(
 				name,
 				type,
 				languageSpecific,
-				indexed,
 				highlighted,
 
 				supplier
@@ -392,7 +355,6 @@ public class FieldDefinitionImpl<T>
 				name,
 				type,
 				languageSpecific,
-				indexed,
 				highlighted,
 
 				supplier
@@ -406,7 +368,6 @@ public class FieldDefinitionImpl<T>
 				name,
 				type,
 				languageSpecific,
-				indexed,
 				highlighted,
 
 				supplier
@@ -423,7 +384,6 @@ public class FieldDefinitionImpl<T>
 				name,
 				type,
 				languageSpecific,
-				indexed,
 				highlighted,
 
 				supplier

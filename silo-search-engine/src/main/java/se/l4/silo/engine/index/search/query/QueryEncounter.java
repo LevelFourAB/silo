@@ -43,7 +43,7 @@ public interface QueryEncounter<T extends QueryClause>
 	 *
 	 * @return
 	 */
-	SearchIndexEncounter index();
+	SearchIndexEncounter<?> index();
 
 	/**
 	 * Parse another clause.

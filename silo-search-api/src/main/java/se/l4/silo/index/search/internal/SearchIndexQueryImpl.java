@@ -14,6 +14,7 @@ import se.l4.silo.index.search.PaginatedSearchResult;
 import se.l4.silo.index.search.QueryClause;
 import se.l4.silo.index.search.SearchIndexQuery;
 import se.l4.silo.index.search.SearchResult;
+import se.l4.silo.index.search.facets.FacetQuery;
 
 public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 	implements SearchIndexQuery<T, FR>
@@ -22,21 +23,21 @@ public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 	private final Locale locale;
 	private final ImmutableList<QueryClause> clauses;
 	private final ImmutableList<FieldSort> sortOrder;
-	private final boolean waitForLatest;
+	private final ImmutableList<FacetQuery> facets;
 
 	public SearchIndexQueryImpl(
 		String name,
 		Locale locale,
 		ImmutableList<QueryClause> clauses,
 		ImmutableList<FieldSort> sortOrder,
-		boolean waitForLatest
+		ImmutableList<FacetQuery> facets
 	)
 	{
 		this.name = name;
 		this.locale = locale;
 		this.clauses = clauses;
 		this.sortOrder = sortOrder;
-		this.waitForLatest = waitForLatest;
+		this.facets = facets;
 	}
 
 	@Override
@@ -63,6 +64,12 @@ public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 		return sortOrder;
 	}
 
+	@Override
+	public ListIterable<FacetQuery> getFacets()
+	{
+		return facets;
+	}
+
 	public static <T> Builder<T> create(String name, Class<T> type)
 	{
 		return new BuilderImpl<>(
@@ -70,7 +77,7 @@ public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 			null,
 			Lists.immutable.empty(),
 			Lists.immutable.empty(),
-			false
+			Lists.immutable.empty()
 		);
 	}
 
@@ -86,12 +93,12 @@ public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 			Locale locale,
 			ImmutableList<QueryClause> clauses,
 			ImmutableList<FieldSort> sortOrder,
-			boolean waitForLatest,
+			ImmutableList<FacetQuery> facets,
 			OptionalLong resultOffset,
 			OptionalLong resultLimit
 		)
 		{
-			super(name, locale, clauses, sortOrder, waitForLatest);
+			super(name, locale, clauses, sortOrder, facets);
 
 			this.resultOffset = resultOffset;
 			this.resultLimit = resultLimit;
@@ -117,21 +124,21 @@ public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 		protected final Locale locale;
 		protected final ImmutableList<QueryClause> clauses;
 		protected final ImmutableList<FieldSort> sortOrder;
-		protected final boolean waitForLatest;
+		protected final ImmutableList<FacetQuery> facets;
 
 		public BaseBuilderImpl(
 			String name,
 			Locale locale,
 			ImmutableList<QueryClause> clauses,
 			ImmutableList<FieldSort> sortOrder,
-			boolean waitForLatest
+			ImmutableList<FacetQuery> facets
 		)
 		{
 			this.name = name;
 			this.locale = locale;
 			this.clauses = clauses;
 			this.sortOrder = sortOrder;
-			this.waitForLatest = waitForLatest;
+			this.facets = facets;
 		}
 
 		protected abstract Self create(
@@ -139,7 +146,7 @@ public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 			Locale locale,
 			ImmutableList<QueryClause> clauses,
 			ImmutableList<FieldSort> sortOrder,
-			boolean waitForLatest
+			ImmutableList<FacetQuery> facets
 		);
 
 		@Override
@@ -150,7 +157,7 @@ public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 				locale,
 				clauses,
 				sortOrder,
-				waitForLatest
+				facets
 			);
 		}
 
@@ -162,7 +169,19 @@ public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 				locale,
 				this.clauses.newWithAll(clauses),
 				sortOrder,
-				waitForLatest
+				facets
+			);
+		}
+
+		@Override
+		public Self addFacet(FacetQuery facet)
+		{
+			return create(
+				name,
+				locale,
+				clauses,
+				sortOrder,
+				facets.newWith(facet)
 			);
 		}
 
@@ -180,7 +199,7 @@ public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 				locale,
 				clauses,
 				sortOrder.newWith(sort),
-				waitForLatest
+				facets
 			);
 		}
 	}
@@ -197,12 +216,12 @@ public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 			Locale locale,
 			ImmutableList<QueryClause> clauses,
 			ImmutableList<FieldSort> sortOrder,
-			boolean waitForLatest,
+			ImmutableList<FacetQuery> facets,
 			OptionalLong resultOffset,
 			OptionalLong resultLimit
 		)
 		{
-			super(name, locale, clauses, sortOrder, waitForLatest);
+			super(name, locale, clauses, sortOrder, facets);
 
 			this.resultOffset = resultOffset;
 			this.resultLimit = resultLimit;
@@ -214,7 +233,7 @@ public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 			Locale locale,
 			ImmutableList<QueryClause> clauses,
 			ImmutableList<FieldSort> sortOrder,
-			boolean waitForLatest
+			ImmutableList<FacetQuery> facets
 		)
 		{
 			return new LimitableBuilderImpl<>(
@@ -222,7 +241,7 @@ public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 				locale,
 				clauses,
 				sortOrder,
-				waitForLatest,
+				facets,
 				resultOffset,
 				resultLimit
 			);
@@ -236,7 +255,7 @@ public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 				locale,
 				clauses,
 				sortOrder,
-				waitForLatest,
+				facets,
 				OptionalLong.of(offset),
 				resultLimit
 			);
@@ -250,7 +269,7 @@ public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 				locale,
 				clauses,
 				sortOrder,
-				waitForLatest,
+				facets,
 				resultOffset,
 				OptionalLong.of(limit)
 			);
@@ -264,7 +283,7 @@ public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 				locale,
 				clauses,
 				sortOrder,
-				waitForLatest,
+				facets,
 				resultOffset,
 				resultLimit
 			);
@@ -280,10 +299,10 @@ public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 			Locale locale,
 			ImmutableList<QueryClause> clauses,
 			ImmutableList<FieldSort> sortOrder,
-			boolean waitForLatest
+			ImmutableList<FacetQuery> facets
 		)
 		{
-			super(name, locale, clauses, sortOrder, waitForLatest);
+			super(name, locale, clauses, sortOrder, facets);
 		}
 
 		@Override
@@ -292,7 +311,7 @@ public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 			Locale locale,
 			ImmutableList<QueryClause> clauses,
 			ImmutableList<FieldSort> sortOrder,
-			boolean waitForLatest
+			ImmutableList<FacetQuery> facets
 		)
 		{
 			return new BuilderImpl<>(
@@ -300,7 +319,7 @@ public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 				locale,
 				clauses,
 				sortOrder,
-				waitForLatest
+				facets
 			);
 		}
 
@@ -312,7 +331,7 @@ public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 				locale,
 				clauses,
 				sortOrder,
-				waitForLatest,
+				facets,
 				OptionalLong.of(offset),
 				OptionalLong.empty()
 			);
@@ -326,7 +345,7 @@ public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 				locale,
 				clauses,
 				sortOrder,
-				waitForLatest,
+				facets,
 				OptionalLong.empty(),
 				OptionalLong.of(limit)
 			);
@@ -340,7 +359,7 @@ public abstract class SearchIndexQueryImpl<T, FR extends SearchResult<T>>
 				locale,
 				clauses,
 				sortOrder,
-				waitForLatest,
+				facets,
 				OptionalLong.empty(),
 				OptionalLong.empty()
 			);

@@ -1,17 +1,15 @@
 package se.l4.silo.engine.index.search;
 
 import org.eclipse.collections.api.RichIterable;
-import org.eclipse.collections.api.set.SetIterable;
 
 import se.l4.silo.engine.index.search.locales.LocaleSupport;
-import se.l4.silo.engine.index.search.types.SearchFieldType;
 
 /**
  * Encounter used to expose access to information about fields, names and
  * how data is structured in Lucene. Used to implement things like facets and
  * custom scoring.
  */
-public interface SearchIndexEncounter
+public interface SearchIndexEncounter<T>
 {
 	/**
 	 * Retrieve a field from the definition.
@@ -19,7 +17,7 @@ public interface SearchIndexEncounter
 	 * @param name
 	 * @return
 	 */
-	SearchFieldDefinition<?> getField(String name);
+	SearchField<T, ?> getField(String name);
 
 	/**
 	 * Retrieve a field based on the name used internally in the search engine.
@@ -27,7 +25,7 @@ public interface SearchIndexEncounter
 	 * @param name
 	 * @return
 	 */
-	SearchFieldDefinition<?> getFieldFromIndexName(String name);
+	SearchField<T, ?> getFieldFromIndexName(String name);
 
 	/**
 	 * Resolve the regular name from the one used internally in the index.
@@ -42,15 +40,7 @@ public interface SearchIndexEncounter
 	 *
 	 * @return
 	 */
-	RichIterable<SearchFieldDefinition<?>> getFields();
-
-	/**
-	 * Get all fields that will store values.
-	 *
-	 * @see SearchFieldType#createValuesField(String, LocaleSupport, Object)
-	 * @return
-	 */
-	SetIterable<String> getValueFields();
+	RichIterable<SearchField<T, ?>> getFields();
 
 	/**
 	 * Get under which names a doc values field is stored.

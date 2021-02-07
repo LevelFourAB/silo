@@ -19,18 +19,19 @@ import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.Token;
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.index.IndexDataUpdater;
+import se.l4.silo.engine.index.search.SearchField;
 import se.l4.silo.engine.index.search.SearchFieldDefinition;
 import se.l4.silo.engine.index.search.locales.LocaleSupport;
 import se.l4.silo.engine.index.search.locales.Locales;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
 import se.l4.silo.index.search.SearchIndexException;
 
-public class SearchIndexDataUpdater
+public class SearchIndexDataUpdater<T>
 	implements IndexDataUpdater
 {
 	private final Locales locales;
 
-	private final IndexDefinitionImpl encounter;
+	private final IndexDefinitionImpl<T> encounter;
 	private final IndexWriter writer;
 	private final IndexSearcherManager searchManager;
 
@@ -39,7 +40,7 @@ public class SearchIndexDataUpdater
 	public SearchIndexDataUpdater(
 		Locales locales,
 
-		IndexDefinitionImpl encounter,
+		IndexDefinitionImpl<T> encounter,
 
 		IndexWriter writer,
 		IndexSearcherManager searcherManager,
@@ -124,7 +125,7 @@ public class SearchIndexDataUpdater
 				in.next(Token.VALUE);
 				String fieldName = in.readString();
 
-				SearchFieldDefinition field = encounter.getField(fieldName);
+				SearchField<T, ?> field = encounter.getField(fieldName);
 				if(field == null)
 				{
 					in.skipNext();
@@ -142,7 +143,7 @@ public class SearchIndexDataUpdater
 
 					while(in.peek() != Token.LIST_END)
 					{
-						Object value = field.getType().read(in);
+						Object value = field.getDefinition().getType().read(in);
 						addField(doc, defaultLangSupport, specificLanguageSupport, field, value);
 					}
 
@@ -150,7 +151,7 @@ public class SearchIndexDataUpdater
 				}
 				else
 				{
-					Object value = field.getType().read(in);
+					Object value = field.getDefinition().getType().read(in);
 					addField(doc, defaultLangSupport, specificLanguageSupport, field, value);
 				}
 
@@ -179,13 +180,13 @@ public class SearchIndexDataUpdater
 		Document document,
 		LocaleSupport fallback,
 		LocaleSupport current,
-		SearchFieldDefinition<?> field,
+		SearchField<T, ?> field,
 		V object
 	)
 	{
 		if(object == null)
 		{
-			String fieldName = encounter.nullName(field);
+			String fieldName = encounter.nullName(field.getDefinition());
 			FieldType ft = new FieldType();
 			ft.setStored(false);
 			ft.setIndexOptions(IndexOptions.DOCS);
@@ -195,15 +196,14 @@ public class SearchIndexDataUpdater
 			return;
 		}
 
-		boolean needValues = encounter.getValueFields().contains(field.getName());
-
-		SearchFieldType type = ((SearchFieldType) field.getType());
-		if(type.isLocaleSupported() && field.isLanguageSpecific() && fallback != current)
+		SearchFieldDefinition<?> def = field.getDefinition();
+		SearchFieldType type = ((SearchFieldType) def.getType());
+		if(type.isLocaleSupported() && def.isLanguageSpecific() && fallback != current)
 		{
 			type.create(new FieldCreationEncounterImpl<V>(
 				encounter,
 				document::add,
-				field,
+				(SearchField) field,
 				current,
 				object
 			));
@@ -212,7 +212,7 @@ public class SearchIndexDataUpdater
 		type.create(new FieldCreationEncounterImpl<V>(
 			encounter,
 			document::add,
-			field,
+			(SearchField) field,
 			fallback,
 			object
 		));

@@ -7,11 +7,11 @@ import java.util.Locale;
 import java.util.function.Function;
 
 import org.eclipse.collections.api.RichIterable;
-import org.eclipse.collections.api.map.ImmutableMap;
 
 import se.l4.exobytes.streaming.StreamingFormat;
 import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.silo.engine.index.IndexDataGenerator;
+import se.l4.silo.engine.index.search.SearchField;
 import se.l4.silo.engine.index.search.SearchFieldDefinition;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
 import se.l4.silo.index.search.SearchIndexException;
@@ -20,11 +20,11 @@ public class SearchIndexDataGenerator<T>
 	implements IndexDataGenerator<T>
 {
 	private final Function<T, Locale> localeSupplier;
-	private final ImmutableMap<String, SearchFieldDefinition<T>> fields;
+	private final RichIterable<SearchField<T, ?>> fields;
 
 	public SearchIndexDataGenerator(
 		Function<T, Locale> localeSupplier,
-		ImmutableMap<String, SearchFieldDefinition<T>> fields
+		RichIterable<SearchField<T, ?>> fields
 	)
 	{
 		this.localeSupplier = localeSupplier;
@@ -52,18 +52,20 @@ public class SearchIndexDataGenerator<T>
 			// Write all of the extracted fields
 			out.writeListStart(fields.size());
 
-			for(SearchFieldDefinition<T> field : fields)
+			for(SearchField<T, ?> field : fields)
 			{
 				out.writeListStart(2);
 
+				SearchFieldDefinition<T> def = field.getDefinition();
+
 				// Write the name of the field
-				out.writeString(field.getName());
+				out.writeString(def.getName());
 
 				// Get and write the value
-				SearchFieldType type = field.getType();
-				if(field instanceof SearchFieldDefinition.Single)
+				SearchFieldType type = def.getType();
+				if(def instanceof SearchFieldDefinition.Single)
 				{
-					Object value = ((SearchFieldDefinition.Single) field).getSupplier().apply(data);
+					Object value = ((SearchFieldDefinition.Single) def).getSupplier().apply(data);
 					if(value == null)
 					{
 						out.writeNull();
@@ -73,9 +75,9 @@ public class SearchIndexDataGenerator<T>
 						type.write(value, out);
 					}
 				}
-				else if(field instanceof SearchFieldDefinition.Collection)
+				else if(def instanceof SearchFieldDefinition.Collection)
 				{
-					Object value = ((SearchFieldDefinition.Collection) field).getSupplier().apply(data);
+					Object value = ((SearchFieldDefinition.Collection) def).getSupplier().apply(data);
 					if(value == null)
 					{
 						out.writeNull();

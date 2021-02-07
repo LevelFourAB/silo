@@ -1,18 +1,23 @@
 package se.l4.silo.engine.index.search.internal;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Set;
+import java.util.OptionalInt;
 import java.util.function.Consumer;
 
-import org.apache.lucene.document.Document;
+import org.apache.lucene.facet.FacetsCollector;
+import org.apache.lucene.facet.FacetsCollector.MatchingDocs;
+import org.apache.lucene.index.FieldInfo;
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.StoredFieldVisitor;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.ConstantScoreQuery;
+import org.apache.lucene.search.DocIdSet;
 import org.apache.lucene.search.DocValuesFieldExistsQuery;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.MultiCollector;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Sort;
@@ -22,7 +27,6 @@ import org.apache.lucene.search.TopDocsCollector;
 import org.apache.lucene.search.TopFieldCollector;
 import org.apache.lucene.search.TopScoreDocCollector;
 import org.apache.lucene.search.TotalHitCountCollector;
-import org.apache.lucene.util.BytesRef;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ListIterable;
 import org.eclipse.collections.api.list.MutableList;
@@ -32,10 +36,17 @@ import reactor.core.publisher.Mono;
 import se.l4.silo.FetchResult;
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.TransactionValue;
+import se.l4.silo.engine.collection.CountingCollector;
 import se.l4.silo.engine.index.IndexQueryEncounter;
 import se.l4.silo.engine.index.IndexQueryRunner;
+import se.l4.silo.engine.index.search.SearchField;
 import se.l4.silo.engine.index.search.SearchFieldDefinition;
 import se.l4.silo.engine.index.search.SearchIndexEncounter;
+import se.l4.silo.engine.index.search.facets.FacetCollectionEncounter;
+import se.l4.silo.engine.index.search.facets.FacetCollector;
+import se.l4.silo.engine.index.search.facets.FacetDef;
+import se.l4.silo.engine.index.search.internal.facets.FacetResultImpl;
+import se.l4.silo.engine.index.search.internal.facets.FacetValueImpl;
 import se.l4.silo.engine.index.search.locales.LocaleSupport;
 import se.l4.silo.engine.index.search.locales.Locales;
 import se.l4.silo.engine.index.search.query.QueryBuilder;
@@ -45,6 +56,9 @@ import se.l4.silo.index.search.SearchHit;
 import se.l4.silo.index.search.SearchIndexException;
 import se.l4.silo.index.search.SearchIndexQuery;
 import se.l4.silo.index.search.SearchResult;
+import se.l4.silo.index.search.facets.FacetQuery;
+import se.l4.silo.index.search.facets.FacetResult;
+import se.l4.silo.index.search.facets.FacetValue;
 
 public class SearchIndexQueryRunner<T>
 	implements IndexQueryRunner<T, SearchIndexQuery<T, ?>>
@@ -56,9 +70,7 @@ public class SearchIndexQueryRunner<T>
 
 	private final QueryBuilders queryParsers;
 
-	private final IndexDefinitionImpl encounter;
-
-	private final IndexSearcherManager searcherManager;
+	private final IndexDefinitionImpl<T> encounter;
 
 	private final TransactionValue<IndexSearcherHandle> handleValue;
 
@@ -66,7 +78,7 @@ public class SearchIndexQueryRunner<T>
 		Locales locales,
 		QueryBuilders queryBuilders,
 
-		IndexDefinitionImpl encounter,
+		IndexDefinitionImpl<T> encounter,
 
 		IndexSearcherManager searcherManager
 	)
@@ -76,7 +88,6 @@ public class SearchIndexQueryRunner<T>
 
 		this.encounter = encounter;
 
-		this.searcherManager = searcherManager;
 		handleValue = v -> searcherManager.acquire();
 	}
 
@@ -96,7 +107,7 @@ public class SearchIndexQueryRunner<T>
 		return Mono.fromSupplier(() -> {
 			IndexSearcherHandle handle = encounter.get(handleValue);
 
-			ResultHitCollector<T> collector = new ResultHitCollector<>(encounter);
+			FullSearchResultCollector<T> collector = new FullSearchResultCollector<>(encounter);
 
 			query(
 				handle,
@@ -120,7 +131,7 @@ public class SearchIndexQueryRunner<T>
 	public void query(
 		IndexSearcherHandle handle,
 		SearchIndexQuery<T, ?> query,
-		HitCollector<T> hitCollector
+		ResultCollector<T> hitCollector
 	)
 	{
 		try
@@ -147,13 +158,13 @@ public class SearchIndexQueryRunner<T>
 	 * pagination as needed.
 	 *
 	 * @param query
-	 * @param hitCollector
+	 * @param resultCollector
 	 * @param searcher
 	 * @throws IOException
 	 */
 	private void limitedSearch(
 		SearchIndexQuery.Limited<T> query,
-		HitCollector<T> hitCollector,
+		ResultCollector<T> resultCollector,
 		IndexSearcher searcher
 	)
 		throws IOException
@@ -161,16 +172,16 @@ public class SearchIndexQueryRunner<T>
 		long offset = query.getResultOffset().orElse(DEFAULT_OFFSET);
 		long limit = query.getResultLimit().orElse(DEFAULT_LIMIT);
 
-		Collector resultCollector;
+		Collector luceneCollector;
 		if(limit == 0)
 		{
 			// If limit is set to zero this is counting requests
-			resultCollector = new TotalHitCountCollector();
+			luceneCollector = new TotalHitCountCollector();
 		}
 		else if(query.getSortOrder().isEmpty())
 		{
 			// No sorting, only collect the top scoring ones
-			resultCollector = TopScoreDocCollector.create(
+			luceneCollector = TopScoreDocCollector.create(
 				(int) (offset + limit),
 				Integer.MAX_VALUE
 			);
@@ -179,7 +190,7 @@ public class SearchIndexQueryRunner<T>
 		{
 			// Sorting results
 			Sort sort = createSort(query);
-			resultCollector = TopFieldCollector.create(
+			luceneCollector = TopFieldCollector.create(
 				sort,
 				(int) (offset + limit),
 				null,
@@ -187,63 +198,109 @@ public class SearchIndexQueryRunner<T>
 			);
 		}
 
-		search(query, searcher, resultCollector, limit > 0, true);
+		search(query, searcher, resultCollector, luceneCollector);
 
 		long hits;
 		if(limit == 0)
 		{
 			// No results requested, just collect the number of hits
-			hits = ((TotalHitCountCollector) resultCollector).getTotalHits();
+			hits = ((TotalHitCountCollector) luceneCollector).getTotalHits();
 		}
 		else
 		{
 			// Results requested, slice things up and load the data
-			TopDocs docs = ((TopDocsCollector<?>) resultCollector).topDocs();
+			TopDocs docs = ((TopDocsCollector<?>) luceneCollector).topDocs();
 			hits = docs.totalHits.value;
 
 			for(long i=offset, n=docs.scoreDocs.length; i<n; i++)
 			{
 				ScoreDoc d = docs.scoreDocs[(int) i];
-				hitCollector.collect(searcher, d);
+				resultCollector.collect(searcher, d.doc, d.score);
 			}
 		}
 
 		// TODO: Support estimated totals
-		hitCollector.metadata(hits, false);
+		resultCollector.setHits(hits, false);
 	}
 
 	private Sort createSort(SearchIndexQuery<T, ?> query)
 	{
 		SortField[] fields = query.getSortOrder()
 			.collect(s -> {
-				SearchFieldDefinition<?> fdef = encounter.getField(s.getField());
+				SearchField<T, ?> field = encounter.getField(s.getField());
 
 				// TODO: LocaleSupport?
-				String name = encounter.sortValuesName(fdef, null);
-				return fdef.getType().createSortField(name, s.isAscending());
+				String name = encounter.sortValuesName(field.getDefinition(), null);
+				return field.getDefinition().getType().createSortField(name, s.isAscending());
 			})
 			.toArray(new SortField[0]);
 
 		return new Sort(fields);
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	/**
+	 * Perform a search.
+	 *
+	 * @param query
+	 * @param searcher
+	 * @param collector
+	 * @param facetCollector
+	 * @throws IOException
+	 */
 	private void search(
-		SearchIndexQuery query,
+		SearchIndexQuery<T, ?> query,
 		IndexSearcher searcher,
-		Collector collector,
-		boolean score,
-		boolean withFacets
+		ResultCollector<T> collector,
+		Collector luceneCollector
 	)
 		throws IOException
 	{
 		// TODO: Get the language of the query here
 		LocaleSupport currentLocale = locales.getDefault();
 
+		// Get the facets that are active for the query
+		ListIterable<FacetHandler<?>> facets = query.getFacets()
+			.collect(f -> new FacetHandler<>(encounter.getFacet(f.getId()), f));
+
+		// Parse into Lucene query
 		Query parsedQuery = createRootQuery(currentLocale, query.getClauses());
 		// log.debug("Searching with query {}", parsedQuery);
 
-		searcher.search(parsedQuery, collector);
+		// Create a combined collector if facets are requested
+		FacetsCollector facetHitCollector = null;
+		if(collector.supportsFacets() && ! facets.isEmpty())
+		{
+			facetHitCollector = new FacetsCollector(false);
+
+			luceneCollector = MultiCollector.wrap(luceneCollector, facetHitCollector);
+		}
+
+		// Perform the actual search
+		searcher.search(parsedQuery, luceneCollector);
+
+		if(facetHitCollector != null)
+		{
+			// Run through and collect the facets
+			for(FacetHandler<?> handler : facets)
+			{
+				handler.prepareCollection(currentLocale);
+			}
+
+			// Perform the collection step
+			for(MatchingDocs docs : facetHitCollector.getMatchingDocs())
+			{
+				for(FacetHandler<?> handler : facets)
+				{
+					handler.collectLeaf(docs.context.reader(), docs.bits);
+				}
+			}
+
+			// Create the results
+			for(FacetHandler<?> handler : facets)
+			{
+				collector.addFacet(handler.getResult());
+			}
+		}
 	}
 
 	private Query createRootQuery(
@@ -321,20 +378,26 @@ public class SearchIndexQueryRunner<T>
 			| ((long) data[0] & 0xff);
 	}
 
-	private static class ResultHitCollector<T>
-		extends HitCollector<T>
+	/**
+	 * {@link ResultCollector} that creates instances of {@link SearchResult}.
+	 */
+	private static class FullSearchResultCollector<T>
+		extends ResultCollector<T>
 	{
 		private final MutableList<SearchHit<T>> results;
+		private final MutableList<FacetResult<?>> facets;
+
 		private long totalHits;
 		private boolean totalEstimated;
 
-		public ResultHitCollector(
+		public FullSearchResultCollector(
 			IndexQueryEncounter<? extends SearchIndexQuery<T, ?>, T> encounter
 		)
 		{
 			super(encounter);
 
 			this.results = Lists.mutable.empty();
+			this.facets = Lists.mutable.empty();
 		}
 
 		@Override
@@ -344,7 +407,19 @@ public class SearchIndexQueryRunner<T>
 		}
 
 		@Override
-		public void metadata(
+		public boolean supportsFacets()
+		{
+			return true;
+		}
+
+		@Override
+		public void addFacet(FacetResult<?> facet)
+		{
+			facets.add(facet);
+		}
+
+		@Override
+		public void setHits(
 			long totalHits,
 			boolean isTotalEstimated
 		)
@@ -365,7 +440,7 @@ public class SearchIndexQueryRunner<T>
 					totalEstimated,
 					limited.getResultOffset().orElse(DEFAULT_OFFSET),
 					limited.getResultLimit().orElse(DEFAULT_LIMIT),
-					null // TODO: Facets
+					facets.toImmutable()
 				);
 			}
 			else
@@ -375,44 +450,111 @@ public class SearchIndexQueryRunner<T>
 		}
 	}
 
-	private static abstract class HitCollector<T>
+	/**
+	 * Abstract collector of results.
+	 */
+	private static abstract class ResultCollector<T>
 	{
 		protected final IndexQueryEncounter<? extends SearchIndexQuery<T, ?>, T> encounter;
-		private final Set<String> fields;
 
-		public HitCollector(
+		private final Visitor<T> visitor;
+
+		public ResultCollector(
 			IndexQueryEncounter<? extends SearchIndexQuery<T, ?>, T> encounter
 		)
 		{
 			this.encounter = encounter;
 
-			this.fields = Collections.singleton("_:id");
+			this.visitor = new Visitor<>(encounter);
 		}
 
+		/**
+		 * Collect a hit.
+		 *
+		 * @param searcher
+		 * @param scoreDoc
+		 * @throws IOException
+		 */
 		public void collect(
 			IndexSearcher searcher,
-			ScoreDoc scoreDoc
+			int docId,
+			float score
 		)
 			throws IOException
 		{
-			// TODO: Switch this to using a StoredFieldVisitor
 			// TODO: Support for highlighting
+			searcher.doc(docId, visitor);
 
-			Document doc = searcher.doc(scoreDoc.doc, fields);
-			BytesRef idRef = doc.getBinaryValue("_:id");
-
-			long id = deserializeId(idRef.bytes);
-			T data = encounter.load(id);
-
-			searchHit(new SearchHitImpl<>(data, scoreDoc.score));
+			SearchHit<T> hit = visitor.get(score);
+			searchHit(hit);
 		}
 
+		/**
+		 * Record a hit.
+		 *
+		 * @param hit
+		 */
 		public abstract void searchHit(SearchHit<T> hit);
 
-		public abstract void metadata(
+		/**
+		 * Get if this collector supports facets.
+		 *
+		 * @return
+		 */
+		public abstract boolean supportsFacets();
+
+		/**
+		 * Add a facet to this result.
+		 *
+		 * @param facet
+		 */
+		public abstract void addFacet(FacetResult<?> facet);
+
+		/**
+		 * Set metadata about the total number of hits.
+		 *
+		 * @param totalHits
+		 * @param isTotalEstimated
+		 */
+		public abstract void setHits(
 			long totalHits,
 			boolean isTotalEstimated
 		);
+	}
+
+	private static class Visitor<T>
+		extends StoredFieldVisitor
+	{
+		private final IndexQueryEncounter<? extends SearchIndexQuery<T, ?>, T> encounter;
+
+		private T data;
+
+		public Visitor(
+			IndexQueryEncounter<? extends SearchIndexQuery<T, ?>, T> encounter
+		)
+		{
+			this.encounter = encounter;
+		}
+
+		@Override
+		public Status needsField(FieldInfo fieldInfo)
+			throws IOException
+		{
+			return "_:id".equals(fieldInfo.name) ? Status.YES : (data == null ? Status.NO : Status.STOP);
+		}
+
+		@Override
+		public void binaryField(FieldInfo fieldInfo, byte[] value)
+			throws IOException
+		{
+			long id = deserializeId(value);
+			data = encounter.load(id);
+		}
+
+		public SearchHit<T> get(float score)
+		{
+			return new SearchHitImpl<>(data, score);
+		}
 	}
 
 	private class QueryParserEncounterImpl<C extends QueryClause>
@@ -468,6 +610,136 @@ public class SearchIndexQueryRunner<T>
 			throws IOException
 		{
 			return createQuery(currentLocaleSupport, item);
+		}
+	}
+
+	/**
+	 * Handler class to simplify dealing with facets.
+	 */
+	private class FacetHandler<V>
+	{
+		private final FacetDef<T, V, ?> def;
+		private final FacetQuery query;
+
+		private FacetCollector<V> collector;
+		private FacetCollectionEncounterImpl<V> collectionEncounter;
+
+		public FacetHandler(
+			FacetDef<T, V, ?> def,
+			FacetQuery query
+		)
+		{
+			this.def = def;
+			this.query = query;
+		}
+
+		/**
+		 * Prepare this facet for collecting values.
+		 *
+		 * @param locale
+		 *   the current locale
+		 */
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		public void prepareCollection(LocaleSupport locale)
+		{
+			collector = ((FacetDef) def).createCollector(query);
+			collectionEncounter = new FacetCollectionEncounterImpl<>(locale, query.getLimit());
+		}
+
+		/**
+		 * Collect facets in the given leaf.
+		 *
+		 * @param reader
+		 *   the reader
+		 * @param docs
+		 *   docs matching in the reader
+		 */
+		public void collectLeaf(LeafReader reader, DocIdSet docs)
+			throws IOException
+		{
+			collectionEncounter.setLeaf(reader, docs);
+			collector.collect(collectionEncounter);
+		}
+
+		/**
+		 * Create the result.
+		 *
+		 * @return
+		 */
+		public FacetResult<V> getResult()
+		{
+			return new FacetResultImpl<>(def.getId(), collectionEncounter.getValues());
+		}
+	}
+
+	/**
+	 * Implementation of {@link FacetCollectionEncounter}.
+	 */
+	private class FacetCollectionEncounterImpl<V>
+		implements FacetCollectionEncounter<V>
+	{
+		private final LocaleSupport locale;
+
+		private LeafReader reader;
+		private DocIdSet docs;
+
+		private CountingCollector<V> collector;
+
+		public FacetCollectionEncounterImpl(
+			LocaleSupport locale,
+			OptionalInt count
+		)
+		{
+			this.locale = locale;
+			this.collector = count.isPresent()
+				? CountingCollector.topK(count.getAsInt())
+				: CountingCollector.sorted();
+		}
+
+		/**
+		 * Set the leaf being read.
+		 *
+		 * @param reader
+		 * @param docs
+		 */
+		public void setLeaf(
+			LeafReader reader,
+			DocIdSet docs
+		)
+		{
+			this.reader = reader;
+			this.docs = docs;
+		}
+
+		@Override
+		public LeafReader getReader()
+		{
+			return reader;
+		}
+
+		@Override
+		public DocIdSet getDocs()
+		{
+			return docs;
+		}
+
+		@Override
+		public String getFieldName(SearchFieldDefinition<?> field)
+		{
+			return encounter.docValuesName(field, locale);
+		}
+
+		@Override
+		public void collect(V value)
+		{
+			collector.offer(value);
+		}
+
+		@SuppressWarnings("unchecked")
+		public Iterable<FacetValue<V>> getValues()
+		{
+			return collector.withCounts()
+				.collect(e -> new FacetValueImpl<V>((V) e.getItem(), e.getCount()));
 		}
 	}
 }

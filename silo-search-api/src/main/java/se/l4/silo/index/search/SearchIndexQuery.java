@@ -9,6 +9,7 @@ import se.l4.silo.index.FieldSort;
 import se.l4.silo.index.FieldSortBuilder;
 import se.l4.silo.index.LimitableQuery;
 import se.l4.silo.index.Query;
+import se.l4.silo.index.search.facets.FacetQuery;
 import se.l4.silo.index.search.internal.SearchIndexQueryImpl;
 import se.l4.silo.index.search.query.QueryBranch;
 
@@ -36,6 +37,13 @@ public interface SearchIndexQuery<T, FR extends SearchResult<T>>
 	 */
 	ListIterable<FieldSort> getSortOrder();
 
+	/**
+	 * Get the requested facets.
+	 *
+	 * @return
+	 */
+	ListIterable<FacetQuery> getFacets();
+
 	static <T> Builder<T> create(String name, Class<T> type)
 	{
 		return SearchIndexQueryImpl.create(name, type);
@@ -53,6 +61,13 @@ public interface SearchIndexQuery<T, FR extends SearchResult<T>>
 	interface BaseBuilder<Self extends BaseBuilder<Self>>
 		extends QueryBranch.Builder<Self>
 	{
+		/**
+		 * Add a facet to this query.
+		 *
+		 * @param facet
+		 * @return
+		 */
+		Self addFacet(FacetQuery facet);
 
 		/**
 		 * Set the locale this query is being performed from. This is used for

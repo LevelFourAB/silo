@@ -11,8 +11,7 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.NRTCachingDirectory;
-import org.eclipse.collections.api.map.ImmutableMap;
-import org.eclipse.collections.api.map.MapIterable;
+import org.eclipse.collections.api.RichIterable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +23,7 @@ import se.l4.silo.engine.index.IndexQueryRunner;
 import se.l4.silo.engine.index.search.SearchFieldDefinition;
 import se.l4.silo.engine.index.search.config.IndexCacheConfig;
 import se.l4.silo.engine.index.search.config.IndexCommitConfig;
+import se.l4.silo.engine.index.search.facets.FacetDef;
 import se.l4.silo.engine.index.search.locales.Locales;
 import se.l4.silo.engine.index.search.query.QueryBuilders;
 import se.l4.silo.index.search.SearchIndexQuery;
@@ -57,7 +57,8 @@ public class SearchIndex<T>
 		IndexCommitConfig commitConfig,
 		IndexCacheConfig cacheConfig,
 		Function<T, Locale> localeSupplier,
-		ImmutableMap<String, SearchFieldDefinition<T>> fields
+		RichIterable<SearchFieldDefinition<T>> fields,
+		RichIterable<FacetDef<T, ?, ?>> facets
 	)
 		throws IOException
 	{
@@ -65,7 +66,8 @@ public class SearchIndex<T>
 
 		IndexDefinitionImpl encounter = new IndexDefinitionImpl(
 			locales,
-			(MapIterable) fields
+			fields,
+			facets
 		);
 
 		// Create the directory implementation to use
@@ -89,7 +91,7 @@ public class SearchIndex<T>
 			searcherManager
 		);
 
-		dataGenerator = new SearchIndexDataGenerator<>(localeSupplier, fields);
+		dataGenerator = new SearchIndexDataGenerator<>(localeSupplier, encounter.getFields());
 
 		dataUpdater = new SearchIndexDataUpdater(
 			locales,

@@ -4,6 +4,7 @@ import java.util.function.Consumer;
 
 import org.apache.lucene.index.IndexableField;
 
+import se.l4.silo.engine.index.search.SearchField;
 import se.l4.silo.engine.index.search.SearchFieldDefinition;
 import se.l4.silo.engine.index.search.SearchIndexEncounter;
 import se.l4.silo.engine.index.search.locales.LocaleSupport;
@@ -12,16 +13,16 @@ import se.l4.silo.engine.index.search.types.FieldCreationEncounter;
 public class FieldCreationEncounterImpl<T>
 	implements FieldCreationEncounter<T>
 {
-	private final SearchIndexEncounter index;
+	private final SearchIndexEncounter<?> index;
 	private final Consumer<IndexableField> fieldReceiver;
-	private final SearchFieldDefinition<?> field;
+	private final SearchField<?, T> field;
 	private final LocaleSupport locale;
 	private final T value;
 
 	public FieldCreationEncounterImpl(
-		SearchIndexEncounter index,
+		SearchIndexEncounter<?> index,
 		Consumer<IndexableField> fieldReceiver,
-		SearchFieldDefinition<?> field,
+		SearchField<?, T> field,
 		LocaleSupport locale,
 		T value
 	)
@@ -48,13 +49,13 @@ public class FieldCreationEncounterImpl<T>
 	@Override
 	public boolean isStored()
 	{
-		return field.isHighlighted();
+		return field.getDefinition().isHighlighted();
 	}
 
 	@Override
 	public boolean isHighlighted()
 	{
-		return field.isHighlighted();
+		return field.getDefinition().isHighlighted();
 	}
 
 	@Override
@@ -68,8 +69,7 @@ public class FieldCreationEncounterImpl<T>
 	@Override
 	public boolean isStoreDocValues()
 	{
-		// TODO:
-		return false;
+		return field.isStoreDocValues();
 	}
 
 	@Override
@@ -81,19 +81,19 @@ public class FieldCreationEncounterImpl<T>
 	@Override
 	public String docValuesName()
 	{
-		return index.docValuesName(field, locale);
+		return index.docValuesName(field.getDefinition(), locale);
 	}
 
 	@Override
 	public String sortValuesName()
 	{
-		return index.sortValuesName(field, locale);
+		return index.sortValuesName(field.getDefinition(), locale);
 	}
 
 	@Override
 	public String name()
 	{
-		return index.name(field, locale);
+		return index.name(field.getDefinition(), locale);
 	}
 
 	@Override

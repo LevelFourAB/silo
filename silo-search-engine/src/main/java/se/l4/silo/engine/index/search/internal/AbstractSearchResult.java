@@ -2,10 +2,13 @@ package se.l4.silo.engine.index.search.internal;
 
 import org.eclipse.collections.api.list.ListIterable;
 
-import se.l4.silo.index.search.Facets;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import se.l4.silo.index.search.PaginatedSearchResult;
 import se.l4.silo.index.search.SearchHit;
 import se.l4.silo.index.search.SearchResult;
+import se.l4.silo.index.search.facets.FacetRef;
+import se.l4.silo.index.search.facets.FacetResult;
 import se.l4.silo.results.IterableFetchResult;
 
 public class AbstractSearchResult<T>
@@ -14,13 +17,13 @@ public class AbstractSearchResult<T>
 {
 	private final long total;
 	private final boolean estimatedTotal;
-	private final Facets facets;
+	private final ListIterable<FacetResult<?>> facets;
 
 	public AbstractSearchResult(
 		ListIterable<SearchHit<T>> iterable,
 		long total,
 		boolean estimatedTotal,
-		Facets facets
+		ListIterable<FacetResult<?>> facets
 	)
 	{
 		super(iterable);
@@ -31,9 +34,24 @@ public class AbstractSearchResult<T>
 	}
 
 	@Override
-	public Facets facets()
+	public Flux<FacetResult<?>> facets()
 	{
-		return facets;
+		return Flux.fromIterable(facets);
+	}
+
+	@Override
+	public <V> Mono<FacetResult<V>> facet(FacetRef<V> ref)
+	{
+		return facet(ref.getId(), ref.getValueType());
+	}
+
+	@Override
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public <V> Mono<FacetResult<V>> facet(String id, Class<V> type)
+	{
+		return (Mono) facets()
+			.filter(f -> f.getId().equals(id))
+			.singleOrEmpty();
 	}
 
 	@Override
@@ -61,7 +79,7 @@ public class AbstractSearchResult<T>
 			boolean estimatedTotal,
 			long offset,
 			long limit,
-			Facets facets
+			ListIterable<FacetResult<?>> facets
 		)
 		{
 			super(
