@@ -4,12 +4,18 @@ import java.io.IOException;
 
 import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.document.NumericDocValuesField;
+import org.apache.lucene.document.SortedNumericDocValuesField;
+import org.apache.lucene.index.SortedNumericDocValues;
+import org.apache.lucene.index.SortedSetDocValues;
+import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SortField;
 
 import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.exobytes.streaming.Token;
+import se.l4.silo.engine.index.search.SearchFieldDefinition;
+import se.l4.silo.engine.index.search.facets.FacetCollector;
 import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.Matcher;
 import se.l4.silo.index.RangeMatcher;
@@ -20,6 +26,7 @@ import se.l4.silo.index.search.SearchIndexException;
  */
 public class LongFieldType
 	extends NumericFieldType<Long>
+	implements FacetableSearchFieldType<Long>
 {
 	@Override
 	public Long read(StreamingInput in)
@@ -57,7 +64,7 @@ public class LongFieldType
 
 		if(encounter.isStoreDocValues())
 		{
-			encounter.emit(new NumericDocValuesField(
+			encounter.emit(new SortedNumericDocValuesField(
 				encounter.docValuesName(),
 				encounter.getValue()
 			));
@@ -112,5 +119,34 @@ public class LongFieldType
 		}
 
 		throw new SearchIndexException("Unsupported matcher: " + matcher);
+	}
+
+	@Override
+	public FacetCollector<Long> createFacetCollector(
+		SearchFieldDefinition<?> field
+	)
+	{
+		return encounter -> {
+			String fieldName = encounter.getFieldName(field);
+
+			SortedNumericDocValues values = encounter.getReader()
+				.getSortedNumericDocValues(fieldName);
+
+			if(values == null) return;
+
+			DocIdSetIterator it = encounter.getDocs().iterator();
+			int doc;
+			while((doc = it.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS)
+			{
+				if(values.advanceExact(doc))
+				{
+					long value;
+					while((value = values.nextValue()) != SortedSetDocValues.NO_MORE_ORDS)
+					{
+						encounter.collect(value);
+					}
+				}
+			};
+		};
 	}
 }

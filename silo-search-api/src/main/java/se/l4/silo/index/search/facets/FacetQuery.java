@@ -5,7 +5,8 @@ import java.util.OptionalInt;
 /**
  * Activation of faceting for a certain request.
  */
-public interface FacetQuery
+public interface FacetQuery<V>
+	extends FacetRef<V>
 {
 	/**
 	 * Get the facet being activated.
