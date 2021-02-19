@@ -80,16 +80,11 @@ public class BooleanFieldType
 	}
 
 	@Override
-	public Query createQuery(String field, Matcher matcher)
+	public Query createQuery(String field, Matcher<Boolean> matcher)
 	{
 		if(matcher instanceof EqualsMatcher)
 		{
-			Object value = ((EqualsMatcher) matcher).getValue();
-			if(! (value instanceof Boolean))
-			{
-				throw new SearchIndexException("Querying for equality requires a boolean");
-			}
-
+			Boolean value = ((EqualsMatcher<Boolean>) matcher).getValue();
 			BytesRefBuilder bytesRef = new BytesRefBuilder();
 			bytesRef.append((byte) (((Boolean) value).booleanValue() ? 1 : 0));
 			return new TermQuery(new Term(field, bytesRef.get()));

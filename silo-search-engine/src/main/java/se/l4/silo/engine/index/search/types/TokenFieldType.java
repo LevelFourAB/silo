@@ -91,11 +91,11 @@ public class TokenFieldType
 	}
 
 	@Override
-	public Query createQuery(String field, Matcher matcher)
+	public Query createQuery(String field, Matcher<String> matcher)
 	{
 		if(matcher instanceof EqualsMatcher)
 		{
-			Object value = ((EqualsMatcher) matcher).getValue();
+			String value = ((EqualsMatcher<String>) matcher).getValue();
 			return new TermQuery(new Term(field, value.toString()));
 		}
 

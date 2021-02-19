@@ -82,11 +82,11 @@ public final class BinaryFieldType
 	}
 
 	@Override
-	public Query createQuery(String field, Matcher matcher)
+	public Query createQuery(String field, Matcher<byte[]> matcher)
 	{
 		if(matcher instanceof EqualsMatcher)
 		{
-			byte[] data = (byte[]) ((EqualsMatcher) matcher).getValue();
+			byte[] data = ((EqualsMatcher<byte[]>) matcher).getValue();
 			return new TermQuery(new Term(field, new BytesRef(data)));
 		}
 

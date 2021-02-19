@@ -113,11 +113,11 @@ public class LocaleFieldType
 	}
 
 	@Override
-	public Query createQuery(String field, Matcher matcher)
+	public Query createQuery(String field, Matcher<Locale> matcher)
 	{
 		if(matcher instanceof EqualsMatcher)
 		{
-			Locale value = (Locale) ((EqualsMatcher) matcher).getValue();
+			Locale value = ((EqualsMatcher<Locale>) matcher).getValue();
 			BooleanQuery.Builder builder = new BooleanQuery.Builder();
 
 			/*

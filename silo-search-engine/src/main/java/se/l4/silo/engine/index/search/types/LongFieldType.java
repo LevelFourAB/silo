@@ -78,16 +78,16 @@ public class LongFieldType
 	}
 
 	@Override
-	public Query createQuery(String field, Matcher matcher)
+	public Query createQuery(String field, Matcher<Long> matcher)
 	{
 		if(matcher instanceof EqualsMatcher)
 		{
-			Object value = ((EqualsMatcher) matcher).getValue();
-			return LongPoint.newExactQuery(field, toNumber(value).longValue());
+			Long value = ((EqualsMatcher<Long>) matcher).getValue();
+			return LongPoint.newExactQuery(field, value);
 		}
 		else if(matcher instanceof RangeMatcher)
 		{
-			RangeMatcher range = (RangeMatcher) matcher;
+			RangeMatcher<Long> range = (RangeMatcher<Long>) matcher;
 			if(! range.getLower().isPresent() && ! range.getUpper().isPresent())
 			{
 				throw new SearchIndexException("Ranges without lower and upper bound are not supported");
@@ -96,7 +96,7 @@ public class LongFieldType
 			long lower = Long.MIN_VALUE;
 			if(range.getLower().isPresent())
 			{
-				lower = toNumber(range.getLower().get()).longValue();
+				lower = range.getLower().get();
 
 				if(! range.isLowerInclusive())
 				{
@@ -107,7 +107,7 @@ public class LongFieldType
 			long upper = Long.MAX_VALUE;
 			if(range.getUpper().isPresent())
 			{
-				upper = toNumber(range.getUpper().get()).longValue();
+				upper = range.getUpper().get();
 
 				if(! range.isUpperInclusive())
 				{

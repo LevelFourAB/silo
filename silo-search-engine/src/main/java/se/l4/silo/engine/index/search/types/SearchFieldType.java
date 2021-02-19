@@ -63,7 +63,7 @@ public interface SearchFieldType<T>
 	 * @param matcher
 	 * @return
 	 */
-	Query createQuery(String field, Matcher matcher);
+	Query createQuery(String field, Matcher<T> matcher);
 
 	/**
 	 * Create the field from the given object.
