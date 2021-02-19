@@ -17,7 +17,7 @@ public class BasicIndexQueryImpl<T>
 	implements BasicIndexQuery<T>
 {
 	private final String index;
-	private final ImmutableList<FieldLimit> limits;
+	private final ImmutableList<FieldLimit<?>> limits;
 	private final ImmutableList<FieldSort> sorting;
 	private final boolean defaultSortAscending;
 	private final OptionalLong resultOffset;
@@ -25,7 +25,7 @@ public class BasicIndexQueryImpl<T>
 
 	public BasicIndexQueryImpl(
 		String index,
-		ImmutableList<FieldLimit> limits,
+		ImmutableList<FieldLimit<?>> limits,
 		ImmutableList<FieldSort> sorting,
 		boolean defaultSortAscending,
 		OptionalLong resultOffset,
@@ -47,7 +47,7 @@ public class BasicIndexQueryImpl<T>
 	}
 
 	@Override
-	public ListIterable<FieldLimit> getLimits()
+	public ListIterable<FieldLimit<?>> getLimits()
 	{
 		return limits;
 	}
@@ -92,7 +92,7 @@ public class BasicIndexQueryImpl<T>
 		implements Builder<T>
 	{
 		private final String index;
-		private final ImmutableList<FieldLimit> limits;
+		private final ImmutableList<FieldLimit<?>> limits;
 		private final ImmutableList<FieldSort> sorting;
 		private final boolean defaultSortAscending;
 		private final OptionalLong resultOffset;
@@ -100,7 +100,7 @@ public class BasicIndexQueryImpl<T>
 
 		public BuilderImpl(
 			String index,
-			ImmutableList<FieldLimit> limits,
+			ImmutableList<FieldLimit<?>> limits,
 			ImmutableList<FieldSort> sorting,
 			boolean defaultSortAscending,
 			OptionalLong resultOffset,
@@ -116,7 +116,7 @@ public class BasicIndexQueryImpl<T>
 		}
 
 		@Override
-		public Builder<T> add(FieldLimit limit)
+		public Builder<T> add(FieldLimit<?> limit)
 		{
 			return new BuilderImpl<>(
 				index,
@@ -135,7 +135,7 @@ public class BasicIndexQueryImpl<T>
 		}
 
 		@Override
-		public Builder<T> field(String name, Matcher matcher)
+		public Builder<T> field(String name, Matcher<?> matcher)
 		{
 			return add(FieldLimit.create(name, matcher));
 		}

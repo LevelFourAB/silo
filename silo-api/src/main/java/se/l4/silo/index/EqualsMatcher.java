@@ -8,13 +8,13 @@ import se.l4.silo.internal.EqualsMatcherImpl;
  * {@link Matcher} describing that something should be equal to a certain
  * value.
  */
-public interface EqualsMatcher
-	extends Matcher
+public interface EqualsMatcher<V>
+	extends Matcher<V>, MappableMatcher<V>
 {
 	/**
 	 * Get the value to be matched against.
 	 */
-	Object getValue();
+	V getValue();
 
 	/**
 	 * Create a matcher for the given value.
@@ -22,17 +22,17 @@ public interface EqualsMatcher
 	 * @param value
 	 * @return
 	 */
-	static EqualsMatcher create(Object value)
+	static <V> EqualsMatcher<V> create(V value)
 	{
 		Objects.requireNonNull(value);
-		return new EqualsMatcherImpl(value);
+		return new EqualsMatcherImpl<>(value);
 	}
 
 	/**
 	 * Builder for limiting something based on equality.
 	 */
 	interface ComposableBuilder<ReturnPath, V>
-		extends Matcher.ComposableBuilder<ReturnPath>
+		extends Matcher.ComposableBuilder<ReturnPath, V>
 	{
 		/**
 		 * Match field against a specific value.

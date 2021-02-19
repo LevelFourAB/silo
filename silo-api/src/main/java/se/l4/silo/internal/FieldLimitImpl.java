@@ -8,15 +8,15 @@ import se.l4.silo.index.Matcher;
 /**
  * Implementation of {@link FieldLimit}.
  */
-public class FieldLimitImpl
-	implements FieldLimit
+public class FieldLimitImpl<V>
+	implements FieldLimit<V>
 {
 	private final String field;
-	private final Matcher matcher;
+	private final Matcher<V> matcher;
 
 	public FieldLimitImpl(
 		String field,
-		Matcher matcher
+		Matcher<V> matcher
 	)
 	{
 		this.field = field;
@@ -30,7 +30,7 @@ public class FieldLimitImpl
 	}
 
 	@Override
-	public Matcher getMatcher()
+	public Matcher<V> getMatcher()
 	{
 		return matcher;
 	}

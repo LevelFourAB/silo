@@ -2,7 +2,9 @@ package se.l4.silo.internal;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 
+import se.l4.silo.index.Matcher;
 import se.l4.silo.index.RangeMatcher;
 
 /**
@@ -51,6 +53,17 @@ public class RangeMatcherImpl<T>
 	public boolean isUpperInclusive()
 	{
 		return upperInclusive;
+	}
+
+	@Override
+	public <NV> Matcher<NV> map(Function<T, NV> func)
+	{
+		return new RangeMatcherImpl<>(
+			func.apply(lower),
+			lowerInclusive,
+			func.apply(upper),
+			upperInclusive
+		);
 	}
 
 	@Override

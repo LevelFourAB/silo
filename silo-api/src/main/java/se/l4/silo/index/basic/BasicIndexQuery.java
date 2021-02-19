@@ -23,7 +23,7 @@ public interface BasicIndexQuery<T>
 	 *
 	 * @return
 	 */
-	ListIterable<FieldLimit> getLimits();
+	ListIterable<FieldLimit<?>> getLimits();
 
 	/**
 	 * Get fields that are being sorted on.
@@ -68,7 +68,7 @@ public interface BasicIndexQuery<T>
 		 * @param limit
 		 * @return
 		 */
-		Builder<T> add(FieldLimit limit);
+		Builder<T> add(FieldLimit<?> limit);
 
 		/**
 		 * Limit the given field in a fluent way.
@@ -92,7 +92,7 @@ public interface BasicIndexQuery<T>
 		 * @return
 		 *   copy of builder with field limit added
 		 */
-		Builder<T> field(String name, Matcher matcher);
+		Builder<T> field(String name, Matcher<?> matcher);
 
 		/**
 		 * Sort on the given field, specifying ascending or descending order

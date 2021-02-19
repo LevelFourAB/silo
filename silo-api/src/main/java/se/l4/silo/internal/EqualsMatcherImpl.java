@@ -1,28 +1,36 @@
 package se.l4.silo.internal;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 import se.l4.silo.index.EqualsMatcher;
+import se.l4.silo.index.Matcher;
 
 /**
  * Implementation of {@link EqualsMatcher}.
  */
-public class EqualsMatcherImpl
-	implements EqualsMatcher
+public class EqualsMatcherImpl<V>
+	implements EqualsMatcher<V>
 {
-	private final Object value;
+	private final V value;
 
 	public EqualsMatcherImpl(
-		Object value
+		V value
 	)
 	{
 		this.value = value;
 	}
 
 	@Override
-	public Object getValue()
+	public V getValue()
 	{
 		return value;
+	}
+
+	@Override
+	public <NV> Matcher<NV> map(Function<V, NV> func)
+	{
+		return new EqualsMatcherImpl<>(func.apply(value));
 	}
 
 	@Override

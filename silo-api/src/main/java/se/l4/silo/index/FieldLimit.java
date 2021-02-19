@@ -5,7 +5,7 @@ import se.l4.silo.internal.FieldLimitImpl;
 /**
  * Limit as commonly used in {@link Query index queries}.
  */
-public interface FieldLimit
+public interface FieldLimit<V>
 {
 	/**
 	 * Get the field being limited.
@@ -21,7 +21,7 @@ public interface FieldLimit
 	 * @return
 	 *   the matcher being used to limit the field
 	 */
-	Matcher getMatcher();
+	Matcher<V> getMatcher();
 
 	/**
 	 * Create a limit for a field.
@@ -33,8 +33,8 @@ public interface FieldLimit
 	 * @return
 	 *   new instance of {@link FieldLimit}
 	 */
-	static FieldLimit create(String field, Matcher matcher)
+	static <V> FieldLimit<V> create(String field, Matcher<V> matcher)
 	{
-		return new FieldLimitImpl(field, matcher);
+		return new FieldLimitImpl<>(field, matcher);
 	}
 }

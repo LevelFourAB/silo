@@ -8,15 +8,15 @@ import se.l4.silo.internal.RangeMatcherImpl;
  * {@link Matcher} used to match a continuos interval where each side can be
  * either open or closed.
  */
-public interface RangeMatcher<T>
-	extends Matcher
+public interface RangeMatcher<V>
+	extends Matcher<V>, MappableMatcher<V>
 {
 	/**
 	 * Get the lower limit.
 	 *
 	 * @return
 	 */
-	Optional<T> getLower();
+	Optional<V> getLower();
 
 	/**
 	 * Get if the lower limit is inclusive.
@@ -30,7 +30,7 @@ public interface RangeMatcher<T>
 	 *
 	 * @return
 	 */
-	Optional<T> getUpper();
+	Optional<V> getUpper();
 
 	/**
 	 * Get if the upper limit is inclusive.
@@ -43,13 +43,13 @@ public interface RangeMatcher<T>
 	 * Get a matcher that will match anything that is less than the given
 	 * value.
 	 *
-	 * @param <T>
+	 * @param <V>
 	 * @param value
 	 * @return
 	 *   interval representing {@code [MIN, value)}
 	 */
-	static <T> RangeMatcher<T> isLessThan(
-		T value
+	static <V> RangeMatcher<V> isLessThan(
+		V value
 	)
 	{
 		return new RangeMatcherImpl<>(null, false, value, false);
@@ -59,13 +59,13 @@ public interface RangeMatcher<T>
 	 * Get a matcher that will match anything that is less than or equal to
 	 * the given value.
 	 *
-	 * @param <T>
+	 * @param <V>
 	 * @param value
 	 * @return
 	 *   interval representing {@code [MIN, value]}
 	 */
-	static <T> RangeMatcher<T> isLessThanOrEqualTo(
-		T value
+	static <V> RangeMatcher<V> isLessThanOrEqualTo(
+		V value
 	)
 	{
 		return new RangeMatcherImpl<>(null, false, value, true);
@@ -75,13 +75,13 @@ public interface RangeMatcher<T>
 	 * Get a matcher that will match anything that is more than the given
 	 * value.
 	 *
-	 * @param <T>
+	 * @param <V>
 	 * @param value
 	 * @return
 	 *   interval representing {@code (value, MAX]}
 	 */
-	static <T> RangeMatcher<T> isMoreThan(
-		T value
+	static <V> RangeMatcher<V> isMoreThan(
+		V value
 	)
 	{
 		return new RangeMatcherImpl<>(value, false, null, false);
@@ -91,13 +91,13 @@ public interface RangeMatcher<T>
 	 * Get a matcher that will match anything that is more than or equal to
 	 * the given value.
 	 *
-	 * @param <T>
+	 * @param <V>
 	 * @param value
 	 * @return
 	 *   interval representing {@code [value, MAX]}
 	 */
-	static <T> RangeMatcher<T> isMoreThanOrEqualTo(
-		T value
+	static <V> RangeMatcher<V> isMoreThanOrEqualTo(
+		V value
 	)
 	{
 		return new RangeMatcherImpl<>(value, true, null, false);
@@ -107,7 +107,7 @@ public interface RangeMatcher<T>
 	 * Get a matcher representing a range, with lower and upper being
 	 * inclusive or not.
 	 *
-	 * @param <T>
+	 * @param <V>
 	 * @param lower
 	 * @param lowerInclusive
 	 * @param upper
@@ -115,10 +115,10 @@ public interface RangeMatcher<T>
 	 * @return
 	 *   interval
 	 */
-	static <T> RangeMatcher<T> between(
-		T lower,
+	static <V> RangeMatcher<V> between(
+		V lower,
 		boolean lowerInclusive,
-		T upper,
+		V upper,
 		boolean upperInclusive
 	)
 	{
@@ -129,15 +129,15 @@ public interface RangeMatcher<T>
 	 * Get matcher representing a range where both the lower and upper limit
 	 * are inclusive.
 	 *
-	 * @param <T>
+	 * @param <V>
 	 * @param lower
 	 * @param upper
 	 * @return
 	 *   interval representing {@code [lower, upper]}
 	 */
-	static <T> RangeMatcher<T> betweenInclusive(
-		T lower,
-		T upper
+	static <V> RangeMatcher<V> betweenInclusive(
+		V lower,
+		V upper
 	)
 	{
 		return new RangeMatcherImpl<>(lower, true, upper, true);
@@ -147,15 +147,15 @@ public interface RangeMatcher<T>
 	 * Get matcher representing a range where both the lower and upper limit
 	 * are exclusive.
 	 *
-	 * @param <T>
+	 * @param <V>
 	 * @param lower
 	 * @param upper
 	 * @return
 	 *   interval representing {@code (lower, upper)}
 	 */
-	static <T> RangeMatcher<T> betweenExclusive(
-		T lower,
-		T upper
+	static <V> RangeMatcher<V> betweenExclusive(
+		V lower,
+		V upper
 	)
 	{
 		return new RangeMatcherImpl<>(lower, false, upper, false);
@@ -165,15 +165,15 @@ public interface RangeMatcher<T>
 	 * Get a matcher representing a range where the lower limit is exclusive
 	 * and the upper is inclusive.
 	 *
-	 * @param <T>
+	 * @param <V>
 	 * @param lower
 	 * @param upper
 	 * @return
 	 *   interval representing {@code (lower, upper]}
 	 */
-	static <T> RangeMatcher<T> betweenLowerExclusive(
-		T lower,
-		T upper
+	static <V> RangeMatcher<V> betweenLowerExclusive(
+		V lower,
+		V upper
 	)
 	{
 		return new RangeMatcherImpl<>(lower, false, upper, true);
@@ -183,22 +183,22 @@ public interface RangeMatcher<T>
 	 * Get a matcher representing a range where the lower limit is inclusive
 	 * and the upper is exclusive.
 	 *
-	 * @param <T>
+	 * @param <V>
 	 * @param lower
 	 * @param upper
 	 * @return
 	 *   interval representing {@code [lower, upper)}
 	 */
-	static <T> RangeMatcher<T> betweenUpperExclusive(
-		T lower,
-		T upper
+	static <V> RangeMatcher<V> betweenUpperExclusive(
+		V lower,
+		V upper
 	)
 	{
 		return new RangeMatcherImpl<>(lower, true, upper, false);
 	}
 
 	interface ComposableBuilder<ReturnPath, V>
-		extends Matcher.ComposableBuilder<ReturnPath>
+		extends Matcher.ComposableBuilder<ReturnPath, V>
 	{
 		/**
 		 * Get a matcher that will match anything that is less than the given

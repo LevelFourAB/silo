@@ -3,14 +3,14 @@ package se.l4.silo.index;
 /**
  * Matcher abstraction used with certain {@link Query index queries}.
  */
-public interface Matcher
+public interface Matcher<V>
 {
-	static Matcher isEqualTo(Object value)
+	static <V> Matcher<V> isEqualTo(V value)
 	{
 		return EqualsMatcher.create(value);
 	}
 
-	interface ComposableBuilder<ReturnPath>
+	interface ComposableBuilder<ReturnPath, V>
 	{
 		/**
 		 * Math using the given {@link Matcher}.
@@ -19,6 +19,6 @@ public interface Matcher
 		 * @return
 		 *   previous builder
 		 */
-		ReturnPath matcher(Matcher matcher);
+		ReturnPath matcher(Matcher<V> matcher);
 	}
 }
