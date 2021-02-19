@@ -1,17 +1,19 @@
 package se.l4.silo.engine.index.search.types;
 
+import java.util.function.Function;
+
 import org.apache.lucene.index.IndexableField;
 
 import se.l4.silo.engine.index.search.locales.LocaleSupport;
 
-public interface FieldCreationEncounter<T>
+public interface FieldCreationEncounter<V>
 {
 	/**
 	 * Get the value to store.
 	 *
 	 * @return
 	 */
-	T getValue();
+	V getValue();
 
 	/**
 	 * Get if the value should be indexed for searching.
@@ -89,4 +91,13 @@ public interface FieldCreationEncounter<T>
 	 * @param field
 	 */
 	void emit(IndexableField field);
+
+	/**
+	 * Create a mapped version of this encounter.
+	 *
+	 * @param <NV>
+	 * @param func
+	 * @return
+	 */
+	<NV> FieldCreationEncounter<NV> map(Function<V, NV> func);
 }

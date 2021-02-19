@@ -1,6 +1,7 @@
 package se.l4.silo.engine.index.search.types;
 
 import java.io.IOException;
+import java.util.function.Function;
 
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SortField;
@@ -8,6 +9,7 @@ import org.apache.lucene.search.SortField;
 import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.silo.engine.index.search.SearchFieldDefinition;
+import se.l4.silo.engine.index.search.internal.MappedSearchFieldType;
 import se.l4.silo.index.Matcher;
 
 /**
@@ -86,5 +88,13 @@ public interface SearchFieldType<T>
 	default SortField createSortField(String field, boolean ascending)
 	{
 		throw new UnsupportedOperationException("The field type " + getClass().getSimpleName() + " does not support sorting");
+	}
+
+	default <V> SearchFieldType<V> map(
+		Function<T, V> toV,
+		Function<V, T> fromV
+	)
+	{
+		return new MappedSearchFieldType<>(this, toV, fromV);
 	}
 }

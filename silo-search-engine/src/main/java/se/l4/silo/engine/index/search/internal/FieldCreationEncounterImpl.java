@@ -1,6 +1,7 @@
 package se.l4.silo.engine.index.search.internal;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.apache.lucene.index.IndexableField;
 
@@ -15,14 +16,14 @@ public class FieldCreationEncounterImpl<T>
 {
 	private final SearchIndexEncounter<?> index;
 	private final Consumer<IndexableField> fieldReceiver;
-	private final SearchField<?, T> field;
+	private final SearchField<?, ?> field;
 	private final LocaleSupport locale;
 	private final T value;
 
 	public FieldCreationEncounterImpl(
 		SearchIndexEncounter<?> index,
 		Consumer<IndexableField> fieldReceiver,
-		SearchField<?, T> field,
+		SearchField<?, ?> field,
 		LocaleSupport locale,
 		T value
 	)
@@ -106,5 +107,17 @@ public class FieldCreationEncounterImpl<T>
 	public void emit(IndexableField field)
 	{
 		fieldReceiver.accept(field);
+	}
+
+	@Override
+	public <NV> FieldCreationEncounter<NV> map(Function<T, NV> func)
+	{
+		return new FieldCreationEncounterImpl<>(
+			index,
+			fieldReceiver,
+			field,
+			locale,
+			func.apply(value)
+		);
 	}
 }
