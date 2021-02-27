@@ -23,4 +23,11 @@ public interface LocaleSupport
 	 * @return
 	 */
 	Analyzer getTextAnalyzer();
+
+	/**
+	 * Get the analyzer to use for type-ahead.
+	 *
+	 * @return
+	 */
+	Analyzer getTypeAheadAnalyzer();
 }
