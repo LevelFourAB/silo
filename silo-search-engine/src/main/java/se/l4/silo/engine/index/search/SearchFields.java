@@ -2,9 +2,6 @@ package se.l4.silo.engine.index.search;
 
 import java.util.Locale;
 
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-
 import se.l4.silo.engine.index.search.internal.SearchIndex;
 import se.l4.silo.engine.index.search.types.BinaryFieldType;
 import se.l4.silo.engine.index.search.types.BooleanFieldType;
@@ -12,8 +9,8 @@ import se.l4.silo.engine.index.search.types.IntFieldType;
 import se.l4.silo.engine.index.search.types.LocaleFieldType;
 import se.l4.silo.engine.index.search.types.LongFieldType;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
+import se.l4.silo.engine.index.search.types.StringFieldType;
 import se.l4.silo.engine.index.search.types.TextFieldType;
-import se.l4.silo.engine.index.search.types.TokenFieldType;
 
 /**
  * {@link SearchFieldType types} that can be used within a
@@ -24,13 +21,6 @@ import se.l4.silo.engine.index.search.types.TokenFieldType;
  */
 public class SearchFields
 {
-	public static final Analyzer DEFAULT_ANALYZER = new StandardAnalyzer();
-
-	/**
-	 * Token field, saved the entire input string as single token. Does not
-	 * use localization and does not store the input by default.
-	 */
-	public static final SearchFieldType<String> TOKEN = new TokenFieldType();
 
 	/**
 	 * Text field.
@@ -63,5 +53,15 @@ public class SearchFields
 
 	private SearchFields()
 	{
+	}
+
+	/**
+	 * Start building a field type that stores {@link String strings}.
+	 *
+	 * @return
+	 */
+	public static StringFieldType.Builder string()
+	{
+		return StringFieldType.create();
 	}
 }

@@ -1,4 +1,4 @@
-package se.l4.silo.engine.index.search.types;
+package se.l4.silo.engine.index.search.internal.types;
 
 import java.io.IOException;
 
@@ -15,13 +15,20 @@ import org.apache.lucene.util.BytesRef;
 import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.exobytes.streaming.Token;
+import se.l4.silo.engine.index.search.types.FieldCreationEncounter;
+import se.l4.silo.engine.index.search.types.StringFieldType;
 import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.Matcher;
 import se.l4.silo.index.search.SearchIndexException;
 
+/**
+ * Field type used to index a {@link String} as a token.
+ */
 public class TokenFieldType
-	implements SearchFieldType<String>
+	implements StringFieldType
 {
+	public static final TokenFieldType INSTANCE = new TokenFieldType();
+
 	@Override
 	public String read(StreamingInput in)
 		throws IOException
