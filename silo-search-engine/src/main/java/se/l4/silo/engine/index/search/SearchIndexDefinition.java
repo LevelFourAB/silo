@@ -99,12 +99,28 @@ public interface SearchIndexDefinition<T>
 		Builder<T> addField(Buildable<? extends SearchFieldDefinition<T>> buildable);
 
 		/**
+		 * Add multiple fields to this configuration.
+		 *
+		 * @param fields
+		 * @return
+		 */
+		Builder<T> addFields(Iterable<? extends SearchFieldDefinition<T>> fields);
+
+		/**
 		 * Add a facet to this definition.
 		 *
 		 * @param facet
 		 * @return
 		 */
 		Builder<T> addFacet(FacetDef<T, ?, ?> facet);
+
+		/**
+		 * Add multiple facets to this configuration.
+		 *
+		 * @param facets
+		 * @return
+		 */
+		Builder<T> addFacets(Iterable<? extends FacetDef<T, ?, ?>> facets);
 
 		/**
 		 * Build the index definition.

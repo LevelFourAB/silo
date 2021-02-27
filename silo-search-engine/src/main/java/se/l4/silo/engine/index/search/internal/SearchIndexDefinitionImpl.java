@@ -200,6 +200,21 @@ public class SearchIndexDefinitionImpl<T>
 		}
 
 		@Override
+		public Builder<T> addFields(
+			Iterable<? extends SearchFieldDefinition<T>> fields
+		)
+		{
+			Builder<T> result = this;
+
+			for(SearchFieldDefinition<T> field : fields)
+			{
+				result = result.addField(field);
+			}
+
+			return result;
+		}
+
+		@Override
 		public Builder<T> addFacet(FacetDef<T, ?, ?> facet)
 		{
 			Objects.requireNonNull(facet);
@@ -216,6 +231,19 @@ public class SearchIndexDefinitionImpl<T>
 				fields,
 				facets.newWithKeyValue(facet.getId(), facet)
 			);
+		}
+
+		@Override
+		public Builder<T> addFacets(Iterable<? extends FacetDef<T, ?, ?>> facets)
+		{
+			Builder<T> result = this;
+
+			for(FacetDef<T, ?, ?> facet : facets)
+			{
+				result = result.addFacet(facet);
+			}
+
+			return result;
 		}
 
 		@Override
