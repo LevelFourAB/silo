@@ -8,7 +8,7 @@ import se.l4.silo.index.search.facets.FacetQuery;
 /**
  * Definition of a facet.
  */
-public interface FacetDef<T, V, Q extends FacetQuery>
+public interface FacetDef<T, V, Q extends FacetQuery<V>>
 {
 	/**
 	 * Get the identifier of the facet.
