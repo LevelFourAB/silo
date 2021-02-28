@@ -32,4 +32,10 @@ public class IterableFetchResult<T>
 	{
 		return iterable.size();
 	}
+
+	@Override
+	public ListIterable<T> getItems()
+	{
+		return iterable;
+	}
 }

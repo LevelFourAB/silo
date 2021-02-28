@@ -3,6 +3,8 @@ package se.l4.silo;
 import java.util.Iterator;
 import java.util.Spliterator;
 
+import org.eclipse.collections.api.list.ListIterable;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import se.l4.silo.results.FetchResultSpliterator;
@@ -49,4 +51,11 @@ public interface FetchResult<T>
 	{
 		return new FetchResultSpliterator<T>(this);
 	}
+
+	/**
+	 * Get the fetched items as a {@link ListIterable}.
+	 *
+	 * @return
+	 */
+	ListIterable<T> getItems();
 }
