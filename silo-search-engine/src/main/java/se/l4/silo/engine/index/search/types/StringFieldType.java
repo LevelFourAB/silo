@@ -6,7 +6,7 @@ import se.l4.silo.engine.index.search.internal.types.StringFieldTypeBuilderImpl;
  * {@link SearchFieldType} that works on instances of {@link String}.
  */
 public interface StringFieldType
-	extends SearchFieldType<String>
+	extends SearchFieldType<String>, FacetableSearchFieldType<String>
 {
 	/**
 	 * Start building a {@link StringFieldType}.
