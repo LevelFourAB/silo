@@ -177,6 +177,8 @@ public class IndexSearcherManager
 			}
 			else
 			{
+				long current = writer.getMaxCompletedSequenceNumber();
+
 				/*
 				 * Open a new reader and searcher on the current writer and
 				 * start tracking it.
@@ -190,7 +192,7 @@ public class IndexSearcherManager
 				 * Check if this is the latest available searcher and if so
 				 * keep a reference to it around.
 				 */
-				if(writer.getMaxCompletedSequenceNumber() == sequence)
+				if(current == sequence)
 				{
 					if(latestVersion != null)
 					{
