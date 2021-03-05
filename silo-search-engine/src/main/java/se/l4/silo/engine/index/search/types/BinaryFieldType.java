@@ -4,15 +4,23 @@ import java.io.IOException;
 
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
+import org.apache.lucene.document.SortedSetDocValuesField;
 import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.util.ArrayUtil;
 import org.apache.lucene.util.BytesRef;
+import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
+import org.eclipse.collections.impl.factory.primitive.LongObjectMaps;
 
 import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.exobytes.streaming.Token;
+import se.l4.silo.engine.index.search.SearchFieldDefinition;
+import se.l4.silo.engine.index.search.facets.FacetCollector;
 import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.Matcher;
 import se.l4.silo.index.search.SearchIndexException;
@@ -21,7 +29,7 @@ import se.l4.silo.index.search.SearchIndexException;
  * Field type for indexing binary data.
  */
 public final class BinaryFieldType
-	implements SearchFieldType<byte[]>
+	implements SearchFieldType<byte[]>, FacetableSearchFieldType<byte[]>
 {
 	private static final FieldType INDEX_TYPE = createFieldType();
 
@@ -59,7 +67,7 @@ public final class BinaryFieldType
 	@Override
 	public boolean isDocValuesSupported()
 	{
-		return false;
+		return true;
 	}
 
 	@Override
@@ -79,6 +87,14 @@ public final class BinaryFieldType
 				INDEX_TYPE
 			));
 		}
+
+		if(encounter.isStoreDocValues())
+		{
+			encounter.emit(new SortedSetDocValuesField(
+				encounter.docValuesName(),
+				new BytesRef(encounter.getValue())
+			));
+		}
 	}
 
 	@Override
@@ -91,5 +107,44 @@ public final class BinaryFieldType
 		}
 
 		throw new SearchIndexException("Binary fields only support equality matching");
+	}
+
+	@Override
+	public FacetCollector<byte[]> createFacetCollector(
+		SearchFieldDefinition<?> field
+	)
+	{
+		return encounter -> {
+			String fieldName = encounter.getFieldName(field);
+
+			SortedSetDocValues values = encounter.getReader()
+				.getSortedSetDocValues(fieldName);
+
+			if(values == null) return;
+
+			MutableLongObjectMap<byte[]> cachedOrds = LongObjectMaps.mutable.empty();
+
+			DocIdSetIterator it = encounter.getDocs().iterator();
+			int doc;
+			while((doc = it.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS)
+			{
+				if(values.advanceExact(doc))
+				{
+					long value;
+					while((value = values.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS)
+					{
+						byte[] byteValue = cachedOrds.get(value);
+						if(byteValue == null)
+						{
+							BytesRef ref = values.lookupOrd(value);
+							byteValue = ArrayUtil.copyOfSubArray(ref.bytes, ref.offset, ref.offset + ref.length);
+							cachedOrds.put(value, byteValue);
+						}
+
+						encounter.collect(byteValue);
+					}
+				}
+			};
+		};
 	}
 }
