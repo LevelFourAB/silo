@@ -3,6 +3,7 @@ package se.l4.silo.engine.index.search.internal;
 import java.io.IOException;
 import java.util.OptionalInt;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.apache.lucene.facet.FacetsCollector;
 import org.apache.lucene.facet.FacetsCollector.MatchingDocs;
@@ -683,7 +684,8 @@ public class SearchIndexQueryRunner<T>
 		private LeafReader reader;
 		private DocIdSet docs;
 
-		private CountingCollector<V> collector;
+		private final CountingCollector<Object> collector;
+		private Function<Object, V> mapper;
 
 		public FacetCollectionEncounterImpl(
 			LocaleSupport locale,
@@ -739,7 +741,17 @@ public class SearchIndexQueryRunner<T>
 		public Iterable<FacetValue<V>> getValues()
 		{
 			return collector.withCounts()
-				.collect(e -> new FacetValueImpl<V>((V) e.getItem(), e.getCount()));
+				.collect(e -> new FacetValueImpl<V>(
+					mapper == null ? (V) e.getItem() : mapper.apply(e.getItem()),
+					e.getCount())
+				);
+		}
+
+		@Override
+		public <NV> FacetCollectionEncounter<NV> map(Function<NV, V> toV)
+		{
+			this.mapper = (Function) toV;
+			return (FacetCollectionEncounter) this;
 		}
 	}
 }

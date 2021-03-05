@@ -3,11 +3,19 @@ package se.l4.silo.engine.index.search.internal;
 import java.io.IOException;
 import java.util.function.Function;
 
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.search.DocIdSet;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SortField;
+import org.eclipse.collections.api.factory.Maps;
+import org.eclipse.collections.api.map.MutableMap;
 
 import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
+import se.l4.silo.engine.index.search.SearchFieldDefinition;
+import se.l4.silo.engine.index.search.facets.FacetCollectionEncounter;
+import se.l4.silo.engine.index.search.facets.FacetCollector;
+import se.l4.silo.engine.index.search.types.FacetableSearchFieldType;
 import se.l4.silo.engine.index.search.types.FieldCreationEncounter;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
 import se.l4.silo.index.MappableMatcher;
@@ -19,10 +27,10 @@ import se.l4.silo.index.Matcher;
 public class MappedSearchFieldType<T, V>
 	implements SearchFieldType<V>
 {
-	private final SearchFieldType<T> originalType;
+	protected final SearchFieldType<T> originalType;
 
-	private final Function<T, V> toV;
-	private final Function<V, T> fromV;
+	protected final Function<T, V> toV;
+	protected final Function<V, T> fromV;
 
 	public MappedSearchFieldType(
 		SearchFieldType<T> originalType,
@@ -95,5 +103,30 @@ public class MappedSearchFieldType<T, V>
 	public SortField createSortField(String field, boolean ascending)
 	{
 		return originalType.createSortField(field, ascending);
+	}
+
+	public static class Facetable<T, V>
+		extends MappedSearchFieldType<T, V>
+		implements FacetableSearchFieldType<V>
+	{
+		public Facetable(
+			FacetableSearchFieldType<T> originalType,
+			Function<T, V> toV,
+			Function<V, T> fromV
+		)
+		{
+			super(originalType, toV, fromV);
+		}
+
+		@Override
+		public FacetCollector<V> createFacetCollector(
+			SearchFieldDefinition<?> field
+		)
+		{
+			FacetCollector<T> collector = ((FacetableSearchFieldType<T>) originalType)
+				.createFacetCollector(field);
+
+			return encounter -> collector.collect(encounter.map(toV));
+		}
 	}
 }

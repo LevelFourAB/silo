@@ -1,5 +1,7 @@
 package se.l4.silo.engine.index.search.facets;
 
+import java.util.function.Function;
+
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.DocIdSet;
 
@@ -38,4 +40,12 @@ public interface FacetCollectionEncounter<V>
 	 * @param value
 	 */
 	void collect(V value);
+
+	/**
+	 * Get an encounter that maps results using the given function.
+	 *
+	 * @param mapper
+	 * @return
+	 */
+	<NV> FacetCollectionEncounter<NV> map(Function<NV, V> toV);
 }

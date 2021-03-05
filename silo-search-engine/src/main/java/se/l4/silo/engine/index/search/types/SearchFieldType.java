@@ -8,6 +8,7 @@ import org.apache.lucene.search.SortField;
 
 import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
+import se.l4.silo.engine.Buildable;
 import se.l4.silo.engine.index.search.SearchFieldDefinition;
 import se.l4.silo.engine.index.search.internal.MappedSearchFieldType;
 import se.l4.silo.index.Matcher;
@@ -15,7 +16,7 @@ import se.l4.silo.index.Matcher;
 /**
  * Type of data that can be used for {@link SearchFieldDefinition fields}.
  */
-public interface SearchFieldType<T>
+public interface SearchFieldType<V>
 {
 	/**
 	 * Write the given instance to the output.
@@ -24,7 +25,7 @@ public interface SearchFieldType<T>
 	 * @param out
 	 * @throws IOException
 	 */
-	void write(T instance, StreamingOutput out)
+	void write(V instance, StreamingOutput out)
 		throws IOException;
 
 	/**
@@ -35,7 +36,7 @@ public interface SearchFieldType<T>
 	 * @return
 	 * @throws IOException
 	 */
-	T read(StreamingInput in)
+	V read(StreamingInput in)
 		throws IOException;
 
 	/**
@@ -65,7 +66,7 @@ public interface SearchFieldType<T>
 	 * @param matcher
 	 * @return
 	 */
-	Query createQuery(String field, Matcher<T> matcher);
+	Query createQuery(String field, Matcher<V> matcher);
 
 	/**
 	 * Create the field from the given object.
@@ -74,7 +75,7 @@ public interface SearchFieldType<T>
 	 * @return
 	 */
 	void create(
-		FieldCreationEncounter<T> encounter
+		FieldCreationEncounter<V> encounter
 	);
 
 	/**
@@ -90,11 +91,20 @@ public interface SearchFieldType<T>
 		throw new UnsupportedOperationException("The field type " + getClass().getSimpleName() + " does not support sorting");
 	}
 
-	default <V> SearchFieldType<V> map(
-		Function<T, V> toV,
-		Function<V, T> fromV
+	default <NV> SearchFieldType<NV> map(
+		Function<V, NV> toN,
+		Function<NV, V> fromN
 	)
 	{
-		return new MappedSearchFieldType<>(this, toV, fromV);
+		return new MappedSearchFieldType<>(this, toN, fromN);
+	}
+
+	interface Builder<T extends SearchFieldType<?>>
+		extends Buildable<T>
+	{
+		<V> Builder<T> map(
+			Function<T, V> toV,
+			Function<V, T> fromV
+		);
 	}
 }
