@@ -13,6 +13,7 @@ import se.l4.silo.engine.index.search.SearchFieldDefinition;
 import se.l4.silo.engine.index.search.facets.FacetCollector;
 import se.l4.silo.engine.index.search.facets.ValueFacetDef;
 import se.l4.silo.engine.index.search.internal.MappedSearchFieldType;
+import se.l4.silo.engine.index.search.internal.types.BinaryFieldType;
 import se.l4.silo.engine.index.search.internal.types.BooleanFieldType;
 import se.l4.silo.engine.index.search.internal.types.DoubleFieldType;
 import se.l4.silo.engine.index.search.internal.types.FieldTypeInstanceBuilder;
@@ -168,6 +169,16 @@ public interface SearchFieldType<V>
 		{
 			return new FieldTypeInstanceBuilder<>(build().map(toN, fromN));
 		}
+	}
+
+	/**
+	 * Start building a type for binary values.
+	 *
+	 * @return
+	 */
+	static Builder<byte[], SearchFieldType<byte[]>> forBinary()
+	{
+		return new FieldTypeInstanceBuilder<>(BinaryFieldType.INSTANCE);
 	}
 
 	/**
