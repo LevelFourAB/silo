@@ -125,8 +125,7 @@ public class SearchIndexQueryRunner<T>
 		IndexQueryEncounter<? extends SearchIndexQuery<T, ?>, T> encounter
 	)
 	{
-		// TODO Auto-generated method stub
-		return null;
+		return fetch(encounter).flatMapMany(r -> r.stream());
 	}
 
 	public void query(
