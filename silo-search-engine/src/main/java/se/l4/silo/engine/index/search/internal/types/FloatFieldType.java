@@ -1,4 +1,4 @@
-package se.l4.silo.engine.index.search.types;
+package se.l4.silo.engine.index.search.internal.types;
 
 import java.io.IOException;
 
@@ -12,14 +12,17 @@ import org.apache.lucene.util.NumericUtils;
 import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.exobytes.streaming.Token;
+import se.l4.silo.engine.index.search.types.FieldCreationEncounter;
 import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.Matcher;
 import se.l4.silo.index.RangeMatcher;
 import se.l4.silo.index.search.SearchIndexException;
 
 public class FloatFieldType
-	extends NumericFieldType<Float>
+	extends AbstractNumericFieldType<Float>
 {
+	public static final FloatFieldType INSTANCE = new FloatFieldType();
+
 	@Override
 	public Float read(StreamingInput in)
 		throws IOException

@@ -1,4 +1,4 @@
-package se.l4.silo.engine.index.search.types;
+package se.l4.silo.engine.index.search.internal.types;
 
 import java.io.IOException;
 import java.util.Locale;
@@ -22,6 +22,9 @@ import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.exobytes.streaming.Token;
 import se.l4.silo.engine.index.search.internal.LocaleAnalyzer;
+import se.l4.silo.engine.index.search.types.AnalyzingTextField;
+import se.l4.silo.engine.index.search.types.FieldCreationEncounter;
+import se.l4.silo.engine.index.search.types.SearchFieldType;
 import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.Matcher;
 import se.l4.silo.index.search.SearchIndexException;

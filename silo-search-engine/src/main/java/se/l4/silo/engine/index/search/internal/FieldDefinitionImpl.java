@@ -3,6 +3,7 @@ package se.l4.silo.engine.index.search.internal;
 import java.util.Objects;
 import java.util.function.Function;
 
+import se.l4.silo.engine.Buildable;
 import se.l4.silo.engine.index.search.SearchFieldDefinition;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
 
@@ -148,6 +149,14 @@ public class FieldDefinitionImpl<T>
 				type.isLocaleSupported(),
 				highlighted
 			);
+		}
+
+		@Override
+		public <NF> Builder<T, NF> withType(
+			Buildable<? extends SearchFieldType<NF>> buildable
+		)
+		{
+			return withType(buildable.build());
 		}
 
 		@Override

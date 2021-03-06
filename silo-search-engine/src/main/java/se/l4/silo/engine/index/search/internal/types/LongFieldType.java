@@ -1,4 +1,4 @@
-package se.l4.silo.engine.index.search.types;
+package se.l4.silo.engine.index.search.internal.types;
 
 import java.io.IOException;
 
@@ -16,6 +16,8 @@ import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.exobytes.streaming.Token;
 import se.l4.silo.engine.index.search.SearchFieldDefinition;
 import se.l4.silo.engine.index.search.facets.FacetCollector;
+import se.l4.silo.engine.index.search.types.FieldCreationEncounter;
+import se.l4.silo.engine.index.search.types.SearchFieldType;
 import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.Matcher;
 import se.l4.silo.index.RangeMatcher;
@@ -25,9 +27,11 @@ import se.l4.silo.index.search.SearchIndexException;
  * {@link SearchFieldType} for indexing something as a {@link Long}.
  */
 public class LongFieldType
-	extends NumericFieldType<Long>
-	implements FacetableSearchFieldType<Long>
+	extends AbstractNumericFieldType<Long>
+	implements SearchFieldType.Facetable<Long>
 {
+	public static final LongFieldType INSTANCE = new LongFieldType();
+
 	@Override
 	public Long read(StreamingInput in)
 		throws IOException

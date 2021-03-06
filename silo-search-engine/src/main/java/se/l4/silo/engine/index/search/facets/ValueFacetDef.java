@@ -2,7 +2,7 @@ package se.l4.silo.engine.index.search.facets;
 
 import se.l4.silo.engine.index.search.SearchFieldDefinition;
 import se.l4.silo.engine.index.search.internal.facets.ValueFacetDefImpl;
-import se.l4.silo.engine.index.search.types.FacetableSearchFieldType;
+import se.l4.silo.engine.index.search.types.SearchFieldType;
 import se.l4.silo.index.search.facets.ValueFacetQuery;
 
 /**
@@ -33,7 +33,7 @@ public interface ValueFacetDef<T, V>
 	{
 		/**
 		 * Set the field to use. The type of the field should be something
-		 * that is {@link FacetableSearchFieldType}.
+		 * that is {@link SearchFieldType.Facetable}.
 		 *
 		 * @param <NV>
 		 * @param field

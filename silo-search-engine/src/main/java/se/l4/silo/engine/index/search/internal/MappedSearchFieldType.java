@@ -3,19 +3,13 @@ package se.l4.silo.engine.index.search.internal;
 import java.io.IOException;
 import java.util.function.Function;
 
-import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.search.DocIdSet;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SortField;
-import org.eclipse.collections.api.factory.Maps;
-import org.eclipse.collections.api.map.MutableMap;
 
 import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.silo.engine.index.search.SearchFieldDefinition;
-import se.l4.silo.engine.index.search.facets.FacetCollectionEncounter;
 import se.l4.silo.engine.index.search.facets.FacetCollector;
-import se.l4.silo.engine.index.search.types.FacetableSearchFieldType;
 import se.l4.silo.engine.index.search.types.FieldCreationEncounter;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
 import se.l4.silo.index.MappableMatcher;
@@ -107,10 +101,10 @@ public class MappedSearchFieldType<T, V>
 
 	public static class Facetable<T, V>
 		extends MappedSearchFieldType<T, V>
-		implements FacetableSearchFieldType<V>
+		implements SearchFieldType.Facetable<V>
 	{
 		public Facetable(
-			FacetableSearchFieldType<T> originalType,
+			SearchFieldType.Facetable<T> originalType,
 			Function<T, V> toV,
 			Function<V, T> fromV
 		)
@@ -123,7 +117,7 @@ public class MappedSearchFieldType<T, V>
 			SearchFieldDefinition<?> field
 		)
 		{
-			FacetCollector<T> collector = ((FacetableSearchFieldType<T>) originalType)
+			FacetCollector<T> collector = ((SearchFieldType.Facetable<T>) originalType)
 				.createFacetCollector(field);
 
 			return encounter -> collector.collect(encounter.map(toV));

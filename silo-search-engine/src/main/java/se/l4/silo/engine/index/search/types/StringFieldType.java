@@ -6,7 +6,7 @@ import se.l4.silo.engine.index.search.internal.types.StringFieldTypeBuilderImpl;
  * {@link SearchFieldType} that works on instances of {@link String}.
  */
 public interface StringFieldType
-	extends SearchFieldType<String>, FacetableSearchFieldType<String>
+	extends SearchFieldType.Facetable<String>
 {
 	/**
 	 * Start building a {@link StringFieldType}.
@@ -38,6 +38,7 @@ public interface StringFieldType
 	}
 
 	interface TokenBuilder
+		extends SearchFieldType.Builder<String, StringFieldType>
 	{
 		/**
 		 * Build the type.
@@ -48,6 +49,7 @@ public interface StringFieldType
 	}
 
 	interface FullTextBuilder
+		extends SearchFieldType.Builder<String, StringFieldType>
 	{
 		/**
 		 * Activate support for type ahead.

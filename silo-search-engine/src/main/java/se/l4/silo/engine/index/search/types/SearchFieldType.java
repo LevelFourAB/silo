@@ -10,7 +10,15 @@ import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.silo.engine.Buildable;
 import se.l4.silo.engine.index.search.SearchFieldDefinition;
+import se.l4.silo.engine.index.search.facets.FacetCollector;
+import se.l4.silo.engine.index.search.facets.ValueFacetDef;
 import se.l4.silo.engine.index.search.internal.MappedSearchFieldType;
+import se.l4.silo.engine.index.search.internal.types.BooleanFieldType;
+import se.l4.silo.engine.index.search.internal.types.DoubleFieldType;
+import se.l4.silo.engine.index.search.internal.types.FieldTypeInstanceBuilder;
+import se.l4.silo.engine.index.search.internal.types.FloatFieldType;
+import se.l4.silo.engine.index.search.internal.types.IntFieldType;
+import se.l4.silo.engine.index.search.internal.types.LongFieldType;
 import se.l4.silo.index.Matcher;
 
 /**
@@ -91,6 +99,16 @@ public interface SearchFieldType<V>
 		throw new UnsupportedOperationException("The field type " + getClass().getSimpleName() + " does not support sorting");
 	}
 
+	/**
+	 * Map this type using the given functions. This can be used to create
+	 * field types that use high level objects (such as {@link java.time.ZonedDateTime})
+	 * but stores them using a low-level field type (such as `long`).
+	 *
+	 * @param <NV>
+	 * @param toN
+	 * @param fromN
+	 * @return
+	 */
 	default <NV> SearchFieldType<NV> map(
 		Function<V, NV> toN,
 		Function<NV, V> fromN
@@ -99,12 +117,116 @@ public interface SearchFieldType<V>
 		return new MappedSearchFieldType<>(this, toN, fromN);
 	}
 
-	interface Builder<T extends SearchFieldType<?>>
+	/**
+	 * Extension to {@link SearchFieldType} for those types that can provide
+	 * distinct values for use with a {@link ValueFacetDef}.
+	 */
+	interface Facetable<V>
+		extends SearchFieldType<V>
+	{
+		/**
+		 * Create a collector for facet values.
+		 *
+		 * @param fieldName
+		 *   the field where DocValues is stored
+		 * @param encounter
+		 *   the encounter to use
+		 * @return
+		 */
+		FacetCollector<V> createFacetCollector(
+			SearchFieldDefinition<?> field
+		);
+
+		@Override
+		default <NV> SearchFieldType.Facetable<NV> map(
+			Function<V, NV> toN,
+			Function<NV, V> fromN
+		)
+		{
+			return new MappedSearchFieldType.Facetable<>(this, toN, fromN);
+		}
+	}
+
+	/**
+	 * Builder for a {@link SearchFieldType} instance.
+	 */
+	interface Builder<V, T extends SearchFieldType<V>>
 		extends Buildable<T>
 	{
-		<V> Builder<T> map(
-			Function<T, V> toV,
-			Function<V, T> fromV
-		);
+		/**
+		 * Map this field type.
+		 *
+		 * @param <NV>
+		 * @param toN
+		 * @param fromN
+		 * @return
+		 */
+		default <NV> Builder<NV, SearchFieldType<NV>> map(
+			Function<V, NV> toN,
+			Function<NV, V> fromN
+		)
+		{
+			return new FieldTypeInstanceBuilder<>(build().map(toN, fromN));
+		}
+	}
+
+	/**
+	 * Start building a type for string values.
+	 *
+	 * @return
+	 */
+	static StringFieldType.Builder forString()
+	{
+		return StringFieldType.create();
+	}
+
+	/**
+	 * Start building a type for float values.
+	 *
+	 * @return
+	 */
+	static Builder<Float, NumericFieldType<Float>> forFloat()
+	{
+		return new FieldTypeInstanceBuilder<>(FloatFieldType.INSTANCE);
+	}
+
+	/**
+	 * Start building a type for double values.
+	 *
+	 * @return
+	 */
+	static Builder<Double, NumericFieldType<Double>> forDouble()
+	{
+		return new FieldTypeInstanceBuilder<>(DoubleFieldType.INSTANCE);
+	}
+
+	/**
+	 * Start building a type for integer values.
+	 *
+	 * @return
+	 */
+	static Builder<Integer, NumericFieldType<Integer>> forInteger()
+	{
+		return new FieldTypeInstanceBuilder<>(IntFieldType.INSTANCE);
+	}
+
+	/**
+	 * Start building a type for long values.
+	 *
+	 * @return
+	 */
+	static Builder<Long, NumericFieldType<Long>> forLong()
+	{
+		return new FieldTypeInstanceBuilder<>(LongFieldType.INSTANCE);
+	}
+
+	/**
+	 * Start building a type for boolean values.
+	 *
+	 * @return
+	 */
+	static Builder<Boolean, SearchFieldType<Boolean>> forBoolean()
+	{
+		return new FieldTypeInstanceBuilder<>(BooleanFieldType.INSTANCE);
 	}
 }

@@ -10,6 +10,7 @@ import se.l4.silo.Transaction;
 import se.l4.silo.engine.EntityCodec;
 import se.l4.silo.engine.EntityDefinition;
 import se.l4.silo.engine.LocalSilo;
+import se.l4.silo.engine.index.search.types.SearchFieldType;
 import se.l4.silo.engine.internal.BasicTest;
 import se.l4.silo.engine.internal.TestUserData;
 import se.l4.silo.index.search.PaginatedSearchResult;
@@ -24,19 +25,19 @@ public class SearchObjectEntityTest
 		SearchIndexDefinition<TestUserData> index = SearchIndexDefinition.create(TestUserData.class, "index")
 			.addField(
 				SearchFieldDefinition.create(TestUserData.class, "name")
-					.withType(SearchFields.TEXT)
+					.withType(SearchFieldType.forString().fullText().build())
 					.withSupplier(TestUserData::getName)
 					.build()
 			)
 			.addField(
 				SearchFieldDefinition.create(TestUserData.class, "age")
-					.withType(SearchFields.INTEGER)
+					.withType(SearchFieldType.forInteger().build())
 					.withSupplier(TestUserData::getAge)
 					.build()
 			)
 			.addField(
 				SearchFieldDefinition.create(TestUserData.class, "active")
-					.withType(SearchFields.BOOLEAN)
+					.withType(SearchFieldType.forBoolean().build())
 					.withSupplier(TestUserData::isActive)
 					.build()
 			)

@@ -103,6 +103,14 @@ public interface SearchFieldDefinition<T>
 		<NF> Builder<T, NF> withType(SearchFieldType<NF> type);
 
 		/**
+		 * Set the type of data this field contains.
+		 *
+		 * @param buildable
+		 * @return
+		 */
+		<NF> Builder<T, NF> withType(Buildable<? extends SearchFieldType<NF>> buildable);
+
+		/**
 		 * Set the function used to extract the value for the field.
 		 *
 		 * @param supplier
