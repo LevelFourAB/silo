@@ -45,3 +45,8 @@ books.delete(1l)
 ## Status
 
 `master` currently contains a major rewrite that is not yet ready for release.
+
+## License
+
+This project is licensed under the [MIT license](https://opensource.org/licenses/MIT),
+see the file `LICENSE.md` for details.
