@@ -52,24 +52,24 @@ public class TransactionLogApplierTest
 			}
 
 			@Override
-			public void store(String entity, Object id, InputStream data)
+			public void store(String collection, Object id, InputStream data)
 				throws IOException
 			{
-				ops.check("store", entity, id, data);
+				ops.check("store", collection, id, data);
 			}
 
 			@Override
-			public void delete(String entity, Object id)
+			public void delete(String collection, Object id)
 				throws IOException
 			{
-				ops.check("delete", entity, id);
+				ops.check("delete", collection, id);
 			}
 
 			@Override
-			public void index(String entity, String index, Object id, InputStream data)
+			public void index(String collection, String index, Object id, InputStream data)
 				throws IOException
 			{
-				ops.check("index", entity, index, id, data);
+				ops.check("index", collection, index, id, data);
 			}
 
 			@Override
@@ -102,19 +102,19 @@ public class TransactionLogApplierTest
 		return new ByteArrayInputStream(out);
 	}
 
-	private void expectStore(String entity, Object id, InputStream data)
+	private void expectStore(String collection, Object id, InputStream data)
 	{
-		ops.expect("store", entity, id, data);
+		ops.expect("store", collection, id, data);
 	}
 
-	private void expectDelete(String entity, Object id)
+	private void expectDelete(String collection, Object id)
 	{
-		ops.expect("delete", entity, id);
+		ops.expect("delete", collection, id);
 	}
 
-	private void expectIndex(String entity, String index, Object id, InputStream data)
+	private void expectIndex(String collection, String index, Object id, InputStream data)
 	{
-		ops.expect("index", entity, index, id, data);
+		ops.expect("index", collection, index, id, data);
 	}
 
 	private void expectTransactionStart()

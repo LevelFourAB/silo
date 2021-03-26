@@ -1,16 +1,16 @@
 package se.l4.silo.internal;
 
-import se.l4.silo.EntityRef;
+import se.l4.silo.CollectionRef;
 import se.l4.ylem.types.reflect.TypeRef;
 
-public class EntityRefImpl<ID, T>
-	implements EntityRef<ID, T>
+public class CollectionRefImpl<ID, T>
+	implements CollectionRef<ID, T>
 {
 	private final String name;
 	private final TypeRef idType;
 	private final TypeRef objectType;
 
-	public EntityRefImpl(
+	public CollectionRefImpl(
 		String name,
 		TypeRef idType,
 		TypeRef objectType

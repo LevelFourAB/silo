@@ -2,18 +2,18 @@ package se.l4.silo.engine;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import se.l4.silo.Entity;
+import se.l4.silo.Collection;
 import se.l4.silo.engine.index.LocalIndex;
 
 /**
- * Extension to {@link Entity} to represent extra things available on entities
- * available locally.
+ * Extension to {@link Collection} to represent extra things available on
+ * collections that are available locally.
  */
-public interface LocalEntity<ID, T>
-	extends Entity<ID, T>
+public interface LocalCollection<ID, T>
+	extends Collection<ID, T>
 {
 	/**
-	 * Get the number of reads that have occurred for this entity during the
+	 * Get the number of reads that have occurred for this collection during the
 	 * current runtime.
 	 *
 	 * @return
@@ -21,7 +21,7 @@ public interface LocalEntity<ID, T>
 	long getReads();
 
 	/**
-	 * Get the number of stores that have occurred for this entity during the
+	 * Get the number of stores that have occurred for this collection during the
 	 * current runtime.
 	 *
 	 * @return
@@ -29,7 +29,7 @@ public interface LocalEntity<ID, T>
 	long getStores();
 
 	/**
-	 * Get the number of deletes that have occurred for this entity during the
+	 * Get the number of deletes that have occurred for this collection during the
 	 * current runtime.
 	 *
 	 * @return
@@ -47,7 +47,7 @@ public interface LocalEntity<ID, T>
 	Mono<LocalIndex> index(String name);
 
 	/**
-	 * Get a {@link Flux} with all of the indexes in this entity.
+	 * Get a {@link Flux} with all of the indexes in this collection.
 	 *
 	 * @return
 	 */

@@ -46,7 +46,7 @@ public interface Transactions
 	 * <pre>
 	 * transactions.withTransaction(tx -> {
 	 *   // This runs within a transaction
-	 *   return entity.store(new TestData());
+	 *   return collection.store(new TestData());
 	 * })
 	 *   // Everything else is outside the transaction
 	 *   .map(result -> ...);

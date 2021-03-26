@@ -294,27 +294,27 @@ public class LogBasedTransactionSupport
 		}
 
 		@Override
-		public void store(String entity, Object id, IOConsumer<OutputStream> generator)
+		public void store(String collection, Object id, IOConsumer<OutputStream> generator)
 		{
 			prepareWrite();
 
-			log.store(this.id, entity, id, generator);
+			log.store(this.id, collection, id, generator);
 		}
 
 		@Override
-		public void delete(String entity, Object id)
+		public void delete(String collection, Object id)
 		{
 			prepareWrite();
 
-			log.delete(this.id, entity, id);
+			log.delete(this.id, collection, id);
 		}
 
 		@Override
-		public void index(String entity, String index, Object id, IOConsumer<OutputStream> generator)
+		public void index(String collection, String index, Object id, IOConsumer<OutputStream> generator)
 		{
 			prepareWrite();
 
-			log.storeIndex(this.id, entity, index, id, generator);
+			log.storeIndex(this.id, collection, index, id, generator);
 		}
 
 		private void prepareWrite()

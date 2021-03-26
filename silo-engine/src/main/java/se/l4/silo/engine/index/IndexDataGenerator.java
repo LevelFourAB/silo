@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * Data generator for a {@link IndexEngine}, used to generate data later
+ * Data generator for a {@link Index}, used to generate data later
  * applied by {@link IndexDataUpdater}.
  */
 public interface IndexDataGenerator<T>

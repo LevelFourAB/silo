@@ -8,15 +8,15 @@ import se.l4.exobytes.Serializer;
 import se.l4.exobytes.streaming.StreamingFormat;
 import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
-import se.l4.silo.engine.EntityCodec;
+import se.l4.silo.engine.ObjectCodec;
 
 /**
- * {@link EntityCodec} that uses a {@link Serializer} to encode and decode
+ * {@link ObjectCodec} that uses a {@link Serializer} to encode and decode
  * data. Supports backwards compatibility with the now removed
  * {@code StructuredEntity}.
  */
 public class SerializingCodec<T>
-	implements EntityCodec<T>
+	implements ObjectCodec<T>
 {
 	private final Serializer<T> serializer;
 

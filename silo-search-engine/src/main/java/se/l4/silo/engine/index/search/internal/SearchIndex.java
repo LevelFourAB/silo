@@ -29,7 +29,7 @@ import se.l4.silo.engine.index.search.query.QueryBuilders;
 import se.l4.silo.index.search.SearchIndexQuery;
 
 /**
- * Query engine that maintains a Lucene index for an entity.
+ * Query engine that maintains a Lucene index for a collection.
  */
 public class SearchIndex<T>
 	implements Index<T, SearchIndexQuery<T, ?>>

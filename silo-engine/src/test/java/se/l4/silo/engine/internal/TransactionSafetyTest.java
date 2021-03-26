@@ -1,8 +1,8 @@
 package se.l4.silo.engine.internal;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 
 import java.util.function.Supplier;
 
@@ -11,11 +11,11 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import se.l4.exobytes.Serializers;
-import se.l4.silo.Entity;
+import se.l4.silo.Collection;
 import se.l4.silo.Transaction;
-import se.l4.silo.engine.EntityCodec;
-import se.l4.silo.engine.EntityDefinition;
+import se.l4.silo.engine.CollectionDef;
 import se.l4.silo.engine.LocalSilo;
+import se.l4.silo.engine.ObjectCodec;
 
 /**
  * Tests related to transaction safety.
@@ -26,17 +26,17 @@ public class TransactionSafetyTest
 	@Override
 	protected LocalSilo.Builder setup(LocalSilo.Builder builder)
 	{
-		return builder.addEntity(
-			EntityDefinition.create(TestUserData.class, "test")
+		return builder.addCollection(
+			CollectionDef.create(TestUserData.class, "test")
 				.withId(Integer.class, TestUserData::getId)
-				.withCodec(EntityCodec.serialized(Serializers.create().build(), TestUserData.class))
+				.withCodec(ObjectCodec.serialized(Serializers.create().build(), TestUserData.class))
 				.build()
 		);
 	}
 
-	protected Entity<Integer, TestUserData> entity()
+	protected Collection<Integer, TestUserData> collection()
 	{
-		return instance().entity("test", Integer.class, TestUserData.class);
+		return instance().getCollection("test", Integer.class, TestUserData.class);
 	}
 
 	@Test
@@ -46,11 +46,11 @@ public class TransactionSafetyTest
 
 		instance()
 			.transactions()
-			.transactional(entity().store(o))
+			.transactional(collection().store(o))
 			.block();
 
 		assertThat(
-			entity().get(1).block(),
+			collection().get(1).block(),
 			is(o)
 		);
 	}
@@ -65,7 +65,7 @@ public class TransactionSafetyTest
 			instance()
 				.transactions()
 				.transactional(
-					entity().store(o)
+					collection().store(o)
 						.then(Mono.error(new IllegalArgumentException("Error")))
 				)
 				.block();
@@ -76,7 +76,7 @@ public class TransactionSafetyTest
 		}
 
 		assertThat(
-			entity().get(1).block(),
+			collection().get(1).block(),
 			nullValue()
 		);
 	}
@@ -94,12 +94,12 @@ public class TransactionSafetyTest
 			.transactions()
 			.transactional(
 				Flux.fromArray(data)
-					.flatMap(entity()::store)
+					.flatMap(collection()::store)
 			)
 			.blockLast();
 
 		assertThat(
-			entity().get(1).block(),
+			collection().get(1).block(),
 			is(data[0])
 		);
 	}
@@ -122,7 +122,7 @@ public class TransactionSafetyTest
 						.flatMap(o -> {
 							if(o.getId() == 3) return Mono.error(new IllegalArgumentException());
 
-							return entity().store(o);
+							return collection().store(o);
 						})
 				)
 				.blockLast();
@@ -133,7 +133,7 @@ public class TransactionSafetyTest
 		}
 
 		assertThat(
-			entity().get(1).block(),
+			collection().get(1).block(),
 			nullValue()
 		);
 	}
@@ -145,12 +145,12 @@ public class TransactionSafetyTest
 
 		Transaction tx = instance().transactions().newTransaction().block();
 
-		tx.wrap(entity().store(o)).block();
+		tx.wrap(collection().store(o)).block();
 
 		tx.commit().block();
 
 		assertThat(
-			entity().get(1).block(),
+			collection().get(1).block(),
 			is(o)
 		);
 	}
@@ -162,12 +162,12 @@ public class TransactionSafetyTest
 
 		Transaction tx = instance().transactions().newTransaction().block();
 
-		tx.wrap(entity().store(o)).block();
+		tx.wrap(collection().store(o)).block();
 
 		tx.rollback().block();
 
 		assertThat(
-			entity().get(1).block(),
+			collection().get(1).block(),
 			nullValue()
 		);
 	}
@@ -185,19 +185,19 @@ public class TransactionSafetyTest
 
 		tx.wrap(
 			Flux.fromArray(data)
-				.flatMap(entity()::store)
+				.flatMap(collection()::store)
 		).blockLast();
 
 		// At this point there should be nothing stored
 		assertThat(
-			entity().get(1).block(),
+			collection().get(1).block(),
 			nullValue()
 		);
 
 		tx.commit().block();
 
 		assertThat(
-			entity().get(1).block(),
+			collection().get(1).block(),
 			is(data[0])
 		);
 	}
@@ -215,13 +215,13 @@ public class TransactionSafetyTest
 
 		tx.wrap(
 			Flux.fromArray(data)
-				.flatMap(entity()::store)
+				.flatMap(collection()::store)
 		).blockLast();
 
 		tx.rollback().block();
 
 		assertThat(
-			entity().get(1).block(),
+			collection().get(1).block(),
 			nullValue()
 		);
 	}
@@ -239,19 +239,19 @@ public class TransactionSafetyTest
 
 		tx.execute(tx0 ->
 			Flux.fromArray(data)
-				.flatMap(entity()::store)
+				.flatMap(collection()::store)
 		).blockLast();
 
 		// At this point there should be nothing stored
 		assertThat(
-			entity().get(1).block(),
+			collection().get(1).block(),
 			nullValue()
 		);
 
 		tx.commit().block();
 
 		assertThat(
-			entity().get(1).block(),
+			collection().get(1).block(),
 			is(data[0])
 		);
 	}
@@ -269,13 +269,13 @@ public class TransactionSafetyTest
 
 		tx.execute(tx0 ->
 			Flux.fromArray(data)
-				.flatMap(entity()::store)
+				.flatMap(collection()::store)
 		).blockLast();
 
 		tx.rollback().block();
 
 		assertThat(
-			entity().get(1).block(),
+			collection().get(1).block(),
 			nullValue()
 		);
 	}
@@ -291,11 +291,11 @@ public class TransactionSafetyTest
 
 		instance().transactions().withTransaction(tx ->
 			Flux.fromArray(data)
-				.flatMap(entity()::store)
+				.flatMap(collection()::store)
 		).blockLast();
 
 		assertThat(
-			entity().get(1).block(),
+			collection().get(1).block(),
 			is(data[0])
 		);
 	}
@@ -318,7 +318,7 @@ public class TransactionSafetyTest
 						.flatMap(o -> {
 							if(o.getId() == 3) return Mono.error(new IllegalArgumentException());
 
-							return entity().store(o);
+							return collection().store(o);
 						})
 				)
 				.blockLast();
@@ -329,7 +329,7 @@ public class TransactionSafetyTest
 		}
 
 		assertThat(
-			entity().get(1).block(),
+			collection().get(1).block(),
 			nullValue()
 		);
 	}
@@ -340,11 +340,11 @@ public class TransactionSafetyTest
 		TestUserData o = new TestUserData(1, "V1", 20, true);
 
 		instance().transactions().inTransaction(() -> {
-			entity().store(o).block();
+			collection().store(o).block();
 		}).block();
 
 		assertThat(
-			entity().get(1).block(),
+			collection().get(1).block(),
 			is(o)
 		);
 	}
@@ -357,7 +357,7 @@ public class TransactionSafetyTest
 		try
 		{
 			instance().transactions().inTransaction((Runnable) () -> {
-				entity().store(o).block();
+				collection().store(o).block();
 
 				throw new IllegalArgumentException();
 			}).block();
@@ -368,7 +368,7 @@ public class TransactionSafetyTest
 		}
 
 		assertThat(
-			entity().get(1).block(),
+			collection().get(1).block(),
 			nullValue()
 		);
 	}
@@ -379,7 +379,7 @@ public class TransactionSafetyTest
 		TestUserData o = new TestUserData(1, "V1", 20, true);
 
 		String value = instance().transactions().inTransaction(() -> {
-			entity().store(o).block();
+			collection().store(o).block();
 
 			return "test";
 		}).block();
@@ -387,7 +387,7 @@ public class TransactionSafetyTest
 		assertThat(value, is("test"));
 
 		assertThat(
-			entity().get(1).block(),
+			collection().get(1).block(),
 			is(o)
 		);
 	}
@@ -400,7 +400,7 @@ public class TransactionSafetyTest
 		try
 		{
 			instance().transactions().inTransaction((Supplier<String>) () -> {
-				entity().store(o).block();
+				collection().store(o).block();
 
 				throw new IllegalArgumentException();
 			}).block();
@@ -411,7 +411,7 @@ public class TransactionSafetyTest
 		}
 
 		assertThat(
-			entity().get(1).block(),
+			collection().get(1).block(),
 			nullValue()
 		);
 	}
@@ -423,23 +423,23 @@ public class TransactionSafetyTest
 		TestUserData updated = new TestUserData(1, "V2", 20, true);
 
 		// Store the original data
-		entity().store(original).block();
+		collection().store(original).block();
 
 		// This transaction should keep old data
 		Transaction tx = instance().transactions().newTransaction().block();
 
 		// Update the original data, auto-committing it
-		entity().store(updated).block();
+		collection().store(updated).block();
 
 		// Check that reading data outside TX shows updated data
 		assertThat(
-			entity().get(1).block(),
+			collection().get(1).block(),
 			is(updated)
 		);
 
 		// Check that reading data inside TX shows original data
 		assertThat(
-			tx.wrap(entity().get(1)).block(),
+			tx.wrap(collection().get(1)).block(),
 			is(original)
 		);
 
@@ -453,23 +453,23 @@ public class TransactionSafetyTest
 		TestUserData o = new TestUserData(1, "V1", 20, true);
 
 		// Store the original data
-		entity().store(o).block();
+		collection().store(o).block();
 
 		// This transaction should keep old data
 		Transaction tx = instance().transactions().newTransaction().block();
 
 		// Update the original data, auto-committing it
-		entity().delete(1).block();
+		collection().delete(1).block();
 
 		// Check that reading data outside TX shows updated data
 		assertThat(
-			entity().get(1).block(),
+			collection().get(1).block(),
 			nullValue()
 		);
 
 		// Check that reading data inside TX shows original data
 		assertThat(
-			tx.wrap(entity().get(1)).block(),
+			tx.wrap(collection().get(1)).block(),
 			is(o)
 		);
 

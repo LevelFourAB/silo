@@ -1,87 +1,49 @@
 package se.l4.silo;
 
-import java.util.function.Function;
-import java.util.function.Supplier;
-
-import org.reactivestreams.Publisher;
-
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-
 /**
- * Silo storage, provides access to all entities stored, transactions and
- * resource management. An instance of this class contains {@link Entity entities}
- * that can be used to store and retrieve data.
- *
- * <h2>Transactions</h2>
- * <p>
- * Silo provides transaction support. In normal usage every write operation is
- * a tiny transaction, so a store operation will internally be mapped against a
- * transaction. Transactions in Silo are implemented so that they become
- * readable when they are committed, so any changes made in a transaction
- * are not visible either within our outside the transaction.
- *
- * <h3>Using {@link #newTransaction()}</h3>
- * <p>
- * When {@link #newTransaction()} is called a transaction is activated for the
- * current thread. Transactions <strong>must</strong> either be committed or
- * rolled back when they are used.
- *
- * <p>
- * Example:
- * <pre>
- * Transaction tx = silo.newTransaction();
- * try {
- *   // Perform operations as usual here
- *   entity.store("test id", object);
- *
- *   tx.commit();
- * } catch(Throwable t) {
- *   tx.rollback();
- * }
- * </pre>
- *
- * <h3>Using {@link #inTransaction(Runnable)} and {@link #inTransaction(Supplier)}</h3>
- * <p>
- * An alternative way of using transactions is provided via {@link #inTransaction(Runnable)}
- * and {@link #inTransaction(Supplier)}. These will take care of committing
- * and rolling back a transaction.
- *
- * <p>
- * Examples:
- * <pre>
- * silo.inTransaction(() -> {
- *   entity.store("test id", object);
- * });
- * </pre>
+ * Silo storage, provides access to all collections and transactions. An
+ * instance of this class contains {@link Collection collections} that can be
+ * used to store and retrieve data.
  */
 public interface Silo
 {
 	/**
-	 * Check if the given entity is available.
+	 * Check if the given collection is available.
 	 *
-	 * @param entityName
+	 * @param name
 	 * @return
 	 */
-	boolean hasEntity(String entityName);
+	boolean hasCollection(String name);
 
 	/**
-	 * Get an entity.
+	 * Get a collection.
 	 *
-	 * @param entityName
 	 * @param ref
+	 *   reference to the collection
+	 * @return
+	 *   found collection
+	 * @throws StorageException
+	 *   if collection can not be found
 	 */
-	<ID, T> Entity<ID, T> entity(EntityRef<ID, T> ref);
+	<ID, T> Collection<ID, T> getCollection(CollectionRef<ID, T> ref);
 
 	/**
-	 * Get an entity.
+	 * Get a collection.
 	 *
-	 * @param entityName
-	 * @param type
+	 * @param name
+	 *   name
+	 * @param idType
+	 *   the type of ids used
+	 * @param objectType
+	 *   the type of object stored
+	 * @return
+	 *   found collection
+	 * @throws StorageException
+	 *   if collection can not be found
 	 */
-	default <ID, T> Entity<ID, T> entity(String name, Class<ID> idType, Class<T> objectType)
+	default <ID, T> Collection<ID, T> getCollection(String name, Class<ID> idType, Class<T> objectType)
 	{
-		return entity(EntityRef.create(name, idType, objectType));
+		return getCollection(CollectionRef.create(name, idType, objectType));
 	}
 
 	/**

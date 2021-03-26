@@ -8,7 +8,7 @@ import reactor.core.scheduler.Scheduler;
 import se.l4.silo.engine.MVStoreManager;
 
 /**
- * Encounter for when a {@link IndexEngine} is being constructed.
+ * Encounter for when a {@link Index} is being constructed.
  *
  */
 public interface IndexEngineCreationEncounter
@@ -28,7 +28,7 @@ public interface IndexEngineCreationEncounter
 	String getUniqueName();
 
 	/**
-	 * Resolve a name against the data directory of the entity the query
+	 * Resolve a name against the data directory of the collection the query
 	 * engine will belong to.
 	 *
 	 * @param name
@@ -37,7 +37,7 @@ public interface IndexEngineCreationEncounter
 	Path resolveDataFile(String name);
 
 	/**
-	 * Resolve a path against the data directory of the entity the query
+	 * Resolve a path against the data directory of the collection the query
 	 * engine will belong to.
 	 *
 	 * @param path

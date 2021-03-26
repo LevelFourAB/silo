@@ -7,26 +7,26 @@ import se.l4.silo.engine.io.BinaryDataInput;
 import se.l4.silo.engine.io.BinaryDataOutput;
 
 /**
- * Operation representing the deletion of a certain id in an entity.
+ * Operation representing the deletion of a certain id in a collection.
  */
 public class DeleteOperation
 	implements TransactionOperation
 {
-	private final String entity;
+	private final String collection;
 	private final Object id;
 
 	public DeleteOperation(
-		String entity,
+		String collection,
 		Object id
 	)
 	{
-		this.entity = entity;
+		this.collection = collection;
 		this.id = id;
 	}
 
-	public String getEntity()
+	public String getCollection()
 	{
-		return entity;
+		return collection;
 	}
 
 	public Object getId()
@@ -39,8 +39,8 @@ public class DeleteOperation
 	{
 		int result = 8;
 
-		// Entity
-		result += 24 + 2 * entity.length();
+		// collection
+		result += 24 + 2 * collection.length();
 
 		// Id
 		result += TransactionOperation.estimateIdMemory(id);
@@ -51,7 +51,7 @@ public class DeleteOperation
 	@Override
 	public int hashCode()
 	{
-		return Objects.hash(entity, id);
+		return Objects.hash(collection, id);
 	}
 
 	@Override
@@ -61,14 +61,14 @@ public class DeleteOperation
 		if(obj == null) return false;
 		if(getClass() != obj.getClass()) return false;
 		DeleteOperation other = (DeleteOperation) obj;
-		return Objects.equals(entity, other.entity)
+		return Objects.equals(collection, other.collection)
 			&& Objects.equals(id, other.id);
 	}
 
 	@Override
 	public String toString()
 	{
-		return "DeleteOperation{entity=" + entity + ", id=" + id + "}";
+		return "DeleteOperation{collection=" + collection + ", id=" + id + "}";
 	}
 
 	/**
@@ -77,11 +77,11 @@ public class DeleteOperation
 	 * @return
 	 */
 	public static DeleteOperation create(
-		String entity,
+		String collection,
 		Object id
 	)
 	{
-		return new DeleteOperation(entity, id);
+		return new DeleteOperation(collection, id);
 	}
 
 	/**
@@ -96,10 +96,10 @@ public class DeleteOperation
 	)
 		throws IOException
 	{
-		String entity = in.readString();
+		String collection = in.readString();
 		Object id = in.readId();
 
-		return new DeleteOperation(entity, id);
+		return new DeleteOperation(collection, id);
 	}
 
 	/**
@@ -115,25 +115,25 @@ public class DeleteOperation
 	)
 		throws IOException
 	{
-		write(out, op.getEntity(), op.getId());
+		write(out, op.getCollection(), op.getId());
 	}
 
 	/**
 	 * Write an operation to the given output.
 	 *
 	 * @param out
-	 * @param entity
+	 * @param collection
 	 * @param id
 	 * @throws IOException
 	 */
 	public static void write(
 		BinaryDataOutput out,
-		String entity,
+		String collection,
 		Object id
 	)
 		throws IOException
 	{
-		out.writeString(entity);
+		out.writeString(collection);
 		out.writeId(id);
 	}
 }

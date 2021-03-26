@@ -8,27 +8,30 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.ListIterable;
 
 import se.l4.silo.engine.Buildable;
-import se.l4.silo.engine.EntityCodec;
-import se.l4.silo.engine.EntityDefinition;
+import se.l4.silo.engine.CollectionDef;
+import se.l4.silo.engine.ObjectCodec;
 import se.l4.silo.engine.index.IndexDefinition;
 import se.l4.ylem.types.reflect.TypeRef;
 import se.l4.ylem.types.reflect.Types;
 
-public class EntityDefinitionImpl<ID, T>
-	implements EntityDefinition<ID, T>
+/**
+ * Implementation of {@link CollectionDef}.
+ */
+public class CollectionDefImpl<ID, T>
+	implements CollectionDef<ID, T>
 {
 	private final String name;
 	private final TypeRef idType;
 	private final TypeRef objectType;
-	private final EntityCodec<T> codec;
+	private final ObjectCodec<T> codec;
 	private final Function<T, ID> idSupplier;
 	private final ImmutableList<IndexDefinition<T>> indexes;
 
-	public EntityDefinitionImpl(
+	public CollectionDefImpl(
 		String name,
 		TypeRef idType,
 		TypeRef objectType,
-		EntityCodec<T> codec,
+		ObjectCodec<T> codec,
 		Function<T, ID> idSupplier,
 		ImmutableList<IndexDefinition<T>> indexes
 	)
@@ -60,7 +63,7 @@ public class EntityDefinitionImpl<ID, T>
 	}
 
 	@Override
-	public EntityCodec<T> getCodec()
+	public ObjectCodec<T> getCodec()
 	{
 		return codec;
 	}
@@ -90,7 +93,7 @@ public class EntityDefinitionImpl<ID, T>
 		private final String name;
 		private final TypeRef idType;
 		private final TypeRef objectType;
-		private final EntityCodec<T> codec;
+		private final ObjectCodec<T> codec;
 		private final Function<T, ID> idSupplier;
 		private final ImmutableList<IndexDefinition<T>> indexes;
 
@@ -98,7 +101,7 @@ public class EntityDefinitionImpl<ID, T>
 			String name,
 			TypeRef idType,
 			TypeRef objectType,
-			EntityCodec<T> codec,
+			ObjectCodec<T> codec,
 			Function<T, ID> idSupplier,
 			ImmutableList<IndexDefinition<T>> indexes
 		)
@@ -112,7 +115,7 @@ public class EntityDefinitionImpl<ID, T>
 		}
 
 		@Override
-		public Builder<ID, T> withCodec(EntityCodec<T> codec)
+		public Builder<ID, T> withCodec(ObjectCodec<T> codec)
 		{
 			return new BuilderImpl<>(
 				name,
@@ -168,12 +171,12 @@ public class EntityDefinitionImpl<ID, T>
 		}
 
 		@Override
-		public EntityDefinition<ID, T> build()
+		public CollectionDef<ID, T> build()
 		{
 			Objects.requireNonNull(codec, "codec must be specified");
 			Objects.requireNonNull(idSupplier, "idSupplier must be specified");
 
-			return new EntityDefinitionImpl<>(name, idType, objectType, codec, idSupplier, indexes);
+			return new CollectionDefImpl<>(name, idType, objectType, codec, idSupplier, indexes);
 		}
 	}
 }

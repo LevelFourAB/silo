@@ -6,7 +6,7 @@ import se.l4.silo.engine.TransactionExchange;
 import se.l4.ylem.io.IOConsumer;
 
 /**
- * Exchange to allow entities to interact with a transaction. Exchanges map
+ * Exchange to allow collections to interact with a transaction. Exchanges map
  * to a single transaction and create transactions as needed.
  */
 public interface WriteableTransactionExchange
@@ -20,31 +20,31 @@ public interface WriteableTransactionExchange
 	long getVersion();
 
 	/**
-	 * Store data for an entity.
+	 * Store data for a collection.
 	 *
-	 * @param entity
+	 * @param collection
 	 * @param id
 	 * @param bytes
 	 * @return
 	 */
-	void store(String entity, Object id, IOConsumer<OutputStream> generator);
+	void store(String collection, Object id, IOConsumer<OutputStream> generator);
 
 	/**
-	 * Delete data associated with an entity.
+	 * Delete data associated with a collection.
 	 *
-	 * @param entity
+	 * @param collection
 	 * @param id
 	 * @return
 	 */
-	void delete(String entity, Object id);
+	void delete(String collection, Object id);
 
 	/**
-	 * Store index data for an entity.
+	 * Store index data for a collection.
 	 *
-	 * @param entity
+	 * @param collection
 	 * @param index
 	 * @param id
 	 * @param bytes
 	 */
-	void index(String entity, String index, Object id, IOConsumer<OutputStream> generator);
+	void index(String collection, String index, Object id, IOConsumer<OutputStream> generator);
 }

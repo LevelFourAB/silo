@@ -8,29 +8,29 @@ import se.l4.silo.engine.io.BinaryDataInput;
 import se.l4.silo.engine.io.BinaryDataOutput;
 
 /**
- * Operation indicating something is being stored in an entity.
+ * Operation indicating something is being stored in a collection.
  */
 public class StoreChunkOperation
 	implements ChunkOperation
 {
-	private final String entity;
+	private final String collection;
 	private final Object id;
 	private final byte[] chunk;
 
 	public StoreChunkOperation(
-		String entity,
+		String collection,
 		Object id,
 		byte[] chunk
 	)
 	{
-		this.entity = entity;
+		this.collection = collection;
 		this.id = id;
 		this.chunk = chunk;
 	}
 
-	public String getEntity()
+	public String getCollection()
 	{
-		return entity;
+		return collection;
 	}
 
 	public Object getId()
@@ -48,8 +48,8 @@ public class StoreChunkOperation
 	{
 		int result = 8;
 
-		// Entity
-		result += 24 + 2 * entity.length();
+		// collection
+		result += 24 + 2 * collection.length();
 
 		// Id
 		result += TransactionOperation.estimateIdMemory(id);
@@ -66,7 +66,7 @@ public class StoreChunkOperation
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + Arrays.hashCode(chunk);
-		result = prime * result + Objects.hash(entity, id);
+		result = prime * result + Objects.hash(collection, id);
 		return result;
 	}
 
@@ -78,31 +78,31 @@ public class StoreChunkOperation
 		if(getClass() != obj.getClass()) return false;
 		StoreChunkOperation other = (StoreChunkOperation) obj;
 		return Arrays.equals(chunk, other.chunk)
-			&& Objects.equals(entity, other.entity)
+			&& Objects.equals(collection, other.collection)
 			&& Objects.equals(id, other.id);
 	}
 
 	@Override
 	public String toString()
 	{
-		return "StoreOperation{entity=" + entity + ", id=" + id + ", chunkSize=" + chunk.length + "}";
+		return "StoreOperation{collection=" + collection + ", id=" + id + ", chunkSize=" + chunk.length + "}";
 	}
 
 	/**
 	 * Create an instance of this operation.
 	 *
-	 * @param entity
+	 * @param collection
 	 * @param id
 	 * @param chunk
 	 * @return
 	 */
 	public static StoreChunkOperation create(
-		String entity,
+		String collection,
 		Object id,
 		byte[] chunk
 	)
 	{
-		return new StoreChunkOperation(entity, id, chunk);
+		return new StoreChunkOperation(collection, id, chunk);
 	}
 
 	/**
@@ -119,11 +119,11 @@ public class StoreChunkOperation
 	)
 		throws IOException
 	{
-		String entity = in.readString();
+		String collection = in.readString();
 		Object id = in.readId();
 		byte[] data = in.readByteArray();
 
-		return new StoreChunkOperation(entity, id, data);
+		return new StoreChunkOperation(collection, id, data);
 	}
 
 	/**
@@ -143,7 +143,7 @@ public class StoreChunkOperation
 	{
 		write(
 			out,
-			op.getEntity(),
+			op.getCollection(),
 			op.getId(),
 			op.getData(),
 			0,
@@ -155,7 +155,7 @@ public class StoreChunkOperation
 	 * Write an operation to the given output.
 	 *
 	 * @param out
-	 * @param entity
+	 * @param collection
 	 * @param id
 	 * @param chunk
 	 * @param chunkOffset
@@ -164,7 +164,7 @@ public class StoreChunkOperation
 	 */
 	public static void write(
 		BinaryDataOutput out,
-		String entity,
+		String collection,
 		Object id,
 		byte[] chunk,
 		int chunkOffset,
@@ -172,7 +172,7 @@ public class StoreChunkOperation
 	)
 		throws IOException
 	{
-		out.writeString(entity);
+		out.writeString(collection);
 		out.writeId(id);
 		out.writeByteArray(chunk, chunkOffset, chunkLength);
 	}
@@ -181,18 +181,18 @@ public class StoreChunkOperation
 	 * Write an operation to the given output.
 	 *
 	 * @param out
-	 * @param entity
+	 * @param collection
 	 * @param id
 	 * @throws IOException
 	 */
 	public static void writeEnd(
 		BinaryDataOutput out,
-		String entity,
+		String collection,
 		Object id
 	)
 		throws IOException
 	{
-		out.writeString(entity);
+		out.writeString(collection);
 		out.writeId(id);
 		out.writeVInt(0);
 	}

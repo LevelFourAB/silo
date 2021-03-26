@@ -1,7 +1,7 @@
 package se.l4.silo.engine.internal.index.basic;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 import java.util.Collections;
 import java.util.List;
@@ -11,11 +11,11 @@ import org.junit.jupiter.api.Test;
 
 import se.l4.exobytes.AnnotationSerialization;
 import se.l4.exobytes.Expose;
-import se.l4.silo.Entity;
-import se.l4.silo.EntityRef;
-import se.l4.silo.engine.EntityCodec;
-import se.l4.silo.engine.EntityDefinition;
+import se.l4.silo.Collection;
+import se.l4.silo.CollectionRef;
+import se.l4.silo.engine.CollectionDef;
 import se.l4.silo.engine.LocalSilo;
+import se.l4.silo.engine.ObjectCodec;
 import se.l4.silo.engine.index.basic.BasicFieldDefinition;
 import se.l4.silo.engine.index.basic.BasicIndexDefinition;
 import se.l4.silo.engine.internal.BasicTest;
@@ -44,8 +44,8 @@ public class BasicIndexQueryEngineTest
 			.withSupplier(TestData::getField3)
 			.build();
 
-		EntityDefinition<Long, TestData> test = EntityDefinition.create(TestData.class, "test")
-			.withCodec(EntityCodec.serialized(serializers, TestData.class))
+		CollectionDef<Long, TestData> test = CollectionDef.create(TestData.class, "test")
+			.withCodec(ObjectCodec.serialized(serializers, TestData.class))
 			.withId(Long.class, TestData::getId)
 			.addIndex(BasicIndexDefinition.create(TestData.class, "byField1")
 				.addField(field1)
@@ -66,23 +66,23 @@ public class BasicIndexQueryEngineTest
 			)
 			.build();
 
-		return builder.addEntity(test);
+		return builder.addCollection(test);
 	}
 
-	private Entity<Long, TestData> entity()
+	private Collection<Long, TestData> collection()
 	{
-		return instance().entity(EntityRef.create("test", Long.class, TestData.class));
+		return instance().getCollection(CollectionRef.create("test", Long.class, TestData.class));
 	}
 
 	@Test
 	public void testStore()
 	{
-		Entity<Long, TestData> entity = entity();
+		Collection<Long, TestData> collection = collection();
 
 		TestData obj = new TestData(1, "value1", false, Collections.emptyList());
-		entity.store(obj).block();
+		collection.store(obj).block();
 
-		BasicIndexResult<TestData> fr = entity.fetch(BasicIndexQuery.create("byField1", TestData.class)
+		BasicIndexResult<TestData> fr = collection.fetch(BasicIndexQuery.create("byField1", TestData.class)
 			.field("field1").isEqualTo("value1")
 			.build()
 		).block();
@@ -94,21 +94,21 @@ public class BasicIndexQueryEngineTest
 	@Test
 	public void testStoreDelete()
 	{
-		Entity<Long, TestData> entity = entity();
+		Collection<Long, TestData> collection = collection();
 
 		TestData obj = new TestData(1, "value1", false, Collections.emptyList());
-		entity.store(obj).block();
+		collection.store(obj).block();
 
-		BasicIndexResult<TestData> fr = entity.fetch(BasicIndexQuery.create("byField1", TestData.class)
+		BasicIndexResult<TestData> fr = collection.fetch(BasicIndexQuery.create("byField1", TestData.class)
 			.field("field1").isEqualTo("value1")
 			.build()
 		).block();
 
 		assertThat(fr.getSize(), is(1l));
 
-		entity.delete(1l).block();
+		collection.delete(1l).block();
 
-		fr = entity.fetch(BasicIndexQuery.create("byField1", TestData.class)
+		fr = collection.fetch(BasicIndexQuery.create("byField1", TestData.class)
 			.field("field1").isEqualTo("value1")
 			.build()
 		).block();
@@ -119,12 +119,12 @@ public class BasicIndexQueryEngineTest
 	@Test
 	public void testStoreReplace()
 	{
-		Entity<Long, TestData> entity = entity();
+		Collection<Long, TestData> collection = collection();
 
 		TestData obj = new TestData(1, "value1", false, Collections.emptyList());
-		entity.store(obj).block();
+		collection.store(obj).block();
 
-		BasicIndexResult<TestData> fr = entity.fetch(BasicIndexQuery.create("byField1", TestData.class)
+		BasicIndexResult<TestData> fr = collection.fetch(BasicIndexQuery.create("byField1", TestData.class)
 			.field("field1").isEqualTo("value1")
 			.build()
 		).block();
@@ -133,10 +133,10 @@ public class BasicIndexQueryEngineTest
 
 		// Replace with new data
 		obj = new TestData(1, "value2", false, Collections.emptyList());
-		entity.store(obj).block();
+		collection.store(obj).block();
 
 		// value1 should no longer match
-		fr = entity.fetch(BasicIndexQuery.create("byField1", TestData.class)
+		fr = collection.fetch(BasicIndexQuery.create("byField1", TestData.class)
 			.field("field1").isEqualTo("value1")
 			.build()
 		).block();
@@ -144,7 +144,7 @@ public class BasicIndexQueryEngineTest
 		assertThat(fr.getSize(), is(0l));
 
 		// value2 should now match
-		fr = entity.fetch(BasicIndexQuery.create("byField1", TestData.class)
+		fr = collection.fetch(BasicIndexQuery.create("byField1", TestData.class)
 			.field("field1").isEqualTo("value2")
 			.build()
 		).block();
@@ -155,14 +155,14 @@ public class BasicIndexQueryEngineTest
 	@Test
 	public void testStoreMultiple1()
 	{
-		Entity<Long, TestData> entity = entity();
+		Collection<Long, TestData> collection = collection();
 
 		TestData obj1 = new TestData(1, "value1", false, Collections.emptyList());
-		entity.store(obj1).block();
+		collection.store(obj1).block();
 		TestData obj2 = new TestData(2, "value1", true, Collections.emptyList());
-		entity.store(obj2).block();
+		collection.store(obj2).block();
 
-		BasicIndexResult<TestData> fr = entity.fetch(BasicIndexQuery.create("byField1", TestData.class)
+		BasicIndexResult<TestData> fr = collection.fetch(BasicIndexQuery.create("byField1", TestData.class)
 			.field("field1").isEqualTo("value1")
 			.build()
 		).block();
@@ -173,16 +173,16 @@ public class BasicIndexQueryEngineTest
 	@Test
 	public void testStoreMultiple2()
 	{
-		Entity<Long, TestData> entity = entity();
+		Collection<Long, TestData> collection = collection();
 
 		instance().transactions().inTransaction(() -> {
 			TestData obj1 = new TestData(1, "value2", false, Collections.emptyList());
-			entity.store(obj1).block();
+			collection.store(obj1).block();
 			TestData obj2 = new TestData(2, "value2", true, Collections.emptyList());
-			entity.store(obj2).block();
+			collection.store(obj2).block();
 		}).block();
 
-		BasicIndexResult<TestData> fr = entity.fetch(BasicIndexQuery.create("byField1", TestData.class)
+		BasicIndexResult<TestData> fr = collection.fetch(BasicIndexQuery.create("byField1", TestData.class)
 			.field("field1").isEqualTo("value2")
 			.build()
 		).block();
@@ -193,12 +193,12 @@ public class BasicIndexQueryEngineTest
 	@Test
 	public void testStoreDeleteStore()
 	{
-		Entity<Long, TestData> entity = entity();
+		Collection<Long, TestData> collection = collection();
 
 		TestData obj1 = new TestData(1, "value1", false, Collections.emptyList());
-		entity.store(obj1).block();
+		collection.store(obj1).block();
 
-		BasicIndexResult<TestData> fr = entity.fetch(BasicIndexQuery.create("byField1", TestData.class)
+		BasicIndexResult<TestData> fr = collection.fetch(BasicIndexQuery.create("byField1", TestData.class)
 			.field("field1").isEqualTo("value1")
 			.build()
 		).block();
@@ -206,9 +206,9 @@ public class BasicIndexQueryEngineTest
 		assertThat(fr.getSize(), is(1l));
 
 		TestData obj2 = new TestData(1, "value2", false, Collections.emptyList());
-		entity.store(obj2).block();
+		collection.store(obj2).block();
 
-		fr = entity.fetch(BasicIndexQuery.create("byField1", TestData.class)
+		fr = collection.fetch(BasicIndexQuery.create("byField1", TestData.class)
 			.field("field1").isEqualTo("value1")
 			.build()
 		).block();
@@ -216,9 +216,9 @@ public class BasicIndexQueryEngineTest
 		assertThat(fr.getSize(), is(0l));
 
 		TestData obj3 = new TestData(1, "value1", false, Collections.emptyList());
-		entity.store(obj3).block();
+		collection.store(obj3).block();
 
-		fr = entity.fetch(BasicIndexQuery.create("byField1", TestData.class)
+		fr = collection.fetch(BasicIndexQuery.create("byField1", TestData.class)
 			.field("field1").isEqualTo("value1")
 			.build()
 		).block();
@@ -229,12 +229,12 @@ public class BasicIndexQueryEngineTest
 	@Test
 	public void testCollection()
 	{
-		Entity<Long, TestData> entity = entity();
+		Collection<Long, TestData> collection = collection();
 
 		TestData obj1 = new TestData(1, "value1", false, List.of("v2", "v1"));
-		entity.store(obj1).block();
+		collection.store(obj1).block();
 
-		BasicIndexResult<TestData> fr = entity.fetch(BasicIndexQuery.create("byField3", TestData.class)
+		BasicIndexResult<TestData> fr = collection.fetch(BasicIndexQuery.create("byField3", TestData.class)
 			.field("field3").isEqualTo("v1")
 			.build()
 		).block();

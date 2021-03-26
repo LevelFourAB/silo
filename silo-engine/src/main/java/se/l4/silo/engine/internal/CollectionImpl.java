@@ -7,18 +7,18 @@ import reactor.core.publisher.Mono;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.FetchResult;
 import se.l4.silo.StoreResult;
-import se.l4.silo.engine.LocalEntity;
+import se.l4.silo.engine.LocalCollection;
 import se.l4.silo.engine.index.LocalIndex;
 import se.l4.silo.index.Query;
 
-public class EntityImpl<ID, T>
-	implements LocalEntity<ID, T>
+public class CollectionImpl<ID, T>
+	implements LocalCollection<ID, T>
 {
 	private final String name;
 	private final Function<T, ID> idSupplier;
 	private final Storage<T> storage;
 
-	public EntityImpl(
+	public CollectionImpl(
 		String name,
 		Function<T, ID> idSupplier,
 		Storage<T> storage

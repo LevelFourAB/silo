@@ -8,8 +8,9 @@ import org.eclipse.collections.api.factory.Lists;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import se.l4.silo.EntityRef;
+import se.l4.silo.CollectionRef;
 import se.l4.silo.Silo;
+import se.l4.silo.StorageException;
 import se.l4.silo.engine.internal.LocalSiloImpl;
 import se.l4.silo.engine.log.DirectApplyLog;
 import se.l4.silo.engine.log.LogBuilder;
@@ -22,30 +23,42 @@ public interface LocalSilo
 	extends Silo
 {
 	/**
-	 * Get an entity.
+	 * Get a collection.
 	 *
-	 * @param entityName
 	 * @param ref
+	 *   reference to the collection
+	 * @return
+	 *   found collection
+	 * @throws StorageException
+	 *   if collection can not be found
 	 */
-	<ID, T> LocalEntity<ID, T> entity(EntityRef<ID, T> ref);
+	<ID, T> LocalCollection<ID, T> getCollection(CollectionRef<ID, T> ref);
 
 	/**
-	 * Get an entity.
+	 * Get a collection.
 	 *
-	 * @param entityName
-	 * @param type
+	 * @param name
+	 *   name
+	 * @param idType
+	 *   the type of ids used
+	 * @param objectType
+	 *   the type of object stored
+	 * @return
+	 *   found collection
+	 * @throws StorageException
+	 *   if collection can not be found
 	 */
-	default <ID, T> LocalEntity<ID, T> entity(String name, Class<ID> idType, Class<T> objectType)
+	default <ID, T> LocalCollection<ID, T> getCollection(String name, Class<ID> idType, Class<T> objectType)
 	{
-		return entity(EntityRef.create(name, idType, objectType));
+		return getCollection(CollectionRef.create(name, idType, objectType));
 	}
 
 	/**
-	 * Get all of the entities.
+	 * Get all of the collections.
 	 *
 	 * @return
 	 */
-	Flux<LocalEntity<?, ?>> entities();
+	Flux<LocalCollection<?, ?>> collections();
 
 	/**
 	 * Close this instance.
@@ -144,20 +157,20 @@ public interface LocalSilo
 		Builder withCacheSize(int cacheSizeInMb);
 
 		/**
-		 * Add an entity that should be available.
+		 * Add a collection that should be available.
 		 *
 		 * @param definition
 		 * @return
 		 */
-		Builder addEntity(EntityDefinition<?, ?> definition);
+		Builder addCollection(CollectionDef<?, ?> definition);
 
 		/**
-		 * Add an entity.
+		 * Add a collection.
 		 *
 		 * @param buildable
 		 * @return
 		 */
-		Builder addEntity(Buildable<? extends EntityDefinition<?, ?>> buildable);
+		Builder addCollection(Buildable<? extends CollectionDef<?, ?>> buildable);
 
 		/**
 		 * Add multiple definitions to this instance.
@@ -165,7 +178,7 @@ public interface LocalSilo
 		 * @param definitions
 		 * @return
 		 */
-		Builder addEntities(Iterable<? extends EntityDefinition<?, ?>> definitions);
+		Builder addCollections(Iterable<? extends CollectionDef<?, ?>> definitions);
 
 		/**
 		 * Return a mono that will start this instance.

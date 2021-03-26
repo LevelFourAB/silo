@@ -5,19 +5,19 @@ import reactor.core.publisher.Mono;
 import se.l4.silo.index.Query;
 
 /**
- * Base for entities in {@link Silo}.
+ * Collection of stored objects in {@link Silo}.
  */
-public interface Entity<ID, T>
+public interface Collection<ID, T>
 {
 	/**
-	 * Get the name of this entity.
+	 * Get the name of this collection.
 	 *
 	 * @return
 	 */
 	String getName();
 
 	/**
-	 * Get stored data using an identifier.
+	 * Get stored object using an identifier.
 	 *
 	 * @param id
 	 * @return
@@ -25,7 +25,7 @@ public interface Entity<ID, T>
 	Mono<T> get(ID id);
 
 	/**
-	 * Check if data with the given identifier exists.
+	 * Check if an object with the given identifier exists.
 	 *
 	 * @param id
 	 * @return
@@ -33,7 +33,9 @@ public interface Entity<ID, T>
 	Mono<Boolean> contains(ID id);
 
 	/**
-	 * Store data in the entity.
+	 * Store an object in this collection. If the id of the object already
+	 * exists it will be replaced, if the id does not exist a new object will
+	 * be stored.
 	 *
 	 * @param object
 	 * @return
@@ -41,7 +43,7 @@ public interface Entity<ID, T>
 	Mono<StoreResult<ID, T>> store(T object);
 
 	/**
-	 * Delete data associated with the given identifier.
+	 * Delete object with the given identifier.
 	 *
 	 * @param id
 	 * @return
@@ -49,7 +51,7 @@ public interface Entity<ID, T>
 	Mono<DeleteResult<ID, T>> delete(ID id);
 
 	/**
-	 * Fetch data from this entity using the given query.
+	 * Fetch objects using the given query.
 	 *
 	 * @param query
 	 * @return

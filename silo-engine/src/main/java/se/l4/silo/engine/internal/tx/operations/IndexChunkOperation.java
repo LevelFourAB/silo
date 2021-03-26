@@ -11,32 +11,32 @@ import se.l4.silo.engine.io.BinaryDataOutput;
 public class IndexChunkOperation
 	implements ChunkOperation
 {
-	private final String entity;
+	private final String collection;
 	private final String index;
 	private final Object id;
 	private final byte[] chunk;
 
 	private IndexChunkOperation(
-		String entity,
+		String collection,
 		String index,
 		Object id,
 		byte[] chunk
 	)
 	{
-		this.entity = entity;
+		this.collection = collection;
 		this.index = index;
 		this.id = id;
 		this.chunk = chunk;
 	}
 
 	/**
-	 * Get entity this operation applies to.
+	 * Get collection this operation applies to.
 	 *
 	 * @return
 	 */
-	public String getEntity()
+	public String getCollection()
 	{
-		return entity;
+		return collection;
 	}
 
 	/**
@@ -74,8 +74,8 @@ public class IndexChunkOperation
 	{
 		int result = 8;
 
-		// Entity
-		result += 24 + 2 * entity.length();
+		// collection
+		result += 24 + 2 * collection.length();
 
 		// Index
 		result += 24 + 2 * index.length();
@@ -92,20 +92,20 @@ public class IndexChunkOperation
 	/**
 	 * Create an instance of this operation.
 	 *
-	 * @param entity
+	 * @param collection
 	 * @param index
 	 * @param id
 	 * @param chunk
 	 * @return
 	 */
 	public static IndexChunkOperation create(
-		String entity,
+		String collection,
 		String index,
 		Object id,
 		byte[] chunk
 	)
 	{
-		return new IndexChunkOperation(entity, index, id, chunk);
+		return new IndexChunkOperation(collection, index, id, chunk);
 	}
 
 	/**
@@ -122,12 +122,12 @@ public class IndexChunkOperation
 	)
 		throws IOException
 	{
-		String entity = in.readString();
+		String collection = in.readString();
 		String index = in.readString();
 		Object id = in.readId();
 		byte[] data = in.readByteArray();
 
-		return new IndexChunkOperation(entity, index, id, data);
+		return new IndexChunkOperation(collection, index, id, data);
 	}
 
 	/**
@@ -147,7 +147,7 @@ public class IndexChunkOperation
 	{
 		write(
 			out,
-			op.getEntity(),
+			op.getCollection(),
 			op.getIndex(),
 			op.getId(),
 			op.getData(),
@@ -160,7 +160,7 @@ public class IndexChunkOperation
 	 * Write an operation to the given output.
 	 *
 	 * @param out
-	 * @param entity
+	 * @param collection
 	 * @param index
 	 * @param id
 	 * @param chunk
@@ -170,7 +170,7 @@ public class IndexChunkOperation
 	 */
 	public static void write(
 		BinaryDataOutput out,
-		String entity,
+		String collection,
 		String index,
 		Object id,
 		byte[] chunk,
@@ -179,7 +179,7 @@ public class IndexChunkOperation
 	)
 		throws IOException
 	{
-		out.writeString(entity);
+		out.writeString(collection);
 		out.writeString(index);
 		out.writeId(id);
 		out.writeByteArray(chunk, chunkOffset, chunkLength);
@@ -189,20 +189,20 @@ public class IndexChunkOperation
 	 * Write an operation to the given output.
 	 *
 	 * @param out
-	 * @param entity
+	 * @param collection
 	 * @param index
 	 * @param id
 	 * @throws IOException
 	 */
 	public static void writeEnd(
 		BinaryDataOutput out,
-		String entity,
+		String collection,
 		String index,
 		Object id
 	)
 		throws IOException
 	{
-		out.writeString(entity);
+		out.writeString(collection);
 		out.writeString(index);
 		out.writeId(id);
 		out.writeVInt(0);

@@ -4,11 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Interface representing the operations that acutally modify the underlying
+ * Interface representing the operations that actually modify the underlying
  * storage.
- *
- * @author Andreas Holstenson
- *
  */
 public interface StorageApplier
 {
@@ -20,34 +17,35 @@ public interface StorageApplier
 	void transactionStart(long id);
 
 	/**
-	 * Store some data for the given entity and identifier.
+	 * Store some data for the given collection and identifier.
 	 *
-	 * @param entity
+	 * @param collection
 	 * @param id
 	 * @param data
 	 * @throws IOException
 	 */
-	void store(String entity, Object id, InputStream data)
+	void store(String collection, Object id, InputStream data)
 		throws IOException;
 
 	/**
-	 * Delete data for the given entity and identifier.
+	 * Delete data for the given collection and identifier.
 	 *
-	 * @param entity
+	 * @param collection
 	 * @param id
 	 */
-	void delete(String entity, Object id)
+	void delete(String collection, Object id)
 		throws IOException;
 
 	/**
+	 * Receive data used for an index in a collection.
 	 *
-	 * @param entity
+	 * @param collection
 	 * @param index
 	 * @param id
 	 * @param data
 	 * @throws IOException
 	 */
-	void index(String entity, String index, Object id, InputStream data)
+	void index(String collection, String index, Object id, InputStream data)
 		throws IOException;
 
 	/**

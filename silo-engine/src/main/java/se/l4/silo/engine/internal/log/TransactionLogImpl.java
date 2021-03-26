@@ -76,7 +76,7 @@ public class TransactionLogImpl
 	@Override
 	public void store(
 		long tx,
-		String entity,
+		String collection,
 		Object id,
 		IOConsumer<OutputStream> generator
 	)
@@ -86,7 +86,7 @@ public class TransactionLogImpl
 			ChunkOutputStream.Control control = (data, offset, length) -> {
 				if(logger.isTraceEnabled())
 				{
-					logger.trace("[" + tx + "] Wrote chunk for " + entity + "[" + id + "]: " + Base64.getEncoder().encodeToString(data));
+					logger.trace("[" + tx + "] Wrote chunk for " + collection + "[" + id + "]: " + Base64.getEncoder().encodeToString(data));
 				}
 
 				log.append(Bytes.capture(stream -> {
@@ -95,7 +95,7 @@ public class TransactionLogImpl
 					out.write(MessageConstants.STORE_CHUNK);
 					out.writeVLong(tx);
 
-					StoreChunkOperation.write(out, entity, id, data, offset, length);
+					StoreChunkOperation.write(out, collection, id, data, offset, length);
 				}));
 			};
 
@@ -107,10 +107,10 @@ public class TransactionLogImpl
 			// Close and flush the output
 			chunkOutput.close();
 
-			// Write a zero length chunk to indicate end of entity
+			// Write a zero length chunk to indicate end of object
 			if(logger.isTraceEnabled())
 			{
-				logger.trace("[" + tx + "] Wrote end of data for " + entity + "[" + id + "]");
+				logger.trace("[" + tx + "] Wrote end of data for " + collection + "[" + id + "]");
 			}
 
 			log.append(Bytes.capture(stream -> {
@@ -118,23 +118,23 @@ public class TransactionLogImpl
 				out.write(MessageConstants.STORE_CHUNK);
 				out.writeVLong(tx);
 
-				StoreChunkOperation.writeEnd(out, entity, id);
+				StoreChunkOperation.writeEnd(out, collection, id);
 			}));
 		}
 		catch(IOException e)
 		{
-			throw new StorageException("Could not store " + entity + " with id " + id + " in transaction" + tx + "; " + e.getMessage(), e);
+			throw new StorageException("Could not store " + collection + " with id " + id + " in transaction" + tx + "; " + e.getMessage(), e);
 		}
 	}
 
 	@Override
-	public void delete(long tx, String entity, Object id)
+	public void delete(long tx, String collection, Object id)
 	{
 		try
 		{
 			if(logger.isTraceEnabled())
 			{
-				logger.trace("[" + tx + "] Wrote delete for " + entity + "[" + id + "]");
+				logger.trace("[" + tx + "] Wrote delete for " + collection + "[" + id + "]");
 			}
 
 			log.append(Bytes.capture(stream -> {
@@ -143,19 +143,19 @@ public class TransactionLogImpl
 				out.write(MessageConstants.DELETE);
 				out.writeVLong(tx);
 
-				DeleteOperation.write(out, entity, id);
+				DeleteOperation.write(out, collection, id);
 			}));
 		}
 		catch(IOException e)
 		{
-			throw new StorageException("Could not delete " + entity + " with id " + id + " in transaction" + tx + ", log said: " + e.getMessage(), e);
+			throw new StorageException("Could not delete " + collection + " with id " + id + " in transaction" + tx + ", log said: " + e.getMessage(), e);
 		}
 	}
 
 	@Override
 	public void storeIndex(
 		long tx,
-		String entity,
+		String collection,
 		String index,
 		Object id,
 		IOConsumer<OutputStream> generator
@@ -166,7 +166,7 @@ public class TransactionLogImpl
 			ChunkOutputStream.Control control = (data, offset, length) -> {
 				if(logger.isTraceEnabled())
 				{
-					logger.trace("[" + tx + "] Wrote index chunk for " + entity + "[" + id + "]: " + Base64.getEncoder().encodeToString(data));
+					logger.trace("[" + tx + "] Wrote index chunk for " + collection + "[" + id + "]: " + Base64.getEncoder().encodeToString(data));
 				}
 
 				log.append(Bytes.capture(stream -> {
@@ -177,7 +177,7 @@ public class TransactionLogImpl
 
 					IndexChunkOperation.write(
 						out,
-						entity,
+						collection,
 						index,
 						id,
 						data,
@@ -199,7 +199,7 @@ public class TransactionLogImpl
 
 			if(logger.isTraceEnabled())
 			{
-				logger.trace("[" + tx + "] Wrote end of data for " + entity + "[" + id + "]");
+				logger.trace("[" + tx + "] Wrote end of data for " + collection + "[" + id + "]");
 			}
 
 			log.append(Bytes.capture(stream -> {
@@ -209,7 +209,7 @@ public class TransactionLogImpl
 
 				IndexChunkOperation.writeEnd(
 					out,
-					entity,
+					collection,
 					index,
 					id
 				);
@@ -217,7 +217,7 @@ public class TransactionLogImpl
 		}
 		catch(IOException e)
 		{
-			throw new StorageException("Could not store index " + index + " in " + entity + " with id " + id + " in transaction" + tx + "; " + e.getMessage(), e);
+			throw new StorageException("Could not store index " + index + " in " + collection + " with id " + id + " in transaction" + tx + "; " + e.getMessage(), e);
 		}
 	}
 

@@ -2,8 +2,8 @@ package se.l4.silo.engine.internal;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import se.l4.silo.Collection;
 import se.l4.silo.DeleteResult;
-import se.l4.silo.Entity;
 import se.l4.silo.FetchResult;
 import se.l4.silo.StoreResult;
 import se.l4.silo.engine.index.IndexDefinition;
@@ -11,7 +11,7 @@ import se.l4.silo.engine.index.LocalIndex;
 import se.l4.silo.index.Query;
 
 /**
- * Storage that can be used by {@link Entity entities}.
+ * Storage that can be used by {@link Collection collections}.
  */
 public interface Storage<T>
 {
@@ -47,7 +47,7 @@ public interface Storage<T>
 	Mono<LocalIndex> getIndex(String name);
 
 	/**
-	 * Get a {@link Flux} with all of the indexes in this entity.
+	 * Get a {@link Flux} with all of the indexes in this collection.
 	 *
 	 * @return
 	 */

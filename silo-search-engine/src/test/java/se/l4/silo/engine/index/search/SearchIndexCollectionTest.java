@@ -1,22 +1,22 @@
 package se.l4.silo.engine.index.search;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 import org.junit.jupiter.api.Test;
 
-import se.l4.silo.Entity;
+import se.l4.silo.Collection;
 import se.l4.silo.Transaction;
-import se.l4.silo.engine.EntityCodec;
-import se.l4.silo.engine.EntityDefinition;
+import se.l4.silo.engine.CollectionDef;
 import se.l4.silo.engine.LocalSilo;
+import se.l4.silo.engine.ObjectCodec;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
 import se.l4.silo.engine.internal.BasicTest;
 import se.l4.silo.engine.internal.TestUserData;
 import se.l4.silo.index.search.PaginatedSearchResult;
 import se.l4.silo.index.search.SearchIndexQuery;
 
-public class SearchObjectEntityTest
+public class SearchIndexCollectionTest
 	extends BasicTest
 {
 	@Override
@@ -43,40 +43,40 @@ public class SearchObjectEntityTest
 			)
 			.build();
 
-		return builder.addEntity(EntityDefinition.create(TestUserData.class, "test")
-			.withCodec(EntityCodec.serialized(serializers, TestUserData.class))
+		return builder.addCollection(CollectionDef.create(TestUserData.class, "test")
+			.withCodec(ObjectCodec.serialized(serializers, TestUserData.class))
 			.withId(Integer.class, TestUserData::getId)
 			.addIndex(index)
 			.build());
 	}
 
-	private Entity<Long, TestUserData> entity()
+	private Collection<Long, TestUserData> collection()
 	{
-		return instance().entity("test", Long.class, TestUserData.class);
+		return instance().getCollection("test", Long.class, TestUserData.class);
 	}
 
 	@Test
 	public void testStore()
 	{
-		Entity<Long, TestUserData> entity = entity();
+		Collection<Long, TestUserData> collection = collection();
 
 		TestUserData data = new TestUserData(1, "Donna", 30, true);
 
-		entity.store(data)
+		collection.store(data)
 			.block();
 	}
 
 	@Test
 	public void testQueryAll()
 	{
-		Entity<Long, TestUserData> entity = entity();
+		Collection<Long, TestUserData> collection = collection();
 
 		TestUserData data = new TestUserData(1, "Donna", 30, true);
 
-		entity.store(data)
+		collection.store(data)
 			.block();
 
-		PaginatedSearchResult<TestUserData> result = entity.fetch(
+		PaginatedSearchResult<TestUserData> result = collection.fetch(
 			SearchIndexQuery.create("index", TestUserData.class)
 				.limited()
 				.build()
@@ -88,18 +88,18 @@ public class SearchObjectEntityTest
 	@Test
 	public void testQueryInTransaction()
 	{
-		Entity<Long, TestUserData> entity = entity();
+		Collection<Long, TestUserData> collection = collection();
 
-		entity.store(new TestUserData(1, "Donna", 30, true))
+		collection.store(new TestUserData(1, "Donna", 30, true))
 			.block();
 
 		Transaction tx = instance().transactions().newTransaction().block();
 
-		entity.store(new TestUserData(2, "Steve", 30, true))
+		collection.store(new TestUserData(2, "Steve", 30, true))
 			.block();
 
 		PaginatedSearchResult<TestUserData> result = tx.execute(v ->
-			entity.fetch(
+			collection.fetch(
 				SearchIndexQuery.create("index", TestUserData.class)
 					.limited()
 					.build()
@@ -110,7 +110,7 @@ public class SearchObjectEntityTest
 
 		tx.commit().block();
 
-		result = entity.fetch(
+		result = collection.fetch(
 			SearchIndexQuery.create("index", TestUserData.class)
 				.limited()
 				.build()

@@ -5,20 +5,20 @@ extendable indexing and backup support. Silo runs on Java 9+ and is intended to
 be used as an embedded part of larger solutions.
 
 ```java
-// Definition of a an entity named `books`
-EntityDefinition booksDef = EntityDefinition.create("books", Book.class)
+// Definition of a collection named `books`
+CollectionDef booksDef = CollectionDef.create("books", Book.class)
   .withCodec(...)
   .withId(Book::getId)
   .build();
 
-// Start a Silo instance with one entity
+// Start a Silo instance with one collection
 LocalSilo silo = LocalSilo.open("path/to/data/directory")
-  .addEntity(booksDef)
+  .addCollection(booksDef)
   .start()
   .block();
 
 // Get `Entity` object to perform operations
-Entity<Long, Book> books = silo.entity("books", Long.class, Books.class);
+Collection<Long, Book> books = silo.getCollection("books", Long.class, Books.class);
 
 // Store an object
 books.store(new Book(1l, "The Tourist's Guide through North Wales"))

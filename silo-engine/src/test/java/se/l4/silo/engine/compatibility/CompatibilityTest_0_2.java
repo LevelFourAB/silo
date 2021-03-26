@@ -1,9 +1,9 @@
 package se.l4.silo.engine.compatibility;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -21,10 +21,10 @@ import org.junit.jupiter.api.Test;
 import se.l4.exobytes.AnnotationSerialization;
 import se.l4.exobytes.Expose;
 import se.l4.exobytes.Serializers;
-import se.l4.silo.Entity;
-import se.l4.silo.engine.EntityCodec;
-import se.l4.silo.engine.EntityDefinition;
+import se.l4.silo.Collection;
+import se.l4.silo.engine.CollectionDef;
 import se.l4.silo.engine.LocalSilo;
+import se.l4.silo.engine.ObjectCodec;
 import se.l4.silo.engine.internal.DataUtils;
 import se.l4.silo.engine.internal.SiloTest;
 
@@ -32,7 +32,7 @@ import se.l4.silo.engine.internal.SiloTest;
  * This test ensures compatibility with the 0.2.x series when it comes to stored
  * data.
  *
- * The 0.2 compatibility file contains two entities with data:
+ * The 0.2 compatibility file contains two collections with data:
  *
  * * `object`, long id from 1 to 1000 - DataObject serialization
  * * `binary`, int id from 1 to 100
@@ -55,14 +55,14 @@ public class CompatibilityTest_0_2
 
 		// Open the Silo instance
 		silo = LocalSilo.open(tmp)
-			.addEntity(
-				EntityDefinition.create(DataObject.class, "object")
-					.withCodec(EntityCodec.serialized(Serializers.create().build(), DataObject.class))
+			.addCollection(
+				CollectionDef.create(DataObject.class, "object")
+					.withCodec(ObjectCodec.serialized(Serializers.create().build(), DataObject.class))
 					.withId(Long.class, DataObject::getId)
 					.build()
 			)
-			.addEntity(
-				EntityDefinition.create(InMemoryBlob.class, "binary")
+			.addCollection(
+				CollectionDef.create(InMemoryBlob.class, "binary")
 					.withCodec(new InMemoryBlobCodec())
 					.withId(Integer.class, o -> { throw new UnsupportedOperationException(); })
 					.build()
@@ -83,43 +83,43 @@ public class CompatibilityTest_0_2
 	@Test
 	public void testObject()
 	{
-		Entity<Long, DataObject> entity = silo.entity("object", Long.class, DataObject.class);
+		Collection<Long, DataObject> collection = silo.getCollection("object", Long.class, DataObject.class);
 		for(int i=1; i<=1000; i++)
 		{
-			DataObject o = entity.get((long) i).block();
+			DataObject o = collection.get((long) i).block();
 			assertThat(o, is(new DataObject(i, "U" + i, i % 30, i % 2 == 0)));
 		}
 
-		assertThat(entity.get(1001l).block(), nullValue());
+		assertThat(collection.get(1001l).block(), nullValue());
 	}
 
 	@Test
 	public void testStoreNewObject()
 	{
-		Entity<Long, DataObject> entity = silo.entity("object", Long.class, DataObject.class);
+		Collection<Long, DataObject> collection = silo.getCollection("object", Long.class, DataObject.class);
 
 		DataObject o = new DataObject(1001, "Test", 31, false);
-		entity.store(o).block();
+		collection.store(o).block();
 
 		// Test that all of the values are still available
 		for(int i=1; i<=1000; i++)
 		{
-			DataObject l = entity.get((long) i).block();
+			DataObject l = collection.get((long) i).block();
 			assertThat(l, is(new DataObject(i, "U" + i, i % 30, i % 2 == 0)));
 		}
 
-		assertThat(entity.get(1001l).block(), is(o));
+		assertThat(collection.get(1001l).block(), is(o));
 	}
 
 	@Test
 	public void testBinary()
 		throws IOException
 	{
-		Entity<Integer, InMemoryBlob> entity = silo.entity("binary", Integer.class, InMemoryBlob.class);
+		Collection<Integer, InMemoryBlob> collection = silo.getCollection("binary", Integer.class, InMemoryBlob.class);
 
 		for(int i=1; i<=100; i++)
 		{
-			InMemoryBlob o = entity.get(i).block();
+			InMemoryBlob o = collection.get(i).block();
 			assertThat("object " + i + " is null", o, notNullValue());
 
 			try(InputStream in = o.asStream())
@@ -221,7 +221,7 @@ public class CompatibilityTest_0_2
 	}
 
 	private static class InMemoryBlobCodec
-		implements EntityCodec<InMemoryBlob>
+		implements ObjectCodec<InMemoryBlob>
 	{
 		@Override
 		public InMemoryBlob decode(InputStream in)

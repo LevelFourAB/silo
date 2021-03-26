@@ -4,27 +4,27 @@ import java.util.function.Function;
 
 import org.eclipse.collections.api.list.ListIterable;
 
-import se.l4.silo.EntityRef;
+import se.l4.silo.CollectionRef;
 import se.l4.silo.engine.index.IndexDefinition;
-import se.l4.silo.engine.internal.EntityDefinitionImpl;
+import se.l4.silo.engine.internal.CollectionDefImpl;
 
 /**
- * Definition of an {@link se.l4.silo.Entity}.
+ * Definition of a {@link se.l4.silo.Collection}.
  */
-public interface EntityDefinition<ID, T>
-	extends EntityRef<ID, T>
+public interface CollectionDef<ID, T>
+	extends CollectionRef<ID, T>
 {
 	/**
-	 * Get the name of the entity.
+	 * Get the name of the collection.
 	 *
 	 * @return
 	 */
 	String getName();
 
 	/**
-	 * Get the codec used for the entity.
+	 * Get the codec used for the collection.
 	 */
-	EntityCodec<T> getCodec();
+	ObjectCodec<T> getCodec();
 
 	/**
 	 * Get a function that can be used to extract the identifier of an object.
@@ -34,14 +34,14 @@ public interface EntityDefinition<ID, T>
 	Function<T, ID> getIdSupplier();
 
 	/**
-	 * Get indexes defined for this entity.
+	 * Get indexes defined for this collection.
 	 *
 	 * @return
 	 */
 	ListIterable<IndexDefinition<T>> getIndexes();
 
 	/**
-	 * Start building a new {@link EntityDefinition}.
+	 * Start building a new {@link CollectionDef}.
 	 *
 	 * @param <T>
 	 * @param name
@@ -50,25 +50,25 @@ public interface EntityDefinition<ID, T>
 	 */
 	public static <T> Builder<Void, T> create(Class<T> type, String name)
 	{
-		return EntityDefinitionImpl.create(name, type);
+		return CollectionDefImpl.create(name, type);
 	}
 
 	/**
-	 * Builder for creating instances of {@link EntityDefinition}.
+	 * Builder for creating instances of {@link CollectionDef}.
 	 */
 	interface Builder<ID, T>
-		extends Buildable<EntityDefinition<ID, T>>
+		extends Buildable<CollectionDef<ID, T>>
 	{
 		/**
-		 * Set the codec that should be used for this entity.
+		 * Set the codec that should be used for this collection.
 		 *
 		 * @param codec
 		 * @return
 		 */
-		Builder<ID, T> withCodec(EntityCodec<T> codec);
+		Builder<ID, T> withCodec(ObjectCodec<T> codec);
 
 		/**
-		 * Set how this entity extracts an identifier from the the data.
+		 * Set how this collection extracts an identifier from the the data.
 		 *
 		 * @param idFunction
 		 * @return
@@ -76,7 +76,7 @@ public interface EntityDefinition<ID, T>
 		<NewID> Builder<NewID, T> withId(Class<NewID> type, Function<T, NewID> idFunction);
 
 		/**
-		 * Add an index to this entity.
+		 * Add an index to this collection.
 		 *
 		 * @param definition
 		 *   the index definition
@@ -85,7 +85,7 @@ public interface EntityDefinition<ID, T>
 		Builder<ID, T> addIndex(IndexDefinition<T> definition);
 
 		/**
-		 * Add an index to this entity.
+		 * Add an index to this collection.
 		 *
 		 * @param buildable
 		 * @return
@@ -97,6 +97,6 @@ public interface EntityDefinition<ID, T>
 		 *
 		 * @return
 		 */
-		EntityDefinition<ID, T> build();
+		CollectionDef<ID, T> build();
 	}
 }

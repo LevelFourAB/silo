@@ -55,7 +55,7 @@ public interface Transaction
 	 * <pre>
 	 * transaction.execute(tx -> {
 	 *   // This will run within this transaction
-	 *   return entity.store(new TestData());
+	 *   return collection.store(new TestData());
 	 * });
 	 * </pre>
 	 *

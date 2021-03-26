@@ -21,12 +21,12 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import se.l4.silo.Entity;
+import se.l4.silo.Collection;
 import se.l4.silo.StorageException;
 import se.l4.silo.StorageTransactionException;
+import se.l4.silo.engine.CollectionDef;
 import se.l4.silo.engine.EngineConfig;
-import se.l4.silo.engine.EntityCodec;
-import se.l4.silo.engine.EntityDefinition;
+import se.l4.silo.engine.ObjectCodec;
 import se.l4.silo.engine.Snapshot;
 import se.l4.silo.engine.index.IndexDefinition;
 import se.l4.silo.engine.internal.log.TransactionLog;
@@ -69,7 +69,7 @@ public class StorageEngine
 
 	/**
 	 * All instances of {@link Storage} that have been created by
-	 * {@link Entity entities}.
+	 * {@link Collection collections}.
 	 */
 	private final Map<String, StorageImpl<?>> storages;
 
@@ -79,7 +79,7 @@ public class StorageEngine
 	private final MVStoreManagerImpl store;
 
 	/**
-	 * {@link DataStorage} used for main entity data.
+	 * {@link DataStorage} used for collection data.
 	 */
 	private final MVDataStorage dataStorage;
 
@@ -145,7 +145,7 @@ public class StorageEngine
 		Path root,
 
 		EngineConfig config,
-		ListIterable<EntityDefinition> entities
+		ListIterable<CollectionDef> collectionDefs
 	)
 	{
 		logger.debug("Creating new storage engine in {}", root);
@@ -251,12 +251,12 @@ public class StorageEngine
 			}
 
 			@Override
-			public void store(String entity, Object id, InputStream data)
+			public void store(String collection, Object id, InputStream data)
 				throws IOException
 			{
 				stores.increase();
 
-				StorageImpl storage = storages.get(entity);
+				StorageImpl storage = storages.get(collection);
 				if(storage == null)
 				{
 					return;
@@ -266,13 +266,13 @@ public class StorageEngine
 			}
 
 			@Override
-			public void delete(String entity, Object id)
+			public void delete(String collection, Object id)
 				throws IOException
 			{
 				deletes.increase();
 				mutationLock.lock();
 
-				StorageImpl storage = storages.get(entity);
+				StorageImpl storage = storages.get(collection);
 				if(storage == null)
 				{
 					return;
@@ -282,10 +282,10 @@ public class StorageEngine
 			}
 
 			@Override
-			public void index(String entity, String index, Object id, InputStream data)
+			public void index(String collection, String index, Object id, InputStream data)
 				throws IOException
 			{
-				StorageImpl storage = storages.get(entity);
+				StorageImpl storage = storages.get(collection);
 				if(storage == null)
 				{
 					return;
@@ -344,7 +344,7 @@ public class StorageEngine
 	 * @param name
 	 * @return
 	 */
-	public <T> Storage.Builder<T> createStorage(String name, EntityCodec<T> codec)
+	public <T> Storage.Builder<T> createStorage(String name, ObjectCodec<T> codec)
 	{
 		String storageName = name;
 		return new Storage.Builder<T>()

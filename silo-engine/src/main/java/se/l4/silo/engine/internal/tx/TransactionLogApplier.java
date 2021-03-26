@@ -268,7 +268,7 @@ public class TransactionLogApplier
 			if(op instanceof DeleteOperation)
 			{
 				DeleteOperation delete = (DeleteOperation) op;
-				applier.delete(delete.getEntity(), delete.getId());
+				applier.delete(delete.getCollection(), delete.getId());
 			}
 			else if(op instanceof StoreChunkOperation)
 			{
@@ -277,7 +277,7 @@ public class TransactionLogApplier
 				{
 					// Zero length chunk means end of data
 					applier.store(
-						store.getEntity(),
+						store.getCollection(),
 						store.getId(),
 						new SequenceInputStream(new InputStreamEnumeration(keys))
 					);
@@ -296,7 +296,7 @@ public class TransactionLogApplier
 				{
 					// Zero length chunk means end of data
 					applier.index(
-						indexChunk.getEntity(),
+						indexChunk.getCollection(),
 						indexChunk.getIndex(),
 						indexChunk.getId(),
 						new SequenceInputStream(new InputStreamEnumeration(keys))

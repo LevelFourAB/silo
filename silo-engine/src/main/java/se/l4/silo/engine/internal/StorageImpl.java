@@ -25,8 +25,8 @@ import se.l4.silo.DeleteResult;
 import se.l4.silo.FetchResult;
 import se.l4.silo.StorageException;
 import se.l4.silo.StoreResult;
-import se.l4.silo.engine.EntityCodec;
 import se.l4.silo.engine.MVStoreManager;
+import se.l4.silo.engine.ObjectCodec;
 import se.l4.silo.engine.index.Index;
 import se.l4.silo.engine.index.IndexDefinition;
 import se.l4.silo.engine.index.LocalIndex;
@@ -50,7 +50,7 @@ public class StorageImpl<T>
 	private final DataStorage mainDataStorage;
 
 	private final String name;
-	private final EntityCodec<T> codec;
+	private final ObjectCodec<T> codec;
 
 	private final PrimaryIndex primary;
 	private final MapIterable<String, Index<T, ?>> queryEngines;
@@ -73,7 +73,7 @@ public class StorageImpl<T>
 		DataStorage mainDataStorage,
 
 		String name,
-		EntityCodec<T> codec,
+		ObjectCodec<T> codec,
 
 		DataStorage indexDataStorage,
 		Path indexDataPath,
@@ -448,7 +448,7 @@ public class StorageImpl<T>
 	}
 
 	/**
-	 * Store an entry for this entity.
+	 * Store an object in this storage.
 	 *
 	 * @param id
 	 * @param bytes

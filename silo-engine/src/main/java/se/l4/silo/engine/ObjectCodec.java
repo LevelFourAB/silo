@@ -11,7 +11,7 @@ import se.l4.silo.engine.internal.SerializingCodec;
 /**
  * Codec used to map between object and binary format.
  */
-public interface EntityCodec<T>
+public interface ObjectCodec<T>
 {
 	/**
 	 * Encode the given instance.
@@ -40,7 +40,7 @@ public interface EntityCodec<T>
 	 * @param serializer
 	 * @return
 	 */
-	public static <T> EntityCodec<T> serialized(Serializer<T> serializer)
+	public static <T> ObjectCodec<T> serialized(Serializer<T> serializer)
 	{
 		return new SerializingCodec<>(serializer);
 	}
@@ -52,7 +52,7 @@ public interface EntityCodec<T>
 	 * @param serializer
 	 * @return
 	 */
-	public static <T> EntityCodec<T> serialized(Serializers serializers, Class<T> type)
+	public static <T> ObjectCodec<T> serialized(Serializers serializers, Class<T> type)
 	{
 		return serialized(serializers.get(type));
 	}
