@@ -37,6 +37,7 @@ public interface BasicIndexDefinition<T>
 	}
 
 	public interface Builder<T>
+		extends Buildable<BasicIndexDefinition<T>>
 	{
 		/**
 		 * Add a new field that can be queried.
