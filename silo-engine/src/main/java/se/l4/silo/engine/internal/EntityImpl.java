@@ -60,6 +60,12 @@ public class EntityImpl<ID, T>
 	}
 
 	@Override
+	public Mono<Boolean> contains(ID id)
+	{
+		return storage.contains(id);
+	}
+
+	@Override
 	public Mono<StoreResult<ID, T>> store(T object)
 	{
 		ID id = idSupplier.apply(object);

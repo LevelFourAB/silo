@@ -25,6 +25,14 @@ public interface Entity<ID, T>
 	Mono<T> get(ID id);
 
 	/**
+	 * Check if data with the given identifier exists.
+	 *
+	 * @param id
+	 * @return
+	 */
+	Mono<Boolean> contains(ID id);
+
+	/**
 	 * Store data in the entity.
 	 *
 	 * @param object

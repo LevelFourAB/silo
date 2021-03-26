@@ -273,6 +273,14 @@ public class StorageImpl<T>
 		}, mainDataStorage, primary);
 	}
 
+	@Override
+	public Mono<Boolean> contains(Object id)
+	{
+		return transactionSupport.withExchange(tx -> {
+			return primary.get(tx, id) > 0;
+		});
+	}
+
 	public T getInternal(WriteableTransactionExchange exchange, long id)
 	{
 		try

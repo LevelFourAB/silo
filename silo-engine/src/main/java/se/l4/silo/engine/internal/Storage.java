@@ -71,6 +71,14 @@ public interface Storage<T>
 	Mono<T> get(Object id);
 
 	/**
+	 * Check if some data exists in this storage.
+	 *
+	 * @param id
+	 * @return
+	 */
+	Mono<Boolean> contains(Object id);
+
+	/**
 	 * Delete some data in this storage.
 	 *
 	 * @param id
