@@ -11,6 +11,7 @@ import se.l4.silo.index.FieldSort;
 import se.l4.silo.index.FieldSortBuilder;
 import se.l4.silo.index.Matcher;
 import se.l4.silo.index.basic.BasicFieldLimitBuilder;
+import se.l4.silo.index.basic.BasicFieldRef;
 import se.l4.silo.index.basic.BasicIndexQuery;
 
 public class BasicIndexQueryImpl<T>
@@ -135,9 +136,21 @@ public class BasicIndexQueryImpl<T>
 		}
 
 		@Override
+		public <V> BasicFieldLimitBuilder<Builder<T>, V> field(BasicFieldRef<V> field)
+		{
+			return matcher -> field(field.getName(), matcher);
+		}
+
+		@Override
 		public Builder<T> field(String name, Matcher<?> matcher)
 		{
 			return add(FieldLimit.create(name, matcher));
+		}
+
+		@Override
+		public <V> Builder<T> field(BasicFieldRef<V> field, Matcher<V> matcher)
+		{
+			return field(field.getName(), matcher);
 		}
 
 		@Override

@@ -82,17 +82,39 @@ public interface BasicIndexQuery<T>
 		BasicFieldLimitBuilder<Builder<T>, Object> field(String name);
 
 		/**
+		 * Limit the given field in a fluent way.
+		 *
+		 * @param field
+		 *   the field to limit
+		 * @return
+		 *   builder that can be used to define how the field is to be
+		 *   matched
+		 */
+		<V> BasicFieldLimitBuilder<Builder<T>, V> field(BasicFieldRef<V> field);
+
+		/**
 		 * Limit the given field using a pre-built matcher.
 		 *
 		 * @param name
 		 *   the name of the field
 		 * @param matcher
-		 *   the matcher that should be used to limit the field. Created
-		 *   via static methods in {@link Matcher}
+		 *   the matcher that should be used to limit the field
 		 * @return
 		 *   copy of builder with field limit added
 		 */
 		Builder<T> field(String name, Matcher<?> matcher);
+
+		/**
+		 * Limit the given field using a pre-built matcher.
+		 *
+		 * @param field
+		 *   the field to limit
+		 * @param matcher
+		 *   the matcher that should be used to limit the field
+		 * @return
+		 *   copy of builder with field limit added
+		 */
+		<V> Builder<T> field(BasicFieldRef<V> field, Matcher<V> matcher);
 
 		/**
 		 * Sort on the given field, specifying ascending or descending order
