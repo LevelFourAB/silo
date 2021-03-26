@@ -28,7 +28,7 @@ import se.l4.silo.engine.CollectionDef;
 import se.l4.silo.engine.EngineConfig;
 import se.l4.silo.engine.ObjectCodec;
 import se.l4.silo.engine.Snapshot;
-import se.l4.silo.engine.index.IndexDefinition;
+import se.l4.silo.engine.index.IndexDef;
 import se.l4.silo.engine.internal.log.TransactionLog;
 import se.l4.silo.engine.internal.log.TransactionLogImpl;
 import se.l4.silo.engine.internal.migration.Migration;
@@ -349,17 +349,17 @@ public class StorageEngine
 		String storageName = name;
 		return new Storage.Builder<T>()
 		{
-			private final MutableList<IndexDefinition<T>> indexes = Lists.mutable.empty();
+			private final MutableList<IndexDef<T>> indexes = Lists.mutable.empty();
 
 			@Override
-			public Storage.Builder<T> addIndexes(Iterable<IndexDefinition<T>> indexes)
+			public Storage.Builder<T> addIndexes(Iterable<IndexDef<T>> indexes)
 			{
 				this.indexes.withAll(indexes);
 				return this;
 			}
 
 			@Override
-			public Storage.Builder<T> addIndex(IndexDefinition<T> index)
+			public Storage.Builder<T> addIndex(IndexDef<T> index)
 			{
 				this.indexes.add(index);
 				return this;

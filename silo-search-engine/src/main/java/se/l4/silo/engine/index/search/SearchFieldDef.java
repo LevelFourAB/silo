@@ -3,13 +3,13 @@ package se.l4.silo.engine.index.search;
 import java.util.function.Function;
 
 import se.l4.silo.engine.Buildable;
-import se.l4.silo.engine.index.search.internal.FieldDefinitionImpl;
+import se.l4.silo.engine.index.search.internal.SearchFieldDefImpl;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
 
 /**
- * Definition of a field that can be used in a {@link SearchIndexDefinition search index}.
+ * Definition of a field that can be used in a {@link SearchIndexDef search index}.
  */
-public interface SearchFieldDefinition<T>
+public interface SearchFieldDef<T>
 {
 	/**
 	 * Get the name of the field.
@@ -43,7 +43,7 @@ public interface SearchFieldDefinition<T>
 	 * Field representing a single value that may be queried.
 	 */
 	interface Single<T, V>
-		extends SearchFieldDefinition<T>
+		extends SearchFieldDef<T>
 	{
 		/**
 		 * Get a function that can be used to read this field from a certain
@@ -65,7 +65,7 @@ public interface SearchFieldDefinition<T>
 	 * Field containing multiple values that may be queried.
 	 */
 	interface Collection<T, V>
-		extends SearchFieldDefinition<T>
+		extends SearchFieldDef<T>
 	{
 		/**
 		 * Get a function that can be used to read this field from a certain
@@ -88,7 +88,7 @@ public interface SearchFieldDefinition<T>
 	 */
 	static <T> Builder<T, Void> create(Class<T> type, String name)
 	{
-		return FieldDefinitionImpl.create(name, type);
+		return SearchFieldDefImpl.create(name, type);
 	}
 
 	interface Builder<T, F>
@@ -165,7 +165,7 @@ public interface SearchFieldDefinition<T>
 	}
 
 	interface SingleBuilder<T, F>
-		extends BaseBuilder<SingleBuilder<T, F>>, Buildable<SearchFieldDefinition.Single<T, F>>
+		extends BaseBuilder<SingleBuilder<T, F>>, Buildable<SearchFieldDef.Single<T, F>>
 	{
 		/**
 		 * Set the function used to extract the value for the field.
@@ -198,11 +198,11 @@ public interface SearchFieldDefinition<T>
 		 *
 		 * @return
 		 */
-		SearchFieldDefinition.Single<T, F> build();
+		SearchFieldDef.Single<T, F> build();
 	}
 
 	interface CollectionBuilder<T, F>
-		extends BaseBuilder<CollectionBuilder<T, F>>, Buildable<SearchFieldDefinition.Collection<T, F>>
+		extends BaseBuilder<CollectionBuilder<T, F>>, Buildable<SearchFieldDef.Collection<T, F>>
 	{
 		/**
 		 * Set the function used to extract the value for the field.
@@ -217,6 +217,6 @@ public interface SearchFieldDefinition<T>
 		 *
 		 * @return
 		 */
-		SearchFieldDefinition.Collection<T, F> build();
+		SearchFieldDef.Collection<T, F> build();
 	}
 }

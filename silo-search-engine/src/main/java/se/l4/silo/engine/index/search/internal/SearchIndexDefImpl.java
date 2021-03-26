@@ -14,28 +14,28 @@ import se.l4.silo.StorageException;
 import se.l4.silo.engine.Buildable;
 import se.l4.silo.engine.index.Index;
 import se.l4.silo.engine.index.IndexEngineCreationEncounter;
-import se.l4.silo.engine.index.search.SearchFieldDefinition;
-import se.l4.silo.engine.index.search.SearchIndexDefinition;
+import se.l4.silo.engine.index.search.SearchFieldDef;
+import se.l4.silo.engine.index.search.SearchIndexDef;
 import se.l4.silo.engine.index.search.config.IndexCacheConfig;
 import se.l4.silo.engine.index.search.config.IndexCommitConfig;
 import se.l4.silo.engine.index.search.facets.FacetDef;
 import se.l4.silo.engine.index.search.locales.Locales;
 import se.l4.silo.index.search.SearchIndexException;
 
-public class SearchIndexDefinitionImpl<T>
-	implements SearchIndexDefinition<T>
+public class SearchIndexDefImpl<T>
+	implements SearchIndexDef<T>
 {
 	private final String name;
 	private final Locales locales;
 	private final Function<T, Locale> localeSupplier;
-	private final ImmutableMap<String, SearchFieldDefinition<T>> fields;
+	private final ImmutableMap<String, SearchFieldDef<T>> fields;
 	private final ImmutableMap<String, FacetDef<T, ?, ?>> facets;
 
-	public SearchIndexDefinitionImpl(
+	public SearchIndexDefImpl(
 		String name,
 		Locales locales,
 		Function<T, Locale> localeSupplier,
-		ImmutableMap<String, SearchFieldDefinition<T>> fields,
+		ImmutableMap<String, SearchFieldDef<T>> fields,
 		ImmutableMap<String, FacetDef<T, ?, ?>> facets
 	)
 	{
@@ -59,7 +59,7 @@ public class SearchIndexDefinitionImpl<T>
 	}
 
 	@Override
-	public RichIterable<SearchFieldDefinition<T>> getFields()
+	public RichIterable<SearchFieldDef<T>> getFields()
 	{
 		return fields;
 	}
@@ -118,14 +118,14 @@ public class SearchIndexDefinitionImpl<T>
 		private final String name;
 		private final Locales locales;
 		private final Function<T, Locale> localeSupplier;
-		private final ImmutableMap<String, SearchFieldDefinition<T>> fields;
+		private final ImmutableMap<String, SearchFieldDef<T>> fields;
 		private final ImmutableMap<String, FacetDef<T, ?, ?>> facets;
 
 		public BuilderImpl(
 			String name,
 			Locales locales,
 			Function<T, Locale> localeSupplier,
-			ImmutableMap<String, SearchFieldDefinition<T>> fields,
+			ImmutableMap<String, SearchFieldDef<T>> fields,
 			ImmutableMap<String, FacetDef<T, ?, ?>> facets
 		)
 		{
@@ -173,7 +173,7 @@ public class SearchIndexDefinitionImpl<T>
 		}
 
 		@Override
-		public Builder<T> addField(SearchFieldDefinition<T> field)
+		public Builder<T> addField(SearchFieldDef<T> field)
 		{
 			Objects.requireNonNull(field);
 
@@ -193,7 +193,7 @@ public class SearchIndexDefinitionImpl<T>
 
 		@Override
 		public Builder<T> addField(
-			Buildable<? extends SearchFieldDefinition<T>> buildable
+			Buildable<? extends SearchFieldDef<T>> buildable
 		)
 		{
 			return addField(buildable.build());
@@ -201,12 +201,12 @@ public class SearchIndexDefinitionImpl<T>
 
 		@Override
 		public Builder<T> addFields(
-			Iterable<? extends SearchFieldDefinition<T>> fields
+			Iterable<? extends SearchFieldDef<T>> fields
 		)
 		{
 			Builder<T> result = this;
 
-			for(SearchFieldDefinition<T> field : fields)
+			for(SearchFieldDef<T> field : fields)
 			{
 				result = result.addField(field);
 			}
@@ -247,9 +247,9 @@ public class SearchIndexDefinitionImpl<T>
 		}
 
 		@Override
-		public SearchIndexDefinition<T> build()
+		public SearchIndexDef<T> build()
 		{
-			return new SearchIndexDefinitionImpl<>(
+			return new SearchIndexDefImpl<>(
 				name,
 				locales,
 				localeSupplier,

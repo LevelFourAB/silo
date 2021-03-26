@@ -48,7 +48,7 @@ public interface SearchIndexEncounter<T>
 	 * @param localeSupport
 	 * @return
 	 */
-	String docValuesName(SearchFieldDefinition<?> field, LocaleSupport localeSupport);
+	String docValuesName(SearchFieldDef<?> field, LocaleSupport localeSupport);
 
 	/**
 	 * Get under which names a sort values field is stored.
@@ -56,7 +56,7 @@ public interface SearchIndexEncounter<T>
 	 * @param localeSupport
 	 * @return
 	 */
-	String sortValuesName(SearchFieldDefinition<?> field, LocaleSupport localeSupport);
+	String sortValuesName(SearchFieldDef<?> field, LocaleSupport localeSupport);
 
 	/**
 	 * Get under which name this field is stored for the specific language.
@@ -65,7 +65,7 @@ public interface SearchIndexEncounter<T>
 	 * @param localeSupport
 	 * @return
 	 */
-	String name(SearchFieldDefinition<?> field, LocaleSupport localeSupport);
+	String name(SearchFieldDef<?> field, LocaleSupport localeSupport);
 
 	/**
 	 * Get the name of the given field when stored as a {@code null} value.
@@ -73,5 +73,5 @@ public interface SearchIndexEncounter<T>
 	 * @param def
 	 * @return
 	 */
-	String nullName(SearchFieldDefinition<?> def);
+	String nullName(SearchFieldDef<?> def);
 }

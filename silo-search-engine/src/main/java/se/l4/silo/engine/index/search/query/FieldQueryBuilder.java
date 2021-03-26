@@ -8,7 +8,7 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
 
 import se.l4.silo.engine.index.search.SearchField;
-import se.l4.silo.engine.index.search.SearchFieldDefinition;
+import se.l4.silo.engine.index.search.SearchFieldDef;
 import se.l4.silo.engine.index.search.SearchIndexEncounter;
 import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.Matcher;
@@ -26,7 +26,7 @@ public class FieldQueryBuilder
 
 		SearchIndexEncounter<?> indexEncounter = encounter.index();
 		SearchField<?, ?> field = indexEncounter.getField(clause.getField());
-		SearchFieldDefinition<?> def = field.getDefinition();
+		SearchFieldDef<?> def = field.getDefinition();
 
 		Matcher matcher = clause.getMatcher();
 		if(matcher instanceof EqualsMatcher)

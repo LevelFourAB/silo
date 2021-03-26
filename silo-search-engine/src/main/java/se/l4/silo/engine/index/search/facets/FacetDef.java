@@ -2,7 +2,7 @@ package se.l4.silo.engine.index.search.facets;
 
 import org.eclipse.collections.api.list.ListIterable;
 
-import se.l4.silo.engine.index.search.SearchFieldDefinition;
+import se.l4.silo.engine.index.search.SearchFieldDef;
 import se.l4.silo.index.search.facets.FacetQuery;
 
 /**
@@ -22,7 +22,7 @@ public interface FacetDef<T, V, Q extends FacetQuery<V>>
 	 *
 	 * @return
 	 */
-	ListIterable<? extends SearchFieldDefinition<T>> getFields();
+	ListIterable<? extends SearchFieldDef<T>> getFields();
 
 	/**
 	 * Create a collector for the given query.

@@ -1,6 +1,9 @@
 package se.l4.silo.engine.index;
 
-public interface IndexDefinition<T>
+/**
+ * Definition for creating an index in a {@link se.l4.silo.Collection}.
+ */
+public interface IndexDef<T>
 {
 	/**
 	 * Get the name of the index.

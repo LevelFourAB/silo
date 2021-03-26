@@ -1,6 +1,6 @@
 package se.l4.silo.engine.index.search.facets;
 
-import se.l4.silo.engine.index.search.SearchFieldDefinition;
+import se.l4.silo.engine.index.search.SearchFieldDef;
 import se.l4.silo.engine.index.search.internal.facets.ValueFacetDefImpl;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
 import se.l4.silo.index.search.facets.ValueFacetQuery;
@@ -39,7 +39,7 @@ public interface ValueFacetDef<T, V>
 		 * @param field
 		 * @return
 		 */
-		<NV> Builder<T, NV> withField(SearchFieldDefinition<T> field);
+		<NV> Builder<T, NV> withField(SearchFieldDef<T> field);
 
 		/**
 		 * Build the definition.

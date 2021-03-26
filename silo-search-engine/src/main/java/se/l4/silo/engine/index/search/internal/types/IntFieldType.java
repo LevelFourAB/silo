@@ -14,7 +14,7 @@ import org.apache.lucene.search.SortField;
 import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.exobytes.streaming.Token;
-import se.l4.silo.engine.index.search.SearchFieldDefinition;
+import se.l4.silo.engine.index.search.SearchFieldDef;
 import se.l4.silo.engine.index.search.facets.FacetCollector;
 import se.l4.silo.engine.index.search.types.FieldCreationEncounter;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
@@ -127,7 +127,7 @@ public class IntFieldType
 
 	@Override
 	public FacetCollector<Integer> createFacetCollector(
-		SearchFieldDefinition<?> field
+		SearchFieldDef<?> field
 	)
 	{
 		return encounter -> {

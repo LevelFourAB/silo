@@ -20,7 +20,7 @@ import se.l4.exobytes.streaming.Token;
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.index.IndexDataUpdater;
 import se.l4.silo.engine.index.search.SearchField;
-import se.l4.silo.engine.index.search.SearchFieldDefinition;
+import se.l4.silo.engine.index.search.SearchFieldDef;
 import se.l4.silo.engine.index.search.locales.LocaleSupport;
 import se.l4.silo.engine.index.search.locales.Locales;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
@@ -31,7 +31,7 @@ public class SearchIndexDataUpdater<T>
 {
 	private final Locales locales;
 
-	private final IndexDefinitionImpl<T> encounter;
+	private final SearchIndexEncounterImpl<T> encounter;
 	private final IndexWriter writer;
 	private final IndexSearcherManager searchManager;
 
@@ -40,7 +40,7 @@ public class SearchIndexDataUpdater<T>
 	public SearchIndexDataUpdater(
 		Locales locales,
 
-		IndexDefinitionImpl<T> encounter,
+		SearchIndexEncounterImpl<T> encounter,
 
 		IndexWriter writer,
 		IndexSearcherManager searcherManager,
@@ -196,7 +196,7 @@ public class SearchIndexDataUpdater<T>
 			return;
 		}
 
-		SearchFieldDefinition<?> def = field.getDefinition();
+		SearchFieldDef<?> def = field.getDefinition();
 		SearchFieldType type = ((SearchFieldType) def.getType());
 		if(type.isLocaleSupported() && def.isLanguageSpecific() && fallback != current)
 		{

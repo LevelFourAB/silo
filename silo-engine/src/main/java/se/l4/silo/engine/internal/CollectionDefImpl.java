@@ -10,7 +10,7 @@ import org.eclipse.collections.api.list.ListIterable;
 import se.l4.silo.engine.Buildable;
 import se.l4.silo.engine.CollectionDef;
 import se.l4.silo.engine.ObjectCodec;
-import se.l4.silo.engine.index.IndexDefinition;
+import se.l4.silo.engine.index.IndexDef;
 import se.l4.ylem.types.reflect.TypeRef;
 import se.l4.ylem.types.reflect.Types;
 
@@ -25,7 +25,7 @@ public class CollectionDefImpl<ID, T>
 	private final TypeRef objectType;
 	private final ObjectCodec<T> codec;
 	private final Function<T, ID> idSupplier;
-	private final ImmutableList<IndexDefinition<T>> indexes;
+	private final ImmutableList<IndexDef<T>> indexes;
 
 	public CollectionDefImpl(
 		String name,
@@ -33,7 +33,7 @@ public class CollectionDefImpl<ID, T>
 		TypeRef objectType,
 		ObjectCodec<T> codec,
 		Function<T, ID> idSupplier,
-		ImmutableList<IndexDefinition<T>> indexes
+		ImmutableList<IndexDef<T>> indexes
 	)
 	{
 		this.name = name;
@@ -75,7 +75,7 @@ public class CollectionDefImpl<ID, T>
 	}
 
 	@Override
-	public ListIterable<IndexDefinition<T>> getIndexes()
+	public ListIterable<IndexDef<T>> getIndexes()
 	{
 		return indexes;
 	}
@@ -95,7 +95,7 @@ public class CollectionDefImpl<ID, T>
 		private final TypeRef objectType;
 		private final ObjectCodec<T> codec;
 		private final Function<T, ID> idSupplier;
-		private final ImmutableList<IndexDefinition<T>> indexes;
+		private final ImmutableList<IndexDef<T>> indexes;
 
 		public BuilderImpl(
 			String name,
@@ -103,7 +103,7 @@ public class CollectionDefImpl<ID, T>
 			TypeRef objectType,
 			ObjectCodec<T> codec,
 			Function<T, ID> idSupplier,
-			ImmutableList<IndexDefinition<T>> indexes
+			ImmutableList<IndexDef<T>> indexes
 		)
 		{
 			this.name = name;
@@ -150,7 +150,7 @@ public class CollectionDefImpl<ID, T>
 		}
 
 		@Override
-		public Builder<ID, T> addIndex(IndexDefinition<T> definition)
+		public Builder<ID, T> addIndex(IndexDef<T> definition)
 		{
 			Objects.requireNonNull(definition);
 
@@ -165,7 +165,7 @@ public class CollectionDefImpl<ID, T>
 		}
 
 		@Override
-		public Builder<ID, T> addIndex(Buildable<? extends IndexDefinition<T>> buildable)
+		public Builder<ID, T> addIndex(Buildable<? extends IndexDef<T>> buildable)
 		{
 			return addIndex(buildable.build());
 		}

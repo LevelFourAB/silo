@@ -20,7 +20,7 @@ import se.l4.silo.engine.index.Index;
 import se.l4.silo.engine.index.IndexDataGenerator;
 import se.l4.silo.engine.index.IndexDataUpdater;
 import se.l4.silo.engine.index.IndexQueryRunner;
-import se.l4.silo.engine.index.search.SearchFieldDefinition;
+import se.l4.silo.engine.index.search.SearchFieldDef;
 import se.l4.silo.engine.index.search.config.IndexCacheConfig;
 import se.l4.silo.engine.index.search.config.IndexCommitConfig;
 import se.l4.silo.engine.index.search.facets.FacetDef;
@@ -57,14 +57,14 @@ public class SearchIndex<T>
 		IndexCommitConfig commitConfig,
 		IndexCacheConfig cacheConfig,
 		Function<T, Locale> localeSupplier,
-		RichIterable<SearchFieldDefinition<T>> fields,
+		RichIterable<SearchFieldDef<T>> fields,
 		RichIterable<FacetDef<T, ?, ?>> facets
 	)
 		throws IOException
 	{
 		this.name = name;
 
-		IndexDefinitionImpl encounter = new IndexDefinitionImpl(
+		SearchIndexEncounterImpl encounter = new SearchIndexEncounterImpl(
 			locales,
 			fields,
 			facets

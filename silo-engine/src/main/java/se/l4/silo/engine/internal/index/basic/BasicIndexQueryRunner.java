@@ -24,7 +24,7 @@ import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.TransactionValue;
 import se.l4.silo.engine.index.IndexQueryEncounter;
 import se.l4.silo.engine.index.IndexQueryRunner;
-import se.l4.silo.engine.index.basic.BasicFieldDefinition;
+import se.l4.silo.engine.index.basic.BasicFieldDef;
 import se.l4.silo.engine.types.FieldType;
 import se.l4.silo.engine.types.MaxMin;
 import se.l4.silo.index.EqualsMatcher;
@@ -40,8 +40,8 @@ public class BasicIndexQueryRunner<T>
 {
 	private final Logger logger;
 
-	private final BasicFieldDefinition<T, ?>[] fields;
-	private final BasicFieldDefinition.Single<T, ?>[] sortFields;
+	private final BasicFieldDef<T, ?>[] fields;
+	private final BasicFieldDef.Single<T, ?>[] sortFields;
 
 	private final TransactionValue<ReadOnlyIndex> indexMapValue;
 
@@ -50,8 +50,8 @@ public class BasicIndexQueryRunner<T>
 
 		MVStoreManager store,
 
-		BasicFieldDefinition<T, ?>[] fields,
-		BasicFieldDefinition.Single<T, ?>[] sortFields,
+		BasicFieldDef<T, ?>[] fields,
+		BasicFieldDef.Single<T, ?>[] sortFields,
 
 		MVMap<Object[], Object[]> index
 	)

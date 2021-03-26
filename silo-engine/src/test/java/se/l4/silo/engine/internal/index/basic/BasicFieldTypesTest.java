@@ -9,8 +9,8 @@ import se.l4.silo.Collection;
 import se.l4.silo.engine.CollectionDef;
 import se.l4.silo.engine.LocalSilo;
 import se.l4.silo.engine.ObjectCodec;
-import se.l4.silo.engine.index.basic.BasicFieldDefinition;
-import se.l4.silo.engine.index.basic.BasicIndexDefinition;
+import se.l4.silo.engine.index.basic.BasicFieldDef;
+import se.l4.silo.engine.index.basic.BasicIndexDef;
 import se.l4.silo.engine.internal.SiloTest;
 import se.l4.silo.index.basic.BasicIndexQuery;
 import se.l4.silo.index.basic.BasicIndexResult;
@@ -24,8 +24,8 @@ public class BasicFieldTypesTest
 		LocalSilo silo = instance(builder -> builder.addCollection(CollectionDef.create(Long.class, "test")
 			.withCodec(ObjectCodec.serialized(serializers, Long.class))
 			.withId(Long.class, s -> s)
-			.addIndex(BasicIndexDefinition.create(Long.class, "idx")
-				.addField(BasicFieldDefinition.create(Long.class, "v")
+			.addIndex(BasicIndexDef.create(Long.class, "idx")
+				.addField(BasicFieldDef.create(Long.class, "v")
 					.withType(long.class)
 					.withSupplier(s -> s)
 					.build()
@@ -85,8 +85,8 @@ public class BasicFieldTypesTest
 		LocalSilo silo = instance(builder -> builder.addCollection(CollectionDef.create(Long.class, "test")
 			.withCodec(ObjectCodec.serialized(serializers, Long.class))
 			.withId(Long.class, s -> s)
-			.addIndex(BasicIndexDefinition.create(Long.class, "idx")
-				.addField(BasicFieldDefinition.create(Long.class, "v")
+			.addIndex(BasicIndexDef.create(Long.class, "idx")
+				.addField(BasicFieldDef.create(Long.class, "v")
 					.withType(long.class)
 					.withSupplier(s -> s)
 					.build()

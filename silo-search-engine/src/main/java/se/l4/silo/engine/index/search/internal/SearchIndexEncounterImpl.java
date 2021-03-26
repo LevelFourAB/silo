@@ -6,22 +6,22 @@ import org.eclipse.collections.api.map.MapIterable;
 import org.eclipse.collections.api.map.MutableMap;
 
 import se.l4.silo.engine.index.search.SearchField;
-import se.l4.silo.engine.index.search.SearchFieldDefinition;
+import se.l4.silo.engine.index.search.SearchFieldDef;
 import se.l4.silo.engine.index.search.SearchIndexEncounter;
 import se.l4.silo.engine.index.search.facets.FacetDef;
 import se.l4.silo.engine.index.search.locales.LocaleSupport;
 import se.l4.silo.engine.index.search.locales.Locales;
 import se.l4.silo.index.search.SearchIndexException;
 
-public class IndexDefinitionImpl<T>
+public class SearchIndexEncounterImpl<T>
 	implements SearchIndexEncounter<T>
 {
 	private final MapIterable<String, SearchField<T, ?>> fields;
 	private final MapIterable<String, FacetDef<T, ?, ?>> facets;
 
-	public IndexDefinitionImpl(
+	public SearchIndexEncounterImpl(
 		Locales locales,
-		RichIterable<? extends SearchFieldDefinition<T>> indexedFields,
+		RichIterable<? extends SearchFieldDef<T>> indexedFields,
 		RichIterable<? extends FacetDef<T, ?, ?>> facets
 	)
 	{
@@ -32,7 +32,7 @@ public class IndexDefinitionImpl<T>
 		/*
 		 * Collect the fields that should be indexed.
 		 */
-		for(SearchFieldDefinition<T> def : indexedFields)
+		for(SearchFieldDef<T> def : indexedFields)
 		{
 			if(fields.containsKey(def.getName()))
 			{
@@ -48,7 +48,7 @@ public class IndexDefinitionImpl<T>
 		 */
 		for(FacetDef<T, ?, ?> facet : facets)
 		{
-			for(SearchFieldDefinition<T> def : facet.getFields())
+			for(SearchFieldDef<T> def : facet.getFields())
 			{
 				SearchField<T, ?> field = fields.get(def.getName());
 				if(field == null)
@@ -108,14 +108,14 @@ public class IndexDefinitionImpl<T>
 		return facets.get(id);
 	}
 
-	private String name(SearchFieldDefinition<?> field, LocaleSupport localeSupport, char p)
+	private String name(SearchFieldDef<?> field, LocaleSupport localeSupport, char p)
 	{
 		return (! field.isLanguageSpecific() || localeSupport == null) ? p + ":" + field.getName() + ":_" : p + ":" + field.getName() + ":" + localeSupport.getLocale().toLanguageTag();
 	}
 
 	@Override
 	public String name(
-		SearchFieldDefinition<?> field,
+		SearchFieldDef<?> field,
 		LocaleSupport localeSupport
 	)
 	{
@@ -124,7 +124,7 @@ public class IndexDefinitionImpl<T>
 
 	@Override
 	public String docValuesName(
-		SearchFieldDefinition<?> field,
+		SearchFieldDef<?> field,
 		LocaleSupport localeSupport
 	)
 	{
@@ -133,7 +133,7 @@ public class IndexDefinitionImpl<T>
 
 	@Override
 	public String sortValuesName(
-		SearchFieldDefinition<?> field,
+		SearchFieldDef<?> field,
 		LocaleSupport localeSupport
 	)
 	{
@@ -141,7 +141,7 @@ public class IndexDefinitionImpl<T>
 	}
 
 	@Override
-	public String nullName(SearchFieldDefinition<?> field)
+	public String nullName(SearchFieldDef<?> field)
 	{
 		return name(field, null, 'n');
 	}
@@ -149,12 +149,12 @@ public class IndexDefinitionImpl<T>
 	private static class SearchFieldImpl<T, V>
 		implements SearchField<T, V>
 	{
-		private final SearchFieldDefinition<T> definition;
+		private final SearchFieldDef<T> definition;
 		private final boolean indexed;
 		private final boolean storeDocValues;
 
 		public SearchFieldImpl(
-			SearchFieldDefinition<T> definition,
+			SearchFieldDef<T> definition,
 			boolean indexed,
 			boolean storeDocValues
 		)
@@ -165,7 +165,7 @@ public class IndexDefinitionImpl<T>
 		}
 
 		@Override
-		public SearchFieldDefinition<T> getDefinition()
+		public SearchFieldDef<T> getDefinition()
 		{
 			return definition;
 		}

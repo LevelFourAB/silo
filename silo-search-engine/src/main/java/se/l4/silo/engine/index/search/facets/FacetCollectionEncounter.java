@@ -5,7 +5,7 @@ import java.util.function.Function;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.DocIdSet;
 
-import se.l4.silo.engine.index.search.SearchFieldDefinition;
+import se.l4.silo.engine.index.search.SearchFieldDef;
 
 /**
  * Encounter used when collecting facets.
@@ -18,7 +18,7 @@ public interface FacetCollectionEncounter<V>
 	 * @param field
 	 * @return
 	 */
-	String getFieldName(SearchFieldDefinition<?> field);
+	String getFieldName(SearchFieldDef<?> field);
 
 	/**
 	 * Get the reader.

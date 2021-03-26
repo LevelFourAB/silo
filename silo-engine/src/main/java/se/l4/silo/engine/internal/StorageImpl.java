@@ -28,7 +28,7 @@ import se.l4.silo.StoreResult;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.ObjectCodec;
 import se.l4.silo.engine.index.Index;
-import se.l4.silo.engine.index.IndexDefinition;
+import se.l4.silo.engine.index.IndexDef;
 import se.l4.silo.engine.index.LocalIndex;
 import se.l4.silo.engine.internal.index.IndexEngineController;
 import se.l4.silo.engine.internal.index.IndexEngineCreationEncounterImpl;
@@ -77,7 +77,7 @@ public class StorageImpl<T>
 
 		DataStorage indexDataStorage,
 		Path indexDataPath,
-		RichIterable<IndexDefinition<?>> indexes
+		RichIterable<IndexDef<?>> indexes
 	)
 	{
 		this.name = name;
@@ -95,7 +95,7 @@ public class StorageImpl<T>
 		stores = new LongAdder();
 		deletes = new LongAdder();
 
-		this.queryEngines = (ImmutableMap) indexes.toMap(IndexDefinition::getName, def -> {
+		this.queryEngines = (ImmutableMap) indexes.toMap(IndexDef::getName, def -> {
 			String key = def.getName();
 			return def.create(new IndexEngineCreationEncounterImpl(
 				storages,

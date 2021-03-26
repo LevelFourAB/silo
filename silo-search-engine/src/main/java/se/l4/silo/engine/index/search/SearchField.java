@@ -10,7 +10,7 @@ public interface SearchField<T, V>
 	 *
 	 * @return
 	 */
-	SearchFieldDefinition<T> getDefinition();
+	SearchFieldDef<T> getDefinition();
 
 	/**
 	 * Get if the field is indexed for searching.

@@ -3,28 +3,28 @@ package se.l4.silo.engine.index.basic;
 import org.eclipse.collections.api.list.ListIterable;
 
 import se.l4.silo.engine.Buildable;
-import se.l4.silo.engine.index.IndexDefinition;
-import se.l4.silo.engine.internal.index.basic.BasicIndexDefinitionImpl;
+import se.l4.silo.engine.index.IndexDef;
+import se.l4.silo.engine.internal.index.basic.BasicIndexDefImpl;
 
-public interface BasicIndexDefinition<T>
-	extends IndexDefinition<T>
+public interface BasicIndexDef<T>
+	extends IndexDef<T>
 {
 	/**
 	 * Get the fields that can be queried.
 	 *
 	 * @return
 	 */
-	ListIterable<BasicFieldDefinition<T, ?>> getFields();
+	ListIterable<BasicFieldDef<T, ?>> getFields();
 
 	/**
 	 * Get the fields that can be sorted on.
 	 *
 	 * @return
 	 */
-	ListIterable<BasicFieldDefinition.Single<T, ?>> getSortFields();
+	ListIterable<BasicFieldDef.Single<T, ?>> getSortFields();
 
 	/**
-	 * Start building a {@link BasicFieldDefinition}.
+	 * Start building a {@link BasicFieldDef}.
 	 *
 	 * @param <T>
 	 * @param type
@@ -33,11 +33,11 @@ public interface BasicIndexDefinition<T>
 	 */
 	public static <T> Builder<T> create(Class<T> type, String name)
 	{
-		return BasicIndexDefinitionImpl.create(name);
+		return BasicIndexDefImpl.create(name);
 	}
 
 	public interface Builder<T>
-		extends Buildable<BasicIndexDefinition<T>>
+		extends Buildable<BasicIndexDef<T>>
 	{
 		/**
 		 * Add a new field that can be queried.
@@ -45,7 +45,7 @@ public interface BasicIndexDefinition<T>
 		 * @param field
 		 * @return
 		 */
-		Builder<T> addField(BasicFieldDefinition<T, ?> field);
+		Builder<T> addField(BasicFieldDef<T, ?> field);
 
 		/**
 		 * Add a new field that can be quired.
@@ -53,7 +53,7 @@ public interface BasicIndexDefinition<T>
 		 * @param buildable
 		 * @return
 		 */
-		Builder<T> addField(Buildable<? extends BasicFieldDefinition<T, ?>> buildable);
+		Builder<T> addField(Buildable<? extends BasicFieldDef<T, ?>> buildable);
 
 		/**
 		 * Add a field that can be sorted on.
@@ -61,7 +61,7 @@ public interface BasicIndexDefinition<T>
 		 * @param field
 		 * @return
 		 */
-		Builder<T> addSort(BasicFieldDefinition.Single<T, ?> field);
+		Builder<T> addSort(BasicFieldDef.Single<T, ?> field);
 
 		/**
 		 * Add a field that can be sorted on.
@@ -69,14 +69,14 @@ public interface BasicIndexDefinition<T>
 		 * @param buildable
 		 * @return
 		 */
-		Builder<T> addSort(Buildable<? extends BasicFieldDefinition.Single<T, ?>> buildable);
+		Builder<T> addSort(Buildable<? extends BasicFieldDef.Single<T, ?>> buildable);
 
 		/**
 		 * Create the definition.
 		 *
 		 * @return
 		 */
-		BasicIndexDefinition<T> build();
+		BasicIndexDef<T> build();
 	}
 
 

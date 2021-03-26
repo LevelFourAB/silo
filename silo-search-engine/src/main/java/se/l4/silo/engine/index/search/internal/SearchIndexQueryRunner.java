@@ -41,7 +41,7 @@ import se.l4.silo.engine.collection.CountingCollector;
 import se.l4.silo.engine.index.IndexQueryEncounter;
 import se.l4.silo.engine.index.IndexQueryRunner;
 import se.l4.silo.engine.index.search.SearchField;
-import se.l4.silo.engine.index.search.SearchFieldDefinition;
+import se.l4.silo.engine.index.search.SearchFieldDef;
 import se.l4.silo.engine.index.search.SearchIndexEncounter;
 import se.l4.silo.engine.index.search.facets.FacetCollectionEncounter;
 import se.l4.silo.engine.index.search.facets.FacetCollector;
@@ -71,7 +71,7 @@ public class SearchIndexQueryRunner<T>
 
 	private final QueryBuilders queryParsers;
 
-	private final IndexDefinitionImpl<T> encounter;
+	private final SearchIndexEncounterImpl<T> encounter;
 
 	private final TransactionValue<IndexSearcherHandle> handleValue;
 
@@ -79,7 +79,7 @@ public class SearchIndexQueryRunner<T>
 		Locales locales,
 		QueryBuilders queryBuilders,
 
-		IndexDefinitionImpl<T> encounter,
+		SearchIndexEncounterImpl<T> encounter,
 
 		IndexSearcherManager searcherManager
 	)
@@ -725,7 +725,7 @@ public class SearchIndexQueryRunner<T>
 		}
 
 		@Override
-		public String getFieldName(SearchFieldDefinition<?> field)
+		public String getFieldName(SearchFieldDef<?> field)
 		{
 			return encounter.docValuesName(field, locale);
 		}

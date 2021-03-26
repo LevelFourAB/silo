@@ -13,7 +13,7 @@ import se.l4.silo.engine.index.Index;
 import se.l4.silo.engine.index.IndexDataGenerator;
 import se.l4.silo.engine.index.IndexDataUpdater;
 import se.l4.silo.engine.index.IndexQueryRunner;
-import se.l4.silo.engine.index.basic.BasicFieldDefinition;
+import se.l4.silo.engine.index.basic.BasicFieldDef;
 import se.l4.silo.engine.types.ArrayFieldType;
 import se.l4.silo.engine.types.FieldType;
 import se.l4.silo.engine.types.LongFieldType;
@@ -39,8 +39,8 @@ public class BasicIndex<T>
 		MVStoreManager store,
 		String name,
 		String uniqueName,
-		ListIterable<BasicFieldDefinition<T, ?>> fields,
-		ListIterable<BasicFieldDefinition.Single<T, ?>> sortFields
+		ListIterable<BasicFieldDef<T, ?>> fields,
+		ListIterable<BasicFieldDef.Single<T, ?>> sortFields
 	)
 	{
 		this.name = name;
@@ -48,8 +48,8 @@ public class BasicIndex<T>
 
 		Logger logger = LoggerFactory.getLogger(BasicIndex.class.getName() + "[" + uniqueName + "]");
 
-		BasicFieldDefinition<T, ?>[] fieldArray = fields.toArray(new BasicFieldDefinition[fields.size()]);
-		BasicFieldDefinition.Single<T, ?>[] sortFieldArray = sortFields.toArray(new BasicFieldDefinition.Single[sortFields.size()]);
+		BasicFieldDef<T, ?>[] fieldArray = fields.toArray(new BasicFieldDef[fields.size()]);
+		BasicFieldDef.Single<T, ?>[] sortFieldArray = sortFields.toArray(new BasicFieldDef.Single[sortFields.size()]);
 
 		MergedFieldType dataFieldType = createMultiFieldType(fields, false);
 		MVMap<Long, Object[]> indexedData = store.openMap("data:" + uniqueName, LongFieldType.INSTANCE, dataFieldType);
@@ -108,14 +108,14 @@ public class BasicIndex<T>
 	 */
 	@SuppressWarnings("rawtypes")
 	private static <T> MergedFieldType createFieldType(
-		ListIterable<? extends BasicFieldDefinition<T, ?>> fields,
+		ListIterable<? extends BasicFieldDef<T, ?>> fields,
 		boolean appendId
 	)
 	{
 		FieldType[] result = new FieldType[fields.size() + (appendId ? 1 : 0)];
 		for(int i=0, n=fields.size(); i<n; i++)
 		{
-			BasicFieldDefinition field = fields.get(i);
+			BasicFieldDef field = fields.get(i);
 			result[i] = field.getType();
 		}
 
@@ -139,14 +139,14 @@ public class BasicIndex<T>
 	 */
 	@SuppressWarnings("rawtypes")
 	private static <T> MergedFieldType createMultiFieldType(
-		ListIterable<BasicFieldDefinition<T, ?>> fields,
+		ListIterable<BasicFieldDef<T, ?>> fields,
 		boolean appendId
 	)
 	{
 		FieldType[] result = new FieldType[fields.size() + (appendId ? 1 : 0)];
 		for(int i=0, n=fields.size(); i<n; i++)
 		{
-			BasicFieldDefinition field = fields.get(i);
+			BasicFieldDef field = fields.get(i);
 			result[i] = new ArrayFieldType(field.getType());
 		}
 

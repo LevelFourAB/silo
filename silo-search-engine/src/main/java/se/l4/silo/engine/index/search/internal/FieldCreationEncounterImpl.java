@@ -6,7 +6,7 @@ import java.util.function.Function;
 import org.apache.lucene.index.IndexableField;
 
 import se.l4.silo.engine.index.search.SearchField;
-import se.l4.silo.engine.index.search.SearchFieldDefinition;
+import se.l4.silo.engine.index.search.SearchFieldDef;
 import se.l4.silo.engine.index.search.SearchIndexEncounter;
 import se.l4.silo.engine.index.search.locales.LocaleSupport;
 import se.l4.silo.engine.index.search.types.FieldCreationEncounter;
@@ -63,8 +63,8 @@ public class FieldCreationEncounterImpl<T>
 	@SuppressWarnings({ "rawtypes" })
 	public boolean isSorted()
 	{
-		return field instanceof SearchFieldDefinition.Single
-			&& ((SearchFieldDefinition.Single) field).isSorted();
+		return field instanceof SearchFieldDef.Single
+			&& ((SearchFieldDef.Single) field).isSorted();
 	}
 
 	@Override

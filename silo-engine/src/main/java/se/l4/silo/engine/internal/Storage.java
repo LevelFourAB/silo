@@ -6,7 +6,7 @@ import se.l4.silo.Collection;
 import se.l4.silo.DeleteResult;
 import se.l4.silo.FetchResult;
 import se.l4.silo.StoreResult;
-import se.l4.silo.engine.index.IndexDefinition;
+import se.l4.silo.engine.index.IndexDef;
 import se.l4.silo.engine.index.LocalIndex;
 import se.l4.silo.index.Query;
 
@@ -120,7 +120,7 @@ public interface Storage<T>
 		 * @return
 		 *   new instance
 		 */
-		Builder<T> addIndex(IndexDefinition<T> index);
+		Builder<T> addIndex(IndexDef<T> index);
 
 		/**
 		 * Add all of the given indexes to this storage.
@@ -129,7 +129,7 @@ public interface Storage<T>
 		 * @return
 		 *   new instance
 		 */
-		Builder<T> addIndexes(Iterable<IndexDefinition<T>> indexes);
+		Builder<T> addIndexes(Iterable<IndexDef<T>> indexes);
 
 		/**
 		 * Build and return the storage.

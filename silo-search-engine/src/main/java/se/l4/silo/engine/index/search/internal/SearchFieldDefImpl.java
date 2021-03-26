@@ -4,18 +4,18 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import se.l4.silo.engine.Buildable;
-import se.l4.silo.engine.index.search.SearchFieldDefinition;
+import se.l4.silo.engine.index.search.SearchFieldDef;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
 
-public class FieldDefinitionImpl<T>
-	implements SearchFieldDefinition<T>
+public class SearchFieldDefImpl<T>
+	implements SearchFieldDef<T>
 {
 	private final String name;
 	private final boolean isLanguageSpecific;
 	private final boolean isHighlighted;
 	private final SearchFieldType<?> type;
 
-	public FieldDefinitionImpl(
+	public SearchFieldDefImpl(
 		String name,
 		SearchFieldType<?> type,
 		boolean isLanguageSpecific,
@@ -53,7 +53,7 @@ public class FieldDefinitionImpl<T>
 	}
 
 	public static class SingleImpl<T, F>
-		extends FieldDefinitionImpl<T>
+		extends SearchFieldDefImpl<T>
 		implements Single<T, F>
 	{
 		private final Function<T, F> supplier;
@@ -88,7 +88,7 @@ public class FieldDefinitionImpl<T>
 	}
 
 	public static class CollectionImpl<T, F>
-		extends FieldDefinitionImpl<T>
+		extends SearchFieldDefImpl<T>
 		implements Collection<T, F>
 	{
 		private final Function<T, Iterable<F>> supplier;
@@ -301,12 +301,12 @@ public class FieldDefinitionImpl<T>
 		}
 
 		@Override
-		public SearchFieldDefinition.Single<T, F> build()
+		public SearchFieldDef.Single<T, F> build()
 		{
 			Objects.requireNonNull(type, "a type must be specified");
 			Objects.requireNonNull(supplier, "a supplier must be specified");
 
-			return new FieldDefinitionImpl.SingleImpl<>(
+			return new SearchFieldDefImpl.SingleImpl<>(
 				name,
 				type,
 				languageSpecific,
@@ -384,12 +384,12 @@ public class FieldDefinitionImpl<T>
 		}
 
 		@Override
-		public SearchFieldDefinition.Collection<T, F> build()
+		public SearchFieldDef.Collection<T, F> build()
 		{
 			Objects.requireNonNull(type, "a type must be specified");
 			Objects.requireNonNull(supplier, "a supplier must be specified");
 
-			return new FieldDefinitionImpl.CollectionImpl<>(
+			return new SearchFieldDefImpl.CollectionImpl<>(
 				name,
 				type,
 				languageSpecific,

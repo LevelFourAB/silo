@@ -4,20 +4,20 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import se.l4.silo.StorageException;
-import se.l4.silo.engine.index.basic.BasicFieldDefinition;
+import se.l4.silo.engine.index.basic.BasicFieldDef;
 import se.l4.silo.engine.types.BooleanFieldType;
 import se.l4.silo.engine.types.FieldType;
 import se.l4.silo.engine.types.IntFieldType;
 import se.l4.silo.engine.types.LongFieldType;
 import se.l4.silo.engine.types.StringFieldType;
 
-public abstract class BasicFieldDefinitionImpl<T, V>
-	implements BasicFieldDefinition<T, V>
+public abstract class BasicFieldDefImpl<T, V>
+	implements BasicFieldDef<T, V>
 {
 	private final String name;
 	private final FieldType<V> type;
 
-	public BasicFieldDefinitionImpl(
+	public BasicFieldDefImpl(
 		String name,
 		FieldType<V> type
 	)
@@ -44,7 +44,7 @@ public abstract class BasicFieldDefinitionImpl<T, V>
 	}
 
 	public static class SingleImpl<T, V>
-		extends BasicFieldDefinitionImpl<T, V>
+		extends BasicFieldDefImpl<T, V>
 		implements Single<T, V>
 	{
 		private final Function<T, V> supplier;
@@ -68,7 +68,7 @@ public abstract class BasicFieldDefinitionImpl<T, V>
 	}
 
 	public static class CollectionImpl<T, V>
-		extends BasicFieldDefinitionImpl<T, V>
+		extends BasicFieldDefImpl<T, V>
 		implements Collection<T, V>
 	{
 		private final Function<T, Iterable<V>> supplier;
@@ -146,7 +146,6 @@ public abstract class BasicFieldDefinitionImpl<T, V>
 		}
 
 		@Override
-		@SuppressWarnings("unchecked")
 		public SingleBuilder<T, F> withSupplier(Function<T, F> supplier)
 		{
 			Objects.requireNonNull(supplier);

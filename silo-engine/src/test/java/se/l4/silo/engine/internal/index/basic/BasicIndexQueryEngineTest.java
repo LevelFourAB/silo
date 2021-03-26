@@ -16,8 +16,8 @@ import se.l4.silo.CollectionRef;
 import se.l4.silo.engine.CollectionDef;
 import se.l4.silo.engine.LocalSilo;
 import se.l4.silo.engine.ObjectCodec;
-import se.l4.silo.engine.index.basic.BasicFieldDefinition;
-import se.l4.silo.engine.index.basic.BasicIndexDefinition;
+import se.l4.silo.engine.index.basic.BasicFieldDef;
+import se.l4.silo.engine.index.basic.BasicIndexDef;
 import se.l4.silo.engine.internal.BasicTest;
 import se.l4.silo.index.basic.BasicIndexQuery;
 import se.l4.silo.index.basic.BasicIndexResult;
@@ -28,17 +28,17 @@ public class BasicIndexQueryEngineTest
 	@Override
 	protected LocalSilo.Builder setup(LocalSilo.Builder builder)
 	{
-		BasicFieldDefinition<TestData, String> field1 = BasicFieldDefinition.create(TestData.class, "field1")
+		BasicFieldDef<TestData, String> field1 = BasicFieldDef.create(TestData.class, "field1")
 			.withType(String.class)
 			.withSupplier(TestData::getField1)
 			.build();
 
-		BasicFieldDefinition<TestData, Boolean> field2 = BasicFieldDefinition.create(TestData.class, "field2")
+		BasicFieldDef<TestData, Boolean> field2 = BasicFieldDef.create(TestData.class, "field2")
 			.withType(boolean.class)
 			.withSupplier(TestData::isField2)
 			.build();
 
-		BasicFieldDefinition<TestData, String> field3 = BasicFieldDefinition.create(TestData.class, "field3")
+		BasicFieldDef<TestData, String> field3 = BasicFieldDef.create(TestData.class, "field3")
 			.withType(String.class)
 			.collection()
 			.withSupplier(TestData::getField3)
@@ -47,19 +47,19 @@ public class BasicIndexQueryEngineTest
 		CollectionDef<Long, TestData> test = CollectionDef.create(TestData.class, "test")
 			.withCodec(ObjectCodec.serialized(serializers, TestData.class))
 			.withId(Long.class, TestData::getId)
-			.addIndex(BasicIndexDefinition.create(TestData.class, "byField1")
+			.addIndex(BasicIndexDef.create(TestData.class, "byField1")
 				.addField(field1)
 				.build()
 			)
-			.addIndex(BasicIndexDefinition.create(TestData.class, "byField2")
+			.addIndex(BasicIndexDef.create(TestData.class, "byField2")
 				.addField(field2)
 				.build()
 			)
-			.addIndex(BasicIndexDefinition.create(TestData.class, "byField3")
+			.addIndex(BasicIndexDef.create(TestData.class, "byField3")
 				.addField(field3)
 				.build()
 			)
-			.addIndex(BasicIndexDefinition.create(TestData.class, "multiple")
+			.addIndex(BasicIndexDef.create(TestData.class, "multiple")
 				.addField(field2)
 				.addField(field1)
 				.build()

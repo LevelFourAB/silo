@@ -5,7 +5,7 @@ import java.util.Objects;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ListIterable;
 
-import se.l4.silo.engine.index.search.SearchFieldDefinition;
+import se.l4.silo.engine.index.search.SearchFieldDef;
 import se.l4.silo.engine.index.search.facets.FacetCollector;
 import se.l4.silo.engine.index.search.facets.ValueFacetDef;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
@@ -16,11 +16,11 @@ public class ValueFacetDefImpl<T, V>
 	implements ValueFacetDef<T, V>
 {
 	private final String id;
-	private final SearchFieldDefinition<T> field;
+	private final SearchFieldDef<T> field;
 
 	public ValueFacetDefImpl(
 		String id,
-		SearchFieldDefinition<T> field
+		SearchFieldDef<T> field
 	)
 	{
 		this.id = id;
@@ -34,7 +34,7 @@ public class ValueFacetDefImpl<T, V>
 	}
 
 	@Override
-	public ListIterable<? extends SearchFieldDefinition<T>> getFields()
+	public ListIterable<? extends SearchFieldDef<T>> getFields()
 	{
 		return Lists.immutable.of(field);
 	}
@@ -55,11 +55,11 @@ public class ValueFacetDefImpl<T, V>
 		implements Builder<T, V>
 	{
 		private final String id;
-		private final SearchFieldDefinition<T> field;
+		private final SearchFieldDef<T> field;
 
 		public BuilderImpl(
 			String id,
-			SearchFieldDefinition<T> field
+			SearchFieldDef<T> field
 		)
 		{
 			this.id = id;
@@ -67,7 +67,7 @@ public class ValueFacetDefImpl<T, V>
 		}
 
 		@Override
-		public <NV> Builder<T, NV> withField(SearchFieldDefinition<T> field)
+		public <NV> Builder<T, NV> withField(SearchFieldDef<T> field)
 		{
 			Objects.requireNonNull(field);
 

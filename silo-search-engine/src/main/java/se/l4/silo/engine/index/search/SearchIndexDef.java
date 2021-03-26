@@ -6,17 +6,17 @@ import java.util.function.Function;
 import org.eclipse.collections.api.RichIterable;
 
 import se.l4.silo.engine.Buildable;
-import se.l4.silo.engine.index.IndexDefinition;
+import se.l4.silo.engine.index.IndexDef;
 import se.l4.silo.engine.index.search.facets.FacetDef;
-import se.l4.silo.engine.index.search.internal.SearchIndexDefinitionImpl;
+import se.l4.silo.engine.index.search.internal.SearchIndexDefImpl;
 import se.l4.silo.engine.index.search.locales.Locales;
 
 /**
  * Definition that activates support for creating indexes that support
  * advanced querying via a search index.
  */
-public interface SearchIndexDefinition<T>
-	extends IndexDefinition<T>
+public interface SearchIndexDef<T>
+	extends IndexDef<T>
 {
 	/**
 	 * Get function used to extract the locale of a stored object.
@@ -30,7 +30,7 @@ public interface SearchIndexDefinition<T>
 	 *
 	 * @return
 	 */
-	RichIterable<SearchFieldDefinition<T>> getFields();
+	RichIterable<SearchFieldDef<T>> getFields();
 
 	/**
 	 * Get the facets of this index.
@@ -52,7 +52,7 @@ public interface SearchIndexDefinition<T>
 	 */
 	static <T> Builder<T> create(Class<T> type, String name)
 	{
-		return SearchIndexDefinitionImpl.create(type, name);
+		return SearchIndexDefImpl.create(type, name);
 	}
 
 	interface Builder<T>
@@ -88,7 +88,7 @@ public interface SearchIndexDefinition<T>
 		 * @param field
 		 * @return
 		 */
-		Builder<T> addField(SearchFieldDefinition<T> field);
+		Builder<T> addField(SearchFieldDef<T> field);
 
 		/**
 		 * Add a field to this configuration.
@@ -96,7 +96,7 @@ public interface SearchIndexDefinition<T>
 		 * @param buildable
 		 * @return
 		 */
-		Builder<T> addField(Buildable<? extends SearchFieldDefinition<T>> buildable);
+		Builder<T> addField(Buildable<? extends SearchFieldDef<T>> buildable);
 
 		/**
 		 * Add multiple fields to this configuration.
@@ -104,7 +104,7 @@ public interface SearchIndexDefinition<T>
 		 * @param fields
 		 * @return
 		 */
-		Builder<T> addFields(Iterable<? extends SearchFieldDefinition<T>> fields);
+		Builder<T> addFields(Iterable<? extends SearchFieldDef<T>> fields);
 
 		/**
 		 * Add a facet to this definition.
@@ -125,6 +125,6 @@ public interface SearchIndexDefinition<T>
 		/**
 		 * Build the index definition.
 		 */
-		SearchIndexDefinition<T> build();
+		SearchIndexDef<T> build();
 	}
 }

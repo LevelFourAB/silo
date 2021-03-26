@@ -12,7 +12,7 @@ import se.l4.exobytes.streaming.StreamingFormat;
 import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.silo.engine.index.IndexDataGenerator;
 import se.l4.silo.engine.index.search.SearchField;
-import se.l4.silo.engine.index.search.SearchFieldDefinition;
+import se.l4.silo.engine.index.search.SearchFieldDef;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
 import se.l4.silo.index.search.SearchIndexException;
 
@@ -56,16 +56,16 @@ public class SearchIndexDataGenerator<T>
 			{
 				out.writeListStart(2);
 
-				SearchFieldDefinition<T> def = field.getDefinition();
+				SearchFieldDef<T> def = field.getDefinition();
 
 				// Write the name of the field
 				out.writeString(def.getName());
 
 				// Get and write the value
 				SearchFieldType type = def.getType();
-				if(def instanceof SearchFieldDefinition.Single)
+				if(def instanceof SearchFieldDef.Single)
 				{
-					Object value = ((SearchFieldDefinition.Single) def).getSupplier().apply(data);
+					Object value = ((SearchFieldDef.Single) def).getSupplier().apply(data);
 					if(value == null)
 					{
 						out.writeNull();
@@ -75,9 +75,9 @@ public class SearchIndexDataGenerator<T>
 						type.write(value, out);
 					}
 				}
-				else if(def instanceof SearchFieldDefinition.Collection)
+				else if(def instanceof SearchFieldDef.Collection)
 				{
-					Object value = ((SearchFieldDefinition.Collection) def).getSupplier().apply(data);
+					Object value = ((SearchFieldDef.Collection) def).getSupplier().apply(data);
 					if(value == null)
 					{
 						out.writeNull();

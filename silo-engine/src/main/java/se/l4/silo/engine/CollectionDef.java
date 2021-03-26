@@ -5,7 +5,7 @@ import java.util.function.Function;
 import org.eclipse.collections.api.list.ListIterable;
 
 import se.l4.silo.CollectionRef;
-import se.l4.silo.engine.index.IndexDefinition;
+import se.l4.silo.engine.index.IndexDef;
 import se.l4.silo.engine.internal.CollectionDefImpl;
 
 /**
@@ -38,7 +38,7 @@ public interface CollectionDef<ID, T>
 	 *
 	 * @return
 	 */
-	ListIterable<IndexDefinition<T>> getIndexes();
+	ListIterable<IndexDef<T>> getIndexes();
 
 	/**
 	 * Start building a new {@link CollectionDef}.
@@ -82,7 +82,7 @@ public interface CollectionDef<ID, T>
 		 *   the index definition
 		 * @return
 		 */
-		Builder<ID, T> addIndex(IndexDefinition<T> definition);
+		Builder<ID, T> addIndex(IndexDef<T> definition);
 
 		/**
 		 * Add an index to this collection.
@@ -90,7 +90,7 @@ public interface CollectionDef<ID, T>
 		 * @param buildable
 		 * @return
 		 */
-		Builder<ID, T> addIndex(Buildable<? extends IndexDefinition<T>> buildable);
+		Builder<ID, T> addIndex(Buildable<? extends IndexDef<T>> buildable);
 
 		/**
 		 * Build the definition.

@@ -9,21 +9,21 @@ import org.eclipse.collections.api.list.ListIterable;
 import se.l4.silo.engine.Buildable;
 import se.l4.silo.engine.MVStoreManager;
 import se.l4.silo.engine.index.IndexEngineCreationEncounter;
-import se.l4.silo.engine.index.basic.BasicFieldDefinition;
-import se.l4.silo.engine.index.basic.BasicFieldDefinition.Single;
-import se.l4.silo.engine.index.basic.BasicIndexDefinition;
+import se.l4.silo.engine.index.basic.BasicFieldDef;
+import se.l4.silo.engine.index.basic.BasicFieldDef.Single;
+import se.l4.silo.engine.index.basic.BasicIndexDef;
 
-public class BasicIndexDefinitionImpl<T>
-	implements BasicIndexDefinition<T>
+public class BasicIndexDefImpl<T>
+	implements BasicIndexDef<T>
 {
 	private final String name;
-	private final ImmutableList<BasicFieldDefinition<T, ?>> fields;
-	private final ImmutableList<BasicFieldDefinition.Single<T, ?>> sortFields;
+	private final ImmutableList<BasicFieldDef<T, ?>> fields;
+	private final ImmutableList<BasicFieldDef.Single<T, ?>> sortFields;
 
-	public BasicIndexDefinitionImpl(
+	public BasicIndexDefImpl(
 		String name,
-		ImmutableList<BasicFieldDefinition<T, ?>> fields,
-		ImmutableList<BasicFieldDefinition.Single<T, ?>> sortFields
+		ImmutableList<BasicFieldDef<T, ?>> fields,
+		ImmutableList<BasicFieldDef.Single<T, ?>> sortFields
 	)
 	{
 		this.name = name;
@@ -38,13 +38,13 @@ public class BasicIndexDefinitionImpl<T>
 	}
 
 	@Override
-	public ListIterable<BasicFieldDefinition<T, ?>> getFields()
+	public ListIterable<BasicFieldDef<T, ?>> getFields()
 	{
 		return fields;
 	}
 
 	@Override
-	public ListIterable<BasicFieldDefinition.Single<T, ?>> getSortFields()
+	public ListIterable<BasicFieldDef.Single<T, ?>> getSortFields()
 	{
 		return sortFields;
 	}
@@ -75,13 +75,13 @@ public class BasicIndexDefinitionImpl<T>
 		implements Builder<T>
 	{
 		private final String name;
-		private final ImmutableList<BasicFieldDefinition<T, ?>> fields;
-		private final ImmutableList<BasicFieldDefinition.Single<T, ?>> sortFields;
+		private final ImmutableList<BasicFieldDef<T, ?>> fields;
+		private final ImmutableList<BasicFieldDef.Single<T, ?>> sortFields;
 
 		public BuilderImpl(
 			String name,
-			ImmutableList<BasicFieldDefinition<T, ?>> fields,
-			ImmutableList<BasicFieldDefinition.Single<T, ?>> sortFields
+			ImmutableList<BasicFieldDef<T, ?>> fields,
+			ImmutableList<BasicFieldDef.Single<T, ?>> sortFields
 		)
 		{
 			this.name = name;
@@ -90,7 +90,7 @@ public class BasicIndexDefinitionImpl<T>
 		}
 
 		@Override
-		public Builder<T> addField(BasicFieldDefinition<T, ?> field)
+		public Builder<T> addField(BasicFieldDef<T, ?> field)
 		{
 			Objects.requireNonNull(field);
 
@@ -103,14 +103,14 @@ public class BasicIndexDefinitionImpl<T>
 
 		@Override
 		public Builder<T> addField(
-			Buildable<? extends BasicFieldDefinition<T, ?>> buildable
+			Buildable<? extends BasicFieldDef<T, ?>> buildable
 		)
 		{
 			return addField(buildable.build());
 		}
 
 		@Override
-		public Builder<T> addSort(BasicFieldDefinition.Single<T, ?> field)
+		public Builder<T> addSort(BasicFieldDef.Single<T, ?> field)
 		{
 			return new BuilderImpl<>(
 				name,
@@ -126,9 +126,9 @@ public class BasicIndexDefinitionImpl<T>
 		}
 
 		@Override
-		public BasicIndexDefinition<T> build()
+		public BasicIndexDef<T> build()
 		{
-			return new BasicIndexDefinitionImpl<>(name, fields, sortFields);
+			return new BasicIndexDefImpl<>(name, fields, sortFields);
 		}
 	}
 }

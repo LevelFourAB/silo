@@ -22,21 +22,21 @@ public class SearchIndexCollectionTest
 	@Override
 	protected LocalSilo.Builder setup(LocalSilo.Builder builder)
 	{
-		SearchIndexDefinition<TestUserData> index = SearchIndexDefinition.create(TestUserData.class, "index")
+		SearchIndexDef<TestUserData> index = SearchIndexDef.create(TestUserData.class, "index")
 			.addField(
-				SearchFieldDefinition.create(TestUserData.class, "name")
+				SearchFieldDef.create(TestUserData.class, "name")
 					.withType(SearchFieldType.forString().fullText().build())
 					.withSupplier(TestUserData::getName)
 					.build()
 			)
 			.addField(
-				SearchFieldDefinition.create(TestUserData.class, "age")
+				SearchFieldDef.create(TestUserData.class, "age")
 					.withType(SearchFieldType.forInteger().build())
 					.withSupplier(TestUserData::getAge)
 					.build()
 			)
 			.addField(
-				SearchFieldDefinition.create(TestUserData.class, "active")
+				SearchFieldDef.create(TestUserData.class, "active")
 					.withType(SearchFieldType.forBoolean().build())
 					.withSupplier(TestUserData::isActive)
 					.build()

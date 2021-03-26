@@ -9,7 +9,7 @@ import org.apache.lucene.search.SortField;
 import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.silo.engine.Buildable;
-import se.l4.silo.engine.index.search.SearchFieldDefinition;
+import se.l4.silo.engine.index.search.SearchFieldDef;
 import se.l4.silo.engine.index.search.facets.FacetCollector;
 import se.l4.silo.engine.index.search.facets.ValueFacetDef;
 import se.l4.silo.engine.index.search.internal.MappedSearchFieldType;
@@ -23,7 +23,7 @@ import se.l4.silo.engine.index.search.internal.types.LongFieldType;
 import se.l4.silo.index.Matcher;
 
 /**
- * Type of data that can be used for {@link SearchFieldDefinition fields}.
+ * Type of data that can be used for {@link SearchFieldDef fields}.
  */
 public interface SearchFieldType<V>
 {
@@ -135,7 +135,7 @@ public interface SearchFieldType<V>
 		 * @return
 		 */
 		FacetCollector<V> createFacetCollector(
-			SearchFieldDefinition<?> field
+			SearchFieldDef<?> field
 		);
 
 		@Override
