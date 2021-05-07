@@ -126,7 +126,7 @@ public interface LocalSilo
 		return new LocalSiloImpl.BuilderImpl(
 			logBuilder,
 			path,
-			new EngineConfig(),
+			EngineConfig.create().build(),
 			Lists.immutable.empty(),
 			null
 		);
@@ -148,13 +148,12 @@ public interface LocalSilo
 		Builder withVibe(Vibe vibe, String... path);
 
 		/**
-		 * Set the size used to cache data in this instance. This controls the
-		 * cache size of the main storage, but does not do anything for indexes.
+		 * Set configuration for this engine.
 		 *
-		 * @param cacheSizeInMb
+		 * @param config
 		 * @return
 		 */
-		Builder withCacheSize(int cacheSizeInMb);
+		Builder withConfig(EngineConfig config);
 
 		/**
 		 * Add a collection that should be available.

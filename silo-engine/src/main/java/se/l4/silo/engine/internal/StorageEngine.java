@@ -176,7 +176,10 @@ public class StorageEngine
 			.backgroundExceptionHandler((thread, t) -> {
 				logger.error("Error occured in background for data store; " + t.getMessage(), t);
 			})
-			.cacheSize(config.getCacheSizeInMb())
+			.cacheSize(config.getCacheSizeInMiB())
+			.cacheConcurrency(config.getCacheConcurrency())
+			.autoCompactFillRate(config.getAutoCompactFillRate())
+			.autoCommitBufferSize(config.getAutoCommitBufferSizeInKiB())
 			.fileName(root.resolve("storage.mv.bin").toString()));
 
 		// Request a migration of the store

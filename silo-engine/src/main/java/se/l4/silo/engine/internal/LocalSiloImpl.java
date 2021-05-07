@@ -111,6 +111,7 @@ public class LocalSiloImpl
 		private final ImmutableList<CollectionDef> collectionDefs;
 
 		private final EngineConfig config;
+
 		private final Vibe vibe;
 
 		@SuppressWarnings("rawtypes")
@@ -126,7 +127,9 @@ public class LocalSiloImpl
 		{
 			this.logBuilder = logBuilder;
 			this.dataPath = dataPath;
+
 			this.config = config;
+
 			this.vibe = vibe;
 			this.collectionDefs = collectionDefs;
 		}
@@ -180,12 +183,12 @@ public class LocalSiloImpl
 		}
 
 		@Override
-		public Builder withCacheSize(int cacheSizeInMb)
+		public Builder withConfig(EngineConfig config)
 		{
 			return new BuilderImpl(
 				logBuilder,
 				dataPath,
-				config.setCacheSizeInMb(cacheSizeInMb),
+				config,
 				collectionDefs,
 				vibe
 			);
