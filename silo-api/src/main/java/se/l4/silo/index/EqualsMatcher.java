@@ -1,7 +1,5 @@
 package se.l4.silo.index;
 
-import java.util.Objects;
-
 import se.l4.silo.internal.EqualsMatcherImpl;
 
 /**
@@ -24,7 +22,6 @@ public interface EqualsMatcher<V>
 	 */
 	static <V> EqualsMatcher<V> create(V value)
 	{
-		Objects.requireNonNull(value);
 		return new EqualsMatcherImpl<>(value);
 	}
 
