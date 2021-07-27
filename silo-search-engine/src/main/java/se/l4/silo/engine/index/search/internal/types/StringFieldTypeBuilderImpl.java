@@ -67,7 +67,7 @@ public class StringFieldTypeBuilderImpl
 			}
 			else
 			{
-				return FullTextFieldType.WITH_TYPE_AHEAD;
+				return FullTextFieldType.WITHOUT_TYPE_AHEAD;
 			}
 		}
 	}

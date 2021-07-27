@@ -186,16 +186,17 @@ public class SearchIndexDataUpdater<T>
 	{
 		if(object == null)
 		{
+			// Store null = true
 			String fieldName = encounter.nullName(field.getDefinition());
-			FieldType ft = new FieldType();
-			ft.setStored(false);
-			ft.setIndexOptions(IndexOptions.DOCS);
-			ft.setTokenized(false);
-			ft.setOmitNorms(true);
-			document.add(new Field(fieldName, BytesRef.EMPTY_BYTES, ft));
+			document.add(new Field(fieldName, NullFields.VALUE_NULL, NullFields.FIELD_TYPE));
 			return;
 		}
 
+		// Store null = false
+		String fieldName = encounter.nullName(field.getDefinition());
+		document.add(new Field(fieldName, NullFields.VALUE_NON_NULL, NullFields.FIELD_TYPE));
+
+		// Index the actual field
 		SearchFieldDef<?> def = field.getDefinition();
 		SearchFieldType type = ((SearchFieldType) def.getType());
 		if(type.isLocaleSupported() && def.isLanguageSpecific() && fallback != current)

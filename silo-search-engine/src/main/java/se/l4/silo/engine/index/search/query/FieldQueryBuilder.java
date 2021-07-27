@@ -5,13 +5,15 @@ import java.io.IOException;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.util.BytesRef;
 
 import se.l4.silo.engine.index.search.SearchField;
 import se.l4.silo.engine.index.search.SearchFieldDef;
 import se.l4.silo.engine.index.search.SearchIndexEncounter;
+import se.l4.silo.engine.index.search.internal.NullFields;
+import se.l4.silo.index.AnyMatcher;
 import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.Matcher;
+import se.l4.silo.index.NullMatcher;
 import se.l4.silo.index.search.query.FieldQuery;
 
 // TODO: Multiple language support
@@ -29,18 +31,22 @@ public class FieldQueryBuilder
 		SearchFieldDef<?> def = field.getDefinition();
 
 		Matcher matcher = clause.getMatcher();
-		if(matcher instanceof EqualsMatcher)
+		if(matcher instanceof NullMatcher
+			|| (matcher instanceof EqualsMatcher && ((EqualsMatcher) matcher).getValue() == null))
 		{
 			/*
-			 * Handle the special case of null being matched. This is stored
-			 * in an alternative field name.
+			 * Handle the case of null being matched.
 			 */
-			EqualsMatcher equals = (EqualsMatcher) matcher;
-			if(equals.getValue() == null)
-			{
-				String fieldName = indexEncounter.nullName(def);
-				return new TermQuery(new Term(fieldName, new BytesRef(BytesRef.EMPTY_BYTES)));
-			}
+			String fieldName = indexEncounter.nullName(def);
+			return new TermQuery(new Term(fieldName, NullFields.VALUE_NULL));
+		}
+		else if(matcher instanceof AnyMatcher)
+		{
+			/**
+			 * Handle the case of matching any value.
+			 */
+			String fieldName = indexEncounter.nullName(def);
+			return new TermQuery(new Term(fieldName, NullFields.VALUE_NON_NULL));
 		}
 
 		// All other matchers are delegated to the field type

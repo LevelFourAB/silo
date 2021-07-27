@@ -19,17 +19,45 @@ public interface QueryBuilders
 	 */
 	<C extends QueryClause> Optional<QueryBuilder<C>> get(Class<C> clause);
 
+	/**
+	 * Start building a {@link QueryBuilders} instance.
+	 *
+	 * @return
+	 */
 	static Builder create()
 	{
 		return QueryBuildersImpl.DEFAULT_BUILDER;
 	}
 
+	/**
+	 * Builder for creating an instance fo {@link QueryBuilders}.
+	 */
 	interface Builder
 	{
+		/**
+		 * Add a {@link QueryBuilder} automatically resolving the {@link QueryClause}
+		 * it handles via generics.
+		 *
+		 * @param parser
+		 * @return
+		 */
 		Builder add(QueryBuilder<? extends QueryClause> parser);
 
+		/**
+		 * Add a {@link QueryBuilder} for the given {@link QueryClause}.
+		 *
+		 * @param <C>
+		 * @param clause
+		 * @param parser
+		 * @return
+		 */
 		<C extends QueryClause> Builder add(Class<C> clause, QueryBuilder<C> parser);
 
+		/**
+		 * Build the instance.
+		 *
+		 * @return
+		 */
 		QueryBuilders build();
 	}
 }
