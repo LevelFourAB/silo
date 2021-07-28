@@ -63,8 +63,8 @@ public class FieldCreationEncounterImpl<T>
 	@SuppressWarnings({ "rawtypes" })
 	public boolean isSorted()
 	{
-		return field instanceof SearchFieldDef.Single
-			&& ((SearchFieldDef.Single) field).isSorted();
+		return field.getDefinition() instanceof SearchFieldDef.Single
+			&& ((SearchFieldDef.Single) field.getDefinition()).isSorted();
 	}
 
 	@Override
