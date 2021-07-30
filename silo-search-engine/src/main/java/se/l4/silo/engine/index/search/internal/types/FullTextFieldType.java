@@ -5,12 +5,16 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
+import se.l4.silo.engine.index.search.internal.UserQueryParser;
+import se.l4.silo.engine.index.search.query.QueryEncounter;
 import se.l4.silo.engine.index.search.types.AnalyzingTextField;
 import se.l4.silo.engine.index.search.types.FieldCreationEncounter;
 import se.l4.silo.engine.index.search.types.StringFieldType;
 import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.Matcher;
 import se.l4.silo.index.search.SearchIndexException;
+import se.l4.silo.index.search.query.UserQuery;
+import se.l4.silo.index.search.query.UserQueryMatcher;
 
 public class FullTextFieldType
 	extends AbstractStringFieldType
@@ -53,12 +57,24 @@ public class FullTextFieldType
 	}
 
 	@Override
-	public Query createQuery(String field, Matcher<String> matcher)
+	public Query createQuery(
+		QueryEncounter<?> encounter,
+		String field,
+		Matcher<String> matcher
+	)
 	{
 		if(matcher instanceof EqualsMatcher)
 		{
 			String value = ((EqualsMatcher<String>) matcher).getValue();
 			return new TermQuery(new Term(field, value.toString()));
+		}
+		else if(matcher instanceof UserQueryMatcher)
+		{
+			UserQueryMatcher userQuery = (UserQueryMatcher) matcher;
+			return UserQueryParser.create(encounter)
+				.withFields(field)
+				.withTypeAhead(userQuery.getContext() == UserQuery.Context.TYPE_AHEAD)
+				.parse(userQuery.getQuery());
 		}
 
 		throw new SearchIndexException("Token field queries require a " + EqualsMatcher.class.getName());

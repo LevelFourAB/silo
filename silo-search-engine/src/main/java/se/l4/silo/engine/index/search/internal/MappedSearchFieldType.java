@@ -10,6 +10,7 @@ import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.silo.engine.index.search.SearchFieldDef;
 import se.l4.silo.engine.index.search.facets.FacetCollector;
+import se.l4.silo.engine.index.search.query.QueryEncounter;
 import se.l4.silo.engine.index.search.types.FieldCreationEncounter;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
 import se.l4.silo.index.MappableMatcher;
@@ -71,7 +72,11 @@ public class MappedSearchFieldType<T, V>
 
 	@Override
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public Query createQuery(String field, Matcher<V> matcher)
+	public Query createQuery(
+		QueryEncounter<?> encounter,
+		String field,
+		Matcher<V> matcher
+	)
 	{
 		Matcher<T> converted;
 		if(matcher instanceof MappableMatcher)
@@ -84,7 +89,7 @@ public class MappedSearchFieldType<T, V>
 			converted = (Matcher) matcher;
 		}
 
-		return originalType.createQuery(field, converted);
+		return originalType.createQuery(encounter, field, converted);
 	}
 
 	@Override

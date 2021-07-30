@@ -6,6 +6,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
+import se.l4.silo.engine.index.search.query.QueryEncounter;
 import se.l4.silo.engine.index.search.types.FieldCreationEncounter;
 import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.Matcher;
@@ -36,7 +37,11 @@ public class TokenFieldType
 	}
 
 	@Override
-	public Query createQuery(String field, Matcher<String> matcher)
+	public Query createQuery(
+		QueryEncounter<?> encounter,
+		String field,
+		Matcher<String> matcher
+	)
 	{
 		if(matcher instanceof EqualsMatcher)
 		{

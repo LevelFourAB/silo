@@ -12,6 +12,7 @@ import org.apache.lucene.util.NumericUtils;
 import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.exobytes.streaming.Token;
+import se.l4.silo.engine.index.search.query.QueryEncounter;
 import se.l4.silo.engine.index.search.types.FieldCreationEncounter;
 import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.Matcher;
@@ -73,7 +74,11 @@ public class DoubleFieldType
 	}
 
 	@Override
-	public Query createQuery(String field, Matcher<Double> matcher)
+	public Query createQuery(
+		QueryEncounter<?> encounter,
+		String field,
+		Matcher<Double> matcher
+	)
 	{
 		if(matcher instanceof EqualsMatcher)
 		{

@@ -16,6 +16,7 @@ import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.exobytes.streaming.Token;
 import se.l4.silo.engine.index.search.SearchFieldDef;
 import se.l4.silo.engine.index.search.facets.FacetCollector;
+import se.l4.silo.engine.index.search.query.QueryEncounter;
 import se.l4.silo.engine.index.search.types.FieldCreationEncounter;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
 import se.l4.silo.index.EqualsMatcher;
@@ -82,7 +83,11 @@ public class IntFieldType
 	}
 
 	@Override
-	public Query createQuery(String field, Matcher<Integer> matcher)
+	public Query createQuery(
+		QueryEncounter<?> encounter,
+		String field,
+		Matcher<Integer> matcher
+	)
 	{
 		if(matcher instanceof EqualsMatcher)
 		{

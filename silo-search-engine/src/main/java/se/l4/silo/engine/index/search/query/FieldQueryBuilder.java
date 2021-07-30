@@ -51,6 +51,6 @@ public class FieldQueryBuilder
 
 		// All other matchers are delegated to the field type
 		String fieldName = indexEncounter.name(def, encounter.currentLanguage());
-		return def.getType().createQuery(fieldName, matcher);
+		return def.getType().createQuery(encounter, fieldName, matcher);
 	}
 }

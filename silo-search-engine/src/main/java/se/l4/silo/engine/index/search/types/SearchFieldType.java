@@ -20,6 +20,7 @@ import se.l4.silo.engine.index.search.internal.types.FieldTypeInstanceBuilder;
 import se.l4.silo.engine.index.search.internal.types.FloatFieldType;
 import se.l4.silo.engine.index.search.internal.types.IntFieldType;
 import se.l4.silo.engine.index.search.internal.types.LongFieldType;
+import se.l4.silo.engine.index.search.query.QueryEncounter;
 import se.l4.silo.index.Matcher;
 
 /**
@@ -75,7 +76,11 @@ public interface SearchFieldType<V>
 	 * @param matcher
 	 * @return
 	 */
-	Query createQuery(String field, Matcher<V> matcher);
+	Query createQuery(
+		QueryEncounter<?> encounter,
+		String field,
+		Matcher<V> matcher
+	);
 
 	/**
 	 * Create the field from the given object.

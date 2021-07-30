@@ -22,6 +22,7 @@ import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.exobytes.streaming.Token;
 import se.l4.silo.engine.index.search.internal.LocaleAnalyzer;
+import se.l4.silo.engine.index.search.query.QueryEncounter;
 import se.l4.silo.engine.index.search.types.AnalyzingTextField;
 import se.l4.silo.engine.index.search.types.FieldCreationEncounter;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
@@ -116,7 +117,11 @@ public class LocaleFieldType
 	}
 
 	@Override
-	public Query createQuery(String field, Matcher<Locale> matcher)
+	public Query createQuery(
+		QueryEncounter<?> encounter,
+		String field,
+		Matcher<Locale> matcher
+	)
 	{
 		if(matcher instanceof EqualsMatcher)
 		{
