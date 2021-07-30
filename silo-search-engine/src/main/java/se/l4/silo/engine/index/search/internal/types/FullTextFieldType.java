@@ -71,9 +71,10 @@ public class FullTextFieldType
 		else if(matcher instanceof UserQueryMatcher)
 		{
 			UserQueryMatcher userQuery = (UserQueryMatcher) matcher;
+			boolean typeAhead = userQuery.getContext() == UserQuery.Context.TYPE_AHEAD;
 			return UserQueryParser.create(encounter)
-				.withFields(field)
-				.withTypeAhead(userQuery.getContext() == UserQuery.Context.TYPE_AHEAD)
+				.withFields(typeAhead ? field : (field + ":type-ahead"))
+				.withTypeAhead(typeAhead)
 				.parse(userQuery.getQuery());
 		}
 
