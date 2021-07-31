@@ -22,6 +22,7 @@ public class QueryBuildersImpl
 		.add(new OrQueryBuilder())
 		.add(new FieldQueryBuilder())
 		.add(new NegateQueryBuilder())
+		.add(new BoostQueryBuilder())
 		.add(new UserQueryBuilder());
 
 	public static final QueryBuilders DEFAULT = DEFAULT_BUILDER.build();
