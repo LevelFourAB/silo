@@ -12,6 +12,7 @@ import org.apache.lucene.util.NumericUtils;
 import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.exobytes.streaming.Token;
+import se.l4.silo.engine.index.search.SearchFieldDef;
 import se.l4.silo.engine.index.search.query.QueryEncounter;
 import se.l4.silo.engine.index.search.types.FieldCreationEncounter;
 import se.l4.silo.index.EqualsMatcher;
@@ -76,14 +77,17 @@ public class DoubleFieldType
 	@Override
 	public Query createQuery(
 		QueryEncounter<?> encounter,
-		String field,
+		SearchFieldDef<?> fieldDef,
 		Matcher<Double> matcher
 	)
 	{
+		String fieldName = encounter.index()
+			.name(fieldDef, encounter.currentLanguage());
+
 		if(matcher instanceof EqualsMatcher)
 		{
 			Double value = ((EqualsMatcher<Double>) matcher).getValue();
-			return DoublePoint.newExactQuery(field, value);
+			return DoublePoint.newExactQuery(fieldName, value);
 		}
 		else if(matcher instanceof RangeMatcher)
 		{
@@ -115,7 +119,7 @@ public class DoubleFieldType
 				}
 			}
 
-			return DoublePoint.newRangeQuery(field, lower, upper);
+			return DoublePoint.newRangeQuery(fieldName, lower, upper);
 		}
 
 		throw new SearchIndexException("Unsupported matcher: " + matcher);

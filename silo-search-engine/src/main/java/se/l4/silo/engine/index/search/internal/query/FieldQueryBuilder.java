@@ -1,4 +1,4 @@
-package se.l4.silo.engine.index.search.query;
+package se.l4.silo.engine.index.search.internal.query;
 
 import java.io.IOException;
 
@@ -10,13 +10,17 @@ import se.l4.silo.engine.index.search.SearchField;
 import se.l4.silo.engine.index.search.SearchFieldDef;
 import se.l4.silo.engine.index.search.SearchIndexEncounter;
 import se.l4.silo.engine.index.search.internal.NullFields;
+import se.l4.silo.engine.index.search.query.QueryBuilder;
+import se.l4.silo.engine.index.search.query.QueryEncounter;
 import se.l4.silo.index.AnyMatcher;
 import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.Matcher;
 import se.l4.silo.index.NullMatcher;
 import se.l4.silo.index.search.query.FieldQuery;
 
-// TODO: Multiple language support
+/**
+ * Query builder for {@link FieldQuery}.
+ */
 public class FieldQueryBuilder
 	implements QueryBuilder<FieldQuery>
 {
@@ -50,7 +54,6 @@ public class FieldQueryBuilder
 		}
 
 		// All other matchers are delegated to the field type
-		String fieldName = indexEncounter.name(def, encounter.currentLanguage());
-		return def.getType().createQuery(encounter, fieldName, matcher);
+		return def.getType().createQuery(encounter, def, matcher);
 	}
 }

@@ -5,6 +5,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
+import se.l4.silo.engine.index.search.SearchFieldDef;
 import se.l4.silo.engine.index.search.internal.UserQueryParser;
 import se.l4.silo.engine.index.search.query.QueryEncounter;
 import se.l4.silo.engine.index.search.types.AnalyzingTextField;
@@ -14,7 +15,6 @@ import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.Matcher;
 import se.l4.silo.index.search.SearchIndexException;
 import se.l4.silo.index.search.query.UserQuery;
-import se.l4.silo.index.search.query.UserQueryMatcher;
 
 public class FullTextFieldType
 	extends AbstractStringFieldType
@@ -27,6 +27,11 @@ public class FullTextFieldType
 	private FullTextFieldType(boolean typeAhead)
 	{
 		this.typeAhead = typeAhead;
+	}
+
+	public boolean isTypeAhead()
+	{
+		return typeAhead;
 	}
 
 	@Override
@@ -59,25 +64,28 @@ public class FullTextFieldType
 	@Override
 	public Query createQuery(
 		QueryEncounter<?> encounter,
-		String field,
+		SearchFieldDef<?> fieldDef,
 		Matcher<String> matcher
 	)
 	{
 		if(matcher instanceof EqualsMatcher)
 		{
+			String fieldName = encounter.index()
+				.name(fieldDef, encounter.currentLanguage());
+
 			String value = ((EqualsMatcher<String>) matcher).getValue();
-			return new TermQuery(new Term(field, value.toString()));
+			return new TermQuery(new Term(fieldName, value.toString()));
 		}
-		else if(matcher instanceof UserQueryMatcher)
+		else if(matcher instanceof UserQuery.Matcher)
 		{
-			UserQueryMatcher userQuery = (UserQueryMatcher) matcher;
-			boolean typeAhead = userQuery.getContext() == UserQuery.Context.TYPE_AHEAD;
+			UserQuery.Matcher userQuery = (UserQuery.Matcher) matcher;
+			boolean typeAhead = this.typeAhead && userQuery.getContext() == UserQuery.Context.TYPE_AHEAD;
 			return UserQueryParser.create(encounter)
-				.withFields(typeAhead ? field : (field + ":type-ahead"))
 				.withTypeAhead(typeAhead)
+				.addField(fieldDef)
 				.parse(userQuery.getQuery());
 		}
 
-		throw new SearchIndexException("Token field queries require a " + EqualsMatcher.class.getName());
+		throw new SearchIndexException("Unsupported matcher: " + matcher);
 	}
 }

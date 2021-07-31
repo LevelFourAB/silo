@@ -74,7 +74,7 @@ public class MappedSearchFieldType<T, V>
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Query createQuery(
 		QueryEncounter<?> encounter,
-		String field,
+		SearchFieldDef<?> fieldDef,
 		Matcher<V> matcher
 	)
 	{
@@ -89,7 +89,7 @@ public class MappedSearchFieldType<T, V>
 			converted = (Matcher) matcher;
 		}
 
-		return originalType.createQuery(encounter, field, converted);
+		return originalType.createQuery(encounter, fieldDef, converted);
 	}
 
 	@Override

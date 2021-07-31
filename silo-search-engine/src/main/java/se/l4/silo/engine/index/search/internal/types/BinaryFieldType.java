@@ -105,14 +105,17 @@ public final class BinaryFieldType
 	@Override
 	public Query createQuery(
 		QueryEncounter<?> encounter,
-		String field,
+		SearchFieldDef<?> fieldDef,
 		Matcher<byte[]> matcher
 	)
 	{
 		if(matcher instanceof EqualsMatcher)
 		{
+			String fieldName = encounter.index()
+				.name(fieldDef, encounter.currentLanguage());
+
 			byte[] data = ((EqualsMatcher<byte[]>) matcher).getValue();
-			return new TermQuery(new Term(field, new BytesRef(data)));
+			return new TermQuery(new Term(fieldName, new BytesRef(data)));
 		}
 
 		throw new SearchIndexException("Binary fields only support equality matching");

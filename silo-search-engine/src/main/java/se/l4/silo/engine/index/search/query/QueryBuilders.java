@@ -2,7 +2,7 @@ package se.l4.silo.engine.index.search.query;
 
 import java.util.Optional;
 
-import se.l4.silo.engine.index.search.internal.QueryBuildersImpl;
+import se.l4.silo.engine.index.search.internal.query.QueryBuildersImpl;
 import se.l4.silo.index.search.QueryClause;
 
 /**

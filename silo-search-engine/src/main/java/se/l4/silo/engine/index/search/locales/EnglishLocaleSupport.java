@@ -47,8 +47,6 @@ public class EnglishLocaleSupport
 				.withTokenizer(ICUTokenizerFactory.class)
 				.addTokenFilter(EnglishPossessiveFilterFactory.class)
 				.addTokenFilter(ICUNormalizer2FilterFactory.class)
-				.addTokenFilter(StopFilterFactory.class)
-				.addTokenFilter(PorterStemFilterFactory.class)
 				.addTokenFilter(NGramFilterFactory.class, new HashMap<>(Map.of(
 					"minGramSize", "2",
 					"maxGramSize", "5"

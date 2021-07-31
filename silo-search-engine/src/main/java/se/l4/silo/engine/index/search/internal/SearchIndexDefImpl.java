@@ -19,6 +19,7 @@ import se.l4.silo.engine.index.search.SearchIndexDef;
 import se.l4.silo.engine.index.search.config.IndexCacheConfig;
 import se.l4.silo.engine.index.search.config.IndexCommitConfig;
 import se.l4.silo.engine.index.search.facets.FacetDef;
+import se.l4.silo.engine.index.search.internal.query.QueryBuildersImpl;
 import se.l4.silo.engine.index.search.locales.Locales;
 import se.l4.silo.index.search.SearchIndexException;
 

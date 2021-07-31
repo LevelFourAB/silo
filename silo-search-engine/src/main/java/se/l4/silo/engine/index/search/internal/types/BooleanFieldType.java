@@ -115,14 +115,17 @@ public class BooleanFieldType
 	@Override
 	public Query createQuery(
 		QueryEncounter<?> encounter,
-		String field,
+		SearchFieldDef<?> fieldDef,
 		Matcher<Boolean> matcher
 	)
 	{
+		String fieldName = encounter.index()
+			.name(fieldDef, encounter.currentLanguage());
+
 		if(matcher instanceof EqualsMatcher)
 		{
 			Boolean value = ((EqualsMatcher<Boolean>) matcher).getValue();
-			return new TermQuery(new Term(field, value ? TRUE : FALSE));
+			return new TermQuery(new Term(fieldName, value ? TRUE : FALSE));
 		}
 
 		throw new SearchIndexException("Boolean field queries require a " + EqualsMatcher.class.getName());

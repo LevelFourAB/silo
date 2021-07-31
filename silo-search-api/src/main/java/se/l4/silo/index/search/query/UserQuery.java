@@ -6,13 +6,25 @@ import org.eclipse.collections.api.list.primitive.ImmutableFloatList;
 import se.l4.silo.index.search.QueryClause;
 import se.l4.silo.index.search.internal.UserQueryImpl;
 
+/**
+ * Query from a user that applies to one or more fields.
+ */
 public interface UserQuery
 	extends QueryClause
 {
+	/**
+	 * Context to apply.
+	 */
 	enum Context
 	{
+		/**
+		 * Standard context, perform a full-text search.
+		 */
 		STANDARD,
 
+		/**
+		 * Type ahead context.
+		 */
 		TYPE_AHEAD
 	}
 
@@ -64,7 +76,7 @@ public interface UserQuery
 	 * single field.
 	 */
 	interface Matcher
-		extends se.l4.silo.index.Matcher
+		extends se.l4.silo.index.Matcher<String>
 	{
 		/**
 		 * Get the context of this query.
@@ -114,6 +126,11 @@ public interface UserQuery
 		 */
 		Builder withContext(Context context);
 
+		/**
+		 * Build the instance.
+		 *
+		 * @return
+		 */
 		UserQuery build();
 	}
 }

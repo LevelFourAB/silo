@@ -6,6 +6,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
+import se.l4.silo.engine.index.search.SearchFieldDef;
 import se.l4.silo.engine.index.search.query.QueryEncounter;
 import se.l4.silo.engine.index.search.types.FieldCreationEncounter;
 import se.l4.silo.index.EqualsMatcher;
@@ -39,14 +40,17 @@ public class TokenFieldType
 	@Override
 	public Query createQuery(
 		QueryEncounter<?> encounter,
-		String field,
+		SearchFieldDef<?> fieldDef,
 		Matcher<String> matcher
 	)
 	{
+		String fieldName = encounter.index()
+			.name(fieldDef, encounter.currentLanguage());
+
 		if(matcher instanceof EqualsMatcher)
 		{
 			String value = ((EqualsMatcher<String>) matcher).getValue();
-			return new TermQuery(new Term(field, value.toString()));
+			return new TermQuery(new Term(fieldName, value.toString()));
 		}
 
 		throw new SearchIndexException("Token field queries require a " + EqualsMatcher.class.getName());

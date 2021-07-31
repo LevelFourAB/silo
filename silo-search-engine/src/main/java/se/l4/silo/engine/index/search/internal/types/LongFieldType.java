@@ -85,14 +85,17 @@ public class LongFieldType
 	@Override
 	public Query createQuery(
 		QueryEncounter<?> encounter,
-		String field,
+		SearchFieldDef<?> fieldDef,
 		Matcher<Long> matcher
 	)
 	{
+		String fieldName = encounter.index()
+			.name(fieldDef, encounter.currentLanguage());
+
 		if(matcher instanceof EqualsMatcher)
 		{
 			Long value = ((EqualsMatcher<Long>) matcher).getValue();
-			return LongPoint.newExactQuery(field, value);
+			return LongPoint.newExactQuery(fieldName, value);
 		}
 		else if(matcher instanceof RangeMatcher)
 		{
@@ -124,7 +127,7 @@ public class LongFieldType
 				}
 			}
 
-			return LongPoint.newRangeQuery(field, lower, upper);
+			return LongPoint.newRangeQuery(fieldName, lower, upper);
 		}
 
 		throw new SearchIndexException("Unsupported matcher: " + matcher);

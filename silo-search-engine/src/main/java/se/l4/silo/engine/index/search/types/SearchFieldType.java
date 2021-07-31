@@ -78,7 +78,7 @@ public interface SearchFieldType<V>
 	 */
 	Query createQuery(
 		QueryEncounter<?> encounter,
-		String field,
+		SearchFieldDef<?> fieldDef,
 		Matcher<V> matcher
 	);
 

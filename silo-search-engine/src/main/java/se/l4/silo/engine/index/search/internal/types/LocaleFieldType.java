@@ -21,6 +21,7 @@ import org.apache.lucene.util.BytesRef;
 import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.exobytes.streaming.Token;
+import se.l4.silo.engine.index.search.SearchFieldDef;
 import se.l4.silo.engine.index.search.internal.LocaleAnalyzer;
 import se.l4.silo.engine.index.search.query.QueryEncounter;
 import se.l4.silo.engine.index.search.types.AnalyzingTextField;
@@ -119,10 +120,13 @@ public class LocaleFieldType
 	@Override
 	public Query createQuery(
 		QueryEncounter<?> encounter,
-		String field,
+		SearchFieldDef<?> fieldDef,
 		Matcher<Locale> matcher
 	)
 	{
+		String fieldName = encounter.index()
+			.name(fieldDef, encounter.currentLanguage());
+
 		if(matcher instanceof EqualsMatcher)
 		{
 			Locale value = ((EqualsMatcher<Locale>) matcher).getValue();
@@ -132,12 +136,12 @@ public class LocaleFieldType
 			 * Matching is always done in such a way that all the parts are required. This currently focuses on simplified
 			 * matching of a codes with a language and a region.
 			 */
-			builder.add(new TermQuery(new Term(field, value.toLanguageTag())), Occur.SHOULD);
+			builder.add(new TermQuery(new Term(fieldName, value.toLanguageTag())), Occur.SHOULD);
 
 			if(! value.getCountry().isEmpty() && value.getScript().isEmpty())
 			{
 				String q = value.getLanguage() + "-*-" + value.getCountry();
-				builder.add(new WildcardQuery(new Term(field, q)), Occur.SHOULD);
+				builder.add(new WildcardQuery(new Term(fieldName, q)), Occur.SHOULD);
 			}
 
 			return new ConstantScoreQuery(builder.build());

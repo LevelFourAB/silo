@@ -85,14 +85,17 @@ public class IntFieldType
 	@Override
 	public Query createQuery(
 		QueryEncounter<?> encounter,
-		String field,
+		SearchFieldDef<?> fieldDef,
 		Matcher<Integer> matcher
 	)
 	{
+		String fieldName = encounter.index()
+			.name(fieldDef, encounter.currentLanguage());
+
 		if(matcher instanceof EqualsMatcher)
 		{
 			Integer value = ((EqualsMatcher<Integer>) matcher).getValue();
-			return IntPoint.newExactQuery(field, value);
+			return IntPoint.newExactQuery(fieldName, value);
 		}
 		else if(matcher instanceof RangeMatcher)
 		{
@@ -124,7 +127,7 @@ public class IntFieldType
 				}
 			}
 
-			return IntPoint.newRangeQuery(field, lower, upper);
+			return IntPoint.newRangeQuery(fieldName, lower, upper);
 		}
 
 		throw new SearchIndexException("Unsupported matcher: " + matcher);

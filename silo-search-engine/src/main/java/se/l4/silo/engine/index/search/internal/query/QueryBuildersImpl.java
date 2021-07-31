@@ -1,13 +1,10 @@
-package se.l4.silo.engine.index.search.internal;
+package se.l4.silo.engine.index.search.internal.query;
 
 import java.util.Optional;
 
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.map.ImmutableMap;
 
-import se.l4.silo.engine.index.search.query.AndQueryBuilder;
-import se.l4.silo.engine.index.search.query.FieldQueryBuilder;
-import se.l4.silo.engine.index.search.query.OrQueryBuilder;
 import se.l4.silo.engine.index.search.query.QueryBuilder;
 import se.l4.silo.engine.index.search.query.QueryBuilders;
 import se.l4.silo.index.search.QueryClause;
@@ -23,7 +20,9 @@ public class QueryBuildersImpl
 	public static final Builder DEFAULT_BUILDER = new BuilderImpl(Maps.immutable.empty())
 		.add(new AndQueryBuilder())
 		.add(new OrQueryBuilder())
-		.add(new FieldQueryBuilder());
+		.add(new FieldQueryBuilder())
+		.add(new NegateQueryBuilder())
+		.add(new UserQueryBuilder());
 
 	public static final QueryBuilders DEFAULT = DEFAULT_BUILDER.build();
 
