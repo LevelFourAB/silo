@@ -124,7 +124,7 @@
 						<artifactId>reactor-tools</artifactId>
 						<classifier>original</classifier>
 						<scope>runtime</scope>
-						<version>3.3.9.RELEASE</version>
+						<version>3.4.8</version>
 					</dependency>
 				</dependencies>
 
@@ -140,13 +140,13 @@
 			<plugin>
 				<groupId>com.github.spotbugs</groupId>
 				<artifactId>spotbugs-maven-plugin</artifactId>
-				<version>4.2.0</version>
+				<version>4.3.0</version>
 
 				<dependencies>
 					<dependency>
 						<groupId>com.github.spotbugs</groupId>
 						<artifactId>spotbugs</artifactId>
-						<version>4.2.2</version>
+						<version>4.3.0</version>
 					</dependency>
 				</dependencies>
 				<executions>
@@ -165,12 +165,12 @@
 			<plugin>
 				<groupId>org.revapi</groupId>
 				<artifactId>revapi-maven-plugin</artifactId>
-				<version>0.13.2</version>
+				<version>0.14.3</version>
 				<dependencies>
 					<dependency>
 						<groupId>org.revapi</groupId>
 						<artifactId>revapi-java</artifactId>
-						<version>0.23.2</version>
+						<version>0.24.4</version>
 					</dependency>
 				</dependencies>
 				<executions>
@@ -181,36 +181,37 @@
 					</execution>
 				</executions>
 				<configuration>
-					<reportSeverity>nonBreaking</reportSeverity>
-					<failSeverity>breaking</failSeverity>
-
 					<analysisConfiguration>
-						<revapi.java>
-							<filter>
-								<packages>
-									<regex>true</regex>
-									<include>
-										<item>se\.l4\..*</item>
-									</include>
-									<exclude>
-										<item>.*\.impl(\..+)?</item>
-										<item>.*\.internal(\..+)?</item>
-									</exclude>
-								</packages>
-							</filter>
-						</revapi.java>
+						<revapi.filter>
+							<elements>
+								<exclude>
+									<item>
+										<matcher>java-package</matcher>
+										<match>.*\.impl(\..+)?</match>
+									</item>
+									<item>
+										<matcher>java-package</matcher>
+										<match>.*\.internal(\..+)?</match>
+									</item>
+								</exclude>
+							</elements>
+						</revapi.filter>
 
-						<revapi.semver.ignore>
+						<revapi.versions>
 							<enabled>true</enabled>
+							<semantic0>true</semantic0>
 							<versionIncreaseAllows>
-								<major>breaking</major>
-								<minor>nonBreaking</minor>
-								<patch>equivalent</patch>
+								<major>
+									<severity>BREAKING</severity>
+								</major>
+								<minor>
+									<severity>NON_BREAKING</severity>
+								</minor>
+								<patch>
+									<severity>EQUIVALENT</severity>
+								</patch>
 							</versionIncreaseAllows>
-							<passThroughDifferences>
-								<item>java.class.nonPublicPartOfAPI</item>
-							</passThroughDifferences>
-						</revapi.semver.ignore>>
+						</revapi.versions>
 
 						<revapi.ignore>
 							<item>
@@ -241,6 +242,11 @@
 								<code>java.annotation.added</code>
 								<annotationType>edu.umd.cs.findbugs.annotations.SuppressFBWarnings</annotationType>
 								<justification>SpotBugs annotations are for bug finding and not code generation</justification>
+							</item>
+
+							<item>
+								<code>java.class.externalClassExposedInAPI</code>
+								<justification></justification>
 							</item>
 						</revapi.ignore>
 					</analysisConfiguration>
