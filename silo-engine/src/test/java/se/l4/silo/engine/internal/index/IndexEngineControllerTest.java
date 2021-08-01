@@ -1,7 +1,7 @@
 package se.l4.silo.engine.internal.index;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -229,7 +229,7 @@ public class IndexEngineControllerTest
 	public void testReopenWithMoreData()
 		throws IOException
 	{
-		controller.start(new Encounter(2));
+		controller.start(new Encounter(2)).block();
 
 		assertThat(engine.size(), is(2));
 
@@ -238,7 +238,7 @@ public class IndexEngineControllerTest
 		reopen();
 
 		// Start things up again
-		controller.start(new Encounter(3));
+		controller.start(new Encounter(3)).block();
 
 		assertThat(engine.size(), is(3));
 		assertThat(engine.lastOpId, is(3l));

@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 
 import org.eclipse.collections.api.tuple.primitive.LongObjectPair;
-import org.h2.mvstore.MVMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +29,6 @@ import se.l4.silo.engine.index.IndexQueryEncounter;
 import se.l4.silo.engine.index.IndexQueryRunner;
 import se.l4.silo.engine.index.LocalIndex;
 import se.l4.silo.engine.internal.DataStorage;
-import se.l4.silo.engine.internal.types.PositiveLongType;
 import se.l4.silo.index.Query;
 
 /**
@@ -51,7 +49,6 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 	private final IndexQueryRunner<T, Q> queryRunner;
 
 	private final IndexEngineLog engineLog;
-	private final MVMap<Long, Long> data;
 
 	private final Sinks.One<Void> upToDate;
 	private final LongAdder queryCount;
@@ -77,10 +74,19 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 		dataUpdater = engine.getDataUpdater();
 		queryRunner = engine.getQueryRunner();
 
-		this.engineLog = new IndexEngineLog(manager, "index.log." + uniqueName);
-		data = manager.openMap("index.dataMapping." + uniqueName, new MVMap.Builder<Long, Long>()
-			.keyType(PositiveLongType.INSTANCE)
-			.valueType(PositiveLongType.INSTANCE)
+		this.engineLog = new IndexEngineLog(
+			manager,
+			"index.log." + uniqueName,
+			id -> {
+				try
+				{
+					dataStorage.delete(id);
+				}
+				catch(IOException e)
+				{
+					throw new StorageException(e);
+				}
+			}
 		);
 
 		events = Sinks.many().multicast().directBestEffort();
@@ -172,15 +178,15 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 				if(softCursor > engineLog.getLatestOp())
 				{
 					/*
-					* Index has ended up in a state where it has data that does not
-					* exist in the main storage. The common cause here is that a
-					* crash occurred or a backup was restored without removing the
-					* indexes.
-					*
-					* As deletes may have happened in the index but not the main
-					* storage, causing those items to not be queryable in the index,
-					* we have to clear the index at this point and do a rebuild.
-					*/
+					 * Index has ended up in a state where it has data that does not
+					 * exist in the main storage. The common cause here is that a
+					 * crash occurred or a backup was restored without removing the
+					 * indexes.
+					 *
+					 * As deletes may have happened in the index but not the main
+					 * storage, causing those items to not be queryable in the index,
+					 * we have to clear the index at this point and do a rebuild.
+					 */
 					dataUpdater.clear();
 					softCursor = dataUpdater.getLastHardCommit();
 				}
@@ -188,32 +194,18 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 				if(softCursor == 0)
 				{
 					/*
-					* Index has nothing committed so about to attempt a full rebuild
-					* of the index. In this case we can't rely on the log so we need
-					* to rebuild from the stored data.
-					*
-					* The biggest challenge here is if we're in the middle of building
-					* up the data map and a restart occurs where the index has not
-					* committed anything.
-					*
-					* To solve this we keep a generation pointer around and rebuild
-					* up to where we have generated.
-					*/
-					long generationPointer = getGenerationPointer(engineLog.getRebuildMax());
+					 * Index has nothing committed so about to attempt a full rebuild
+					 * of the index. In this case we can't rely on the log so we need
+					 * to rebuild from the stored data.
+					 */
 					engineLog.clear();
 
-					// No maximum rebuild set
+					// Set the point where rebuild will stop
 					long size = encounter.getSize();
-					long largestKey = encounter.getLargestId();
 					if(size > 0)
 					{
+						long largestKey = encounter.getLargestId();
 						engineLog.setRebuildMax(size, largestKey);
-					}
-
-					if(generationPointer > 0)
-					{
-						// Replay the data up to where we have generated
-						replayDataLog(encounter, 0, generationPointer);
 					}
 				}
 
@@ -224,18 +216,8 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 				long lastOp = engineLog.getLastRebuildOp();
 				replayLog(lastOp);
 
-				if(data.size() < engineLog.getRebuildMax())
-				{
-					// Data is being generated or needs to be generated
-					generateData(encounter);
-				}
-				else
-				{
-					// Rebuild the remaining stored data
-					long lastStored = engineLog.getLastStoredId(softCursor);
-					long largestDataToRebuild = engineLog.getRebuildMaxDataId();
-					replayDataLog(encounter, lastStored, largestDataToRebuild);
-				}
+				// Ask for data to be generated
+				generateData(encounter);
 
 				// Replay the rest of the log
 				replayLog(Long.MAX_VALUE);
@@ -266,18 +248,18 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 		});
 	}
 
-	private long getGenerationPointer(long maxId)
-	{
-		Long key = data.floorKey(maxId);
-		return key == null ? 0 : key;
-	}
-
+	/**
+	 * Generate data for the index.
+	 *
+	 * @param encounter
+	 * @throws IOException
+	 */
 	private void generateData(
 		IndexEngineRebuildEncounter<T> encounter
 	)
 		throws IOException
 	{
-		long current = getGenerationPointer(engineLog.getRebuildMaxDataId());
+		long current = engineLog.getLastRebuildOpData();
 
 		Iterator<LongObjectPair<T>> it = encounter.iterator(current, engineLog.getRebuildMaxDataId());
 		while(it.hasNext())
@@ -291,7 +273,6 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 			try
 			{
 				storedId = dataStorage.store(out -> generate(object, out));
-				data.put(dataId, storedId);
 
 				// Update the index
 				long opId = engineLog.appendRebuild(dataId, storedId);
@@ -300,7 +281,7 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 					dataUpdater.apply(opId, dataId, storedStream);
 				}
 
-				// Update the where we are in the log
+				// Update where we are in the log
 				softCursor = opId;
 
 				// Report our progress
@@ -310,38 +291,6 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 			{
 				throw new StorageException("Could not update " + engine.getName() + "; " + e.getMessage(), e);
 			}
-		}
-	}
-
-	private void replayDataLog(
-		IndexEngineRebuildEncounter<T> encounter,
-		long previousDataId,
-		long largestDataToRebuild
-	)
-		throws IOException
-	{
-		Long largerKey = data.higherKey(previousDataId);
-		Iterator<Long> it = data.keyIterator(largerKey);
-		while(it.hasNext())
-		{
-			Long dataId = it.next();
-			if(dataId > largestDataToRebuild) break;
-
-			long storedId = data.get(dataId);
-			long opId = engineLog.appendRebuild(dataId, storedId);
-			try(InputStream storedStream = dataStorage.get(null, storedId))
-			{
-				// Protect against the data having been removed
-				if(storedStream == null) continue;
-
-				dataUpdater.apply(opId, dataId, storedStream);
-			}
-
-			// Update the where we are in the log
-			softCursor = opId;
-
-			// Report our progress
-			maybeEmitProgress(opId);
 		}
 	}
 
@@ -441,8 +390,6 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 		try
 		{
 			storedId = dataStorage.store(in::transferTo);
-			data.put(id, storedId);
-
 			long opId = engineLog.appendStore(id, storedId);
 
 			if(softCursor == opId - 1)
@@ -468,9 +415,6 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 	 */
 	public void delete(long id)
 	{
-		// Remove stored data
-		data.remove(id);
-
 		// Generate an operation and apply it to the engine
 		long opId = engineLog.appendDelete(id);
 

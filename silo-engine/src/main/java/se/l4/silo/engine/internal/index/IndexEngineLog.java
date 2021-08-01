@@ -3,6 +3,7 @@ package se.l4.silo.engine.internal.index;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.function.LongConsumer;
 
 import org.eclipse.collections.api.tuple.primitive.LongObjectPair;
 import org.eclipse.collections.impl.EmptyIterator;
@@ -42,13 +43,17 @@ import se.l4.silo.engine.internal.types.PositiveLongType;
 public class IndexEngineLog
 {
 	private final MVMap<Long, Entry> data;
+	private final LongConsumer onStoredIdDiscarded;
+
 	private long rebuildMax;
 
 	public IndexEngineLog(
 		MVStoreManager manager,
-		String name
+		String name,
+		LongConsumer onStoredIdDiscarded
 	)
 	{
+		this.onStoredIdDiscarded = onStoredIdDiscarded;
 		data = manager.openMap(name, new MVMap.Builder<Long, Entry>()
 			.keyType(PositiveLongType.INSTANCE)
 			.valueType(EntryFieldType.INSTANCE)
@@ -89,6 +94,14 @@ public class IndexEngineLog
 	 */
 	public void clear()
 	{
+		for(Entry e : data.values())
+		{
+			if(e.indexDataId > 0)
+			{
+				onStoredIdDiscarded.accept(e.indexDataId);
+			}
+		}
+
 		data.clear();
 		data.put(0l, new Entry(EntryType.HARD_COMMIT, 0, 0));
 	}
@@ -235,6 +248,7 @@ public class IndexEngineLog
 				case STORE:
 					lastStoredId = e.getId();
 					data.remove(l);
+					onStoredIdDiscarded.accept(e.indexDataId);
 					break;
 				case DELETION:
 				case HARD_COMMIT:
@@ -348,6 +362,17 @@ public class IndexEngineLog
 	{
 		Long largest = data.lowerKey(rebuildMax);
 		return largest == null ? 0 : largest;
+	}
+
+	/**
+	 * Get the last rebuild operation stored.
+	 *
+	 * @return
+	 */
+	public long getLastRebuildOpData()
+	{
+		Long largest = data.lowerKey(rebuildMax);
+		return largest == null ? 0 : data.get(largest).indexDataId;
 	}
 
 	/**

@@ -1,7 +1,7 @@
 package se.l4.silo.engine.internal.index;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -30,7 +30,7 @@ public class IndexEngineLogTest
 				.fileStore(new OffHeapStore())
 		);
 
-		log = new IndexEngineLog(manager, "log");
+		log = new IndexEngineLog(manager, "log", id -> {});
 	}
 
 	@AfterEach
