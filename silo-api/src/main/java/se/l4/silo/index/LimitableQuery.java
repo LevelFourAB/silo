@@ -60,7 +60,7 @@ public interface LimitableQuery
 			if(page < 1) throw new IllegalArgumentException("page must be a positive integer");
 			if(pageSize < 1) throw new IllegalArgumentException("pageSize must be a positive integer");
 
-			return offset((page-1) * pageSize)
+			return offset((page-1) * (long) pageSize)
 				.limit(pageSize);
 		}
 	}
