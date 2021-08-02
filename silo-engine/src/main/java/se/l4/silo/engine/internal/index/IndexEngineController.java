@@ -368,7 +368,7 @@ public class IndexEngineController<T, Q extends Query<T, ?, ?>>
 	 * {@link OutputStream}.
 	 *
 	 * @param data
-	 * @param out0
+	 * @param out
 	 * @throws IOException
 	 */
 	public void generate(T data, OutputStream out)

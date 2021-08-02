@@ -457,9 +457,10 @@ public class BasicIndexQueryRunner<T>
 		 * Accept the given id with the given sorting data.
 		 *
 		 * @param id
-		 * @param sortData
+		 * @param keys
+		 * @param values
 		 * @return
-		 * 		false if no more results are needed
+		 *   false if no more results are needed
 		 */
 		protected abstract boolean accept(long id, Object[] keys, Object[] values);
 	}

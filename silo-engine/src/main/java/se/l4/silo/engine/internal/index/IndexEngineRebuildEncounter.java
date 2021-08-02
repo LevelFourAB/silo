@@ -24,7 +24,8 @@ public interface IndexEngineRebuildEncounter<T>
 	 * Get an iterator that will iterate over data from the given stored
 	 * id (exclusive).
 	 *
-	 * @param dataId
+	 * @param minIdExclusive
+	 * @param maxIdInclusive
 	 * @return
 	 */
 	Iterator<LongObjectPair<T>> iterator(long minIdExclusive, long maxIdInclusive);

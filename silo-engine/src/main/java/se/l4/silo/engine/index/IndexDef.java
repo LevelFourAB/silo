@@ -13,7 +13,7 @@ public interface IndexDef<T>
 	/**
 	 * Create a new instance of this query engine from the given configuration.
 	 *
-	 * @param config
+	 * @param encounter
 	 * @return
 	 */
 	Index<?, ?> create(IndexEngineCreationEncounter encounter);

@@ -18,8 +18,8 @@ public interface DataStorage
 	/**
 	 * Store bytes associated with a certain id.
 	 *
-	 * @param id
-	 * @param bytes
+	 * @param out
+	 *   consumer that generates data
 	 * @throws IOException
 	 */
 	long store(IOConsumer<OutputStream> out)

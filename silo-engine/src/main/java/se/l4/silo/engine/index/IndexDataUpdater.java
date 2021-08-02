@@ -27,14 +27,13 @@ public interface IndexDataUpdater
 
 	/**
 	 * Clear the index and reset {@link #getLastHardCommit()} to {@code 0}.
-	 *
-	 * @param op
 	 */
 	void clear();
 
 	/**
 	 * Apply previously generated data.
 	 *
+	 * @param opId
 	 * @param dataId
 	 * @param in
 	 */
@@ -44,7 +43,8 @@ public interface IndexDataUpdater
 	/**
 	 * Delete something from this query engine.
 	 *
-	 * @param id
+	 * @param opId
+	 * @param dataId
 	 */
 	void delete(long opId, long dataId);
 }

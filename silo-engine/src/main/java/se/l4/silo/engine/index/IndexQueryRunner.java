@@ -20,8 +20,8 @@ public interface IndexQueryRunner<T, Q extends Query<T, ?, ?>>
 	Mono<? extends FetchResult<?>> fetch(IndexQueryEncounter<? extends Q, T> encounter);
 
 	/**
+	 * Stream results for the given encounter.
 	 *
-	 * @param <R>
 	 * @param encounter
 	 * @return
 	 */

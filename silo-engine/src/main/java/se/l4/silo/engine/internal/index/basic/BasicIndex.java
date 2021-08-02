@@ -100,9 +100,7 @@ public class BasicIndex<T>
 	/**
 	 * Create a {@link MergedFieldType} for the given fields.
 	 *
-	 * @param uniqueName
 	 * @param fields
-	 * @param fieldNames
 	 * @param appendId
 	 * @return
 	 */
@@ -131,9 +129,7 @@ public class BasicIndex<T>
 	 * Create a {@link MergedFieldType} that allows multiple values for
 	 * every field.
 	 *
-	 * @param uniqueName
 	 * @param fields
-	 * @param fieldNames
 	 * @param appendId
 	 * @return
 	 */
