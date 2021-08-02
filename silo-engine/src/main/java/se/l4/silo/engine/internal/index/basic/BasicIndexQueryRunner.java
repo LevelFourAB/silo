@@ -237,7 +237,7 @@ public class BasicIndexQueryRunner<T>
 	{
 		for(int i=0, n=sortFields.length; i<n; i++)
 		{
-			if(sortFields[i].equals(name))
+			if(sortFields[i].getName().equals(name))
 			{
 				return i;
 			}
