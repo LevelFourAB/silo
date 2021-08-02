@@ -276,11 +276,14 @@ public class TransactionLogApplier
 				if(store.getData().length == 0)
 				{
 					// Zero length chunk means end of data
-					applier.store(
-						store.getCollection(),
-						store.getId(),
-						new SequenceInputStream(new InputStreamEnumeration(keys))
-					);
+					try(InputStream in = new SequenceInputStream(new InputStreamEnumeration(keys)))
+					{
+						applier.store(
+							store.getCollection(),
+							store.getId(),
+							in
+						);
+					}
 
 					keys.clear();
 				}
@@ -295,12 +298,15 @@ public class TransactionLogApplier
 				if(indexChunk.getData().length == 0)
 				{
 					// Zero length chunk means end of data
-					applier.index(
-						indexChunk.getCollection(),
-						indexChunk.getIndex(),
-						indexChunk.getId(),
-						new SequenceInputStream(new InputStreamEnumeration(keys))
-					);
+					try(InputStream in = new SequenceInputStream(new InputStreamEnumeration(keys)))
+					{
+						applier.index(
+							indexChunk.getCollection(),
+							indexChunk.getIndex(),
+							indexChunk.getId(),
+							in
+						);
+					}
 
 					keys.clear();
 				}
