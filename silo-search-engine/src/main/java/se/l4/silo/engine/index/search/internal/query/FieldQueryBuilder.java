@@ -16,6 +16,7 @@ import se.l4.silo.index.AnyMatcher;
 import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.Matcher;
 import se.l4.silo.index.NullMatcher;
+import se.l4.silo.index.search.SearchIndexException;
 import se.l4.silo.index.search.query.FieldQuery;
 
 /**
@@ -32,6 +33,11 @@ public class FieldQueryBuilder
 
 		SearchIndexEncounter<?> indexEncounter = encounter.index();
 		SearchField<?, ?> field = indexEncounter.getField(clause.getField());
+		if(field == null)
+		{
+			throw new SearchIndexException("The given field does not exist: " + clause.getField());
+		}
+
 		SearchFieldDef<?> def = field.getDefinition();
 
 		Matcher matcher = clause.getMatcher();
