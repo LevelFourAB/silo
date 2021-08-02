@@ -129,6 +129,7 @@ public class SearchIndexDataUpdater<T>
 				if(field == null)
 				{
 					in.skipNext();
+					continue;
 				}
 
 				if(in.peek() == Token.NULL)
