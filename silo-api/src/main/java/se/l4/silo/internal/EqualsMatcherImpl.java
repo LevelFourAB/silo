@@ -30,7 +30,7 @@ public class EqualsMatcherImpl<V>
 	@Override
 	public <NV> Matcher<NV> map(Function<V, NV> func)
 	{
-		return new EqualsMatcherImpl<>(func.apply(value));
+		return new EqualsMatcherImpl<>(value == null ? null : func.apply(value));
 	}
 
 	@Override

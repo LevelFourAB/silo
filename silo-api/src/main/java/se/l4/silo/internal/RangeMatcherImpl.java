@@ -59,9 +59,9 @@ public class RangeMatcherImpl<T>
 	public <NV> Matcher<NV> map(Function<T, NV> func)
 	{
 		return new RangeMatcherImpl<>(
-			func.apply(lower),
+			lower == null ? null : func.apply(lower),
 			lowerInclusive,
-			func.apply(upper),
+			upper == null ? null : func.apply(upper),
 			upperInclusive
 		);
 	}
